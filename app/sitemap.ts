@@ -2,12 +2,38 @@ import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/lib/site';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = ['', '/services', '/who-we-serve', '/contact', '/privacy', '/thank-you'];
+  const now = new Date();
 
-  return routes.map((route) => ({
-    url: `${siteConfig.url}${route}`,
-    lastModified: new Date(),
-    changeFrequency: route === '' ? 'weekly' : 'monthly',
-    priority: route === '' ? 1 : 0.7
-  }));
+  return [
+    {
+      url: `${siteConfig.url}/`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 1
+    },
+    {
+      url: `${siteConfig.url}/services`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.9
+    },
+    {
+      url: `${siteConfig.url}/who-we-serve`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.85
+    },
+    {
+      url: `${siteConfig.url}/contact`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8
+    },
+    {
+      url: `${siteConfig.url}/privacy`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.3
+    }
+  ];
 }

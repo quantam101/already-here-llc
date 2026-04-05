@@ -3,6 +3,8 @@ import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { siteConfig } from '@/lib/site';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -12,15 +14,35 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
+  category: 'business',
+  creator: siteConfig.name,
+  publisher: siteConfig.name,
   keywords: [
+    'Arizona field service',
     'Phoenix field service',
     'Arizona dispatch support',
     'onsite execution partner',
     'rollout support Arizona',
     'POS field support',
     'network field support',
-    'site surveys Arizona'
+    'site surveys Arizona',
+    'smart hands Arizona',
+    'multi-site field support'
   ],
+  alternates: {
+    canonical: '/'
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1
+    }
+  },
   openGraph: {
     title: 'Already Here LLC | Arizona Field Execution Partner',
     description: siteConfig.description,
@@ -33,9 +55,6 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Already Here LLC | Arizona Field Execution Partner',
     description: siteConfig.description
-  },
-  alternates: {
-    canonical: '/'
   }
 };
 
@@ -43,8 +62,8 @@ const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'ProfessionalService',
   name: siteConfig.name,
-  areaServed: 'Arizona',
   description: siteConfig.description,
+  areaServed: 'Arizona',
   address: {
     '@type': 'PostalAddress',
     addressLocality: 'Phoenix',
@@ -54,7 +73,18 @@ const organizationSchema = {
   url: siteConfig.url
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: siteConfig.name,
+  url: siteConfig.url,
+  description: siteConfig.description,
+  inLanguage: 'en-US'
+};
+
+export default function RootLayout({
+  children
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body>
@@ -63,9 +93,16 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           suppressHydrationWarning
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
         <Header />
         <main>{children}</main>
         <Footer />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
