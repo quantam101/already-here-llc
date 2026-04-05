@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-soft text-ink antialiased;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+main {
+  min-height: calc(100vh - 200px);
+}
+
+.container-shell {
+  @apply mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8;
+}
+
+.eyebrow {
+  @apply inline-flex items-center gap-2 rounded-full border border-action/15 bg-action/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-action;
+}
+
+.section-title {
+  @apply text-3xl font-semibold tracking-tight text-navy sm:text-4xl;
+}
+
+.section-copy {
+  @apply mt-4 max-w-3xl text-base leading-7 text-slate-600;
+}
+
+.card {
+  @apply rounded-3xl border border-borderBrand bg-white shadow-panel;
+}
+
+.link-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2;
+}
+
+.grid-label {
+  @apply text-sm font-semibold uppercase tracking-[0.15em] text-slate-500;
+}
