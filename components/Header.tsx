@@ -42,29 +42,29 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-borderBrand/80 bg-white/95 backdrop-blur">
-      <div className="container-shell flex items-center justify-between py-4">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="link-ring flex items-center gap-3 rounded-2xl">
-            <div className="relative h-14 w-14 shrink-0 overflow-hidden">
-              <Image
-                src="/logo.png"
-                alt="Already Here LLC logo"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
+      <div className="container-shell flex items-center justify-between gap-4 py-4 lg:gap-8">
+        <Link href="/" className="link-ring flex min-w-0 items-center gap-3 rounded-2xl">
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm sm:h-14 sm:w-14">
+            <Image
+              src="/logo.png"
+              alt="Already Here LLC logo"
+              fill
+              className="object-contain p-0.5"
+              priority
+            />
+          </div>
 
-            <div>
-              <div className="text-base font-semibold text-navy">{siteConfig.name}</div>
-              <div className="text-xs uppercase tracking-[0.16em] text-slate-500">
-                Field execution partner
-              </div>
+          <div className="min-w-0">
+            <div className="truncate text-lg font-semibold leading-none text-navy">
+              {siteConfig.name}
             </div>
-          </Link>
-        </div>
+            <div className="mt-1 truncate text-[11px] uppercase tracking-[0.18em] text-slate-500 sm:text-xs">
+              Field Execution Partner
+            </div>
+          </div>
+        </Link>
 
-        <nav className="hidden items-center gap-2 lg:flex" aria-label="Primary navigation">
+        <nav className="hidden items-center gap-2 xl:flex" aria-label="Primary navigation">
           {navItems.map((item) => (
             <NavLink key={item.href} href={item.href} label={item.label} pathname={pathname} />
           ))}
@@ -73,7 +73,7 @@ export function Header() {
         <div className="hidden items-center gap-3 lg:flex">
           <Link
             href="/services"
-            className="link-ring rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-navy transition hover:border-action hover:text-action"
+            className="link-ring rounded-full border border-borderBrand px-5 py-2.5 text-sm font-medium text-navy transition hover:border-action hover:text-action"
           >
             View Services
           </Link>
@@ -87,7 +87,7 @@ export function Header() {
 
         <button
           type="button"
-          className="link-ring inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-borderBrand text-navy lg:hidden"
+          className="link-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-borderBrand text-navy lg:hidden"
           onClick={() => setOpen((current) => !current)}
           aria-expanded={open}
           aria-controls="mobile-nav"
@@ -119,7 +119,7 @@ export function Header() {
                 className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-center text-sm font-medium text-navy"
                 onClick={() => setOpen(false)}
               >
-                Check Coverage
+                View Services
               </Link>
               <Link
                 href="/contact"
