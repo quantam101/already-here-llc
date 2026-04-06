@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -12,7 +13,15 @@ const navItems = [
   { href: '/contact', label: 'Dispatch' }
 ];
 
-function NavLink({ href, label, pathname }: { href: string; label: string; pathname: string }) {
+function NavLink({
+  href,
+  label,
+  pathname
+}: {
+  href: string;
+  label: string;
+  pathname: string;
+}) {
   const active = pathname === href;
 
   return (
@@ -36,12 +45,21 @@ export function Header() {
       <div className="container-shell flex items-center justify-between py-4">
         <div className="flex items-center gap-4">
           <Link href="/" className="link-ring flex items-center gap-3 rounded-2xl">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-navy text-sm font-bold tracking-[0.16em] text-white">
-              AH
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden">
+              <Image
+                src="/logo.png"
+                alt="Already Here LLC logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
+
             <div>
               <div className="text-base font-semibold text-navy">{siteConfig.name}</div>
-              <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Field execution partner</div>
+              <div className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                Field execution partner
+              </div>
             </div>
           </Link>
         </div>
@@ -94,6 +112,7 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+
             <div className="grid grid-cols-2 gap-3 pt-2">
               <Link
                 href="/services"
