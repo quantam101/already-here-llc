@@ -1,5 +1,5 @@
-import { DispatchForm } from '../../components/DispatchForm';
 import { siteConfig } from '@/lib/site';
+import { DispatchForm } from '../../components/DispatchForm';
 
 const intakeItems = [
   'Site city and any known access constraints',

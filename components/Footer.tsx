@@ -68,12 +68,14 @@ export function Footer() {
                 {siteConfig.email}
               </a>
             </p>
+
             <p>
               <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                Location
+                Base market
               </span>
               {siteConfig.city}
             </p>
+
             <p>
               <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                 Intake path
