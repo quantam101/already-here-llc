@@ -1,23 +1,24 @@
-import { DispatchForm } from "../../components/DispatchForm";
+import { DispatchForm } from '../../components/DispatchForm';
+import { siteConfig } from '@/lib/site';
 
 const intakeItems = [
-  "Site city and any known access constraints",
-  "Scope summary and ticket, WO, or project reference",
-  "Requested date, arrival window, or due-by timing",
-  "Shared links to PDFs, screenshots, surveys, or project files",
+  'Site city and any known access constraints',
+  'Scope summary and ticket, WO, or project reference',
+  'Requested date, arrival window, or due-by timing',
+  'Shared links to PDFs, screenshots, surveys, or project files'
 ];
 
 const fitItems = [
-  "Single-site dispatches that need reliable onsite ownership",
-  "Recurring field visits and post-install follow-through",
-  "Store, branch, and multi-site technology support",
-  "Projects that require clear documentation and clean closeout",
+  'Single-site dispatches that need reliable onsite ownership',
+  'Recurring field visits and post-install follow-through',
+  'Store, branch, and multi-site technology support',
+  'Projects that require clear documentation and clean closeout'
 ];
 
 const fileItems = [
-  "Share links when files are large or held in your portal",
-  "Include screenshots, survey notes, device lists, or reference docs",
-  "Use the notes field to call out lockbox, access, or scheduling issues",
+  'Share links when files are large or held in your portal',
+  'Include screenshots, survey notes, device lists, or reference docs',
+  'Use the notes field to call out lockbox, access, or scheduling issues'
 ];
 
 export default function ContactPage() {
@@ -30,17 +31,46 @@ export default function ContactPage() {
           </div>
 
           <h1 className="mt-6 max-w-4xl text-5xl font-semibold leading-[0.98] tracking-tight text-slate-900 md:text-6xl">
-            Send scope, city, timing, and the details that affect the site
-            visit.
+            Send scope, city, timing, and the details that affect the site visit.
           </h1>
 
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-            Use this form to send dispatch details, schedule constraints,
-            project references, and supporting notes so the onsite visit starts
-            with the right context.
+            Use this form to send dispatch details, schedule constraints, project references, and
+            supporting notes so the onsite visit starts with the right context.
           </p>
 
-          <div className="mt-10 rounded-[2rem] border border-slate-200 bg-white p-6 md:p-7">
+          <div className="mt-8 rounded-[2rem] border border-slate-200 bg-white p-6 md:p-7">
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+              Direct dispatch contact
+            </h2>
+            <div className="mt-5 space-y-4 text-base leading-8 text-slate-600">
+              <p>
+                <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Dispatch email
+                </span>
+                <a
+                  href={`mailto:${siteConfig.email}`}
+                  className="font-medium text-navy underline decoration-slate-300 underline-offset-4 hover:text-action"
+                >
+                  {siteConfig.email}
+                </a>
+              </p>
+
+              <p>
+                <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Base market
+                </span>
+                {siteConfig.city}
+              </p>
+
+              <p className="text-sm leading-7 text-slate-500">
+                Use the form for the cleanest intake. Email is best for direct follow-up,
+                documentation exchange, and project communication after first contact.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[2rem] border border-slate-200 bg-white p-6 md:p-7">
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
               What to include
             </h2>
@@ -55,9 +85,7 @@ export default function ContactPage() {
           </div>
 
           <div className="mt-6 rounded-[2rem] border border-slate-200 bg-white p-6 md:p-7">
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-              Best fit
-            </h2>
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Best fit</h2>
             <ul className="mt-5 space-y-4 text-base leading-8 text-slate-600">
               {fitItems.map((item) => (
                 <li key={item} className="flex gap-3">
