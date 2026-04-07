@@ -25,10 +25,11 @@ const accessOptions = [
   'Lockbox / key pickup',
   'Badge or manager escort required',
   'After-hours access only',
-  'Rooftop / exterior work area',
-  'Ladder required',
+  'Data closet / server room access',
+  'Biomed / healthcare area',
   'Photos required',
   'Parts onsite',
+  'Remote support team on bridge',
   'Call before arrival'
 ] as const;
 
@@ -40,6 +41,7 @@ function getFieldValue(formData: FormData, field: string) {
 export function DispatchForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedWindow, setSelectedWindow] = useState<string>('Standard business hours');
   const [state, setState] = useState<SubmitState>({ error: null, success: false });
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -89,31 +91,49 @@ export function DispatchForm() {
       return;
     }
 
+    const requestedWindow = getFieldValue(formData, 'requestedWindow');
+    const requestedTime = getFieldValue(formData, 'requestedTime');
+
+    if (requestedWindow === 'Due by specific time' && !requestedTime) {
+      setState({
+        error: 'Add the due-by time when "Due by specific time" is selected.',
+        success: false
+      });
+      return;
+    }
+
     const accessConstraints = formData
       .getAll('accessConstraints')
       .filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
 
+    const fullName = getFieldValue(formData, 'fullName');
+    const company = getFieldValue(formData, 'company');
+    const phone = getFieldValue(formData, 'phone');
     const siteCity = getFieldValue(formData, 'siteCity');
     const requestedDate = getFieldValue(formData, 'requestedDate');
-    const requestedWindow = getFieldValue(formData, 'requestedWindow');
     const ticketNumber = getFieldValue(formData, 'ticketNumber');
     const issueSummary = getFieldValue(formData, 'issueSummary');
     const urgency = getFieldValue(formData, 'urgency');
-    const phone = getFieldValue(formData, 'phone');
+    const remoteTeam = getFieldValue(formData, 'remoteTeam');
     const additionalNotes = getFieldValue(formData, 'additionalNotes');
 
     const requestedVisitLine =
-      requestedDate || requestedWindow
-        ? `Requested visit: ${[requestedDate, requestedWindow].filter(Boolean).join(' | ')}`
+      requestedDate || requestedWindow || requestedTime
+        ? `Requested visit: ${[requestedDate, requestedWindow, requestedTime].filter(Boolean).join(' | ')}`
         : 'Requested visit: Not specified';
 
     const generatedMessage = [
+      `Requester: ${fullName}`,
+      `Company: ${company}`,
+      `Business email: ${email}`,
+      phone ? `Callback number: ${phone}` : '',
+      `Service type: ${getFieldValue(formData, 'serviceType')}`,
       `Scope summary: ${issueSummary}`,
       ticketNumber ? `Ticket / WO: ${ticketNumber}` : '',
       `Site city: ${siteCity}${siteZip ? ` ${siteZip}` : ''}`,
       requestedVisitLine,
       urgency ? `Priority: ${urgency}` : '',
-      phone ? `Callback number: ${phone}` : '',
+      remoteTeam ? `Remote team / bridge details: ${remoteTeam}` : '',
       accessConstraints.length
         ? `Access / site conditions: ${accessConstraints.join(', ')}`
         : 'Access / site conditions: None noted',
@@ -140,6 +160,7 @@ export function DispatchForm() {
       }
 
       form.reset();
+      setSelectedWindow('Standard business hours');
       setState({ error: null, success: true });
       router.push('/thank-you');
     } catch (error) {
@@ -157,8 +178,7 @@ export function DispatchForm() {
       <input type="hidden" name="message" value="" readOnly />
 
       <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm leading-6 text-sky-900">
-        No long paragraph required. Fill the structured fields below and the form will build the dispatch
-        summary automatically.
+        No long paragraph required. Fill the structured fields below and the form will build the dispatch summary automatically.
       </div>
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
@@ -282,7 +302,8 @@ export function DispatchForm() {
           Arrival window
           <select
             name="requestedWindow"
-            defaultValue="Standard business hours"
+            value={selectedWindow}
+            onChange={(event) => setSelectedWindow(event.target.value)}
             className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink"
           >
             {windowOptions.map((option) => (
@@ -292,6 +313,17 @@ export function DispatchForm() {
             ))}
           </select>
         </label>
+
+        {selectedWindow === 'Due by specific time' ? (
+          <label className="grid gap-2 text-sm font-medium text-navy md:col-span-2">
+            Due-by time
+            <input
+              name="requestedTime"
+              type="time"
+              className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink"
+            />
+          </label>
+        ) : null}
       </div>
 
       <label className="mt-6 grid gap-2 text-sm font-medium text-navy">
@@ -304,12 +336,21 @@ export function DispatchForm() {
       </label>
 
       <label className="mt-6 grid gap-2 text-sm font-medium text-navy">
+        Remote team / bridge details
+        <input
+          name="remoteTeam"
+          className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400"
+          placeholder="Remote engineer, bridge line, Teams, Zoom, or onsite coordination note"
+        />
+      </label>
+
+      <label className="mt-6 grid gap-2 text-sm font-medium text-navy">
         One-line scope summary <span className="text-action">*</span>
         <input
           name="issueSummary"
           required
           className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400"
-          placeholder="Example: Replace failed payment terminal and confirm network connectivity"
+          placeholder="Example: Remote team needs onsite laptop triage and drive swap in server closet"
         />
       </label>
 
@@ -353,8 +394,7 @@ export function DispatchForm() {
       </label>
 
       <div className="mt-6 rounded-2xl border border-borderBrand bg-slate-50 px-4 py-4 text-sm text-slate-600">
-        This version is optimized for speed: short summary, checkboxes, standard windows, and a shared file
-        link instead of one long dispatch paragraph.
+        This version is optimized for speed: short summary, checkboxes, standard windows, and a native time picker when due-by timing is required.
       </div>
 
       {state.error ? (

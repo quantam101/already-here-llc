@@ -1,49 +1,59 @@
-import Link from "next/link";
+import Link from 'next/link';
+import { siteConfig } from '@/lib/site';
 
 const serviceCards = [
   {
-    title: "Dispatch and recurring field support",
+    title: 'Remote support team assist and laptop work',
     body:
-      "Single-site dispatches, recurring visits, post-install follow-through, remediation work, and onsite ownership from arrival through closeout.",
+      'Work with remote support teams on bridge calls, guided troubleshooting, laptop and endpoint checks, user-facing device work, and clean onsite follow-through when the remote team needs reliable execution on site.'
   },
   {
-    title: "Store technology and endpoint work",
+    title: 'Smart hands / eyes-on-hands onsite',
     body:
-      "Onsite execution for payment devices, thin clients, workstations, printers, peripherals, and related store technology tasks.",
+      'Provide physical presence for remote teams that need hands onsite for cabling, checks, console access, basic hardware handling, patching, labeling, photos, and field confirmation.'
   },
   {
-    title: "Network and infrastructure field activity",
+    title: 'Data center, server, and storage field work',
     body:
-      "Router and cradlepoint work, AP replacement revisits, low-voltage checks, rack-and-stack support, and related infrastructure tasks.",
+      'Handle server-room, MDF / IDF, and data-center-adjacent work including drive swaps, server checks, storage handling, rack activity, and hands-on coordination when the work cannot be completed remotely.'
   },
   {
-    title: "Surveys, AV, and site verification",
+    title: 'Drive swaps, port changes, and infrastructure activity',
     body:
-      "Pre-work validation, photo documentation, device verification, light AV support, and site-readiness checks that reduce failed trips.",
+      'Support hardware replacement, drive swaps, port changes, patching, router and edge-device activity, AP follow-up, low-voltage checks, and related infrastructure tasks.'
   },
   {
-    title: "Install support and remediation",
+    title: 'Healthcare and biomed-adjacent support',
     body:
-      "Hands-on field support for installs, punch-list work, follow-up corrections, and site cleanup when the original scope needs tighter execution.",
+      'Current experience includes healthcare and biomed-related environments where access constraints, communication discipline, and structured closeout matter.'
   },
   {
-    title: "Documentation and closeout",
+    title: 'Retail rollout, RFID, and new technology build support',
     body:
-      "Clear notes, photo proof when required, ticket references, completion details, and usable closeout documentation your team can act on.",
-  },
+      'Support technology build activity, rollout work, modernization, remediation, and upgrade programs, including current H&M RFID upgrade work and related field execution.'
+  }
 ];
 
 const operatingPoints = [
-  "Phoenix-based with Arizona project support based on scope, timing, and site requirements.",
-  "Built for vendors, MSPs, and multi-site operators that need clean onsite execution.",
-  "Best for scoped field activity, follow-through visits, verification work, and documentation-heavy closeout.",
+  'Phoenix-based with Arizona project support based on scope, timing, access, and site requirements.',
+  'Built for vendors, MSPs, remote support teams, healthcare operators, and multi-site rollout programs.',
+  'Best for scoped field activity, smart hands execution, upgrade work, infrastructure follow-through, and documentation-heavy closeout.'
 ];
 
 const requestExamples = [
-  "Store hardware replacement, payment-device swap, workstation work, and device verification",
-  "Recurring site visits, post-install follow-through, and punch-list remediation",
-  "Router, cradlepoint, AP, and related branch or store infrastructure activity",
-  "Survey, readiness check, photo documentation, and site validation support",
+  'Remote support team needs onsite hands for a laptop issue, guided troubleshooting, or endpoint recovery',
+  'Server room or data closet work involving drive swaps, port changes, rack activity, or patching',
+  'Healthcare or biomed-adjacent field assignment that needs careful onsite execution and documentation',
+  'RFID rollout, modernization, store technology upgrade, or new technology build follow-through',
+  'Starbucks, HPE, McKesson, GE HealthCare, or similar vendor-driven field scope needing onsite ownership'
+];
+
+const experiencePoints = [
+  'GE HealthCare',
+  'McKesson',
+  'HPE',
+  'Starbucks',
+  'Current H&M RFID upgrade work'
 ];
 
 export default function ServicesPage() {
@@ -57,22 +67,18 @@ export default function ServicesPage() {
             </div>
 
             <h1 className="mt-6 text-5xl font-semibold leading-[0.98] tracking-tight text-slate-900 md:text-6xl">
-              Onsite field services built for real dispatch work.
+              Onsite field services built for real dispatch, smart hands, and upgrade work.
             </h1>
 
             <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-              Already Here LLC supports vendors, MSPs, and multi-site operators
-              with onsite execution across Arizona. The work is scoped, handled
-              cleanly, and closed out with documentation your team can use.
+              Already Here LLC supports remote support teams, vendors, MSPs, healthcare operators, and multi-site programs
+              with onsite execution across Arizona. The work is scoped, handled cleanly, and closed out with documentation your team can use.
             </p>
           </div>
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {operatingPoints.map((item) => (
-              <div
-                key={item}
-                className="rounded-3xl border border-slate-200 bg-white p-6 text-base leading-8 text-slate-600"
-              >
+              <div key={item} className="rounded-3xl border border-slate-200 bg-white p-6 text-base leading-8 text-slate-600">
                 {item}
               </div>
             ))}
@@ -87,23 +93,15 @@ export default function ServicesPage() {
               Core capabilities
             </p>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-              Service coverage that fits dispatches, recurring visits, and
-              closeout-heavy field work.
+              Service coverage that fits remote-team assist, data-center field work, biomed-adjacent execution, and closeout-heavy dispatches.
             </h2>
           </div>
 
           <div className="mt-10 grid gap-6 lg:grid-cols-2">
             {serviceCards.map((item) => (
-              <div
-                key={item.title}
-                className="rounded-[2rem] border border-slate-200 bg-slate-50 p-8"
-              >
-                <h3 className="text-2xl font-semibold tracking-tight text-slate-900">
-                  {item.title}
-                </h3>
-                <p className="mt-4 text-base leading-8 text-slate-600">
-                  {item.body}
-                </p>
+              <div key={item.title} className="rounded-[2rem] border border-slate-200 bg-slate-50 p-8">
+                <h3 className="text-2xl font-semibold tracking-tight text-slate-900">{item.title}</h3>
+                <p className="mt-4 text-base leading-8 text-slate-600">{item.body}</p>
               </div>
             ))}
           </div>
@@ -117,22 +115,16 @@ export default function ServicesPage() {
               Common requests
             </p>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-              Best fit for teams that already know the site, scope, and outcome
-              they need.
+              Best fit for teams that already know the site, scope, and outcome they need.
             </h2>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-              This is not generic labor coverage. It is structured field support
-              for technology, infrastructure, verification, remediation, and
-              documentation-driven site work.
+              This is not generic labor coverage. It is structured field support for remote-team execution, laptop and endpoint work, server and infrastructure activity, biomed-adjacent environments, and documentation-driven closeout.
             </p>
           </div>
 
           <div className="space-y-4">
             {requestExamples.map((item) => (
-              <div
-                key={item}
-                className="rounded-3xl border border-slate-200 bg-white p-6 text-base leading-8 text-slate-700"
-              >
+              <div key={item} className="rounded-3xl border border-slate-200 bg-white p-6 text-base leading-8 text-slate-700">
                 {item}
               </div>
             ))}
@@ -143,18 +135,16 @@ export default function ServicesPage() {
       <section className="border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
           <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-8 md:p-10">
-            <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500">
-                Request dispatch
-              </p>
-              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-                Send the scope, city, timing, and site constraints.
-              </h2>
-              <p className="mt-4 text-lg leading-8 text-slate-600">
-                Use the dispatch form to send project details, requested timing,
-                ticket references, and any supporting notes or links that affect
-                onsite execution.
-              </p>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500">
+              Current / recent experience
+            </p>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-5">
+              {experiencePoints.map((item) => (
+                <div key={item} className="rounded-3xl border border-slate-200 bg-white p-5 text-sm font-medium leading-7 text-slate-700">
+                  {item}
+                </div>
+              ))}
             </div>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -165,12 +155,12 @@ export default function ServicesPage() {
                 Request Dispatch
               </Link>
 
-              <Link
-                href="/who-we-serve"
+              <a
+                href={`mailto:${siteConfig.email}`}
                 className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50"
               >
-                See Who We Support
-              </Link>
+                Email Dispatch
+              </a>
             </div>
           </div>
         </div>

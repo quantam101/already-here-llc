@@ -2,7 +2,7 @@ export const siteConfig = {
   name: 'Already Here LLC',
   shortName: 'Already Here',
   description:
-    'Phoenix-based field execution partner for vendors, MSPs, and multi-site operators needing onsite support, recurring visits, rollouts, remediation, store technology, networking, AV/media, surveys, and infrastructure-related field work across Arizona project markets.',
+    'Phoenix-based field execution partner for vendors, MSPs, remote support teams, healthcare operators, and multi-site rollout teams needing onsite smart hands, laptop and endpoint work, server and data-center activity, drive swaps, port changes, surveys, remediation, and clean closeout across Arizona project markets.',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://alreadyherellc.com',
   phoneHref: 'tel:+16020000000',
   phoneDisplay: 'Dispatch number available on request',
@@ -12,54 +12,92 @@ export const siteConfig = {
 
 export const serviceGroups = [
   {
-    title: 'Dispatch and recurring field support',
+    title: 'Remote support team assist and onsite execution',
     description:
-      'Single-site dispatches, recurring visits, post-install follow-through, and remediation work that needs clear onsite ownership and clean closeout.',
-    items: ['Break/fix dispatches', 'Recurring site visits', 'Post-modernization support', 'Revisit and remediation work']
+      'Work with remote support teams on bridge calls, laptop and endpoint troubleshooting, step-by-step field execution, and clean onsite follow-through when the remote team needs reliable hands on site.',
+    items: [
+      'Remote team coordination',
+      'Laptop and endpoint triage',
+      'Bridge-call execution',
+      'Hands-on onsite follow-through'
+    ]
   },
   {
-    title: 'Store technology and endpoint work',
+    title: 'Smart hands, servers, and data-center field work',
     description:
-      'Field execution for payment devices, POS-related hardware, thin clients, workstations, printers, and other store technology tasks.',
-    items: ['POS / payment device swaps', 'Thin-client and endpoint refresh work', 'Printer replacement and configuration', 'Windows device support']
+      'Eyes-and-hands onsite support for racks, servers, storage, drive swaps, port changes, re-cabling, and physically present data-center or MDF / IDF work that remote teams cannot complete alone.',
+    items: [
+      'Smart hands / eyes-on-hands',
+      'Server and storage checks',
+      'Drive swaps',
+      'Port changes and patching'
+    ]
   },
   {
-    title: 'Network and infrastructure field activity',
+    title: 'Store technology, branch systems, and field remediation',
     description:
-      'Onsite support for managed routers, Cradlepoint installs, AP replacement revisits, low-voltage testing, rack/stack tasks, and related infrastructure work.',
-    items: ['Managed router installs', 'Cradlepoint and SD-WAN-related work', 'Wi-Fi and AP troubleshooting', 'Rack / stack / iDRAC support']
+      'Field execution for payment devices, POS-related hardware, thin clients, printers, workstations, branch devices, and follow-up remediation when rollout or break-fix work needs onsite completion.',
+    items: [
+      'POS / payment device swaps',
+      'Thin-client and workstation work',
+      'Printer replacement and configuration',
+      'Remediation and revisit activity'
+    ]
   },
   {
-    title: 'Surveys, AV, and site verification',
+    title: 'Healthcare, biomed, and regulated-site support',
     description:
-      'Operational site assessments, DMB and field surveys, AV/media troubleshooting, TV signal restoration, and site verification for larger project teams.',
-    items: ['Site surveys', 'DMB / documentation surveys', 'AV / media troubleshooting', 'Site verification and closeout photos']
+      'Current field experience includes healthcare and biomed-related environments where device handling, access constraints, and documentation discipline matter.',
+    items: [
+      'Biomed-adjacent field support',
+      'Healthcare environment execution',
+      'Documentation-aware closeout',
+      'Structured onsite communication'
+    ]
+  },
+  {
+    title: 'New technology builds, rollouts, and upgrades',
+    description:
+      'Support for new technology deployment, staged rollout work, upgrade programs, and scoped field execution tied to modernization or expansion projects.',
+    items: [
+      'Rollout / install support',
+      'Technology build activity',
+      'Upgrade programs',
+      'RFID / modernization support'
+    ]
   }
 ] as const;
 
 export const buyerReasons = [
   'Phoenix-based field execution with broader Arizona project support based on scope, scheduling, and travel requirements.',
   'Structured closeout documentation so dispatch teams can close the ticket with usable notes, photos, and field details.',
-  'Commercially insured and positioned for vendor, MSP, and multi-site operator workflows.',
-  'Range across retail, restaurant, hospitality, healthcare, enterprise, AV/media, and infrastructure-related environments.'
+  'Commercially insured and positioned for vendor, MSP, remote support, healthcare, and multi-site operator workflows.',
+  'Current or recent field experience includes GE HealthCare, McKesson, HPE, Starbucks, and current H&M RFID upgrade work.'
 ] as const;
 
 export const documentedWorkTypes = [
+  'Remote support team coordination',
+  'Laptop triage and onsite assist',
+  'Smart hands support',
+  'Server checks and basic field service',
+  'HDD / SSD replacement',
+  'Drive swaps',
+  'Port changes and patching',
+  'Rack / stack / iDRAC work',
   'POS installs and upgrades',
   'Payment device replacement',
   'Thin-client replacement',
-  'HDD / SSD replacement',
   'Desktop / laptop refresh work',
   'LAN migration support',
-  'Smart hands support',
-  'DMB / site surveys',
   'Healthcare-related field assignments',
+  'Biomed-adjacent support activity',
   'Store modernization troubleshooting',
+  'RFID rollout and upgrade support',
+  'DMB / site surveys',
   'Starlink surveys and installs',
   'Digital kitchen conversion work',
   'Cisco SD-WAN decommissioning activity',
   'Cradlepoint installs',
-  'Rack / stack / iDRAC work',
   'Printer replacement / configuration',
   'AV / media troubleshooting',
   'TV signal restoration',
@@ -74,10 +112,10 @@ export const documentedWorkTypes = [
 export const environments = [
   'Retail',
   'QSR / restaurant',
-  'Hospitality',
   'Healthcare',
+  'Biomed-adjacent environments',
   'Enterprise / office',
-  'AV / media environments',
+  'Data center / MDF / IDF',
   'Infrastructure-related project environments'
 ] as const;
 
@@ -105,17 +143,22 @@ export const audience = [
   {
     title: 'Vendors and prime contractors',
     description:
-      'Use Already Here LLC as a field execution partner when the scope, parts, and dispatch logic are already defined and the missing piece is dependable onsite follow-through.'
+      'Use Already Here LLC when the scope, parts, and dispatch logic are already defined and the missing piece is dependable onsite execution and clean follow-through.'
   },
   {
-    title: 'MSPs and network operators',
+    title: 'MSPs and remote support teams',
     description:
-      'Extend coverage for site visits, smart hands tasks, router work, troubleshooting, documentation collection, and follow-up remediation without overpromising unsupported SLAs.'
+      'Extend coverage for laptop work, hands-on troubleshooting, bridge-call execution, smart hands tasks, server checks, port changes, documentation collection, and follow-up remediation.'
   },
   {
-    title: 'Multi-site operators and rollout teams',
+    title: 'Healthcare, biomed, and regulated-site teams',
     description:
-      'Support regional rollouts, revisits, site verification, hardware swaps, and documentation-heavy field activity across Arizona project markets.'
+      'Support healthcare and biomed-adjacent field activity where access constraints, device handling, communication, and closeout discipline matter.'
+  },
+  {
+    title: 'Multi-site rollout and modernization teams',
+    description:
+      'Support regional builds, revisits, RFID upgrades, hardware swaps, site verification, and documentation-heavy field activity across Arizona project markets.'
   }
 ] as const;
 
@@ -130,12 +173,13 @@ export const closeoutItems = [
 
 export const dispatchTypes = [
   'Dispatch / break-fix',
-  'Recurring field support',
-  'Rollout / install support',
-  'Remediation / revisit',
-  'POS / store tech',
-  'Networking / Wi-Fi',
-  'AV / media',
-  'Survey / site verification',
-  'Infrastructure-related onsite work'
+  'Remote support team assist / laptop work',
+  'Smart hands / eyes-on-hands onsite',
+  'Server / data center / storage work',
+  'Drive swap / hardware replacement',
+  'Network / port / rack changes',
+  'Biomed / healthcare device support',
+  'Rollout / install / upgrade support',
+  'RFID / modernization / new technology build',
+  'Survey / site verification'
 ] as const;
