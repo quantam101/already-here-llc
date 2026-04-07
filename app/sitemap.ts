@@ -1,39 +1,40 @@
 import type { MetadataRoute } from 'next';
-import { siteConfig } from '@/lib/site';
+
+const baseUrl = 'https://www.alreadyherellc.com';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
   return [
     {
-      url: `${siteConfig.url}/`,
+      url: `${baseUrl}/`,
       lastModified: now,
       changeFrequency: 'weekly',
-      priority: 1
+      priority: 1,
     },
     {
-      url: `${siteConfig.url}/services`,
+      url: `${baseUrl}/services`,
       lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.9
+      changeFrequency: 'weekly',
+      priority: 0.9,
     },
     {
-      url: `${siteConfig.url}/who-we-serve`,
+      url: `${baseUrl}/contact`,
       lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.85
+      changeFrequency: 'weekly',
+      priority: 0.9,
     },
     {
-      url: `${siteConfig.url}/contact`,
+      url: `${baseUrl}/who-we-serve`,
       lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.8
+      changeFrequency: 'weekly',
+      priority: 0.8,
     },
     {
-      url: `${siteConfig.url}/privacy`,
+      url: `${baseUrl}/privacy`,
       lastModified: now,
       changeFrequency: 'yearly',
-      priority: 0.3
-    }
+      priority: 0.3,
+    },
   ];
 }
