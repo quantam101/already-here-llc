@@ -107,7 +107,7 @@ export default function WhoWeServePage() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/contact"
+              href="/dispatch"
               className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
             >
               Request Dispatch
@@ -146,7 +146,10 @@ export default function WhoWeServePage() {
 
                 <ul className="mt-6 grid gap-3 text-base leading-7 text-slate-700 lg:grid-cols-2">
                   {group.fitPoints.map((item) => (
-                    <li key={item} className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <li
+                      key={item}
+                      className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                    >
                       <span className="mt-2 h-2.5 w-2.5 rounded-full bg-blue-600" />
                       <span>{item}</span>
                     </li>
@@ -230,7 +233,7 @@ export default function WhoWeServePage() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/contact"
+              href="/dispatch"
               className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
             >
               Request Dispatch
