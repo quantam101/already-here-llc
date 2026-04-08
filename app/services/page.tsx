@@ -1,48 +1,3 @@
-This confirms the file is still broken.
-
-You still have:
-
-duplicated content
-
-leftover old code after the component ends
-
-old /dispatch links in the leftover section
-
-
-Do not commit that version.
-
-Do this now
-
-1. Open app/services/page.tsx
-
-
-2. Tap Edit
-
-
-3. Tap in the code
-
-
-4. Select all
-
-
-5. Delete everything
-
-
-6. Make sure the file is completely empty
-
-
-7. Paste only the clean file below
-
-
-8. Scroll to the bottom and confirm the file ends with just one closing brace
-
-
-9. Commit it
-
-
-
-Use this exact full replacement:
-
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -361,4 +316,4 @@ export default function ServicesPage() {
       </section>
     </main>
   );
-}
+      }
