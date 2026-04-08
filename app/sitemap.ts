@@ -13,6 +13,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
+      url: `${baseUrl}/dispatch`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.95,
+    },
+    {
       url: `${baseUrl}/services`,
       lastModified: now,
       changeFrequency: 'weekly',
@@ -25,10 +31,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.85,
     },
     {
-      url: `${baseUrl}/dispatch`,
+      url: `${baseUrl}/service-area`,
       lastModified: now,
       changeFrequency: 'weekly',
-      priority: 0.95,
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/privacy`,
