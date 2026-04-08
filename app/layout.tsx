@@ -17,6 +17,7 @@ const primaryNav = [
   { label: 'Home', href: '/' },
   { label: 'Services', href: '/services' },
   { label: 'Who We Serve', href: '/who-we-serve' },
+  { label: 'Service Area', href: '/service-area' },
   { label: 'Dispatch', href: '/dispatch' },
 ];
 
@@ -132,6 +133,14 @@ export default function RootLayout({
                           className="text-slate-700 hover:text-slate-950"
                         >
                           Who We Serve
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/service-area"
+                          className="text-slate-700 hover:text-slate-950"
+                        >
+                          Service Area
                         </Link>
                       </li>
                       <li>
