@@ -152,6 +152,224 @@ export default function ServicesPage() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
+              href="/contact"
+              className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
+            >
+              Request Dispatch
+            </Link>
+            <a
+              href="mailto:dispatch@alreadyherellc.com"
+              className="inline-flex items-center justify-center rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-white transition hover:border-slate-500 hover:bg-slate-900"
+            >
+              Email Dispatch
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-slate-200 bg-slate-50">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Service groups
+            </p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              Structured around buying intent, not a vague list of tasks
+            </h2>
+          </div>
+
+          <div className="mt-10 space-y-6">
+            {serviceGroups.map((group) => (
+              <article
+                key={group.title}
+                className="rounded-3xl border border-slate-200 bg-white p-6 lg:p-8"
+              >
+                <h3 className="text-2xl font-semibold text-slate-950">{group.title}</h3>
+                <p className="mt-4 max-w-4xl text-base leading-7 text-slate-700">
+                  {group.body}
+                </p>
+
+                <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_1fr]">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Includes
+                    </p>
+                    <ul className="mt-4 space-y-3 text-base leading-7 text-slate-700">
+                      {group.includes.map((item) => (
+                        <li key={item} className="flex gap-3">
+                          <span className="mt-2 h-2.5 w-2.5 rounded-full bg-blue-600" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Best fit
+                    </p>
+                    <p className="mt-3 text-base leading-7 text-slate-700">{group.bestFit}</p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+              How work is handled
+            </p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              Qualified first. Executed cleanly.
+            </h2>
+          </div>
+
+          <div className="mt-10 grid gap-6 lg:grid-cols-3">
+            {processSteps.map((item) => (
+              <article
+                key={item.step}
+                className="rounded-3xl border border-slate-200 bg-slate-50 p-6 lg:p-8"
+              >
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
+                  Step {item.step}
+                </p>
+                <h3 className="mt-3 text-xl font-semibold text-slate-950">{item.title}</h3>
+                <p className="mt-4 text-base leading-7 text-slate-700">{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-slate-200 bg-slate-50">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+          <div className="grid gap-8 lg:grid-cols-2">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 lg:p-8">
+              <h2 className="text-2xl font-semibold text-slate-950">Best-fit work</h2>
+              <ul className="mt-5 space-y-3 text-base leading-7 text-slate-700">
+                {bestFitItems.map((item) => (
+                  <li key={item} className="flex gap-3">
+                    <span className="mt-2 h-2.5 w-2.5 rounded-full bg-slate-950" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 lg:p-8">
+              <h2 className="text-2xl font-semibold text-slate-950">Not ideal for</h2>
+              <ul className="mt-5 space-y-3 text-base leading-7 text-slate-700">
+                {notIdealItems.map((item) => (
+                  <li key={item} className="flex gap-3">
+                    <span className="mt-2 h-2.5 w-2.5 rounded-full bg-slate-400" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 lg:p-8">
+            <h2 className="text-2xl font-semibold text-slate-950">Coverage note</h2>
+            <p className="mt-4 max-w-4xl text-base leading-7 text-slate-700">
+              Phoenix is home base and Arizona is primary coverage. Regional and project-based
+              travel can be supported for qualified work based on scope, logistics, scheduling,
+              and commercial fit.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-950 text-white">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">
+              Need onsite execution tied to a defined scope?
+            </p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+              Send the site details, requested timing, service type, and one-line scope summary.
+            </h2>
+            <p className="mt-5 text-lg leading-8 text-slate-300">
+              Regional and out-of-market requests are welcome for qualified work.
+            </p>
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/contact"
+              className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
+            >
+              Request Dispatch
+            </Link>
+            <a
+              href="mailto:dispatch@alreadyherellc.com"
+              className="inline-flex items-center justify-center rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-white transition hover:border-slate-500 hover:bg-slate-900"
+            >
+              Email Dispatch
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}    step: '02',
+    title: 'Align on execution',
+    body: 'Coverage, scheduling, travel factors, and onsite requirements are confirmed so the visit is structured before arrival.',
+  },
+  {
+    step: '03',
+    title: 'Execute and close out',
+    body: 'The work is carried out onsite with communication, field notes, and closeout documentation your team can use.',
+  },
+];
+
+const bestFitItems = [
+  'Defined scope',
+  'Real site context',
+  'Requested timing',
+  'Remote-team coordination when needed',
+  'Clear onsite objectives',
+  'Work that benefits from disciplined execution and structured closeout',
+];
+
+const notIdealItems = [
+  'Consumer or residential tech support',
+  'Vague handyman-style requests',
+  'Undefined break-fix requests with no scope',
+  'Broad “come see what’s wrong” dispatches',
+  'Low-detail emergency calls without site, timing, or access information',
+];
+
+export default function ServicesPage() {
+  return (
+    <main className="bg-white text-slate-950">
+      <section className="border-b border-slate-200 bg-slate-950 text-white">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
+            Onsite technical field support for remote teams, vendors, and rollout operators
+          </p>
+          <h1 className="mt-4 max-w-5xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+            Disciplined field execution for work that has to be handled correctly on site
+          </h1>
+          <p className="mt-6 max-w-4xl text-lg leading-8 text-slate-300">
+            Already Here LLC supports remote teams, MSPs, healthcare-adjacent operators,
+            vendors, and rollout programs that need qualified onsite execution instead of vague
+            field coverage. Based in Phoenix and serving Arizona first, we provide structured
+            onsite support for remediation, infrastructure activity, endpoint work, rollout
+            programs, and scheduled project execution, with qualified regional and project-based
+            travel available for the right scope.
+          </p>
+          <p className="mt-5 max-w-4xl text-base leading-7 text-slate-300">
+            We qualify the request, align on scope and timing, execute onsite, document what
+            happened, and close the work out cleanly.
+          </p>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link
               href="/dispatch"
               className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
             >
