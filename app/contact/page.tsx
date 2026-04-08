@@ -53,7 +53,7 @@ const notIdealItems = [
   'Consumer or residential tech support',
   'Undefined handyman-style requests',
   'Low-detail emergency requests with no scope or access information',
-  'Broad “come look and tell us what is wrong” calls with no real brief',
+  'Broad requests with no real brief',
   'Requests that cannot provide a real site address, timing window, or onsite contact',
 ];
 
@@ -193,22 +193,20 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="grid gap-6">
-                <div>
-                  <label
-                    htmlFor="fullSiteAddress"
-                    className="block text-sm font-semibold text-slate-900"
-                  >
-                    Full site address
-                  </label>
-                  <input
-                    id="fullSiteAddress"
-                    name="fullSiteAddress"
-                    type="text"
-                    required
-                    className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-500"
-                  />
-                </div>
+              <div>
+                <label
+                  htmlFor="fullSiteAddress"
+                  className="block text-sm font-semibold text-slate-900"
+                >
+                  Full site address
+                </label>
+                <input
+                  id="fullSiteAddress"
+                  name="fullSiteAddress"
+                  type="text"
+                  required
+                  className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-500"
+                />
               </div>
 
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -659,28 +657,5 @@ export default function ContactPage() {
         </div>
       </section>
     </main>
-  );
-}          </div>
-
-          <div className="mt-6 rounded-[2rem] border border-slate-200 bg-white p-6 md:p-7">
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-              Shared files and notes
-            </h2>
-            <ul className="mt-5 space-y-4 text-base leading-8 text-slate-600">
-              {fileItems.map((item) => (
-                <li key={item} className="flex gap-3">
-                  <span className="mt-3 h-2 w-2 shrink-0 rounded-full bg-slate-400" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <div>
-          <DispatchForm />
-        </div>
-      </div>
-    </section>
   );
 }
