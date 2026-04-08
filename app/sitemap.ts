@@ -34,6 +34,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}/service-area`,
       lastModified: now,
       changeFrequency: 'weekly',
+      priority: 0.82,
+    },
+    {
+      url: `${baseUrl}/rollout-support`,
+      lastModified: now,
+      changeFrequency: 'weekly',
       priority: 0.8,
     },
     {

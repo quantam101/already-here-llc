@@ -21,6 +21,11 @@ const primaryNav = [
   { label: 'Dispatch', href: '/dispatch' },
 ];
 
+const secondaryLinks = [
+  { label: 'Rollout Support', href: '/rollout-support' },
+  { label: 'Privacy Policy', href: '/privacy' },
+];
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -84,7 +89,7 @@ export default function RootLayout({
 
           <footer className="border-t border-slate-200 bg-slate-50">
             <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-              <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
+              <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
                     Already Here LLC
@@ -117,42 +122,20 @@ export default function RootLayout({
                       Navigation
                     </p>
                     <ul className="mt-4 space-y-3 text-sm">
-                      <li>
-                        <Link href="/" className="text-slate-700 hover:text-slate-950">
-                          Home
-                        </Link>
-                      </li>
-                      <li>
-                        <Link href="/services" className="text-slate-700 hover:text-slate-950">
-                          Services
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/who-we-serve"
-                          className="text-slate-700 hover:text-slate-950"
-                        >
-                          Who We Serve
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/service-area"
-                          className="text-slate-700 hover:text-slate-950"
-                        >
-                          Service Area
-                        </Link>
-                      </li>
-                      <li>
-                        <Link href="/dispatch" className="text-slate-700 hover:text-slate-950">
-                          Dispatch
-                        </Link>
-                      </li>
-                      <li>
-                        <Link href="/privacy" className="text-slate-700 hover:text-slate-950">
-                          Privacy Policy
-                        </Link>
-                      </li>
+                      {primaryNav.map((item) => (
+                        <li key={item.href}>
+                          <Link href={item.href} className="text-slate-700 hover:text-slate-950">
+                            {item.label}
+                          </Link>
+                        </li>
+                      ))}
+                      {secondaryLinks.map((item) => (
+                        <li key={item.href}>
+                          <Link href={item.href} className="text-slate-700 hover:text-slate-950">
+                            {item.label}
+                          </Link>
+                        </li>
+                      ))}
                     </ul>
                   </div>
 
@@ -163,7 +146,7 @@ export default function RootLayout({
                     <div className="mt-4 space-y-3 text-sm text-slate-700">
                       <p className="font-medium text-slate-950">dispatch@alreadyherellc.com</p>
                       <p>Phoenix, Arizona</p>
-                      <p>Use the dispatch page for site details, timing, scope, and notes.</p>
+                      <p>Use dispatch for site details, timing, scope, and supporting notes.</p>
                     </div>
 
                     <div className="mt-5">
