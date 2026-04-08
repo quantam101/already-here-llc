@@ -152,7 +152,7 @@ export default function ServicesPage() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/contact"
+              href="/dispatch"
               className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
             >
               Request Dispatch
@@ -300,7 +300,7 @@ export default function ServicesPage() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/contact"
+              href="/dispatch"
               className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
             >
               Request Dispatch
@@ -316,4 +316,4 @@ export default function ServicesPage() {
       </section>
     </main>
   );
-      }
+}
