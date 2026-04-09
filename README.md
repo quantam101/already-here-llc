@@ -62,3 +62,4 @@ Expected commands:
 - production
 
 Do not expose secrets in frontend code.
+Last CI trigger check: April 9, 2026
