@@ -1,185 +1,210 @@
-export const siteConfig = {
+// lib/site.ts
+import type { Metadata } from "next";
+
+export const site = {
   name: "Already Here LLC",
-  shortName: "Already Here",
-  description:
-    "Phoenix-based field execution partner for vendors, MSPs, remote support teams, healthcare operators, and multi-site rollout teams needing onsite smart hands, laptop and endpoint work, server and data-center activity, drive swaps, port changes, surveys, remediation, and clean closeout across Arizona project markets.",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.alreadyherellc.com",
-  phoneHref: "tel:+16020000000",
-  phoneDisplay: "Dispatch number available on request",
+  businessName: "Already Here LLC",
+  url: "https://www.alreadyherellc.com",
   email: "dispatch@alreadyherellc.com",
-  city: "Phoenix, Arizona"
-};
+  location: "Phoenix, Arizona",
+  description:
+    "Phoenix-based field execution partner for remote teams, MSPs, vendors, healthcare-adjacent operators, agencies, and rollout programs.",
+} as const;
 
-export const serviceGroups = [
+export const publicRoutes = [
   {
-    title: 'Remote support team assist and onsite execution',
+    path: "/",
+    title: "Phoenix Field Execution Partner | Already Here LLC",
     description:
-      'Work with remote support teams on bridge calls, laptop and endpoint troubleshooting, step-by-step field execution, and clean onsite follow-through when the remote team needs reliable hands on site.',
-    items: [
-      'Remote team coordination',
-      'Laptop and endpoint triage',
-      'Bridge-call execution',
-      'Hands-on onsite follow-through'
-    ]
+      "Already Here LLC provides Phoenix-based field execution for retail, kiosk, POS, signage, device, networking, rollout, and multi-site support.",
+    changeFrequency: "weekly",
+    priority: 1,
   },
   {
-    title: 'Smart hands, servers, and data-center field work',
+    path: "/services",
+    title: "Field Execution Services | Already Here LLC",
     description:
-      'Eyes-and-hands onsite support for racks, servers, storage, drive swaps, port changes, re-cabling, and physically present data-center or MDF / IDF work that remote teams cannot complete alone.',
-    items: [
-      'Smart hands / eyes-on-hands',
-      'Server and storage checks',
-      'Drive swaps',
-      'Port changes and patching'
-    ]
+      "Review field execution services for retail work, kiosk support, POS support, signage, device support, networking support, rollouts, smart-hands work, and closeout documentation.",
+    changeFrequency: "weekly",
+    priority: 0.9,
   },
   {
-    title: 'Store technology, branch systems, and field remediation',
+    path: "/who-we-serve",
+    title: "Who We Serve | Already Here LLC",
     description:
-      'Field execution for payment devices, POS-related hardware, thin clients, printers, workstations, branch devices, and follow-up remediation when rollout or break-fix work needs onsite completion.',
-    items: [
-      'POS / payment device swaps',
-      'Thin-client and workstation work',
-      'Printer replacement and configuration',
-      'Remediation and revisit activity'
-    ]
+      "Already Here LLC supports remote teams, MSPs, vendors, rollout operators, healthcare-adjacent operators, agencies, and service providers.",
+    changeFrequency: "monthly",
+    priority: 0.8,
   },
   {
-    title: 'Healthcare, biomed, and regulated-site support',
+    path: "/service-area",
+    title: "Phoenix and Arizona Service Area | Already Here LLC",
     description:
-      'Current field experience includes healthcare and biomed-related environments where device handling, access constraints, and documentation discipline matter.',
-    items: [
-      'Biomed-adjacent field support',
-      'Healthcare environment execution',
-      'Documentation-aware closeout',
-      'Structured onsite communication'
-    ]
+      "Phoenix-based and Arizona-first onsite field execution coverage with qualified regional and project-based travel support.",
+    changeFrequency: "monthly",
+    priority: 0.8,
   },
   {
-    title: 'New technology builds, rollouts, and upgrades',
+    path: "/dispatch",
+    title: "Dispatch Intake | Already Here LLC",
     description:
-      'Support for new technology deployment, staged rollout work, upgrade programs, and scoped field execution tied to modernization or expansion projects.',
-    items: [
-      'Rollout / install support',
-      'Technology build activity',
-      'Upgrade programs',
-      'RFID / modernization support'
-    ]
-  }
-] as const;
-
-export const buyerReasons = [
-  'Phoenix-based field execution with broader Arizona project support based on scope, scheduling, and travel requirements.',
-  'Structured closeout documentation so dispatch teams can close the ticket with usable notes, photos, and field details.',
-  'Commercially insured and positioned for vendor, MSP, remote support, healthcare, and multi-site operator workflows.',
-  'Current or recent field experience includes GE HealthCare, McKesson, HPE, Starbucks, and current H&M RFID upgrade work.'
-] as const;
-
-export const documentedWorkTypes = [
-  'Remote support team coordination',
-  'Laptop triage and onsite assist',
-  'Smart hands support',
-  'Server checks and basic field service',
-  'HDD / SSD replacement',
-  'Drive swaps',
-  'Port changes and patching',
-  'Rack / stack / iDRAC work',
-  'POS installs and upgrades',
-  'Payment device replacement',
-  'Thin-client replacement',
-  'Desktop / laptop refresh work',
-  'LAN migration support',
-  'Healthcare-related field assignments',
-  'Biomed-adjacent support activity',
-  'Store modernization troubleshooting',
-  'RFID rollout and upgrade support',
-  'DMB / site surveys',
-  'Starlink surveys and installs',
-  'Digital kitchen conversion work',
-  'Cisco SD-WAN decommissioning activity',
-  'Cradlepoint installs',
-  'Printer replacement / configuration',
-  'AV / media troubleshooting',
-  'TV signal restoration',
-  'Managed router installs',
-  'Wi-Fi troubleshooting',
-  'Low-voltage testing',
-  'Site verification',
-  'Exterior router mounting',
-  'Automated locker system installs'
-] as const;
-
-export const environments = [
-  'Retail',
-  'QSR / restaurant',
-  'Healthcare',
-  'Biomed-adjacent environments',
-  'Enterprise / office',
-  'Data center / MDF / IDF',
-  'Infrastructure-related project environments'
-] as const;
-
-export const markets = [
-  'Phoenix',
-  'Tempe',
-  'Chandler',
-  'Scottsdale',
-  'Glendale',
-  'Mesa',
-  'Peoria',
-  'Avondale',
-  'Buckeye',
-  'Goodyear',
-  'Surprise',
-  'Litchfield Park',
-  'Carefree',
-  'Page',
-  'Quartzsite',
-  'San Luis',
-  'Springerville'
-] as const;
-
-export const audience = [
-  {
-    title: 'Vendors and prime contractors',
-    description:
-      'Use Already Here LLC when the scope, parts, and dispatch logic are already defined and the missing piece is dependable onsite execution and clean follow-through.'
+      "Submit site, timing, scope, onsite contact, billing contact, and execution details for qualified onsite field execution requests.",
+    changeFrequency: "weekly",
+    priority: 0.95,
   },
   {
-    title: 'MSPs and remote support teams',
+    path: "/request-coverage",
+    title: "Request Coverage | Already Here LLC",
     description:
-      'Extend coverage for laptop work, hands-on troubleshooting, bridge-call execution, smart hands tasks, server checks, port changes, documentation collection, and follow-up remediation.'
+      "Request Phoenix and Arizona field execution coverage for qualified retail, kiosk, POS, signage, networking, rollout, and multi-site support work.",
+    changeFrequency: "weekly",
+    priority: 0.9,
   },
   {
-    title: 'Healthcare, biomed, and regulated-site teams',
+    path: "/for-agencies-service-providers",
+    title: "For Agencies and Service Providers | Already Here LLC",
     description:
-      'Support healthcare and biomed-adjacent field activity where access constraints, device handling, communication, and closeout discipline matter.'
+      "Onsite field execution support for agencies, vendors, service providers, and remote teams that need clean coordination and usable closeout.",
+    changeFrequency: "monthly",
+    priority: 0.75,
   },
   {
-    title: 'Multi-site rollout and modernization teams',
+    path: "/rollout-support",
+    title: "Rollout Support | Already Here LLC",
     description:
-      'Support regional builds, revisits, RFID upgrades, hardware swaps, site verification, and documentation-heavy field activity across Arizona project markets.'
-  }
+      "Structured onsite rollout support for multi-site programs, device swaps, merchandising, documentation, and closeout-sensitive execution.",
+    changeFrequency: "monthly",
+    priority: 0.75,
+  },
+  {
+    path: "/privacy",
+    title: "Privacy Policy | Already Here LLC",
+    description:
+      "Privacy policy for Already Here LLC, including how dispatch and contact information may be handled.",
+    changeFrequency: "yearly",
+    priority: 0.3,
+  },
+  {
+    path: "/thank-you",
+    title: "Request Received | Already Here LLC",
+    description:
+      "Confirmation page for submitted Already Here LLC dispatch or coverage requests.",
+    changeFrequency: "yearly",
+    priority: 0.2,
+  },
 ] as const;
 
-export const closeoutItems = [
-  'Arrival / departure notes',
-  'Action summary and field observations',
-  'Photos when permitted',
-  'Part swap or equipment notes',
-  'Escalation notes for unresolved items',
-  'Usable closeout language for the client-side ticket'
-] as const;
+export type PublicRoutePath = (typeof publicRoutes)[number]["path"];
 
-export const dispatchTypes = [
-  'Dispatch / break-fix',
-  'Remote support team assist / laptop work',
-  'Smart hands / eyes-on-hands onsite',
-  'Server / data center / storage work',
-  'Drive swap / hardware replacement',
-  'Network / port / rack changes',
-  'Biomed / healthcare device support',
-  'Rollout / install / upgrade support',
-  'RFID / modernization / new technology build',
-  'Survey / site verification'
-] as const;
+export function absoluteUrl(path: string = "/") {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return normalizedPath === "/" ? site.url : `${site.url}${normalizedPath}`;
+}
+
+export function routeFor(path: PublicRoutePath) {
+  return publicRoutes.find((route) => route.path === path) ?? publicRoutes[0];
+}
+
+export function buildMetadata(path: PublicRoutePath): Metadata {
+  const route = routeFor(path);
+  const canonical = absoluteUrl(route.path);
+
+  return {
+    metadataBase: new URL(site.url),
+    title: route.title,
+    description: route.description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      type: "website",
+      locale: "en_US",
+      siteName: site.name,
+      title: route.title,
+      description: route.description,
+      url: canonical,
+    },
+    twitter: {
+      card: "summary",
+      title: route.title,
+      description: route.description,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-snippet": -1,
+        "max-image-preview": "large",
+        "max-video-preview": -1,
+      },
+    },
+  };
+}
+
+export const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${site.url}/#organization`,
+      name: site.businessName,
+      url: site.url,
+      email: site.email,
+      description: site.description,
+      areaServed: [
+        {
+          "@type": "City",
+          name: "Phoenix",
+        },
+        {
+          "@type": "State",
+          name: "Arizona",
+        },
+      ],
+    },
+    {
+      "@type": ["LocalBusiness", "ProfessionalService"],
+      "@id": `${site.url}/#localbusiness`,
+      name: site.businessName,
+      url: site.url,
+      email: site.email,
+      description: site.description,
+      areaServed: [
+        {
+          "@type": "City",
+          name: "Phoenix",
+        },
+        {
+          "@type": "State",
+          name: "Arizona",
+        },
+      ],
+      makesOffer: [
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Field execution support",
+            description:
+              "Onsite field execution for retail, kiosk, POS, signage, device, networking, rollout, and multi-site support work.",
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Dispatch intake and closeout support",
+            description:
+              "Structured dispatch intake, onsite coordination, and documentation-driven closeout support.",
+          },
+        },
+      ],
+    },
+  ],
+} as const;
+
+export function safeJsonLd(data: unknown) {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
+}
