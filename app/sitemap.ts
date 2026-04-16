@@ -1,52 +1,40 @@
-import type { MetadataRoute } from 'next';
+import type { MetadataRoute } from "next";
+import { siteConfig } from "@/lib/site";
 
-const baseUrl = 'https://www.alreadyherellc.com';
+const routes = [
+  "/",
+  "/dispatch",
+  "/services",
+  "/request-coverage",
+  "/for-agencies-service-providers",
+  "/who-we-serve",
+  "/service-area",
+  "/rollout-support",
+  "/privacy",
+] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
-  return [
-    {
-      url: `${baseUrl}/`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/dispatch`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.95,
-    },
-    {
-      url: `${baseUrl}/services`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/who-we-serve`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.85,
-    },
-    {
-      url: `${baseUrl}/service-area`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.82,
-    },
-    {
-      url: `${baseUrl}/rollout-support`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/privacy`,
-      lastModified: now,
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-  ];
+  return routes.map((route) => ({
+    url: new URL(route, siteConfig.url).toString(),
+    lastModified: now,
+    changeFrequency: route === "/privacy" ? "yearly" : "weekly",
+    priority:
+      route === "/"
+        ? 1
+        : route === "/dispatch"
+          ? 0.95
+          : route === "/services"
+            ? 0.9
+            : route === "/request-coverage" || route === "/for-agencies-service-providers"
+              ? 0.86
+              : route === "/who-we-serve"
+                ? 0.84
+                : route === "/service-area"
+                  ? 0.82
+                  : route === "/rollout-support"
+                    ? 0.8
+                    : 0.3
+  }));
 }

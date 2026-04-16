@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-  title:
-    "Phoenix Field Services | Retail, Kiosk, POS, Networking & Multi-Site Support | Already Here LLC",
+export const metadata: Metadata = createPageMetadata({
+  title: "Phoenix Field Services | Retail, Kiosk, POS, Networking & Multi-Site Support",
   description:
     "Phoenix-based regional field execution for retail, kiosk, POS, signage, device, networking, rollout, and multi-site support. Built for agencies, vendors, operators, and project teams.",
-};
+  path: "/",
+});
 
 const proofItems = [
   "Phoenix-based",
@@ -444,13 +445,24 @@ export default function HomePage() {
             >
               Request Coverage
             </Link>
-            <a
-              href="mailto:dispatch@alreadyherellc.com"
+            <Link
+              href="/dispatch"
               className="inline-flex items-center justify-center rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-white transition hover:border-slate-500 hover:bg-slate-900"
             >
-              Email Dispatch
-            </a>
+              Open Dispatch
+            </Link>
           </div>
+
+          <p className="mt-5 text-sm leading-7 text-slate-300">
+            Existing dispatch threads can still use{" "}
+            <a
+              href="mailto:dispatch@alreadyherellc.com"
+              className="font-semibold text-white underline decoration-slate-500 underline-offset-4"
+            >
+              dispatch@alreadyherellc.com
+            </a>
+            .
+          </p>
         </div>
       </section>
     </main>

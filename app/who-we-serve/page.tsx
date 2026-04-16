@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { createPageMetadata } from '@/lib/metadata';
 
-export const metadata: Metadata = {
-  title: 'Who We Serve | Already Here LLC',
+export const metadata: Metadata = createPageMetadata({
+  title: 'Who We Serve',
   description:
     'Phoenix-based, Arizona-first onsite technical field execution for remote teams, MSPs, vendors, healthcare-adjacent operators, and rollout programs that need disciplined onsite support and structured closeout.',
-};
+  path: '/who-we-serve',
+});
 
 const buyerGroups = [
   {
@@ -238,12 +240,12 @@ export default function WhoWeServePage() {
             >
               Request Dispatch
             </Link>
-            <a
-              href="mailto:dispatch@alreadyherellc.com"
+            <Link
+              href="/request-coverage"
               className="inline-flex items-center justify-center rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-white transition hover:border-slate-500 hover:bg-slate-900"
             >
-              Email Dispatch
-            </a>
+              Request Coverage
+            </Link>
           </div>
         </div>
       </section>

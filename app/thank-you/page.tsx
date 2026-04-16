@@ -15,26 +15,26 @@ export default function ThankYouPage() {
       <div className="mx-auto max-w-4xl px-6 py-16 lg:px-8 lg:py-24">
         <div className="rounded-[2rem] border border-slate-200 bg-white p-8 text-center md:p-12">
           <div className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-sky-700">
-            Submission received
+            Submission status
           </div>
 
           <h1 className="mt-6 text-4xl font-semibold tracking-tight text-slate-900 md:text-5xl">
-            Dispatch request received.
+            Dispatch submission status
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-            Your scope has been submitted. If the coverage fit, schedule, and
-            site requirements align, the next step is dispatch confirmation.
+            This page does not confirm a dispatch request by itself. A request is only considered submitted
+            after dispatch intake reports a server-confirmed success message.
           </p>
 
           <div className="mx-auto mt-10 grid max-w-3xl gap-4 text-left md:grid-cols-3">
             <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                What we received
+                What counts as submitted
               </p>
               <p className="mt-3 text-sm leading-7 text-slate-600">
-                Scope details, site information, timing, and any notes you
-                included with the request.
+                A server-confirmed success message from the dispatch intake page. Client-side validation alone
+                is not a submission.
               </p>
             </div>
 
@@ -43,25 +43,24 @@ export default function ThankYouPage() {
                 What happens next
               </p>
               <p className="mt-3 text-sm leading-7 text-slate-600">
-                We review the request for coverage fit, scheduling, access
+                After a successful submission, we review the request for coverage fit, scheduling, access
                 constraints, and execution requirements.
               </p>
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Need another request
+                Need to submit
               </p>
               <p className="mt-3 text-sm leading-7 text-slate-600">
-                You can return to the dispatch page anytime to submit another
-                site, project, or follow-up scope.
+                Return to the dispatch intake page to submit a new site, project, or follow-up scope request.
               </p>
             </div>
           </div>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href="/contact"
+              href="/dispatch"
               className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               Submit Another Request

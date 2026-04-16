@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { createPageMetadata } from '@/lib/metadata';
 
-export const metadata: Metadata = {
-  title: 'Service Area | Already Here LLC',
+export const metadata: Metadata = createPageMetadata({
+  title: 'Service Area',
   description:
     'Phoenix-based, Arizona-first onsite technical field execution with qualified regional and project-based travel support for remote teams, MSPs, vendors, healthcare-adjacent operators, and rollout programs.',
-};
+  path: '/service-area',
+});
 
 const primaryCoverage = [
   'Phoenix metro and surrounding Arizona markets',

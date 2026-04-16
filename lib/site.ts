@@ -1,13 +1,13 @@
 export const siteConfig = {
-  name: 'Already Here LLC',
-  shortName: 'Already Here',
+  name: "Already Here LLC",
+  shortName: "Already Here",
   description:
-    'Phoenix-based field execution partner for vendors, MSPs, remote support teams, healthcare operators, and multi-site rollout teams needing onsite smart hands, laptop and endpoint work, server and data-center activity, drive swaps, port changes, surveys, remediation, and clean closeout across Arizona project markets.',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://alreadyherellc.com',
-  phoneHref: 'tel:+16020000000',
-  phoneDisplay: 'Dispatch number available on request',
-  email: 'dispatch@alreadyherellc.com',
-  city: 'Phoenix, Arizona'
+    "Phoenix-based field execution partner for vendors, MSPs, remote support teams, healthcare operators, and multi-site rollout teams needing onsite smart hands, laptop and endpoint work, server and data-center activity, drive swaps, port changes, surveys, remediation, and clean closeout across Arizona project markets.",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.alreadyherellc.com",
+  phoneHref: "tel:+16020000000",
+  phoneDisplay: "Dispatch number available on request",
+  email: "dispatch@alreadyherellc.com",
+  city: "Phoenix, Arizona"
 };
 
 export const serviceGroups = [

@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { createPageMetadata } from '@/lib/metadata';
 
-export const metadata: Metadata = {
-  title: 'Rollout Support | Already Here LLC',
+export const metadata: Metadata = createPageMetadata({
+  title: 'Rollout Support',
   description:
     'Rollout, RFID, modernization, refresh, and remediation support for vendors, remote teams, MSPs, and multi-site operators that need disciplined onsite technical field execution.',
-};
+  path: '/rollout-support',
+});
 
 const fitItems = [
   'RFID-related field execution',

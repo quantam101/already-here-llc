@@ -1,11 +1,13 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "For Agencies & Service Providers | Phoenix Regional Field Coverage",
   description:
     "Dependable Phoenix field coverage for agencies, vendors, and service providers. Support for retail, kiosk, POS, signage, device, networking, rollout, and multi-site field execution.",
-};
+  path: "/for-agencies-service-providers",
+});
 
 const whoWeSupport = [
   "Retail execution agencies",
@@ -121,19 +123,24 @@ export default function AgenciesPage() {
             >
               Request Coverage
             </Link>
-            <a
-              href="mailto:dispatch@alreadyherellc.com"
-              className="inline-flex items-center justify-center rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-white transition hover:border-slate-500 hover:bg-slate-900"
-            >
-              Send Scope / Locations
-            </a>
             <Link
-              href="/contact"
+              href="/dispatch"
               className="inline-flex items-center justify-center rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-white transition hover:border-slate-500 hover:bg-slate-900"
             >
-              Discuss a Project
+              Open Dispatch
             </Link>
           </div>
+
+          <p className="mt-5 text-sm leading-7 text-slate-300">
+            Existing dispatch threads can still use{" "}
+            <a
+              href="mailto:dispatch@alreadyherellc.com"
+              className="font-semibold text-white underline decoration-slate-500 underline-offset-4"
+            >
+              dispatch@alreadyherellc.com
+            </a>
+            .
+          </p>
         </div>
       </section>
 
@@ -340,12 +347,12 @@ export default function AgenciesPage() {
             >
               Request Coverage
             </Link>
-            <a
-              href="mailto:dispatch@alreadyherellc.com"
+            <Link
+              href="/dispatch"
               className="inline-flex items-center justify-center rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-white transition hover:border-slate-500 hover:bg-slate-900"
             >
-              Send Scope / Locations
-            </a>
+              Open Dispatch
+            </Link>
           </div>
         </div>
       </section>

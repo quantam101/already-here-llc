@@ -10,7 +10,7 @@ const navItems = [
   { href: '/', label: 'Home' },
   { href: '/services', label: 'Services' },
   { href: '/who-we-serve', label: 'Who We Serve' },
-  { href: '/contact', label: 'Dispatch' }
+  { href: '/dispatch', label: 'Dispatch' }
 ];
 
 function NavLink({
@@ -78,10 +78,10 @@ export function Header() {
             View Services
           </Link>
           <Link
-            href="/contact"
+            href="/dispatch"
             className="link-ring rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy"
           >
-            Request Dispatch
+            Open Dispatch
           </Link>
         </div>
 
@@ -122,11 +122,11 @@ export function Header() {
                 View Services
               </Link>
               <Link
-                href="/contact"
+                href="/dispatch"
                 className="link-ring rounded-2xl bg-action px-4 py-3 text-center text-sm font-semibold text-white"
                 onClick={() => setOpen(false)}
               >
-                Request Dispatch
+                Open Dispatch
               </Link>
             </div>
           </div>

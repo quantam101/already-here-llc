@@ -1,29 +1,45 @@
-import './globals.css';
-import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
-import Link from 'next/link';
+import "./globals.css";
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import type { ReactNode } from "react";
+import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.alreadyherellc.com'),
+  metadataBase: new URL(siteConfig.url),
   title: {
-    default: 'Already Here LLC | Field Execution Partner',
-    template: '%s | Already Here LLC',
+    default: "Already Here LLC | Field Execution Partner",
+    template: "%s | Already Here LLC",
   },
-  description:
-    'Phoenix-based, Arizona-first onsite technical field execution for remote teams, MSPs, vendors, healthcare-adjacent operators, and rollout programs.',
+  description: siteConfig.description,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    siteName: siteConfig.name,
+    url: siteConfig.url,
+    title: "Already Here LLC | Field Execution Partner",
+    description: siteConfig.description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Already Here LLC | Field Execution Partner",
+    description: siteConfig.description,
+  },
 };
 
 const primaryNav = [
-  { label: 'Home', href: '/' },
-  { label: 'Services', href: '/services' },
-  { label: 'Who We Serve', href: '/who-we-serve' },
-  { label: 'Service Area', href: '/service-area' },
-  { label: 'Dispatch', href: '/dispatch' },
+  { label: "Home", href: "/" },
+  { label: "Services", href: "/services" },
+  { label: "Who We Serve", href: "/who-we-serve" },
+  { label: "Service Area", href: "/service-area" },
+  { label: "Dispatch", href: "/dispatch" },
 ];
 
 const secondaryLinks = [
-  { label: 'Rollout Support', href: '/rollout-support' },
-  { label: 'Privacy Policy', href: '/privacy' },
+  { label: "Rollout Support", href: "/rollout-support" },
+  { label: "Privacy Policy", href: "/privacy" },
 ];
 
 export default function RootLayout({
@@ -31,19 +47,38 @@ export default function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const organizationStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: siteConfig.name,
+    url: siteConfig.url,
+    email: siteConfig.email,
+    areaServed: ["Phoenix, Arizona", "Arizona"],
+  };
+
   return (
     <html lang="en">
       <body className="min-h-screen bg-white text-slate-950 antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationStructuredData),
+          }}
+        />
+
         <div className="flex min-h-screen flex-col">
           <header className="border-b border-slate-200 bg-white">
             <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
               <div className="flex flex-col gap-4 py-5 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-center gap-4">
                   <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50">
-                    <img
+                    <Image
                       src="/logo.png"
                       alt="Already Here LLC logo"
+                      width={56}
+                      height={56}
                       className="h-full w-full object-cover"
+                      priority
                     />
                   </div>
 
@@ -73,12 +108,12 @@ export default function RootLayout({
                       </Link>
                     ))}
 
-                    <a
-                      href="mailto:dispatch@alreadyherellc.com"
+                    <Link
+                      href="/dispatch"
                       className="inline-flex items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
                     >
-                      Email Dispatch
-                    </a>
+                      Open Dispatch
+                    </Link>
                   </nav>
                 </div>
               </div>
@@ -144,25 +179,35 @@ export default function RootLayout({
                       Direct contact
                     </p>
                     <div className="mt-4 space-y-3 text-sm text-slate-700">
-                      <p className="font-medium text-slate-950">dispatch@alreadyherellc.com</p>
-                      <p>Phoenix, Arizona</p>
-                      <p>Use dispatch for site details, timing, scope, and supporting notes.</p>
+                      <p className="font-medium text-slate-950">{siteConfig.email}</p>
+                      <p>{siteConfig.city}</p>
+                      <p>Use the dispatch form as the primary intake path for scope, timing, and site details.</p>
                     </div>
 
-                    <div className="mt-5">
-                      <a
-                        href="mailto:dispatch@alreadyherellc.com"
+                    <div className="mt-5 space-y-3">
+                      <Link
+                        href="/dispatch"
                         className="inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
                       >
-                        Email Dispatch
-                      </a>
+                        Open Dispatch
+                      </Link>
+                      <p className="text-sm leading-6 text-slate-600">
+                        Existing threads can still use{" "}
+                        <a
+                          href={`mailto:${siteConfig.email}`}
+                          className="font-medium text-slate-950 underline decoration-slate-300 underline-offset-4"
+                        >
+                          {siteConfig.email}
+                        </a>
+                        .
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="mt-10 border-t border-slate-200 pt-6 text-sm text-slate-500">
-                © 2026 Already Here LLC. All rights reserved.
+                © {new Date().getFullYear()} Already Here LLC. All rights reserved.
               </div>
             </div>
           </footer>

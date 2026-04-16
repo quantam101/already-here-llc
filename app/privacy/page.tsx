@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
+import { createPageMetadata } from '@/lib/metadata';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'Privacy Policy',
-  description: 'Privacy policy for Already Here LLC website visitors and dispatch form submissions.'
-};
+  description: 'Privacy policy for Already Here LLC website visitors and dispatch form submissions.',
+  path: '/privacy',
+});
 
 export default function PrivacyPage() {
   return (
@@ -16,7 +18,7 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-navy">Information collected</h2>
             <p className="mt-3">
               When you submit the dispatch form, the site may collect contact details, company information, site location details,
-              service request information, scheduling notes, and any files you choose to upload.
+              scheduling details, and service request notes needed to review coverage and respond to the request.
             </p>
           </section>
 
@@ -29,10 +31,10 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-navy">File uploads and third-party processing</h2>
+            <h2 className="text-lg font-semibold text-navy">Third-party processing</h2>
             <p className="mt-3">
-              The dispatch form may route submissions through a third-party form processing service. Uploaded files and submitted details
-              are transmitted only for dispatch intake and response handling.
+              Dispatch form submissions are processed by the website application and routed through the configured email delivery provider
+              so the request can reach the dispatch inbox for review and follow-up.
             </p>
           </section>
 
