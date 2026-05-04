@@ -9,7 +9,7 @@
     "lint": "echo \"lint handled by build/typecheck gate\"",
     "typecheck": "tsc --noEmit",
     "test": "npm run test:dispatch",
-    "test:dispatch": "node tests/dispatch-contract.test.mjs"
+    "test:dispatch": "node --experimental-strip-types tests/dispatch-contract.test.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
