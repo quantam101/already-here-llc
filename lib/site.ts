@@ -26,6 +26,15 @@ export const markets = [
   "Arizona regional coverage",
 ] as const;
 
+export const closeoutItems = [
+  "Scope confirmation",
+  "Before and after photos",
+  "Serial and asset capture",
+  "Install and test notes",
+  "Remote bridge coordination",
+  "Completion summary",
+] as const;
+
 export const publicRoutes = [
   {
     path: "/",
