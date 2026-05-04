@@ -10,6 +10,8 @@ import {
 
 export const runtime = "nodejs";
 
+const operationalFallbackRecipients = ["alreadyherellc@gmail.com"] as const;
+
 type ResendSuccess = {
   id?: string;
 };
@@ -22,6 +24,28 @@ type ResendError = {
 
 function textOrEmpty(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeEmail(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function parseEmailList(value: string): string[] {
+  return value
+    .split(/[\s,;]+/)
+    .map(normalizeEmail)
+    .filter((email) => email.includes("@") && email.includes("."));
+}
+
+function uniqueEmails(values: string[]): string[] {
+  return Array.from(new Set(values.map(normalizeEmail))).filter(Boolean);
+}
+
+function getDispatchRecipients() {
+  return uniqueEmails([
+    ...parseEmailList(textOrEmpty(process.env.DISPATCH_TO_EMAIL)),
+    ...operationalFallbackRecipients,
+  ]);
 }
 
 function htmlEscape(value: string): string {
@@ -86,6 +110,7 @@ export async function GET() {
     ok: true,
     service: "dispatch",
     env: getDispatchEnvStatus(),
+    recipientFallback: true,
     timestamp: new Date().toISOString(),
   });
 }
@@ -107,9 +132,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const missingEnvVars = getMissingDispatchEnvVars();
+  const recipients = getDispatchRecipients();
+  const requesterEmail = normalizeEmail(payload.email);
+  const requesterCopy = requesterEmail && !recipients.includes(requesterEmail) ? [requesterEmail] : [];
+  const missingEnvVars = getMissingDispatchEnvVars().filter((name) => name !== "DISPATCH_TO_EMAIL");
 
-  if (missingEnvVars.length > 0) {
+  if (missingEnvVars.length > 0 || recipients.length === 0) {
     return NextResponse.json(
       {
         ok: false,
@@ -123,13 +151,13 @@ export async function POST(request: Request) {
 
   const resendApiKey = textOrEmpty(process.env.RESEND_API_KEY);
   const from = textOrEmpty(process.env.DISPATCH_FROM_EMAIL);
-  const to = textOrEmpty(process.env.DISPATCH_TO_EMAIL);
   const siteUrl = textOrEmpty(process.env.NEXT_PUBLIC_SITE_URL);
   const submittedAt = new Date().toISOString();
 
   const resendPayload = {
     from,
-    to: [to],
+    to: recipients,
+    cc: requesterCopy,
     reply_to: payload.email,
     subject: buildSubject(payload),
     text: `${formatPlainText(payload, submittedAt)}\n\nSource: ${siteUrl}/dispatch`,
@@ -175,6 +203,7 @@ export async function POST(request: Request) {
       ok: true,
       message: "Dispatch request delivered to the Already Here LLC dispatch inbox.",
       resendId: responseJson && "id" in responseJson ? responseJson.id : undefined,
+      recipientCount: recipients.length + requesterCopy.length,
     });
   } catch {
     return NextResponse.json(
