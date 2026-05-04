@@ -6,10 +6,34 @@ export const site = {
   businessName: "Already Here LLC",
   url: "https://www.alreadyherellc.com",
   email: "dispatch@alreadyherellc.com",
+  city: "Phoenix, Arizona",
   location: "Phoenix, Arizona",
   description:
     "Phoenix-based field execution partner for remote teams, MSPs, vendors, healthcare-adjacent operators, agencies, and rollout programs.",
 } as const;
+
+export const siteConfig = site;
+
+export const markets = [
+  "Phoenix",
+  "Scottsdale",
+  "Tempe",
+  "Mesa",
+  "Chandler",
+  "Glendale",
+  "Peoria",
+  "Gilbert",
+  "Arizona regional coverage",
+] as const;
+
+export const closeoutItems = [
+  "Scope confirmation",
+  "Before and after photos",
+  "Serial and asset capture",
+  "Install and test notes",
+  "Remote bridge coordination",
+  "Completion summary",
+] as const;
 
 export const publicRoutes = [
   {
