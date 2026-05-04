@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { buildMetadata, organizationJsonLd, safeJsonLd } from "@/lib/site";
 
 export const metadata: Metadata = buildMetadata("/");
