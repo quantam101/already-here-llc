@@ -7,9 +7,56 @@ export const site = {
   url: "https://www.alreadyherellc.com",
   email: "dispatch@alreadyherellc.com",
   location: "Phoenix, Arizona",
+  city: "Phoenix, Arizona",
   description:
     "Phoenix-based field execution partner for remote teams, MSPs, vendors, healthcare-adjacent operators, agencies, and rollout programs.",
 } as const;
+
+export const siteConfig = {
+  ...site,
+  shortName: "Already Here",
+  domain: "alreadyherellc.com",
+  serviceArea: [
+    "Phoenix",
+    "Glendale",
+    "Peoria",
+    "Surprise",
+    "Tempe",
+    "Mesa",
+    "Chandler",
+    "Scottsdale",
+    "Gilbert",
+    "Goodyear",
+    "Avondale",
+    "Maricopa County",
+    "Arizona",
+  ],
+} as const;
+
+export const markets = [
+  "Phoenix",
+  "Glendale",
+  "Peoria",
+  "Surprise",
+  "Tempe",
+  "Mesa",
+  "Chandler",
+  "Scottsdale",
+  "Gilbert",
+  "Goodyear",
+  "Avondale",
+  "Maricopa County",
+  "Arizona",
+] as const;
+
+export const closeoutItems = [
+  "Site arrival and departure notes",
+  "Before and after photos where allowed",
+  "Device, port, serial, or asset details when available",
+  "Remote-bridge communication notes",
+  "Issue, action, and result summary",
+  "Buyer-ready closeout language",
+] as const;
 
 export const publicRoutes = [
   {
@@ -96,16 +143,16 @@ export const publicRoutes = [
 
 export type PublicRoutePath = (typeof publicRoutes)[number]["path"];
 
-export function absoluteUrl(path: string = "/") {
+export function absoluteUrl(path = "/") {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return normalizedPath === "/" ? site.url : `${site.url}${normalizedPath}`;
 }
 
-export function routeFor(path: PublicRoutePath) {
+export function routeFor(path: string) {
   return publicRoutes.find((route) => route.path === path) ?? publicRoutes[0];
 }
 
-export function buildMetadata(path: PublicRoutePath): Metadata {
+export function buildMetadata(path: string): Metadata {
   const route = routeFor(path);
   const canonical = absoluteUrl(route.path);
 
@@ -125,7 +172,7 @@ export function buildMetadata(path: PublicRoutePath): Metadata {
       url: canonical,
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: route.title,
       description: route.description,
     },
