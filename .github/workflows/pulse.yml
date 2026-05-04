@@ -1,0 +1,53 @@
+name: Pulse
+
+on:
+  push:
+    branches:
+      - pulse
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit live Valley dispatch pulse
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > payload.json <<'JSON'
+          {
+            "fullName": "Already Here Live Verification",
+            "company": "Already Here LLC",
+            "email": "dispatch@alreadyherellc.com",
+            "phone": "6025550100",
+            "fullSiteAddress": "Phoenix Valley dispatch pulse - live verification only, no onsite service requested",
+            "state": "Arizona",
+            "siteCount": "One site",
+            "travelLikely": "No",
+            "requestedDate": "2026-05-05",
+            "requestedWindow": "Business hours",
+            "dueByTime": "End of day",
+            "serviceType": "Live Dispatch Pulse Verification",
+            "priority": "Normal",
+            "ticketReference": "LIVE-PULSE-2026-05-04",
+            "onsiteContactName": "Already Here Verification",
+            "onsiteContactPhone": "6025550101",
+            "onsiteContactEmail": "dispatch@alreadyherellc.com",
+            "billingContactName": "Already Here Verification",
+            "billingContactPhone": "6025550102",
+            "billingContactEmail": "dispatch@alreadyherellc.com",
+            "liftRequired": "No",
+            "toolsRequired": "No",
+            "oneLineScopeSummary": "Live Valley dispatch pulse to verify production intake and email delivery path after deployment.",
+            "bridgeDetails": "No bridge required. This is a live production verification pulse only.",
+            "accessNotes": "No site access required. Do not dispatch technician.",
+            "closeoutRequirements": "Confirm receipt of this dispatch pulse in the configured dispatch inbox."
+          }
+          JSON
+          status=$(curl -sS -o response.json -w "%{http_code}" -X POST "https://www.alreadyherellc.com/api/dispatch" -H "Content-Type: application/json" --data @payload.json)
+          echo "HTTP status: ${status}"
+          cat response.json
+          test "${status}" -ge 200
+          test "${status}" -lt 300
