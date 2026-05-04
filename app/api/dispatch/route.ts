@@ -8,7 +8,7 @@ import {
   validateDispatchPayload,
   type DispatchFieldName,
   type DispatchPayload,
-} from "@/lib/dispatch";
+} from "../../../lib/dispatch";
 
 export const runtime = "nodejs";
 
