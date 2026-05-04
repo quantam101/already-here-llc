@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "echo \"lint handled by build/typecheck gate\"",
     "typecheck": "tsc --noEmit",
-    "test": "npm run test:dispatch",
+    "test": "npm run test:dispatch && node tests/pulse.mjs",
     "test:dispatch": "tsc tests/dispatch-contract.test.ts --target ES2022 --module commonjs --moduleResolution node --esModuleInterop --skipLibCheck --outDir .tmp-test && node .tmp-test/tests/dispatch-contract.test.js"
   },
   "dependencies": {
