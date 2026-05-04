@@ -118,6 +118,7 @@ async function main() {
     assert.equal(json.env.DISPATCH_FROM_EMAIL, true);
     assert.equal(json.env.DISPATCH_TO_EMAIL, true);
     assert.equal(json.env.NEXT_PUBLIC_SITE_URL, true);
+    assert.equal(json.recipientFallback, true);
     assert.equal(typeof json.timestamp, "string");
   });
 
@@ -144,8 +145,8 @@ async function main() {
       assert.equal(json.ok, false);
       assert.ok(json.message.includes("RESEND_API_KEY"));
       assert.ok(json.message.includes("DISPATCH_FROM_EMAIL"));
-      assert.ok(json.message.includes("DISPATCH_TO_EMAIL"));
       assert.ok(json.message.includes("NEXT_PUBLIC_SITE_URL"));
+      assert.equal(json.message.includes("DISPATCH_TO_EMAIL"), false);
     },
   );
 
@@ -176,9 +177,12 @@ async function main() {
     const originalFetch = globalThis.fetch;
 
     try {
-      globalThis.fetch = async (input: RequestInfo | URL) => {
+      globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
         assert.equal(url, "https://api.resend.com/emails");
+        const resendPayload = JSON.parse(String(init?.body));
+        assert.deepEqual(resendPayload.to, ["alreadyherellc@gmail.com"]);
+        assert.deepEqual(resendPayload.cc, ["test@example.com"]);
 
         return new Response(JSON.stringify({ id: "email_test_id" }), {
           status: 200,
@@ -191,10 +195,43 @@ async function main() {
       const json = await response.json();
       assert.equal(json.ok, true);
       assert.equal(json.resendId, "email_test_id");
+      assert.equal(json.recipientCount, 2);
     } finally {
       globalThis.fetch = originalFetch;
     }
   });
+
+  await withEnv(
+    {
+      ...requiredEnv,
+      DISPATCH_TO_EMAIL: "",
+    },
+    async () => {
+      const originalFetch = globalThis.fetch;
+
+      try {
+        globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit) => {
+          const resendPayload = JSON.parse(String(init?.body));
+          assert.deepEqual(resendPayload.to, ["alreadyherellc@gmail.com"]);
+          assert.deepEqual(resendPayload.cc, ["test@example.com"]);
+
+          return new Response(JSON.stringify({ id: "fallback_email_test_id" }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        };
+
+        const response = await dispatchApiPost(jsonRequest(payload));
+        assert.equal(response.status, 200);
+        const json = await response.json();
+        assert.equal(json.ok, true);
+        assert.equal(json.resendId, "fallback_email_test_id");
+        assert.equal(json.recipientCount, 2);
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    },
+  );
 
   console.log("dispatch contract + api tests passed");
 }
