@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "echo \"lint handled by build/typecheck gate\"",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"build and typecheck passed\"",
-    "test:dispatch": "echo \"dispatch contract covered by typecheck/build gate\""
+    "test": "npm run test:dispatch",
+    "test:dispatch": "node tests/dispatch-contract.test.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
