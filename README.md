@@ -1,65 +1,70 @@
-# Already Here LLC
+# Already Here LLC website
 
-Production website and controlled commercial intake system for Already Here LLC.
-
-## Purpose
-
-This project exists to:
-
-- position the business as a field execution partner
-- qualify buyer intent
-- route dispatch requests
-- support trust, conversion, and public credibility
+Lean multi-page B2B field-service website for Already Here LLC, built with Next.js App Router, TypeScript, and Tailwind CSS.
 
 ## Stack
 
-- Next.js App Router
-- GitHub source of truth
-- Vercel production runtime
-- GoDaddy DNS
+- Next.js 14 App Router
+- TypeScript
+- Tailwind CSS
 
-## Canonical domains
+## Pages
 
-- https://www.alreadyherellc.com
-- https://alreadyherellc.com
+- Home
+- Services
+- Who We Serve
+- Contact / Dispatch
+- Privacy Policy
+- Thank You
 
-Apex redirects to www. www serves production.
+## Environment variables
 
-## Public routes
+Copy `.env.example` to `.env.local` and set the following values:
 
-- /
-- /services
-- /who-we-serve
-- /dispatch
-- /contact
-- /service-area
-- /privacy
-- /thank-you
+```bash
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
+FORMSPREE_ENDPOINT=https://formspree.io/f/your_form_id
+```
 
-## Governance
-
-This repo is governed by:
-
-- ARCHITECTURE.md
-- DECISIONS.md
-- RUNBOOK.md
-- docs/BUILD_OPERATING_STANDARD.md
+`FORMSPREE_ENDPOINT` is required for production submissions. Without it, the form renders normally but submission will fail with a clear configuration error.
 
 ## Local development
 
-Expected commands:
+```bash
+npm install
+npm run dev
+```
 
-    npm install
-    npm run dev
-    npm run build
-    npm run start
-    npm run lint
+Open `http://localhost:3000`.
 
-## Environment model
+## Deployment notes
 
-- local
-- preview
-- production
+### Git-based Vercel deployment
 
-Do not expose secrets in frontend code.
-Last CI trigger check: April 9, 2026
+1. Push the project to GitHub.
+2. Import the repository into Vercel.
+3. Add these environment variables in Vercel project settings:
+   - `NEXT_PUBLIC_SITE_URL`
+   - `FORMSPREE_ENDPOINT`
+4. Deploy.
+
+### Vercel CLI deployment
+
+```bash
+npm i -g vercel
+vercel --prod
+```
+
+## Production QA
+
+- Confirm homepage loads on desktop and mobile.
+- Confirm Phoenix-based and Commercially Insured are visible high on the page.
+- Confirm Request Dispatch and Send Scope CTAs are visible quickly.
+- Confirm the dispatch form submits successfully with a real endpoint.
+- Confirm uploaded PDF/JPG/PNG files are accepted.
+- Confirm proof image is present.
+- Confirm no prohibited claims remain in public copy.
+
+## Form processing
+
+The contact form posts to `/api/dispatch`, which validates required fields and then forwards the multipart payload to the configured Formspree endpoint. File upload support on Formspree depends on the plan in use.

@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -10,20 +9,13 @@ const navItems = [
   { href: '/', label: 'Home' },
   { href: '/services', label: 'Services' },
   { href: '/who-we-serve', label: 'Who We Serve' },
+  { href: '/capability-statement', label: 'Capability Statement' },
+  { href: '/blog', label: 'Field Insights' },
   { href: '/dispatch', label: 'Dispatch' }
 ];
 
-function NavLink({
-  href,
-  label,
-  pathname
-}: {
-  href: string;
-  label: string;
-  pathname: string;
-}) {
+function NavLink({ href, label, pathname }: { href: string; label: string; pathname: string }) {
   const active = pathname === href;
-
   return (
     <Link
       href={href}
@@ -42,53 +34,53 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-borderBrand/80 bg-white/95 backdrop-blur">
-      <div className="container-shell flex items-center justify-between gap-4 py-4 lg:gap-8">
-        <Link href="/" className="link-ring flex min-w-0 items-center gap-3 rounded-2xl">
-          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm sm:h-14 sm:w-14">
-            <Image
-              src="/logo.png"
-              alt="Already Here LLC logo"
-              fill
-              className="object-contain p-0.5"
-              priority
-            />
-          </div>
-
-          <div className="min-w-0">
-            <div className="truncate text-lg font-semibold leading-none text-navy">
-              {siteConfig.name}
+      <div className="container-shell flex items-center justify-between py-4">
+        <div className="flex items-center gap-4">
+          <Link href="/" className="link-ring flex items-center gap-3 rounded-2xl">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-navy text-sm font-bold tracking-[0.16em] text-white">
+              AH
             </div>
-            <div className="mt-1 truncate text-[11px] uppercase tracking-[0.18em] text-slate-500 sm:text-xs">
-              Field Execution Partner
+            <div>
+              <div className="text-base font-semibold text-navy">{siteConfig.name}</div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase tracking-[0.16em] text-slate-500">Field execution partner</span>
+                <span className="rounded-full border border-amber-300/60 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-amber-700">
+                  SDVOSB
+                </span>
+              </div>
             </div>
-          </div>
-        </Link>
+          </Link>
+        </div>
 
-        <nav className="hidden items-center gap-2 xl:flex" aria-label="Primary navigation">
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
           {navItems.map((item) => (
             <NavLink key={item.href} href={item.href} label={item.label} pathname={pathname} />
           ))}
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <Link
-            href="/services"
-            className="link-ring rounded-full border border-borderBrand px-5 py-2.5 text-sm font-medium text-navy transition hover:border-action hover:text-action"
+          <a
+            href={siteConfig.phoneHref}
+            className="link-ring flex items-center gap-2 rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-navy transition hover:border-action hover:text-action"
+            aria-label="Call for urgent same-day dispatch"
           >
-            View Services
-          </Link>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+              <path d="M1.5 2C1.5 2 2.5 4.5 4.5 6.5S8.5 10 8.5 10l1.25-1.25c.45-.45 1.05-.35 1.35.1l.8 1.2c.3.45.1 1.05-.35 1.35C9.5 12.5 8 13.5 6 12.5 3 11 1 8 1 5 0 3 1 1.5 2.05 1.05c.5-.25 1.05-.05 1.35.45l.8 1.2c.3.45.2 1.05-.25 1.35Z" fill="currentColor"/>
+            </svg>
+            {siteConfig.phoneDisplay}
+          </a>
           <Link
             href="/dispatch"
             className="link-ring rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy"
           >
-            Open Dispatch
+            Request Dispatch
           </Link>
         </div>
 
         <button
           type="button"
-          className="link-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-borderBrand text-navy lg:hidden"
-          onClick={() => setOpen((current) => !current)}
+          className="link-ring inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-borderBrand text-navy lg:hidden"
+          onClick={() => setOpen((c) => !c)}
           aria-expanded={open}
           aria-controls="mobile-nav"
           aria-label="Toggle navigation"
@@ -112,21 +104,20 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-
             <div className="grid grid-cols-2 gap-3 pt-2">
-              <Link
-                href="/services"
+              <a
+                href={siteConfig.phoneHref}
                 className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-center text-sm font-medium text-navy"
                 onClick={() => setOpen(false)}
               >
-                View Services
-              </Link>
+                {siteConfig.phoneDisplay}
+              </a>
               <Link
                 href="/dispatch"
                 className="link-ring rounded-2xl bg-action px-4 py-3 text-center text-sm font-semibold text-white"
                 onClick={() => setOpen(false)}
               >
-                Open Dispatch
+                Request Dispatch
               </Link>
             </div>
           </div>
@@ -135,5 +126,3 @@ export function Header() {
     </header>
   );
 }
-
-export default Header;

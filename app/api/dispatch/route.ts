@@ -1,188 +1,112 @@
-import { NextResponse } from "next/server";
-import {
-  dispatchFieldLabels,
-  getDispatchEnvStatus,
-  getMissingDispatchEnvVars,
-  sanitizeDispatchPayload,
-  validateDispatchPayload,
-  type DispatchPayload,
-} from "../../../lib/dispatch";
+import { NextResponse } from 'next/server';
 
-export const runtime = "nodejs";
+const acceptedFileTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+const maxFileSize = 10 * 1024 * 1024;
 
-type ResendSuccess = {
-  id?: string;
-};
+const requiredFields = ['fullName', 'company', 'email', 'siteCity', 'serviceType', 'message'];
 
-type ResendError = {
-  message?: string;
-  error?: string;
-  name?: string;
-};
-
-function textOrEmpty(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
+function validateFormData(formData: FormData): string | null {
+  for (const field of requiredFields) {
+    const value = formData.get(field);
+    if (typeof value !== 'string' || value.trim().length === 0) {
+      return `Missing required field: ${field}`;
+    }
+  }
+  const email = formData.get('email');
+  if (typeof email === 'string' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return 'Invalid email address.';
+  }
+  const attachment = formData.get('attachment');
+  if (attachment instanceof File && attachment.size > 0) {
+    if (!acceptedFileTypes.includes(attachment.type)) return 'Attachment must be PDF, JPG, or PNG.';
+    if (attachment.size > maxFileSize) return 'Attachment must be 10 MB or smaller.';
+  }
+  return null;
 }
 
-function htmlEscape(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+async function sendViaResend(formData: FormData): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY!;
+  const to = process.env.DISPATCH_TO_EMAIL!;
 
-function formatPlainText(payload: DispatchPayload, submittedAt: string) {
-  const lines = [
-    "New Already Here LLC dispatch request",
-    `Submitted: ${submittedAt}`,
-    "",
-    ...Object.entries(dispatchFieldLabels).map(([field, label]) => {
-      const value = payload[field as keyof DispatchPayload] || "Not provided";
-      return `${label}: ${value}`;
-    }),
-  ];
+  const fields = requiredFields.map((f) => `<tr><td style="padding:6px 12px;font-weight:600;color:#0F2747;vertical-align:top">${f}</td><td style="padding:6px 12px;color:#334155">${formData.get(f) ?? '—'}</td></tr>`).join('');
+  const optionals = ['phone', 'siteZip', 'requestedWindow', 'ticketNumber'].map((f) => `<tr><td style="padding:6px 12px;font-weight:600;color:#0F2747;vertical-align:top">${f}</td><td style="padding:6px 12px;color:#334155">${formData.get(f) || '—'}</td></tr>`).join('');
 
-  return lines.join("\n");
-}
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto;background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden">
+      <div style="background:#0F2747;padding:24px 32px">
+        <p style="margin:0;color:#fff;font-size:18px;font-weight:700">New Dispatch Request — Already Here LLC</p>
+        <p style="margin:4px 0 0;color:rgba(255,255,255,0.6);font-size:13px">${new Date().toLocaleString('en-US', { timeZone: 'America/Phoenix' })} MST</p>
+      </div>
+      <div style="padding:24px 32px">
+        <table style="width:100%;border-collapse:collapse;font-size:14px">${fields}${optionals}</table>
+      </div>
+      <div style="padding:16px 32px;background:#F8FAFC;border-top:1px solid #E2E8F0">
+        <p style="margin:0;font-size:12px;color:#64748B">Submitted via alreadyherellc.com/dispatch · Already Here LLC · dispatch@alreadyherellc.com</p>
+      </div>
+    </div>`;
 
-function formatHtml(payload: DispatchPayload, submittedAt: string) {
-  const rows = Object.entries(dispatchFieldLabels)
-    .map(([field, label]) => {
-      const value = payload[field as keyof DispatchPayload] || "Not provided";
-      return `<tr><th style="text-align:left;padding:8px;border:1px solid #cbd5e1;background:#f8fafc;vertical-align:top;">${htmlEscape(
-        label,
-      )}</th><td style="padding:8px;border:1px solid #cbd5e1;vertical-align:top;">${htmlEscape(
-        value,
-      )}</td></tr>`;
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: 'Dispatch <dispatch@alreadyherellc.com>',
+      to: [to],
+      subject: `Dispatch: ${formData.get('serviceType')} — ${formData.get('siteCity')} — ${formData.get('company')}`,
+      html
     })
-    .join("");
+  });
 
-  return `<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#0f172a;"><h1>New Already Here LLC dispatch request</h1><p><strong>Submitted:</strong> ${htmlEscape(
-    submittedAt,
-  )}</p><table style="border-collapse:collapse;width:100%;max-width:900px;">${rows}</table></body></html>`;
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { message?: string };
+    throw new Error(err.message || 'Resend API rejected the request.');
+  }
 }
 
-function buildSubject(payload: DispatchPayload) {
-  const priority = payload.priority || "Dispatch";
-  const company = payload.company || "Unknown company";
-  const serviceType = payload.serviceType || "Service request";
-  const requestedDate = payload.requestedDate || "Date not set";
-
-  return `${priority} dispatch request | ${company} | ${serviceType} | ${requestedDate}`;
+async function sendViaFormspree(formData: FormData): Promise<void> {
+  const endpoint = process.env.FORMSPREE_ENDPOINT!;
+  const res = await fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body: formData, cache: 'no-store' });
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null) as { errors?: Array<{ message?: string }> } | null;
+    throw new Error(payload?.errors?.[0]?.message || 'Formspree rejected the submission.');
+  }
 }
 
-async function readJson(request: Request) {
+export async function POST(request: Request) {
+  const formData = await request.formData();
+
+  const validationError = validateFormData(formData);
+  if (validationError) {
+    return NextResponse.json({ message: validationError }, { status: 400 });
+  }
+
+  const hasResend = !!process.env.RESEND_API_KEY && !!process.env.DISPATCH_TO_EMAIL;
+  const hasFormspree = !!process.env.FORMSPREE_ENDPOINT;
+
+  if (!hasResend && !hasFormspree) {
+    return NextResponse.json(
+      { message: 'Dispatch endpoint not configured. Add RESEND_API_KEY + DISPATCH_TO_EMAIL to Vercel environment variables.' },
+      { status: 500 }
+    );
+  }
+
   try {
-    return await request.json();
-  } catch {
-    return null;
+    if (hasResend) {
+      await sendViaResend(formData);
+    } else {
+      await sendViaFormspree(formData);
+    }
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Dispatch submission failed.';
+    return NextResponse.json({ message }, { status: 502 });
   }
 }
 
 export async function GET() {
+  const hasResend = !!process.env.RESEND_API_KEY;
+  const hasFormspree = !!process.env.FORMSPREE_ENDPOINT;
   return NextResponse.json({
-    ok: true,
-    service: "dispatch",
-    env: getDispatchEnvStatus(),
-    timestamp: new Date().toISOString(),
+    status: 'ok',
+    delivery: hasResend ? 'resend' : hasFormspree ? 'formspree' : 'unconfigured'
   });
-}
-
-export async function POST(request: Request) {
-  const body = await readJson(request);
-  const payload = sanitizeDispatchPayload(body);
-  const validation = validateDispatchPayload(payload);
-
-  if (validation.invalidFields.length > 0) {
-    return NextResponse.json(
-      {
-        ok: false,
-        message: "Dispatch request is missing required fields.",
-        fieldErrors: validation.fieldErrors,
-        invalidFields: validation.invalidFields,
-      },
-      { status: 400 },
-    );
-  }
-
-  const missingEnvVars = getMissingDispatchEnvVars();
-
-  if (missingEnvVars.length > 0) {
-    return NextResponse.json(
-      {
-        ok: false,
-        message: `Dispatch delivery is not configured. Missing environment variables: ${missingEnvVars.join(
-          ", ",
-        )}.`,
-      },
-      { status: 500 },
-    );
-  }
-
-  const resendApiKey = textOrEmpty(process.env.RESEND_API_KEY);
-  const from = textOrEmpty(process.env.DISPATCH_FROM_EMAIL);
-  const to = textOrEmpty(process.env.DISPATCH_TO_EMAIL);
-  const siteUrl = textOrEmpty(process.env.NEXT_PUBLIC_SITE_URL);
-  const submittedAt = new Date().toISOString();
-
-  const resendPayload = {
-    from,
-    to: [to],
-    reply_to: payload.email,
-    subject: buildSubject(payload),
-    text: `${formatPlainText(payload, submittedAt)}\n\nSource: ${siteUrl}/dispatch`,
-    html: `${formatHtml(
-      payload,
-      submittedAt,
-    )}<p style="font-family:Arial,Helvetica,sans-serif;color:#475569;"><strong>Source:</strong> ${htmlEscape(
-      `${siteUrl}/dispatch`,
-    )}</p>`,
-  };
-
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(resendPayload),
-      cache: "no-store",
-    });
-
-    const responseJson = (await response.json().catch(() => null)) as ResendSuccess | ResendError | null;
-
-    if (!response.ok) {
-      const upstreamMessage =
-        responseJson && "message" in responseJson
-          ? responseJson.message
-          : responseJson && "error" in responseJson
-            ? responseJson.error
-            : "Resend rejected the dispatch email.";
-
-      return NextResponse.json(
-        {
-          ok: false,
-          message: upstreamMessage || "Resend rejected the dispatch email.",
-        },
-        { status: 502 },
-      );
-    }
-
-    return NextResponse.json({
-      ok: true,
-      message: "Dispatch request delivered to the Already Here LLC dispatch inbox.",
-      resendId: responseJson && "id" in responseJson ? responseJson.id : undefined,
-    });
-  } catch {
-    return NextResponse.json(
-      {
-        ok: false,
-        message: "Dispatch request could not be delivered because the email provider request failed.",
-      },
-      { status: 502 },
-    );
-  }
 }

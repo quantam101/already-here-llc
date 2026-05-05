@@ -1,233 +1,75 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { createPageMetadata } from "@/lib/metadata";
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { closeoutItems, serviceGroups } from '@/lib/site';
 
-type ServiceBucket = {
-  title: string;
-  description: string;
-  includes: string[];
-  bestFit: string;
+export const metadata: Metadata = {
+  title: 'Services',
+  description:
+    'Dispatches, recurring field support, rollout work, remediation, POS/store technology, networking, AV/media, surveys, and infrastructure-related onsite services in Arizona.'
 };
 
-export const metadata: Metadata = createPageMetadata({
-  title: "Services | Phoenix Field Execution & Multi-Site Support",
-  description:
-    "Merchandising, audits, resets, kiosk and POS support, signage updates, device replacement, networking smart-hands, and rollout support across Phoenix and qualified Arizona work.",
-  path: "/services",
-});
-
-const serviceBuckets: ServiceBucket[] = [
-  {
-    title: "Merchandising, Audits & Resets",
-    description:
-      "Support for recurring retail visits, audits, resets, display updates, sticker and graphic swaps, and repeat site execution where consistency and closeout matter.",
-    includes: [
-      "Merchandising support",
-      "Store audits and site checks",
-      "Resets and changeouts",
-      "Pallet and display updates",
-      "Sticker and graphic swaps",
-      "Punch-list and rework visits",
-    ],
-    bestFit:
-      "Best for agencies, vendors, and operators that need repeatable store-level execution across one or more locations.",
-  },
-  {
-    title: "POS, Devices & Signage",
-    description:
-      "Onsite field support for POS hardware, payment devices, kiosks, digital signage, displays, printers, and related retail technology that still needs hands on site.",
-    includes: [
-      "POS swaps and troubleshooting",
-      "Kiosk installs and remediation",
-      "Digital signage replacement",
-      "Peripheral and printer support",
-      "Media player and display work",
-      "Device staging and replacement",
-    ],
-    bestFit:
-      "Best for retail technology teams, device operators, and service providers that need field execution with clear documentation.",
-  },
-  {
-    title: "Remote Team Support",
-    description:
-      "Bridge-call coordination, guided troubleshooting, validation, remediation, and onsite follow-through when the remote team cannot finish the work from a distance.",
-    includes: [
-      "Guided troubleshooting onsite",
-      "Remote bridge-call support",
-      "Validation and verification",
-      "Physical follow-through",
-      "Photo and note-based closeout",
-      "Repeat follow-up visits",
-    ],
-    bestFit:
-      "Best for MSPs, NOCs, service desks, and remote support teams that need dependable onsite hands in Arizona.",
-  },
-  {
-    title: "Infrastructure Field Work",
-    description:
-      "Smart hands, patching, rack work, structured follow-through, port and device checks, basic low-voltage activity, and physical infrastructure work that requires onsite presence.",
-    includes: [
-      "Rack and server-room support",
-      "Patching and port verification",
-      "Cable tracing and replacement",
-      "Drive, part, and device swaps",
-      "Basic low-voltage field execution",
-      "Physical site remediation",
-    ],
-    bestFit:
-      "Best for infrastructure teams, field service partners, and operators that need clear onsite execution rather than general handyman work.",
-  },
-  {
-    title: "Rollout and Modernization Support",
-    description:
-      "Rollout execution, refresh activity, modernization work, multi-site coordination, and structured project follow-through across one site or many.",
-    includes: [
-      "Rollout support",
-      "Refresh and modernization visits",
-      "Multi-site coordination",
-      "Project-based travel support",
-      "Revisit and punch-list closeout",
-      "Documentation-first execution",
-    ],
-    bestFit:
-      "Best for rollout operators, implementation teams, and buyers that need a field partner who can execute to scope and close cleanly.",
-  },
-  {
-    title: "Healthcare / Controlled Environments",
-    description:
-      "Access-sensitive, documentation-sensitive, and workflow-sensitive onsite work where professionalism, handling discipline, and clean closeout matter.",
-    includes: [
-      "Healthcare-adjacent field support",
-      "Sensitive equipment handling",
-      "Structured onsite communication",
-      "Documentation-driven closeout",
-      "Controlled environment professionalism",
-      "Repeatable site process compliance",
-    ],
-    bestFit:
-      "Best for healthcare-adjacent operators, vendors, and support teams that need careful onsite execution in structured environments.",
-  },
-];
-
 export default function ServicesPage() {
-  const displayBuckets = [...serviceBuckets].reverse();
-
   return (
-    <main className="bg-slate-50 text-slate-900">
-      <section className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-16 sm:px-8 lg:px-10">
-          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">
-            Service Architecture
-          </p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-            Six buyer-facing service buckets that reflect the real work mix
-          </h1>
-          <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-            Already Here LLC supports the work that buyers actually need done on
-            site: remote team follow-through, infrastructure work, retail tech,
-            controlled environment execution, rollouts, resets, and recurring
-            field activity with usable closeout.
-          </p>
+    <div className="container-shell py-16 lg:py-24">
+      <span className="eyebrow">Services</span>
+      <h1 className="section-title mt-5">Launch-ready service scope for B2B field execution.</h1>
+      <p className="section-copy">
+        Already Here LLC is not positioned as a generic MSP. The public offer is field execution: get onsite, complete the defined work, communicate clearly, and close with documentation that is useful to the dispatching team.
+      </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/request-coverage"
-              className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-            >
-              Request Coverage
-            </Link>
-            <Link
-              href="/for-agencies-service-providers"
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
-            >
-              Discuss a Project
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-6 py-16 sm:px-8 lg:px-10">
-        <div className="space-y-8">
-          {displayBuckets.map((bucket) => (
-            <section
-              key={bucket.title}
-              className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm sm:p-10"
-            >
-              <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-                <div>
-                  <h2 className="text-3xl font-semibold tracking-tight text-slate-950">
-                    {bucket.title}
-                  </h2>
-                  <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
-                    {bucket.description}
-                  </p>
-
-                  <div className="mt-8">
-                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">
-                      Includes
-                    </p>
-                    <ul className="mt-5 space-y-4">
-                      {bucket.includes.map((item) => (
-                        <li
-                          key={item}
-                          className="flex items-start gap-3 text-lg leading-8 text-slate-700"
-                        >
-                          <span className="mt-2 h-3 w-3 rounded-full bg-blue-600" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                <aside className="rounded-[28px] border border-slate-200 bg-slate-50 p-6 sm:p-8">
-                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">
-                    Best Fit
-                  </p>
-                  <p className="mt-5 text-lg leading-8 text-slate-700">
-                    {bucket.bestFit}
-                  </p>
-                </aside>
+      <div className="mt-12 grid gap-6">
+        {serviceGroups.map((group) => (
+          <section key={group.title} className="card p-8 sm:p-10">
+            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+              <div>
+                <h2 className="text-2xl font-semibold text-navy">{group.title}</h2>
+                <p className="mt-4 text-base leading-7 text-slate-600">{group.description}</p>
               </div>
-            </section>
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {group.items.map((item) => (
+                  <li key={item} className="rounded-2xl border border-borderBrand bg-soft px-4 py-4 text-sm leading-6 text-slate-700">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <section className="mt-12 card p-8 sm:p-10">
+        <span className="grid-label">Closeout standard</span>
+        <h2 className="mt-4 text-2xl font-semibold text-navy">Structured ticket closeout is part of the service.</h2>
+        <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
+          The value is not only the onsite work. It is the combination of field execution, communication, photos or notes when permitted, and closeout language that lets the buyer finish the job internally.
+        </p>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {closeoutItems.map((item) => (
+            <div key={item} className="rounded-2xl border border-borderBrand bg-soft px-4 py-4 text-sm leading-6 text-slate-700">
+              {item}
+            </div>
           ))}
         </div>
       </section>
 
-      <section className="border-t border-slate-200 bg-slate-950 text-white">
-        <div className="mx-auto max-w-6xl px-6 py-16 sm:px-8 lg:px-10">
-          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-400">
-                Need onsite execution?
-              </p>
-              <h2 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
-                Send the site, timing, scope summary, and access details through
-                dispatch.
-              </h2>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-                Same-day and urgent Arizona work is reviewed by scope, access,
-                schedule, and execution fit.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <Link
-                href="/dispatch"
-                className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-              >
-                Open Dispatch Form
-              </Link>
-              <Link
-                href="/request-coverage"
-                className="inline-flex items-center justify-center rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-900"
-              >
-                Request Coverage
-              </Link>
-            </div>
+      <section className="mt-12 card bg-navy p-8 text-white sm:p-10">
+        <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <h2 className="text-2xl font-semibold">Need to confirm whether the scope fits?</h2>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-white/80">
+              Send the work type, city, due window, and any supporting files. Coverage and schedule should be confirmed against the actual scope.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+            <Link href="/contact" className="link-ring inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-navy">
+              Request Dispatch
+            </Link>
+            <Link href="/contact" className="link-ring inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white">
+              Send Scope
+            </Link>
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

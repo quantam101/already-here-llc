@@ -21,10 +21,22 @@ const config: Config = {
       },
       maxWidth: {
         content: '1200px'
+      },
+      typography: {
+        DEFAULT: {
+          css: {
+            color: '#334155',
+            maxWidth: 'none',
+            h2: { color: '#0F2747', fontWeight: '600' },
+            h3: { color: '#0F2747', fontWeight: '600' },
+            a: { color: '#1565C0' },
+            strong: { color: '#0F172A' }
+          }
+        }
       }
     }
   },
-  plugins: []
+  plugins: [require('@tailwindcss/typography')]
 };
 
 export default config;

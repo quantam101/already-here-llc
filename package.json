@@ -1,32 +1,29 @@
 {
   "name": "already-here-llc",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "echo \"lint handled by build/typecheck gate\"",
-    "typecheck": "tsc --noEmit",
-    "test": "npm run test:dispatch",
-    "test:dispatch": "tsc tests/dispatch-contract.test.ts --target ES2022 --module commonjs --moduleResolution node --esModuleInterop --skipLibCheck --outDir .tmp-test && node .tmp-test/tests/dispatch-contract.test.js"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@vercel/analytics": "^2.0.1",
-    "@vercel/speed-insights": "^2.0.0",
-    "next": "15.5.15",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "next": "^14.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@types/node": "20.14.0",
-    "@types/react": "18.2.66",
-    "@types/react-dom": "18.2.22",
-    "autoprefixer": "10.4.20",
-    "eslint": "8.57.0",
-    "eslint-config-next": "15.5.15",
-    "postcss": "8.4.49",
-    "tailwindcss": "3.4.13",
-    "typescript": "5.5.4"
+    "@tailwindcss/typography": "^0.5.13",
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.5.4"
   }
 }

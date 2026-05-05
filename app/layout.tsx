@@ -1,34 +1,113 @@
-// app/layout.tsx
-import type { Metadata } from "next";
-import type { ReactNode } from "react";
-import { Suspense } from "react";
-import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { buildMetadata, organizationJsonLd, safeJsonLd } from "@/lib/site";
+import type { Metadata } from 'next';
+import './globals.css';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { siteConfig } from '@/lib/site';
 
-export const metadata: Metadata = buildMetadata("/");
+export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: 'Already Here LLC | Arizona Field Execution Partner',
+    template: '%s | Already Here LLC'
+  },
+  description: siteConfig.description,
+  applicationName: siteConfig.name,
+  keywords: [
+    'Phoenix field service',
+    'Arizona dispatch support',
+    'onsite execution partner',
+    'rollout support Arizona',
+    'POS field support',
+    'network field support',
+    'site surveys Arizona',
+    'MSP smart hands Phoenix',
+    'IT field technician Phoenix',
+    'SDVOSB IT services Arizona',
+    'veteran owned IT services Phoenix',
+    'kiosk support Phoenix AZ',
+    'field execution partner Phoenix'
+  ],
+  openGraph: {
+    title: 'Already Here LLC | Arizona Field Execution Partner',
+    description: siteConfig.description,
+    url: siteConfig.url,
+    siteName: siteConfig.name,
+    locale: 'en_US',
+    type: 'website'
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Already Here LLC | Arizona Field Execution Partner',
+    description: siteConfig.description
+  },
+  alternates: {
+    canonical: '/'
+  }
+};
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+// Full LocalBusiness schema with NAP, SDVOSB, NAICS, service area, hours
+const localBusinessSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  name: 'Already Here LLC',
+  description: siteConfig.description,
+  url: siteConfig.url,
+  telephone: siteConfig.phoneHref.replace('tel:', ''),
+  email: siteConfig.email,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: '429 N 18th Dr',
+    addressLocality: 'Phoenix',
+    addressRegion: 'AZ',
+    postalCode: '85007',
+    addressCountry: 'US'
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: 33.4484,
+    longitude: -112.0740
+  },
+  areaServed: [
+    'Phoenix, AZ', 'Tempe, AZ', 'Mesa, AZ', 'Chandler, AZ',
+    'Scottsdale, AZ', 'Glendale, AZ', 'Peoria, AZ', 'Surprise, AZ',
+    'Goodyear, AZ', 'Avondale, AZ', 'Gilbert, AZ', 'Arizona'
+  ],
+  openingHoursSpecification: {
+    '@type': 'OpeningHoursSpecification',
+    dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    opens: '07:00',
+    closes: '20:00'
+  },
+  knowsAbout: [
+    'SDVOSB', 'Veteran-Owned Small Business', 'Field Service Management',
+    'MSP Smart Hands', 'IT Field Services', 'POS Support', 'Infrastructure Deployment'
+  ],
+  hasOfferCatalog: {
+    '@type': 'OfferCatalog',
+    name: 'Field Execution Services',
+    itemListElement: [
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'MSP Smart-Hands Support' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Infrastructure Field Work' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'POS and Kiosk Support' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Healthcare-Adjacent Field Execution' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Rollout and Modernization Support' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Site Surveys and Verification' } }
+    ]
+  }
+};
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: safeJsonLd(organizationJsonLd),
-          }}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
         />
-
-        <Suspense fallback={null}>
-          <Header />
-        </Suspense>
-
-        {children}
-
-        <Suspense fallback={null}>
-          <Footer />
-        </Suspense>
+        <Header />
+        <main>{children}</main>
+        <Footer />
       </body>
     </html>
   );
