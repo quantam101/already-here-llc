@@ -23,7 +23,7 @@ export const siteConfig = {
 export const serviceGroups = [
   {
     title: 'Dispatch and recurring field support',
-    description:
+    description:fix: add missing exports to site.ts
       'Single-site dispatches, recurring visits, post-install follow-through, and remediation work that needs clear onsite ownership and clean closeout.',
     items: ['Break/fix dispatches', 'Recurring site visits', 'Post-modernization support', 'Revisit and remediation work'],
     bestFit: 'Vendors and MSPs with defined scope that need dependable onsite execution without managing a local headcount.'
