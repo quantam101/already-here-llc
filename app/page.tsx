@@ -200,7 +200,7 @@ export default function HomePage() {
                 Send the scope, target city, schedule window, and any files that matter. Already Here LLC will assess coverage fit and execute the site work cleanly when the dispatch is confirmed.
               </p>
               <p className="mt-3 text-sm text-white/60">
-                SDVOSB-certified · SAM.gov registered · EIN {siteConfig.ein}
+                SDVOSB-certified · SAM.gov registered
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
