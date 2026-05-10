@@ -26,7 +26,7 @@ export default function HomePage() {
         <div className="container-shell grid gap-14 py-16 lg:grid-cols-[1.08fr_0.92fr] lg:py-24">
           <div>
             <div className="mb-6 flex flex-wrap items-center gap-3">
-              <span className="eyebrow">Modern Tech Ops · Government/vendor capable</span>
+              <span className="eyebrow">Field execution partner for MSPs, vendors, and infrastructure teams</span>
               <span className="rounded-full border border-borderBrand bg-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Phoenix-Based</span>
               <span className="rounded-full border border-borderBrand bg-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Operating Since 2013</span>
             </div>
