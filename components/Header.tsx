@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { BrandMark } from '@/components/BrandMark';
 import { siteConfig } from '@/lib/site';
 
 const navItems = [
@@ -34,23 +35,14 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-borderBrand/80 bg-white/95 backdrop-blur">
-      <div className="container-shell flex items-center justify-between py-4">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="link-ring flex items-center gap-3 rounded-2xl">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-navy text-sm font-bold tracking-[0.16em] text-white">
-              AH
-            </div>
-            <div>
-              <div className="text-base font-semibold text-navy">{siteConfig.name}</div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs uppercase tracking-[0.16em] text-slate-500">Field execution partner</span>
-                <span className="rounded-full border border-amber-300/60 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-amber-700">
-                  SDVOSB Eligible
-                </span>
-              </div>
-            </div>
-          </Link>
-        </div>
+      <div className="container-shell flex items-center justify-between gap-4 py-4">
+        <Link href="/" className="link-ring flex min-w-0 items-center rounded-2xl" aria-label="Already Here LLC home">
+          <BrandMark
+            className="min-w-0"
+            tagline="ONSITE INFRASTRUCTURE EXECUTION"
+            textColorClassName="text-navy"
+          />
+        </Link>
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
           {navItems.map((item) => (
@@ -65,7 +57,7 @@ export function Header() {
             aria-label="Call for urgent same-day dispatch"
           >
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-              <path d="M1.5 2C1.5 2 2.5 4.5 4.5 6.5S8.5 10 8.5 10l1.25-1.25c.45-.45 1.05-.35 1.35.1l.8 1.2c.3.45.1 1.05-.35 1.35C9.5 12.5 8 13.5 6 12.5 3 11 1 8 1 5 0 3 1 1.5 2.05 1.05c.5-.25 1.05-.05 1.35.45l.8 1.2c.3.45.2 1.05-.25 1.35Z" fill="currentColor"/>
+              <path d="M1.5 2C1.5 2 2.5 4.5 4.5 6.5S8.5 10 8.5 10l1.25-1.25c.45-.45 1.05-.35 1.35.1l.8 1.2c.3.45.1 1.05-.35 1.35C9.5 12.5 8 13.5 6 12.5 3 11 1 8 1 5 0 3 1 1.5 2.05 1.05c.5-.25 1.05-.05 1.35.45l.8 1.2c.3.45.2 1.05-.25 1.35Z" fill="currentColor" />
             </svg>
             {siteConfig.phoneDisplay}
           </a>
@@ -79,7 +71,7 @@ export function Header() {
 
         <button
           type="button"
-          className="link-ring inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-borderBrand text-navy lg:hidden"
+          className="link-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-borderBrand text-navy lg:hidden"
           onClick={() => setOpen((c) => !c)}
           aria-expanded={open}
           aria-controls="mobile-nav"
