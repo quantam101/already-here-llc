@@ -27,7 +27,7 @@ export default function HomePage() {
         <div className="container-shell grid gap-14 py-16 lg:grid-cols-[1.08fr_0.92fr] lg:py-24">
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-6">
-              <span className="eyebrow">Modern Tech Ops · Government/vendor capable</span>
+              <span className="eyebrow">Field execution partner for MSPs, vendors, and infrastructure teams</span>
               <span className="inline-flex items-center rounded-full border border-borderBrand bg-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-steel">
                 Phoenix-Based
               </span>
