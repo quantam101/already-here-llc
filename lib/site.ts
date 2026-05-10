@@ -2,11 +2,11 @@ export const siteConfig = {
   name: 'Already Here LLC',
   shortName: 'Already Here',
   description:
-    'Phoenix-based field execution partner for vendors, MSPs, and multi-site operators needing onsite support, recurring visits, rollouts, remediation, store technology, networking, AV/media, surveys, and infrastructure-related field work across Arizona project markets.',
+    'Phoenix-based onsite infrastructure execution and technical field operations partner for MSPs, vendors, commercial sites, retail environments, and critical systems, with project coverage available nationwide depending on scope.',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://alreadyherellc.com',
   phoneHref: 'tel:+16028822920',
   phoneDisplay: '(602) 882-2920',
-  phoneNote: 'Urgent / same-day dispatch',
+  phoneNote: 'Dispatch and infrastructure assessment',
   email: 'dispatch@alreadyherellc.com',
   city: 'Phoenix, Arizona',
   address: {
@@ -17,7 +17,7 @@ export const siteConfig = {
     full: '429 N 18th Dr, Phoenix, AZ 85007'
   },
   certifications: ['SDVOSB', 'Commercially Insured', 'SAM.gov Registered'],
-  ein: '46-4403432'
+  trustBar: ['A+ BBB Rating', 'Operating Since 2013', 'Phoenix-Based', 'Commercial & Multi-Site Support', 'Rapid Onsite Dispatch']
 };
 
 export const serviceGroups = [
@@ -26,21 +26,21 @@ export const serviceGroups = [
     description:
       'Single-site dispatches, recurring visits, post-install follow-through, and remediation work that needs clear onsite ownership and clean closeout.',
     items: ['Break/fix dispatches', 'Recurring site visits', 'Post-modernization support', 'Revisit and remediation work'],
-    bestFit: 'Vendors and MSPs with defined scope that need dependable onsite execution without managing a local headcount.'
+    bestFit: 'Vendors and MSPs with defined scope that need dependable onsite execution without managing local headcount in every project market.'
   },
   {
     title: 'Store technology and endpoint work',
     description:
       'Field execution for payment devices, POS-related hardware, thin clients, workstations, printers, and other store technology tasks.',
     items: ['POS / payment device swaps', 'Thin-client and endpoint refresh work', 'Printer replacement and configuration', 'Windows device support'],
-    bestFit: 'Retail, QSR, and hospitality operators running multi-site technology programs across Arizona.'
+    bestFit: 'Retail, QSR, hospitality, and multi-site commercial operators running defined technology programs.'
   },
   {
     title: 'Network and infrastructure field activity',
     description:
       'Onsite support for managed routers, Cradlepoint installs, AP replacement revisits, low-voltage testing, rack/stack tasks, and related infrastructure work.',
     items: ['Managed router installs', 'Cradlepoint and SD-WAN-related work', 'Wi-Fi and AP troubleshooting', 'Rack / stack / iDRAC support'],
-    bestFit: 'MSPs and network operators needing smart-hands coverage for infrastructure work across Phoenix metro.'
+    bestFit: 'MSPs and network operators needing smart-hands coverage for infrastructure work.'
   },
   {
     title: 'Healthcare and controlled environment field work',
@@ -61,15 +61,15 @@ export const serviceGroups = [
     description:
       'Multi-site rollout execution, store modernization cleanup, revisit work after missed items, and post-rollout troubleshooting.',
     items: ['Multi-site rollout execution', 'Store modernization cleanup', 'Revisit after missed items', 'Post-rollout troubleshooting'],
-    bestFit: 'Program managers running Phoenix-area or Arizona-wide modernization programs who need a reliable local execution layer.'
+    bestFit: 'Program managers running modernization programs who need a reliable onsite execution layer.'
   }
 ] as const;
 
 export const buyerReasons = [
-  'Phoenix-based field execution with broader Arizona project support based on scope, scheduling, and travel requirements.',
-  'Structured closeout documentation so dispatch teams can close the ticket with usable notes, photos, and field details.',
-  'Commercially insured and SDVOSB-certified — eligible for set-aside and sole-source procurement opportunities.',
-  'Range across retail, restaurant, hospitality, healthcare, enterprise, AV/media, and infrastructure-related environments.'
+  'Reliable onsite execution for defined technical dispatches without consumer repair-shop positioning.',
+  'Technical field operations for MSPs, vendors, commercial sites, retail environments, and critical systems.',
+  'Structured closeout documentation with photos, field notes, equipment observations, and next-step escalation when required.',
+  'Procurement-ready profile with SDVOSB certification, SAM.gov registration, commercial insurance, and operating history.'
 ] as const;
 
 export const documentedWorkTypes = [
@@ -129,7 +129,8 @@ export const markets = [
   'Page',
   'Quartzsite',
   'San Luis',
-  'Springerville'
+  'Springerville',
+  'Nationwide project coverage by scope'
 ] as const;
 
 export const audience = [
@@ -146,7 +147,7 @@ export const audience = [
   {
     title: 'Multi-site operators and rollout teams',
     description:
-      'Support regional rollouts, revisits, site verification, hardware swaps, and documentation-heavy field activity across Arizona project markets.'
+      'Support rollouts, revisits, site verification, hardware swaps, and documentation-heavy field activity across qualified project markets.'
   },
   {
     title: 'Government primes and SDVOSB set-aside buyers',
@@ -182,32 +183,32 @@ export const representativeWork = [
   {
     client: 'National QSR chain',
     tag: 'POS / Retail',
-    scope: 'POS hardware installation across 4 locations, Mesa AZ metro. NCR Voyix-issued scope. Confirmed closeout with photo documentation delivered same day.'
+    scope: 'POS hardware installation across multiple commercial locations with same-day closeout documentation.'
   },
   {
     client: 'Enterprise infrastructure vendor',
     tag: 'Infrastructure',
-    scope: 'HPE Alletra MP deployment — Chandler, AZ data center. Rack, cable, and verification. Multi-day engagement with structured closeout.'
+    scope: 'Data center infrastructure deployment support including rack, cable, and verification activity.'
   },
   {
     client: 'National retail brand',
     tag: 'Rollout / Survey',
-    scope: 'RFID reader survey — 55 readers, 4 APs, 61 data runs, HP Aruba switches. Chandler Fashion Center US0275. Full structured field execution with documentation.'
+    scope: 'RFID reader and AP survey execution with structured field documentation.'
   },
   {
     client: 'Medical device OEM',
     tag: 'Healthcare',
-    scope: 'GE Healthcare Giraffe / MIC NICU equipment calibration across multiple healthcare sites, Western US. Access-sensitive, documentation-required environments.'
+    scope: 'Healthcare-adjacent equipment support in access-sensitive, documentation-required environments.'
   },
   {
     client: 'National MSP',
     tag: 'Smart Hands',
-    scope: 'GoDaddy Phoenix campus block storage installs — multi-site smart-hands coordination with structured closeout per ticket.'
+    scope: 'Campus smart-hands coordination with structured closeout per ticket.'
   },
   {
-    client: 'National QSR chain (NCR)',
+    client: 'National QSR chain',
     tag: 'POS / Retail',
-    scope: 'Starbucks POS upgrade execution — NCR Voyix WO. Mesa AZ. Pre-flight, install, and documented closeout.'
+    scope: 'POS upgrade execution with pre-flight, install support, and documented closeout.'
   }
 ] as const;
 
