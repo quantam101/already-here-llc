@@ -22,14 +22,16 @@ function NavLink({ href, label, pathname }: { href: string; label: string; pathn
 function InlineBrandMark() {
   return (
     <div className="flex items-center gap-3">
-      <svg className="h-11 w-11 shrink-0" viewBox="0 0 96 96" role="img" aria-label="Already Here LLC mark" xmlns="http://www.w3.org/2000/svg">
-        <rect width="96" height="96" rx="24" fill="#071B34" />
-        <ellipse cx="48" cy="47" rx="35" ry="13" transform="rotate(-28 48 47)" fill="none" stroke="#1B66FF" strokeWidth="6" />
-        <path d="M48 16C35.2 16 24.8 26.4 24.8 39.2C24.8 57.6 48 82 48 82C48 82 71.2 57.6 71.2 39.2C71.2 26.4 60.8 16 48 16Z" fill="#FFFFFF" />
-        <path d="M48 23.5C39.3 23.5 32.2 30.5 32.2 39.2C32.2 50.4 43.9 65.2 48 70.1C52.1 65.2 63.8 50.4 63.8 39.2C63.8 30.5 56.7 23.5 48 23.5Z" fill="#071B34" />
-        <circle cx="48" cy="39" r="8.5" fill="#1B66FF" />
-        <circle cx="75" cy="33" r="4.5" fill="#1B66FF" />
-        <circle cx="21" cy="61" r="4.5" fill="#7E8A9A" />
+      <svg className="h-12 w-12 shrink-0" viewBox="0 0 128 128" role="img" aria-label="Already Here LLC location pin orbit logo" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 87C31 95 62 94 92 80C110 72 121 62 118 55C116 50 106 49 94 53" fill="none" stroke="#071B34" strokeWidth="9" strokeLinecap="round" />
+        <path d="M19 94C39 101 76 95 108 77C116 72 122 67 126 61" fill="none" stroke="#071B34" strokeWidth="4" strokeLinecap="round" opacity="0.95" />
+        <path d="M64 8C39 8 23 26 23 49C23 80 64 120 64 120C64 120 105 80 105 49C105 26 89 8 64 8Z" fill="#071B34" />
+        <path d="M64 8C89 8 105 26 105 49C105 80 64 120 64 120V8Z" fill="#0B4D89" />
+        <path d="M66 58L42 88C49 101 64 120 64 120C64 120 105 80 105 49C105 39 102 30 97 23L66 58Z" fill="#0A63A8" opacity="0.9" />
+        <circle cx="64" cy="48" r="22" fill="#F8FAFC" />
+        <circle cx="64" cy="48" r="14" fill="#FFFFFF" />
+        <path d="M15 85C34 94 68 89 99 72C114 64 123 55 121 50" fill="none" stroke="#F8FAFC" strokeWidth="5" strokeLinecap="round" />
+        <path d="M14 88C31 99 71 95 109 75" fill="none" stroke="#071B34" strokeWidth="5" strokeLinecap="round" />
       </svg>
       <div className="min-w-0 leading-none">
         <div className="text-[15px] font-semibold uppercase tracking-[0.18em] text-white">ALREADY HERE LLC</div>
