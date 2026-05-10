@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { closeoutItems, representativeWork } from '@/lib/site';
 
 export function ProofBlock() {
@@ -33,15 +32,31 @@ export function ProofBlock() {
       {/* Closeout documentation proof */}
       <div className="card overflow-hidden">
         <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="border-b border-borderBrand bg-slate-50 lg:border-b-0 lg:border-r">
-            <Image
-              src="/proof-sample.jpg"
-              alt="Redacted field-work documentation sample"
-              width={1600}
-              height={900}
-              className="h-full w-full object-cover"
-              priority
-            />
+          <div className="border-b border-borderBrand bg-slate-50 p-6 lg:border-b-0 lg:border-r sm:p-8">
+            <div className="rounded-3xl border border-borderBrand bg-white p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-4 border-b border-borderBrand pb-5">
+                <div>
+                  <p className="grid-label">Closeout packet</p>
+                  <h3 className="mt-2 text-xl font-semibold text-navy">Redacted field-work sample</h3>
+                </div>
+                <span className="rounded-full bg-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  Completed
+                </span>
+              </div>
+              <div className="mt-6 grid gap-4">
+                {[
+                  ['Site verification', 'Access, equipment state, and visible site conditions documented.'],
+                  ['Work performed', 'Defined onsite tasks completed or escalated with clear blocker notes.'],
+                  ['Photo evidence', 'Before, during, and after photos captured when permitted by site policy.'],
+                  ['Ticket closeout', 'Outcome, next action, and buyer-facing summary returned for dispatch closure.']
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-2xl border border-borderBrand bg-soft p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-action">{label}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
           <div className="p-8 sm:p-10">
             <span className="eyebrow">Documented closeout</span>
@@ -51,7 +66,7 @@ export function ProofBlock() {
             <p className="mt-4 text-base leading-7 text-slate-600">
               Positioning is grounded in documented field activity spanning hardware replacement, surveys,
               rollouts, remediation, store technology, networking, AV/media, and infrastructure-related
-              onsite work across Arizona project markets.
+              onsite work across Arizona and out-of-state project markets.
             </p>
             <ul className="mt-8 grid gap-4 sm:grid-cols-2">
               {closeoutItems.map((item) => (
