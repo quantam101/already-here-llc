@@ -23,8 +23,7 @@ export const siteConfig = {
     full: '429 N 18th Dr, Phoenix, AZ 85007'
   },
   certifications: ['SDVOSB', 'Commercially Insured', 'SAM.gov Registered'],
-  trustBar: ['A+ BBB Rating', 'Operating Since 2013', 'Phoenix-Based', 'Commercial & Multi-Site Support', 'Rapid Onsite Dispatch'],
-  ein: '46-4403432'
+  trustBar: ['A+ BBB Rating', 'Operating Since 2013', 'Phoenix-Based', 'Commercial & Multi-Site Support', 'Rapid Onsite Dispatch']
 };
 
 export const serviceGroups = [
