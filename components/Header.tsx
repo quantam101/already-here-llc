@@ -20,7 +20,7 @@ function NavLink({ href, label, pathname }: { href: string; label: string; pathn
   return (
     <Link
       href={href}
-      className={`link-ring rounded-full px-4 py-2 text-sm font-medium transition ${active ? 'bg-navy text-white' : 'text-slate-700 hover:bg-slate-100 hover:text-navy'}`}
+      className={`link-ring rounded-full px-4 py-2 text-sm font-medium transition ${active ? 'bg-action text-white' : 'text-slate-200 hover:bg-white/10 hover:text-white'}`}
     >
       {label}
     </Link>
@@ -32,10 +32,10 @@ export function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-borderBrand/80 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-borderBrand/80 bg-[#040A14]/95 backdrop-blur">
       <div className="container-shell flex items-center justify-between py-4">
         <Link href="/" className="link-ring flex items-center rounded-2xl" aria-label="Already Here LLC home">
-          <BrandMark tagline="ONSITE INFRASTRUCTURE EXECUTION" />
+          <BrandMark tagline="ONSITE INFRASTRUCTURE EXECUTION" textColorClassName="text-white" />
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
@@ -47,14 +47,14 @@ export function Header() {
         <div className="hidden items-center gap-3 lg:flex">
           <a
             href={siteConfig.phoneHref}
-            className="link-ring rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-navy transition hover:border-action hover:text-action"
+            className="link-ring rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-action hover:text-white"
             aria-label="Call Already Here LLC"
           >
             {siteConfig.phoneDisplay}
           </a>
           <Link
             href="/dispatch"
-            className="link-ring rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy"
+            className="link-ring rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white hover:text-navy"
           >
             Request Dispatch
           </Link>
@@ -62,7 +62,7 @@ export function Header() {
 
         <button
           type="button"
-          className="link-ring inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-borderBrand text-navy lg:hidden"
+          className="link-ring inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 text-white lg:hidden"
           onClick={() => setOpen((current) => !current)}
           aria-expanded={open}
           aria-controls="mobile-nav"
@@ -73,13 +73,13 @@ export function Header() {
       </div>
 
       {open ? (
-        <div id="mobile-nav" className="border-t border-borderBrand bg-white lg:hidden">
+        <div id="mobile-nav" className="border-t border-borderBrand bg-[#040A14] lg:hidden">
           <div className="container-shell flex flex-col gap-3 py-4">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`link-ring rounded-2xl px-4 py-3 text-sm font-medium ${pathname === item.href ? 'bg-navy text-white' : 'bg-slate-50 text-navy'}`}
+                className={`link-ring rounded-2xl px-4 py-3 text-sm font-medium ${pathname === item.href ? 'bg-action text-white' : 'bg-[#0B1728] text-slate-100'}`}
                 onClick={() => setOpen(false)}
               >
                 {item.label}
@@ -88,7 +88,7 @@ export function Header() {
             <div className="grid grid-cols-2 gap-3 pt-2">
               <a
                 href={siteConfig.phoneHref}
-                className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-center text-sm font-medium text-navy"
+                className="link-ring rounded-2xl border border-white/20 px-4 py-3 text-center text-sm font-medium text-slate-100"
                 onClick={() => setOpen(false)}
               >
                 {siteConfig.phoneDisplay}
