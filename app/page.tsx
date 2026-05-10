@@ -7,7 +7,7 @@ import { audience, buyerReasons, documentedWorkTypes, environments, markets, ser
 export const metadata: Metadata = {
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'Already Here LLC | Arizona Onsite Infrastructure Execution',
+    title: 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations',
     description: siteConfig.description,
     url: '/',
     siteName: siteConfig.name,
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Already Here LLC | Arizona Onsite Infrastructure Execution',
+    title: 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations',
     description: siteConfig.description
   }
 };
@@ -205,7 +205,7 @@ export default function HomePage() {
                 Ready to engage
               </span>
               <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
-                Need onsite infrastructure execution in Arizona?
+                Need onsite infrastructure execution for a project site?
               </h2>
               <p className="mt-4 max-w-3xl text-base leading-7 text-white/80">
                 Send the scope, target city, schedule window, and any files that matter. Already Here LLC will assess coverage fit and execute the site work cleanly when the dispatch is confirmed.
@@ -217,9 +217,6 @@ export default function HomePage() {
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
               <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-navy transition hover:bg-slate-100">
                 Request Dispatch
-              </Link>
-              <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
-                Book Infrastructure Assessment
               </Link>
               <a href={siteConfig.phoneHref} className="link-ring inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
                 {siteConfig.phoneDisplay}
