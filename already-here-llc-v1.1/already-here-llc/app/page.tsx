@@ -1,6 +1,23 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ProofBlock } from '@/components/ProofBlock';
 import { audience, buyerReasons, documentedWorkTypes, environments, markets, serviceGroups, siteConfig } from '@/lib/site';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'Already Here LLC | Arizona Onsite Infrastructure Execution',
+    description: siteConfig.description,
+    url: '/',
+    siteName: siteConfig.name,
+    type: 'website'
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Already Here LLC | Arizona Onsite Infrastructure Execution',
+    description: siteConfig.description
+  }
+};
 
 export default function HomePage() {
   return (
