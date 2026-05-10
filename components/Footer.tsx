@@ -69,7 +69,7 @@ export function Footer() {
       <div className="border-t border-borderBrand py-6">
         <div className="container-shell flex flex-col gap-3 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} {siteConfig.name}. All rights reserved.</p>
-          <p className="text-xs">EIN {siteConfig.ein} · Use the dispatch form to submit scope, schedule, and site details.</p>
+          <p className="text-xs">Use the dispatch form to submit scope, schedule, and site details.</p>
         </div>
       </div>
     </footer>
