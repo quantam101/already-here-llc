@@ -7,28 +7,28 @@ import { siteConfig } from '@/lib/site';
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: 'Already Here LLC | Arizona Field Execution Partner',
+    default: 'Already Here LLC | Arizona Onsite Infrastructure Execution',
     template: '%s | Already Here LLC'
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
   keywords: [
-    'Phoenix field service',
-    'Arizona dispatch support',
-    'onsite execution partner',
-    'rollout support Arizona',
-    'POS field support',
-    'network field support',
-    'site surveys Arizona',
+    'Arizona onsite IT field execution',
+    'Phoenix technical field operations',
+    'onsite infrastructure execution Arizona',
     'MSP smart hands Phoenix',
-    'IT field technician Phoenix',
+    'network troubleshooting Arizona',
+    'rollout recovery Arizona',
+    'commercial IT field support Phoenix',
+    'retail infrastructure support Arizona',
+    'government contractor IT services Arizona',
     'SDVOSB IT services Arizona',
-    'veteran owned IT services Phoenix',
-    'kiosk support Phoenix AZ',
-    'field execution partner Phoenix'
+    'SAM.gov registered IT contractor Phoenix',
+    'field support for critical systems',
+    'vendor field execution Arizona'
   ],
   openGraph: {
-    title: 'Already Here LLC | Arizona Field Execution Partner',
+    title: 'Already Here LLC | Arizona Onsite Infrastructure Execution',
     description: siteConfig.description,
     url: siteConfig.url,
     siteName: siteConfig.name,
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Already Here LLC | Arizona Field Execution Partner',
+    title: 'Already Here LLC | Arizona Onsite Infrastructure Execution',
     description: siteConfig.description
   },
   alternates: {
@@ -45,7 +45,6 @@ export const metadata: Metadata = {
   }
 };
 
-// Full LocalBusiness schema with NAP, SDVOSB, NAICS, service area, hours
 const localBusinessSchema = {
   '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
@@ -54,6 +53,7 @@ const localBusinessSchema = {
   url: siteConfig.url,
   telephone: siteConfig.phoneHref.replace('tel:', ''),
   email: siteConfig.email,
+  slogan: siteConfig.tagline,
   address: {
     '@type': 'PostalAddress',
     streetAddress: '429 N 18th Dr',
@@ -79,19 +79,26 @@ const localBusinessSchema = {
     closes: '20:00'
   },
   knowsAbout: [
-    'SDVOSB', 'Veteran-Owned Small Business', 'Field Service Management',
-    'MSP Smart Hands', 'IT Field Services', 'POS Support', 'Infrastructure Deployment'
+    'Onsite Infrastructure Execution',
+    'Technical Field Operations',
+    'MSP Smart Hands',
+    'Network Troubleshooting',
+    'Rollout Recovery',
+    'Retail Technology Support',
+    'Critical Systems Field Support',
+    'SDVOSB',
+    'SAM.gov Registered Contractor'
   ],
   hasOfferCatalog: {
     '@type': 'OfferCatalog',
-    name: 'Field Execution Services',
+    name: 'Technical Field Operations and Infrastructure Execution Services',
     itemListElement: [
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'MSP Smart-Hands Support' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Infrastructure Field Work' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'POS and Kiosk Support' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Healthcare-Adjacent Field Execution' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Rollout and Modernization Support' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Site Surveys and Verification' } }
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Technical Field Operations' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Onsite Infrastructure Execution' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'MSP Smart Hands Support' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Network Troubleshooting' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Rollout Recovery and Remediation' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Infrastructure Assessment' } }
     ]
   }
 };
