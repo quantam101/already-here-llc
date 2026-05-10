@@ -1,12 +1,18 @@
 export const siteConfig = {
   name: 'Already Here LLC',
   shortName: 'Already Here',
+  tagline: 'Onsite Infrastructure Execution',
+  heroTitle: 'Arizona Onsite IT Field Execution for MSPs, Retail, and Infrastructure Teams',
+  heroDescription:
+    'Already Here LLC delivers onsite remediation, smart hands support, network troubleshooting, rollout recovery, and infrastructure execution across Arizona. We solve the technical issues remote teams cannot close remotely.',
+  positioning:
+    'Already Here LLC provides onsite infrastructure execution and technical field operations for MSPs, commercial sites, retail environments, and critical systems across Arizona.',
   description:
-    'Phoenix-based field execution partner for vendors, MSPs, and multi-site operators needing onsite support, recurring visits, rollouts, remediation, store technology, networking, AV/media, surveys, and infrastructure-related field work across Arizona project markets.',
+    'Phoenix-based onsite infrastructure execution and technical field operations partner for MSPs, vendors, commercial sites, retail environments, and critical systems across Arizona.',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://alreadyherellc.com',
   phoneHref: 'tel:+16028822920',
   phoneDisplay: '(602) 882-2920',
-  phoneNote: 'Urgent / same-day dispatch',
+  phoneNote: 'Dispatch and infrastructure assessment',
   email: 'dispatch@alreadyherellc.com',
   city: 'Phoenix, Arizona',
   address: {
@@ -17,69 +23,74 @@ export const siteConfig = {
     full: '429 N 18th Dr, Phoenix, AZ 85007'
   },
   certifications: ['SDVOSB', 'Commercially Insured', 'SAM.gov Registered'],
+  trustBar: ['A+ BBB Rating', 'Operating Since 2013', 'Phoenix-Based', 'Commercial & Multi-Site Support', 'Rapid Onsite Dispatch'],
   ein: '46-4403432'
 };
 
 export const serviceGroups = [
   {
-    title: 'Dispatch and recurring field support',
+    title: 'Technical Field Operations',
     description:
-      'Single-site dispatches, recurring visits, post-install follow-through, and remediation work that needs clear onsite ownership and clean closeout.',
-    items: ['Break/fix dispatches', 'Recurring site visits', 'Post-modernization support', 'Revisit and remediation work'],
-    bestFit: 'Vendors and MSPs with defined scope that need dependable onsite execution without managing a local headcount.'
+      'Structured onsite execution for MSPs, vendors, and infrastructure teams that need a reliable field operator on site.',
+    items: ['Smart hands support', 'Dispatch execution', 'Site verification', 'Technical closeout'],
+    bestFit: 'Remote teams and prime vendors that need local field execution without building Arizona headcount.'
   },
   {
-    title: 'Store technology and endpoint work',
+    title: 'Onsite Infrastructure Execution',
     description:
-      'Field execution for payment devices, POS-related hardware, thin clients, workstations, printers, and other store technology tasks.',
-    items: ['POS / payment device swaps', 'Thin-client and endpoint refresh work', 'Printer replacement and configuration', 'Windows device support'],
-    bestFit: 'Retail, QSR, and hospitality operators running multi-site technology programs across Arizona.'
+      'Network, rack, endpoint, AP, low-voltage-adjacent, and site infrastructure tasks executed with clear documentation.',
+    items: ['Router and SD-WAN support', 'AP and Wi-Fi troubleshooting', 'Rack / stack / iDRAC support', 'Infrastructure remediation'],
+    bestFit: 'MSPs, network operators, and infrastructure teams needing disciplined onsite work.'
   },
   {
-    title: 'Network and infrastructure field activity',
+    title: 'Retail and Commercial Technology Support',
     description:
-      'Onsite support for managed routers, Cradlepoint installs, AP replacement revisits, low-voltage testing, rack/stack tasks, and related infrastructure work.',
-    items: ['Managed router installs', 'Cradlepoint and SD-WAN-related work', 'Wi-Fi and AP troubleshooting', 'Rack / stack / iDRAC support'],
-    bestFit: 'MSPs and network operators needing smart-hands coverage for infrastructure work across Phoenix metro.'
+      'Field support for POS, payment devices, printers, endpoints, kiosks, store systems, and commercial technology environments.',
+    items: ['POS / payment device swaps', 'Endpoint refresh work', 'Printer replacement', 'Kiosk and store technology support'],
+    bestFit: 'Retail, QSR, hospitality, and multi-site commercial operators across Arizona.'
   },
   {
-    title: 'Healthcare and controlled environment field work',
+    title: 'Rollout Recovery and Remediation',
     description:
-      'Field execution in access-sensitive and compliance-adjacent environments including medical facilities, data centers, and controlled-access sites.',
-    items: ['Healthcare-adjacent field assignments', 'NICU and medical device support', 'Data center rack/stack', 'Controlled-access site execution'],
-    bestFit: 'Healthcare-adjacent operators and enterprise teams that need documented, professional field execution in controlled environments.'
+      'Revisit work, failed closeout recovery, post-install troubleshooting, and ground-truth verification for remote project teams.',
+    items: ['Rollout recovery', 'Revisit work', 'Post-install troubleshooting', 'Closeout correction'],
+    bestFit: 'Program managers and vendors with open issues that cannot be resolved remotely.'
   },
   {
-    title: 'Surveys, AV, and site verification',
+    title: 'Critical Systems Field Support',
     description:
-      'Operational site assessments, DMB and field surveys, AV/media troubleshooting, TV signal restoration, and site verification for larger project teams.',
-    items: ['Site surveys', 'DMB / documentation surveys', 'AV / media troubleshooting', 'Site verification and closeout photos'],
-    bestFit: 'Rollout teams and project managers that need ground-truth verification and documentation from the field.'
+      'Professional onsite support for healthcare-adjacent, controlled-access, infrastructure, and compliance-sensitive commercial environments.',
+    items: ['Controlled-access site work', 'Healthcare-adjacent support', 'Data center support', 'Critical system verification'],
+    bestFit: 'Organizations that need field-ready technical execution in professional environments.'
   },
   {
-    title: 'Rollout and modernization support',
+    title: 'Surveys and Site Assessment',
     description:
-      'Multi-site rollout execution, store modernization cleanup, revisit work after missed items, and post-rollout troubleshooting.',
-    items: ['Multi-site rollout execution', 'Store modernization cleanup', 'Revisit after missed items', 'Post-rollout troubleshooting'],
-    bestFit: 'Program managers running Phoenix-area or Arizona-wide modernization programs who need a reliable local execution layer.'
+      'Operational site assessments, infrastructure surveys, closeout photos, and documentation for planning and remediation decisions.',
+    items: ['Infrastructure assessments', 'RFID and AP surveys', 'Documentation capture', 'Site readiness verification'],
+    bestFit: 'Teams that need ground truth before dispatching parts, approving change orders, or closing a project.'
   }
 ] as const;
 
 export const buyerReasons = [
-  'Phoenix-based field execution with broader Arizona project support based on scope, scheduling, and travel requirements.',
-  'Structured closeout documentation so dispatch teams can close the ticket with usable notes, photos, and field details.',
-  'Commercially insured and SDVOSB-certified — eligible for set-aside and sole-source procurement opportunities.',
-  'Range across retail, restaurant, hospitality, healthcare, enterprise, AV/media, and infrastructure-related environments.'
+  'Enterprise-ready field execution language and process discipline without consumer repair-shop positioning.',
+  'Technical field operations for MSPs, vendors, commercial sites, retail environments, and critical systems across Arizona.',
+  'Structured closeout documentation with photos, field notes, equipment observations, and next-step escalation when required.',
+  'Government/vendor capable profile with SDVOSB certification, SAM.gov registration, commercial insurance, and Arizona operating history.'
 ] as const;
 
 export const documentedWorkTypes = [
+  'Smart hands support',
+  'Network troubleshooting',
+  'Onsite remediation',
+  'Rollout recovery',
+  'Infrastructure assessment',
   'POS installs and upgrades',
   'Payment device replacement',
   'Thin-client replacement',
   'HDD / SSD replacement',
   'Desktop / laptop refresh work',
   'LAN migration support',
-  'Smart hands support',
   'DMB / site surveys',
   'Healthcare-related field assignments',
   'Store modernization troubleshooting',
@@ -102,6 +113,8 @@ export const documentedWorkTypes = [
 ] as const;
 
 export const environments = [
+  'MSP client sites',
+  'Commercial sites',
   'Retail',
   'QSR / restaurant',
   'Hospitality',
@@ -109,7 +122,7 @@ export const environments = [
   'Enterprise / office',
   'AV / media environments',
   'Data center / infrastructure',
-  'Infrastructure-related project environments'
+  'Critical systems environments'
 ] as const;
 
 export const markets = [
@@ -134,19 +147,19 @@ export const markets = [
 
 export const audience = [
   {
-    title: 'Vendors and prime contractors',
-    description:
-      'Use Already Here LLC as a field execution partner when the scope, parts, and dispatch logic are already defined and the missing piece is dependable onsite follow-through.'
-  },
-  {
     title: 'MSPs and network operators',
     description:
-      'Extend coverage for site visits, smart hands tasks, router work, troubleshooting, documentation collection, and follow-up remediation without overpromising unsupported SLAs.'
+      'Extend Arizona coverage for smart hands, network troubleshooting, router work, site visits, documentation collection, and remediation without carrying local headcount.'
   },
   {
-    title: 'Multi-site operators and rollout teams',
+    title: 'Vendors and prime contractors',
     description:
-      'Support regional rollouts, revisits, site verification, hardware swaps, and documentation-heavy field activity across Arizona project markets.'
+      'Use Already Here LLC as the onsite execution layer when the scope, parts, and ticket flow are defined and the missing piece is reliable field completion.'
+  },
+  {
+    title: 'Retail and commercial operators',
+    description:
+      'Support multi-site technology programs, POS work, endpoint refreshes, store modernization, rollout recovery, and commercial infrastructure tasks.'
   },
   {
     title: 'Government primes and SDVOSB set-aside buyers',
@@ -165,17 +178,17 @@ export const closeoutItems = [
 ] as const;
 
 export const dispatchTypes = [
-  'Dispatch / break-fix',
-  'Recurring field support',
-  'Rollout / install support',
+  'Technical field operations',
+  'Smart hands support',
+  'Onsite infrastructure execution',
+  'Network troubleshooting',
+  'Rollout recovery',
   'Remediation / revisit',
   'POS / store tech',
-  'Networking / Wi-Fi',
-  'AV / media',
   'Survey / site verification',
   'Healthcare / controlled environment',
   'Government / SDVOSB set-aside',
-  'Infrastructure-related onsite work'
+  'Critical systems support'
 ] as const;
 
 export const representativeWork = [
