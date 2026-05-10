@@ -39,9 +39,6 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Already Here LLC | Arizona Onsite Infrastructure Execution',
     description: siteConfig.description
-  },
-  alternates: {
-    canonical: '/'
   }
 };
 
