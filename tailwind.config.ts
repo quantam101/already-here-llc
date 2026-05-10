@@ -14,12 +14,12 @@ const config: Config = {
         steel: '#7E8A9A',
         charcoal: '#101820',
         slateBrand: '#7E8A9A',
-        soft: '#F8FAFC',
-        borderBrand: '#DDE5EF',
-        ink: '#101820'
+        soft: '#07111F',
+        borderBrand: '#20314A',
+        ink: '#E5EDF7'
       },
       boxShadow: {
-        panel: '0 18px 50px rgba(7, 27, 52, 0.08)'
+        panel: '0 24px 80px rgba(0, 0, 0, 0.32)'
       },
       maxWidth: {
         content: '1200px'
@@ -30,12 +30,12 @@ const config: Config = {
       typography: {
         DEFAULT: {
           css: {
-            color: '#334155',
+            color: '#B8C4D6',
             maxWidth: 'none',
-            h2: { color: '#071B34', fontWeight: '600' },
-            h3: { color: '#071B34', fontWeight: '600' },
-            a: { color: '#1B66FF' },
-            strong: { color: '#101820' }
+            h2: { color: '#F8FAFC', fontWeight: '600' },
+            h3: { color: '#F8FAFC', fontWeight: '600' },
+            a: { color: '#6EA2FF' },
+            strong: { color: '#FFFFFF' }
           }
         }
       }
