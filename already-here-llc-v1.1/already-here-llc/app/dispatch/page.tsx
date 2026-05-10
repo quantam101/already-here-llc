@@ -3,7 +3,7 @@ import { DispatchForm } from '@/components/DispatchForm';
 import { pricingTiers, siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Request Dispatch | Already Here LLC',
+  title: 'Request Dispatch',
   description:
     'Submit field dispatch requests to Already Here LLC — Phoenix-based IT field execution for MSPs, vendors, healthcare-adjacent operators, and multi-site rollout programs. SDVOSB certified.',
   alternates: { canonical: '/dispatch' }
