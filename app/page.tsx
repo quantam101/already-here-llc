@@ -178,9 +178,9 @@ export default function HomePage() {
         <div className="container-shell grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
             <span className="eyebrow">Service area</span>
-            <h2 className="section-title mt-5">Arizona field operations with Phoenix at the center of the operating model.</h2>
+            <h2 className="section-title mt-5">Phoenix-based with project coverage available nationwide depending on client scope.</h2>
             <p className="section-copy">
-              Public positioning stays precise: Phoenix-based, with broader Arizona project support based on scope, scheduling, and travel requirements.
+              Public positioning stays precise: Phoenix-based, with nationwide project coverage available for qualified client scope, scheduling, and travel requirements.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy">
