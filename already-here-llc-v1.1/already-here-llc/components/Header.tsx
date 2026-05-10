@@ -16,9 +16,7 @@ const navItems = [
 
 function NavLink({ href, label, pathname }: { href: string; label: string; pathname: string }) {
   const active = pathname === href;
-  return (
-    <Link href={href} className={`link-ring rounded-full px-4 py-2 text-sm font-medium transition ${active ? 'bg-action text-white' : 'text-slate-700 hover:bg-slate-100 hover:text-navy'}`}>{label}</Link>
-  );
+  return <Link href={href} className={`link-ring rounded-full px-4 py-2 text-sm font-medium transition ${active ? 'bg-action text-white' : 'text-slate-200 hover:bg-white/10 hover:text-white'}`}>{label}</Link>;
 }
 
 function InlineBrandMark() {
@@ -34,8 +32,8 @@ function InlineBrandMark() {
         <circle cx="21" cy="61" r="4.5" fill="#7E8A9A" />
       </svg>
       <div className="min-w-0 leading-none">
-        <div className="text-[15px] font-semibold uppercase tracking-[0.18em] text-navy">ALREADY HERE LLC</div>
-        <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.26em] text-slate-500">ONSITE INFRASTRUCTURE EXECUTION</div>
+        <div className="text-[15px] font-semibold uppercase tracking-[0.18em] text-white">ALREADY HERE LLC</div>
+        <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.26em] text-slate-300">ONSITE INFRASTRUCTURE EXECUTION</div>
       </div>
     </div>
   );
@@ -46,21 +44,21 @@ export function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-borderBrand/80 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-borderBrand/80 bg-[#040A14]/95 backdrop-blur">
       <div className="container-shell flex items-center justify-between py-4">
         <Link href="/" className="link-ring flex items-center rounded-2xl" aria-label="Already Here LLC home"><InlineBrandMark /></Link>
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">{navItems.map((item) => <NavLink key={item.href} href={item.href} label={item.label} pathname={pathname} />)}</nav>
         <div className="hidden items-center gap-3 lg:flex">
-          <a href={siteConfig.phoneHref} className="link-ring rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-navy transition hover:border-action hover:text-action" aria-label="Call Already Here LLC">{siteConfig.phoneDisplay}</a>
-          <Link href="/dispatch" className="link-ring rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy">Request Dispatch</Link>
+          <a href={siteConfig.phoneHref} className="link-ring rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-action hover:text-white" aria-label="Call Already Here LLC">{siteConfig.phoneDisplay}</a>
+          <Link href="/dispatch" className="link-ring rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white hover:text-navy">Request Dispatch</Link>
         </div>
-        <button type="button" className="link-ring inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-borderBrand text-navy lg:hidden" onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-controls="mobile-nav" aria-label="Toggle navigation"><span className="text-sm font-semibold">{open ? 'Close' : 'Menu'}</span></button>
+        <button type="button" className="link-ring inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 text-white lg:hidden" onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-controls="mobile-nav" aria-label="Toggle navigation"><span className="text-sm font-semibold">{open ? 'Close' : 'Menu'}</span></button>
       </div>
       {open ? (
-        <div id="mobile-nav" className="border-t border-borderBrand bg-white lg:hidden">
+        <div id="mobile-nav" className="border-t border-borderBrand bg-[#040A14] lg:hidden">
           <div className="container-shell flex flex-col gap-3 py-4">
-            {navItems.map((item) => <Link key={item.href} href={item.href} className={`link-ring rounded-2xl px-4 py-3 text-sm font-medium ${pathname === item.href ? 'bg-action text-white' : 'bg-slate-50 text-navy'}`} onClick={() => setOpen(false)}>{item.label}</Link>)}
-            <div className="grid grid-cols-2 gap-3 pt-2"><a href={siteConfig.phoneHref} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-center text-sm font-medium text-navy" onClick={() => setOpen(false)}>{siteConfig.phoneDisplay}</a><Link href="/dispatch" className="link-ring rounded-2xl bg-action px-4 py-3 text-center text-sm font-semibold text-white" onClick={() => setOpen(false)}>Request Dispatch</Link></div>
+            {navItems.map((item) => <Link key={item.href} href={item.href} className={`link-ring rounded-2xl px-4 py-3 text-sm font-medium ${pathname === item.href ? 'bg-action text-white' : 'bg-[#0B1728] text-slate-100'}`} onClick={() => setOpen(false)}>{item.label}</Link>)}
+            <div className="grid grid-cols-2 gap-3 pt-2"><a href={siteConfig.phoneHref} className="link-ring rounded-2xl border border-white/20 px-4 py-3 text-center text-sm font-medium text-slate-100" onClick={() => setOpen(false)}>{siteConfig.phoneDisplay}</a><Link href="/dispatch" className="link-ring rounded-2xl bg-action px-4 py-3 text-center text-sm font-semibold text-white" onClick={() => setOpen(false)}>Request Dispatch</Link></div>
           </div>
         </div>
       ) : null}
