@@ -7,25 +7,27 @@ import { siteConfig } from '@/lib/site';
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: 'Already Here LLC | Arizona Onsite Infrastructure Execution',
+    default: 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations',
     template: '%s | Already Here LLC'
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
   keywords: [
-    'Arizona onsite IT field execution',
-    'Phoenix technical field operations',
-    'onsite infrastructure execution Arizona',
-    'MSP smart hands Phoenix',
-    'network troubleshooting Arizona',
-    'rollout recovery Arizona',
-    'commercial IT field support Phoenix',
-    'retail infrastructure support Arizona',
-    'government contractor IT services Arizona',
-    'SDVOSB IT services Arizona',
-    'SAM.gov registered IT contractor Phoenix',
+    'onsite IT field execution',
+    'technical field operations',
+    'onsite infrastructure execution',
+    'MSP smart hands support',
+    'network troubleshooting',
+    'rollout recovery',
+    'commercial IT field support',
+    'retail infrastructure support',
+    'government contractor IT services',
+    'SDVOSB IT services',
+    'SAM.gov registered IT contractor',
     'field support for critical systems',
-    'vendor field execution Arizona'
+    'vendor field execution',
+    'Arizona onsite IT field execution',
+    'Phoenix technical field operations'
   ]
 };
 
@@ -54,7 +56,8 @@ const localBusinessSchema = {
   areaServed: [
     'Phoenix, AZ', 'Tempe, AZ', 'Mesa, AZ', 'Chandler, AZ',
     'Scottsdale, AZ', 'Glendale, AZ', 'Peoria, AZ', 'Surprise, AZ',
-    'Goodyear, AZ', 'Avondale, AZ', 'Gilbert, AZ', 'Arizona'
+    'Goodyear, AZ', 'Avondale, AZ', 'Gilbert, AZ', 'Arizona',
+    'United States project-based field engagements'
   ],
   openingHoursSpecification: {
     '@type': 'OpeningHoursSpecification',
