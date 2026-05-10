@@ -2,13 +2,13 @@ export const siteConfig = {
   name: 'Already Here LLC',
   shortName: 'Already Here',
   tagline: 'Onsite Infrastructure Execution',
-  heroTitle: 'Arizona Onsite IT Field Execution for MSPs, Retail, and Infrastructure Teams',
+  heroTitle: 'Phoenix-Based Onsite IT Field Execution for MSPs, Retail, and Infrastructure Teams',
   heroDescription:
-    'Already Here LLC delivers onsite remediation, smart hands support, network troubleshooting, rollout recovery, and infrastructure execution across Arizona. We solve the technical issues remote teams cannot close remotely.',
+    'Already Here LLC delivers onsite remediation, smart hands support, network troubleshooting, rollout recovery, and infrastructure execution from Phoenix for Arizona and qualified project sites nationwide. We solve the technical issues remote teams cannot close remotely.',
   positioning:
-    'Already Here LLC provides onsite infrastructure execution and technical field operations for MSPs, commercial sites, retail environments, and critical systems across Arizona.',
+    'Already Here LLC provides onsite infrastructure execution and technical field operations for MSPs, commercial sites, retail environments, and critical systems from Phoenix with project coverage available nationwide depending on client scope.',
   description:
-    'Phoenix-based onsite infrastructure execution and technical field operations partner for MSPs, vendors, commercial sites, retail environments, and critical systems across Arizona.',
+    'Phoenix-based onsite infrastructure execution and technical field operations partner for MSPs, vendors, commercial sites, retail environments, and critical systems, with project coverage available nationwide depending on scope.',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://alreadyherellc.com',
   phoneHref: 'tel:+16028822920',
   phoneDisplay: '(602) 882-2920',
@@ -32,7 +32,7 @@ export const serviceGroups = [
     description:
       'Structured onsite execution for MSPs, vendors, and infrastructure teams that need a reliable field operator on site.',
     items: ['Smart hands support', 'Dispatch execution', 'Site verification', 'Technical closeout'],
-    bestFit: 'Remote teams and prime vendors that need local field execution without building Arizona headcount.'
+    bestFit: 'Remote teams and prime vendors that need field execution without building project-market headcount.'
   },
   {
     title: 'Onsite Infrastructure Execution',
@@ -46,7 +46,7 @@ export const serviceGroups = [
     description:
       'Field support for POS, payment devices, printers, endpoints, kiosks, store systems, and commercial technology environments.',
     items: ['POS / payment device swaps', 'Endpoint refresh work', 'Printer replacement', 'Kiosk and store technology support'],
-    bestFit: 'Retail, QSR, hospitality, and multi-site commercial operators across Arizona.'
+    bestFit: 'Retail, QSR, hospitality, and multi-site commercial operators in qualified regional and project markets.'
   },
   {
     title: 'Rollout Recovery and Remediation',
@@ -72,10 +72,10 @@ export const serviceGroups = [
 ] as const;
 
 export const buyerReasons = [
-  'Enterprise-ready field execution language and process discipline without consumer repair-shop positioning.',
-  'Technical field operations for MSPs, vendors, commercial sites, retail environments, and critical systems across Arizona.',
+  'Reliable onsite execution for defined technical dispatches without consumer repair-shop positioning.',
+  'Technical field operations for MSPs, vendors, commercial sites, retail environments, and critical systems.',
   'Structured closeout documentation with photos, field notes, equipment observations, and next-step escalation when required.',
-  'Government/vendor capable profile with SDVOSB certification, SAM.gov registration, commercial insurance, and Arizona operating history.'
+  'Procurement-ready profile with SDVOSB certification, SAM.gov registration, commercial insurance, and operating history.'
 ] as const;
 
 export const documentedWorkTypes = [
@@ -141,14 +141,15 @@ export const markets = [
   'Page',
   'Quartzsite',
   'San Luis',
-  'Springerville'
+  'Springerville',
+  'Nationwide project coverage by scope'
 ] as const;
 
 export const audience = [
   {
     title: 'MSPs and network operators',
     description:
-      'Extend Arizona coverage for smart hands, network troubleshooting, router work, site visits, documentation collection, and remediation without carrying local headcount.'
+      'Extend field coverage for smart hands, network troubleshooting, router work, site visits, documentation collection, and remediation without carrying local headcount for every project market.'
   },
   {
     title: 'Vendors and prime contractors',
