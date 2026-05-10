@@ -6,7 +6,7 @@ import { audience, buyerReasons, documentedWorkTypes, environments, markets, ser
 export const metadata: Metadata = {
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'Already Here LLC | Arizona Onsite Infrastructure Execution',
+    title: 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations',
     description: siteConfig.description,
     url: '/',
     siteName: siteConfig.name,
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Already Here LLC | Arizona Onsite Infrastructure Execution',
+    title: 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations',
     description: siteConfig.description
   }
 };
@@ -31,10 +31,10 @@ export default function HomePage() {
               <span className="rounded-full border border-borderBrand bg-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Operating Since 2013</span>
             </div>
             <h1 className="mt-2 max-w-4xl text-4xl font-semibold tracking-tight text-navy sm:text-5xl lg:text-6xl">
-              Arizona Onsite IT Field Execution for MSPs, Retail, and Infrastructure Teams
+              {siteConfig.heroTitle}
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-              Already Here LLC delivers onsite remediation, smart hands support, network troubleshooting, rollout recovery, and infrastructure execution across Arizona. We solve the technical issues remote teams cannot close remotely.
+              {siteConfig.heroDescription}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-navy">Request Dispatch</Link>
@@ -53,7 +53,7 @@ export default function HomePage() {
           <div className="card p-8 sm:p-10">
             <span className="grid-label">Positioning</span>
             <p className="mt-4 text-base leading-7 text-slate-600">
-              Already Here LLC provides onsite infrastructure execution and technical field operations for MSPs, commercial sites, retail environments, and critical systems across Arizona.
+              {siteConfig.positioning}
             </p>
             <div className="mt-6 grid gap-4">
               {serviceGroups.slice(0, 4).map((group) => (
@@ -118,8 +118,8 @@ export default function HomePage() {
       <section className="container-shell py-16 lg:py-24">
         <div className="card bg-navy p-8 text-white sm:p-10 lg:p-12">
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div><span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/80">Ready to engage</span><h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">Need onsite infrastructure execution in Arizona?</h2><p className="mt-4 max-w-3xl text-base leading-7 text-white/80">Send the scope, target city, schedule window, and any files that matter. Already Here LLC will assess coverage fit and execute the site work cleanly when the dispatch is confirmed.</p><p className="mt-3 text-sm text-white/60">SDVOSB-certified · SAM.gov registered</p></div>
-            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col"><Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-navy transition hover:bg-slate-100">Request Dispatch</Link><Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">Book Infrastructure Assessment</Link><a href={siteConfig.phoneHref} className="link-ring inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">{siteConfig.phoneDisplay}</a></div>
+            <div><span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/80">Ready to engage</span><h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">Need onsite infrastructure execution for a project site?</h2><p className="mt-4 max-w-3xl text-base leading-7 text-white/80">Send the scope, target city, schedule window, and any files that matter. Already Here LLC will assess coverage fit and execute the site work cleanly when the dispatch is confirmed.</p><p className="mt-3 text-sm text-white/60">SDVOSB-certified · SAM.gov registered</p></div>
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col"><Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-navy transition hover:bg-slate-100">Request Dispatch</Link><a href={siteConfig.phoneHref} className="link-ring inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">{siteConfig.phoneDisplay}</a></div>
           </div>
         </div>
       </section>
