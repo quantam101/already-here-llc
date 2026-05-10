@@ -70,8 +70,8 @@ export default function HomePage() {
 
       <section className="container-shell py-16 lg:py-24">
         <span className="eyebrow">Why buyers choose us</span>
-        <h2 className="section-title mt-5">Enterprise field execution without consumer repair-shop positioning.</h2>
-        <p className="section-copy">Operational, technical, trustworthy, field-ready, and vendor capable. No generic consumer repair language.</p>
+        <h2 className="section-title mt-5">Field execution that closes the gap between remote support and onsite reality.</h2>
+        <p className="section-copy">MSPs, vendors, and multi-site operators get an onsite partner who can reach the location, verify conditions, complete defined technical work, and return clear closeout notes so tickets do not stall or cycle back.</p>
         <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {buyerReasons.map((reason) => <div key={reason} className="card p-6"><p className="text-sm leading-7 text-slate-700">{reason}</p></div>)}
         </div>
