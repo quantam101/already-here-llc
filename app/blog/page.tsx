@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { getAllPosts } from '@/lib/blog';
 
 export const metadata: Metadata = {
-  title: 'Field Service Insights | Already Here LLC',
+  title: 'Field Service Insights',
   description:
     'Practical guides on IT field execution, MSP smart-hands, kiosk and POS support, and Phoenix-area field operations from Already Here LLC.',
   alternates: { canonical: '/blog' },
