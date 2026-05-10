@@ -5,7 +5,7 @@ import { naicsCodes, representativeWork, siteConfig } from '@/lib/site';
 export const metadata: Metadata = {
   title: 'Capability Statement | SDVOSB Field Execution — Already Here LLC',
   description:
-    'Already Here LLC capability statement — SDVOSB-certified Phoenix field execution partner for MSPs, government primes, healthcare-adjacent operators, and rollout programs. SAM.gov registered. EIN 46-4403432.',
+    'Already Here LLC capability statement — SDVOSB-certified Phoenix field execution partner for MSPs, government primes, healthcare-adjacent operators, and rollout programs. SAM.gov registered.',
   alternates: { canonical: '/capability-statement' }
 };
 
@@ -26,7 +26,7 @@ const coreCompetencies = [
 
 const differentiators = [
   'SDVOSB-certified — eligible for set-aside and sole-source contracts under federal and state procurement programs',
-  'SAM.gov active — EIN 46-4403432',
+  'SAM.gov registered',
   'Commercially insured — General Liability and Professional Liability',
   '26+ years IT field experience: healthcare, enterprise, government-adjacent, retail, QSR, data center',
   'Phoenix metro primary coverage — qualified Arizona statewide and Western US travel for project-based engagements',
@@ -40,8 +40,6 @@ export default function CapabilityStatementPage() {
 
   return (
     <div className="container-shell py-16 lg:py-24">
-
-      {/* Header */}
       <div className="card p-8 sm:p-10 mb-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -56,16 +54,10 @@ export default function CapabilityStatementPage() {
           </div>
           <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end lg:gap-3 shrink-0">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path d="M7 1L8.55 4.09L12 4.76L9.5 7.19L10.09 10.62L7 9.09L3.91 10.62L4.5 7.19L2 4.76L5.45 4.09L7 1Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
-              </svg>
               SDVOSB Certified
             </span>
             <span className="rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-slate-600">
               SAM.gov Registered
-            </span>
-            <span className="rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-slate-600">
-              EIN {siteConfig.ein}
             </span>
             <span className="rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-slate-600">
               Commercially Insured
@@ -73,7 +65,6 @@ export default function CapabilityStatementPage() {
           </div>
         </div>
 
-        {/* NAP contact block */}
         <div className="mt-8 grid grid-cols-1 gap-4 border-t border-borderBrand pt-8 sm:grid-cols-3">
           <div>
             <p className="grid-label mb-2">Entity</p>
@@ -102,7 +93,6 @@ export default function CapabilityStatementPage() {
         </div>
       </div>
 
-      {/* Core competencies */}
       <section className="card p-8 sm:p-10 mb-8">
         <h2 className="grid-label mb-6">Core competencies</h2>
         <ul className="grid gap-3 sm:grid-cols-2">
@@ -115,7 +105,6 @@ export default function CapabilityStatementPage() {
         </ul>
       </section>
 
-      {/* Differentiators */}
       <section className="card p-8 sm:p-10 mb-8">
         <h2 className="grid-label mb-6">Differentiators</h2>
         <ul className="grid gap-3">
@@ -128,7 +117,6 @@ export default function CapabilityStatementPage() {
         </ul>
       </section>
 
-      {/* Past performance */}
       <section className="card p-8 sm:p-10 mb-8">
         <h2 className="grid-label mb-6">Past performance (representative)</h2>
         <div className="grid gap-4">
@@ -147,7 +135,6 @@ export default function CapabilityStatementPage() {
         </p>
       </section>
 
-      {/* NAICS codes */}
       <section className="card p-8 sm:p-10 mb-8">
         <h2 className="grid-label mb-6">NAICS codes</h2>
         <div className="overflow-hidden rounded-2xl border border-borderBrand">
@@ -170,7 +157,6 @@ export default function CapabilityStatementPage() {
         </div>
       </section>
 
-      {/* Service area */}
       <section className="card p-8 sm:p-10 mb-8">
         <h2 className="grid-label mb-4">Service area</h2>
         <p className="text-sm leading-7 text-slate-600 max-w-3xl">
@@ -180,7 +166,6 @@ export default function CapabilityStatementPage() {
         </p>
       </section>
 
-      {/* CTA */}
       <div className="card bg-navy p-8 text-white sm:p-10">
         <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
