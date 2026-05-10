@@ -5,7 +5,8 @@ import { audience, environments } from '@/lib/site';
 export const metadata: Metadata = {
   title: 'Who We Serve',
   description:
-    'Already Here LLC supports vendors, MSPs, and multi-site operators that need onsite execution, structured closeout, and Arizona project-market support.'
+    'Already Here LLC supports vendors, MSPs, and multi-site operators that need onsite execution, structured closeout, and Arizona project-market support.',
+  alternates: { canonical: '/who-we-serve' }
 };
 
 export default function WhoWeServePage() {
