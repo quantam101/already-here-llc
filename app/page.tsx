@@ -50,12 +50,6 @@ export default function HomePage() {
                 Request Dispatch
               </Link>
               <Link
-                href="/dispatch"
-                className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-navy transition hover:border-action hover:text-action"
-              >
-                Book Infrastructure Assessment
-              </Link>
-              <Link
                 href="/capability-statement"
                 className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action"
               >
