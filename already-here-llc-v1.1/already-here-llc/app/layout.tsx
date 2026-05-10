@@ -26,20 +26,7 @@ export const metadata: Metadata = {
     'SAM.gov registered IT contractor Phoenix',
     'field support for critical systems',
     'vendor field execution Arizona'
-  ],
-  openGraph: {
-    title: 'Already Here LLC | Arizona Onsite Infrastructure Execution',
-    description: siteConfig.description,
-    url: siteConfig.url,
-    siteName: siteConfig.name,
-    locale: 'en_US',
-    type: 'website'
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Already Here LLC | Arizona Onsite Infrastructure Execution',
-    description: siteConfig.description
-  }
+  ]
 };
 
 const localBusinessSchema = {
