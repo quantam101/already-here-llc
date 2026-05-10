@@ -2,10 +2,10 @@ export const siteConfig = {
   name: 'Already Here LLC',
   shortName: 'Already Here',
   tagline: 'Onsite Infrastructure Execution',
-  heroTitle: 'Arizona Onsite IT Field Execution for MSPs, Retail, and Infrastructure Teams',
-  heroDescription: 'Already Here LLC delivers onsite remediation, smart hands support, network troubleshooting, rollout recovery, and infrastructure execution across Arizona.',
-  positioning: 'Already Here LLC provides onsite infrastructure execution and technical field operations for MSPs, commercial sites, retail environments, and critical systems across Arizona.',
-  description: 'Phoenix-based onsite infrastructure execution and technical field operations partner for MSPs, vendors, commercial sites, retail environments, and critical systems across Arizona.',
+  heroTitle: 'Phoenix-Based Onsite IT Field Execution for MSPs, Retail, and Infrastructure Teams',
+  heroDescription: 'Already Here LLC delivers onsite remediation, smart hands support, network troubleshooting, rollout recovery, and infrastructure execution from Phoenix for Arizona and qualified project sites nationwide. We solve the technical issues remote teams cannot close remotely.',
+  positioning: 'Already Here LLC provides onsite infrastructure execution and technical field operations for MSPs, commercial sites, retail environments, and critical systems from Phoenix with project coverage available nationwide depending on client scope.',
+  description: 'Phoenix-based onsite infrastructure execution and technical field operations partner for MSPs, vendors, commercial sites, retail environments, and critical systems, with project coverage available nationwide depending on scope.',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://alreadyherellc.com',
   phoneHref: 'tel:+16028822920',
   phoneDisplay: '(602) 882-2920',
@@ -18,20 +18,20 @@ export const siteConfig = {
 };
 
 export const serviceGroups = [
-  { title: 'Technical Field Operations', description: 'Structured onsite execution for MSPs, vendors, and infrastructure teams.', items: ['Smart hands support', 'Dispatch execution', 'Site verification'], bestFit: 'Remote teams needing Arizona field execution.' },
-  { title: 'Onsite Infrastructure Execution', description: 'Network, rack, endpoint, AP, and site infrastructure tasks with clear documentation.', items: ['Router support', 'Wi-Fi troubleshooting', 'Infrastructure remediation'], bestFit: 'MSPs and infrastructure teams.' },
-  { title: 'Retail and Commercial Technology Support', description: 'Field support for POS, payment devices, endpoints, printers, kiosks, and store systems.', items: ['POS work', 'Endpoint refresh', 'Printer replacement'], bestFit: 'Retail, QSR, hospitality, and commercial operators.' },
-  { title: 'Rollout Recovery and Remediation', description: 'Revisit work, failed closeout recovery, and post-install troubleshooting.', items: ['Rollout recovery', 'Revisit work', 'Closeout correction'], bestFit: 'Program managers and vendors.' },
-  { title: 'Critical Systems Field Support', description: 'Professional onsite support for controlled-access and infrastructure environments.', items: ['Controlled-access site work', 'Data center support'], bestFit: 'Professional technical environments.' },
+  { title: 'Technical Field Operations', description: 'Structured onsite execution for MSPs, vendors, and infrastructure teams that need a reliable field operator on site.', items: ['Smart hands support', 'Dispatch execution', 'Site verification'], bestFit: 'Remote teams and prime vendors that need field execution without building project-market headcount.' },
+  { title: 'Onsite Infrastructure Execution', description: 'Network, rack, endpoint, AP, and site infrastructure tasks with clear documentation.', items: ['Router support', 'Wi-Fi troubleshooting', 'Infrastructure remediation'], bestFit: 'MSPs and infrastructure teams needing disciplined onsite work.' },
+  { title: 'Retail and Commercial Technology Support', description: 'Field support for POS, payment devices, endpoints, printers, kiosks, and store systems.', items: ['POS work', 'Endpoint refresh', 'Printer replacement'], bestFit: 'Retail, QSR, hospitality, and multi-site commercial operators in qualified regional and project markets.' },
+  { title: 'Rollout Recovery and Remediation', description: 'Revisit work, failed closeout recovery, and post-install troubleshooting.', items: ['Rollout recovery', 'Revisit work', 'Closeout correction'], bestFit: 'Program managers and vendors with open issues that cannot be resolved remotely.' },
+  { title: 'Critical Systems Field Support', description: 'Professional onsite support for controlled-access and infrastructure environments.', items: ['Controlled-access site work', 'Data center support'], bestFit: 'Organizations that need field-ready technical execution in professional environments.' },
   { title: 'Surveys and Site Assessment', description: 'Site assessments, infrastructure surveys, closeout photos, and documentation.', items: ['Infrastructure assessments', 'Documentation capture'], bestFit: 'Teams that need field verification.' }
 ] as const;
 
-export const buyerReasons = ['Enterprise-ready field execution language and process discipline.', 'Technical field operations across Arizona.', 'Structured closeout documentation.', 'Vendor-ready operating profile.'] as const;
+export const buyerReasons = ['Reliable onsite execution for defined technical dispatches without consumer repair-shop positioning.', 'Technical field operations for MSPs, vendors, commercial sites, retail environments, and critical systems.', 'Structured closeout documentation with photos, field notes, equipment observations, and next-step escalation when required.', 'Procurement-ready profile with SDVOSB certification, SAM.gov registration, commercial insurance, and operating history.'] as const;
 export const documentedWorkTypes = ['Smart hands support', 'Network troubleshooting', 'Onsite remediation', 'Rollout recovery', 'Infrastructure assessment', 'POS installs and upgrades', 'Payment device replacement', 'Endpoint refresh work', 'LAN migration support', 'Site surveys', 'Store modernization troubleshooting', 'Cradlepoint installs', 'Rack / stack support', 'Printer replacement', 'AV / media troubleshooting', 'Managed router installs', 'Wi-Fi troubleshooting', 'Low-voltage testing', 'Site verification', 'RFID reader surveys'] as const;
 export const environments = ['MSP client sites', 'Commercial sites', 'Retail', 'QSR / restaurant', 'Hospitality', 'Healthcare', 'Enterprise / office', 'AV / media environments', 'Data center / infrastructure', 'Critical systems environments'] as const;
-export const markets = ['Phoenix', 'Tempe', 'Chandler', 'Scottsdale', 'Glendale', 'Mesa', 'Peoria', 'Avondale', 'Buckeye', 'Goodyear', 'Surprise', 'Litchfield Park', 'Carefree', 'Page', 'Quartzsite', 'San Luis', 'Springerville'] as const;
+export const markets = ['Phoenix', 'Tempe', 'Chandler', 'Scottsdale', 'Glendale', 'Mesa', 'Peoria', 'Avondale', 'Buckeye', 'Goodyear', 'Surprise', 'Litchfield Park', 'Carefree', 'Page', 'Quartzsite', 'San Luis', 'Springerville', 'Nationwide project coverage by scope'] as const;
 export const audience = [
-  { title: 'MSPs and network operators', description: 'Extend Arizona coverage for smart hands, network troubleshooting, router work, site visits, documentation collection, and remediation.' },
+  { title: 'MSPs and network operators', description: 'Extend field coverage for smart hands, network troubleshooting, router work, site visits, documentation collection, and remediation without carrying local headcount for every project market.' },
   { title: 'Vendors and prime contractors', description: 'Use Already Here LLC as the onsite execution layer when the scope, parts, and ticket flow are defined.' },
   { title: 'Retail and commercial operators', description: 'Support multi-site technology programs, POS work, endpoint refreshes, store modernization, and infrastructure tasks.' },
   { title: 'Procurement teams', description: 'SDVOSB-certified and SAM.gov registered for appropriate subcontracting opportunities.' }
