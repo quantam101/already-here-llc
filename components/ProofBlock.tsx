@@ -51,7 +51,7 @@ export function ProofBlock() {
             <p className="mt-4 text-base leading-7 text-slate-600">
               Positioning is grounded in documented field activity spanning hardware replacement, surveys,
               rollouts, remediation, store technology, networking, AV/media, and infrastructure-related
-              onsite work across Arizona project markets.
+              onsite work across Arizona and out-of-state project markets.
             </p>
             <ul className="mt-8 grid gap-4 sm:grid-cols-2">
               {closeoutItems.map((item) => (
