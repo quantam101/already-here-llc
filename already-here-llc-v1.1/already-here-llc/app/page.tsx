@@ -38,7 +38,6 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-navy">Request Dispatch</Link>
-              <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-navy transition hover:border-action hover:text-action">Book Infrastructure Assessment</Link>
               <Link href="/capability-statement" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action">Capability Statement</Link>
             </div>
             <div className="mt-10 rounded-3xl border border-borderBrand bg-soft px-5 py-5">
