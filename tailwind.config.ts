@@ -9,28 +9,33 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        navy: '#0F2747',
-        action: '#1565C0',
-        slateBrand: '#64748B',
+        navy: '#071B34',
+        action: '#1B66FF',
+        steel: '#7E8A9A',
+        charcoal: '#101820',
+        slateBrand: '#7E8A9A',
         soft: '#F8FAFC',
-        borderBrand: '#E2E8F0',
-        ink: '#0F172A'
+        borderBrand: '#DDE5EF',
+        ink: '#101820'
       },
       boxShadow: {
-        panel: '0 18px 50px rgba(15, 39, 71, 0.08)'
+        panel: '0 18px 50px rgba(7, 27, 52, 0.08)'
       },
       maxWidth: {
         content: '1200px'
+      },
+      fontFamily: {
+        sans: ['Inter', 'IBM Plex Sans', 'Arial', 'Helvetica', 'sans-serif']
       },
       typography: {
         DEFAULT: {
           css: {
             color: '#334155',
             maxWidth: 'none',
-            h2: { color: '#0F2747', fontWeight: '600' },
-            h3: { color: '#0F2747', fontWeight: '600' },
-            a: { color: '#1565C0' },
-            strong: { color: '#0F172A' }
+            h2: { color: '#071B34', fontWeight: '600' },
+            h3: { color: '#071B34', fontWeight: '600' },
+            a: { color: '#1B66FF' },
+            strong: { color: '#101820' }
           }
         }
       }
