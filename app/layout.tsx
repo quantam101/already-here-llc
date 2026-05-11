@@ -7,28 +7,28 @@ import { siteConfig } from '@/lib/site';
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: 'Already Here LLC | Arizona Field Execution Partner',
+    default: 'Already Here LLC | Onsite Infrastructure Execution',
     template: '%s | Already Here LLC'
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
   keywords: [
-    'Phoenix field service',
-    'Arizona dispatch support',
-    'onsite execution partner',
-    'rollout support Arizona',
+    'onsite infrastructure execution',
+    'technical field operations',
+    'MSP smart hands support',
+    'vendor field execution',
+    'multi-site rollout support',
     'POS field support',
     'network field support',
-    'site surveys Arizona',
-    'MSP smart hands Phoenix',
-    'IT field technician Phoenix',
-    'SDVOSB IT services Arizona',
-    'veteran owned IT services Phoenix',
-    'kiosk support Phoenix AZ',
-    'field execution partner Phoenix'
+    'site surveys',
+    'IT field technician',
+    'SDVOSB IT services',
+    'veteran owned IT services',
+    'Phoenix field service',
+    'nationwide project field support'
   ],
   openGraph: {
-    title: 'Already Here LLC | Arizona Field Execution Partner',
+    title: 'Already Here LLC | Onsite Infrastructure Execution',
     description: siteConfig.description,
     url: siteConfig.url,
     siteName: siteConfig.name,
@@ -37,15 +37,11 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Already Here LLC | Arizona Field Execution Partner',
+    title: 'Already Here LLC | Onsite Infrastructure Execution',
     description: siteConfig.description
-  },
-  alternates: {
-    canonical: '/'
   }
 };
 
-// Full LocalBusiness schema with NAP, SDVOSB, NAICS, service area, hours
 const localBusinessSchema = {
   '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
@@ -68,9 +64,19 @@ const localBusinessSchema = {
     longitude: -112.0740
   },
   areaServed: [
-    'Phoenix, AZ', 'Tempe, AZ', 'Mesa, AZ', 'Chandler, AZ',
-    'Scottsdale, AZ', 'Glendale, AZ', 'Peoria, AZ', 'Surprise, AZ',
-    'Goodyear, AZ', 'Avondale, AZ', 'Gilbert, AZ', 'Arizona'
+    'Phoenix, AZ',
+    'Tempe, AZ',
+    'Mesa, AZ',
+    'Chandler, AZ',
+    'Scottsdale, AZ',
+    'Glendale, AZ',
+    'Peoria, AZ',
+    'Surprise, AZ',
+    'Goodyear, AZ',
+    'Avondale, AZ',
+    'Gilbert, AZ',
+    'Arizona',
+    'United States project coverage by scope'
   ],
   openingHoursSpecification: {
     '@type': 'OpeningHoursSpecification',
@@ -79,19 +85,24 @@ const localBusinessSchema = {
     closes: '20:00'
   },
   knowsAbout: [
-    'SDVOSB', 'Veteran-Owned Small Business', 'Field Service Management',
-    'MSP Smart Hands', 'IT Field Services', 'POS Support', 'Infrastructure Deployment'
+    'SDVOSB',
+    'Veteran-Owned Small Business',
+    'Field Service Management',
+    'MSP Smart Hands',
+    'IT Field Services',
+    'POS Support',
+    'Infrastructure Deployment'
   ],
   hasOfferCatalog: {
     '@type': 'OfferCatalog',
     name: 'Field Execution Services',
     itemListElement: [
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'MSP Smart-Hands Support' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Infrastructure Field Work' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'POS and Kiosk Support' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Healthcare-Adjacent Field Execution' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Rollout and Modernization Support' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Site Surveys and Verification' } }
+      { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'MSP Smart-Hands Support' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Infrastructure Field Work' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'POS and Kiosk Support' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Healthcare-Adjacent Field Execution' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Rollout and Modernization Support' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Site Surveys and Verification' } }
     ]
   }
 };
