@@ -44,8 +44,9 @@ function NavLink({ href, label, pathname }: { href: string; label: string; pathn
   return (
     <Link
       href={href}
+      aria-current={active ? 'page' : undefined}
       className={`link-ring rounded-full px-4 py-2 text-sm font-medium transition ${
-        active ? 'bg-navy text-white' : 'text-slate-700 hover:bg-slate-100 hover:text-navy'
+        active ? 'bg-[#071B34] text-white' : 'text-[#071B34] hover:bg-slate-100 hover:text-[#071B34]'
       }`}
     >
       {label}
@@ -58,7 +59,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#071B34]/30 bg-white backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-[#071B34]/30 bg-white">
       <div className="container-shell flex items-center justify-between gap-4 py-4">
         <Link href="/" className="link-ring min-w-0 rounded-2xl" aria-label="Already Here LLC home">
           <LogoMark />
@@ -71,14 +72,10 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <a
-            href={siteConfig.phoneHref}
-            className="link-ring flex items-center gap-2 rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-navy transition hover:border-action hover:text-action"
-            aria-label="Call for urgent same-day dispatch"
-          >
+          <a href={siteConfig.phoneHref} className="link-ring flex items-center gap-2 rounded-full border border-[#071B34] bg-white px-4 py-2 text-sm font-semibold text-[#071B34]">
             {siteConfig.phoneDisplay}
           </a>
-          <Link href="/dispatch" className="link-ring rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy">
+          <Link href="/dispatch" className="link-ring rounded-full bg-[#1B66FF] px-5 py-2.5 text-sm font-semibold text-white">
             Request Dispatch
           </Link>
         </div>
@@ -96,7 +93,7 @@ export function Header() {
       </div>
 
       {open ? (
-        <div id="mobile-nav" className="border-t border-[#071B34]/30 bg-white shadow-[0_24px_60px_rgba(7,27,52,0.22)] lg:hidden">
+        <div id="mobile-nav" className="border-t border-[#071B34]/30 bg-white lg:hidden">
           <div className="container-shell flex flex-col gap-3 py-4">
             {navItems.map((item) => {
               const active = pathname === item.href;
@@ -104,11 +101,11 @@ export function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`link-ring rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
-                    active
-                      ? 'border-[#071B34] bg-[#071B34] text-white'
-                      : 'border-[#D5DBE3] bg-white text-[#071B34] shadow-sm hover:border-[#1B66FF] hover:bg-slate-50 hover:text-[#1B66FF]'
-                  }`}
+                  aria-current={active ? 'page' : undefined}
+                  data-active={active ? 'true' : 'false'}
+                  className={active
+                    ? 'link-ring rounded-2xl border border-[#071B34] bg-[#071B34] px-4 py-3 text-sm font-semibold text-white opacity-100'
+                    : 'link-ring rounded-2xl border border-[#D5DBE3] bg-white px-4 py-3 text-sm font-semibold text-[#071B34] opacity-100 shadow-sm'}
                   onClick={() => setOpen(false)}
                 >
                   {item.label}
@@ -118,14 +115,14 @@ export function Header() {
             <div className="grid grid-cols-2 gap-3 pt-2">
               <a
                 href={siteConfig.phoneHref}
-                className="link-ring rounded-2xl border border-[#071B34] bg-white px-4 py-3 text-center text-sm font-semibold text-[#071B34] shadow-sm"
+                className="link-ring rounded-2xl border border-[#071B34] bg-white px-4 py-3 text-center text-sm font-semibold text-[#071B34] opacity-100 shadow-sm"
                 onClick={() => setOpen(false)}
               >
                 {siteConfig.phoneDisplay}
               </a>
               <Link
                 href="/dispatch"
-                className="link-ring rounded-2xl bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white shadow-sm"
+                className="link-ring rounded-2xl border border-[#1B66FF] bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white opacity-100 shadow-sm"
                 onClick={() => setOpen(false)}
               >
                 Request Dispatch
