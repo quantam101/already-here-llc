@@ -5,32 +5,24 @@ import { audience, buyerReasons, documentedWorkTypes, environments, markets, ser
 export default function HomePage() {
   return (
     <>
-      {/* Hero */}
       <section className="border-b border-borderBrand bg-white">
         <div className="container-shell grid gap-14 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
           <div>
-            {/* Trust badges — SDVOSB prominent */}
-            <div className="flex flex-wrap items-center gap-3 mb-6">
-              <span className="eyebrow">Phoenix-based · Commercially insured</span>
+            <div className="mb-6 flex flex-wrap items-center gap-3">
+              <span className="eyebrow">Phoenix-based · Project coverage by scope</span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/60 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">
-                <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-                  <path d="M5.5 0.5L6.8 3.3L10 3.8L7.75 5.95L8.35 9.1L5.5 7.65L2.65 9.1L3.25 5.95L1 3.8L4.2 3.3L5.5 0.5Z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
-                </svg>
                 SDVOSB Certified
               </span>
               <a
                 href={siteConfig.phoneHref}
                 className="inline-flex items-center gap-1.5 rounded-full border border-borderBrand px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-action hover:text-action"
               >
-                <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-                  <path d="M1 1.5C1 1.5 2 4 4 6s4 3 4 3l1.1-1.1c.4-.4.9-.3 1.2.1l.7 1c.3.4.1.9-.3 1.2C9.5 11 8 12 6 11 3 9.5 1 7 1 4.5 0 3 1 1.5 2 1c.4-.2.9-.05 1.2.4l.7 1c.25.4.15.9-.2 1.15Z" fill="currentColor"/>
-                </svg>
-                {siteConfig.phoneDisplay} — urgent/same-day
+                {siteConfig.phoneDisplay} — dispatch line
               </a>
             </div>
 
             <h1 className="mt-2 max-w-4xl text-4xl font-semibold tracking-tight text-navy sm:text-5xl lg:text-6xl">
-              Field execution for vendors, MSPs, and multi-site operators that need onsite work handled cleanly.
+              Field execution for vendors, MSPs, and infrastructure teams that need onsite work handled cleanly.
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
               You send the scope. Already Here LLC executes onsite, communicates clearly, and closes the work with usable documentation.
@@ -48,17 +40,11 @@ export default function HomePage() {
               >
                 Capability Statement
               </Link>
-              <Link
-                href="/services"
-                className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action"
-              >
-                View Services
-              </Link>
             </div>
             <dl className="mt-10 grid gap-4 sm:grid-cols-3">
               <div className="rounded-3xl border border-borderBrand bg-soft px-5 py-5">
                 <dt className="grid-label">Coverage model</dt>
-                <dd className="mt-2 text-sm leading-6 text-slate-700">Arizona project support based on scope, scheduling, and travel requirements.</dd>
+                <dd className="mt-2 text-sm leading-6 text-slate-700">Phoenix-based with project coverage available nationwide depending on client scope, schedule, and travel requirements.</dd>
               </div>
               <div className="rounded-3xl border border-borderBrand bg-soft px-5 py-5">
                 <dt className="grid-label">Core work</dt>
@@ -66,7 +52,7 @@ export default function HomePage() {
               </div>
               <div className="rounded-3xl border border-borderBrand bg-soft px-5 py-5">
                 <dt className="grid-label">Closeout</dt>
-                <dd className="mt-2 text-sm leading-6 text-slate-700">Usable documentation for the client-side ticket, not vague "work completed" notes.</dd>
+                <dd className="mt-2 text-sm leading-6 text-slate-700">Usable documentation for the client-side ticket, not vague work-completed notes.</dd>
               </div>
             </dl>
           </div>
@@ -97,12 +83,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Buyer reasons */}
       <section className="container-shell py-16 lg:py-24">
         <span className="eyebrow">Why buyers choose us</span>
-        <h2 className="section-title mt-5">Operationally useful field support, not inflated marketing language.</h2>
+        <h2 className="section-title mt-5">Field execution that protects schedule, closeout quality, and buyer confidence.</h2>
         <p className="section-copy">
-          The positioning stays disciplined. No unsupported SLA claims. No fake statewide guarantees. No certification language that cannot be verified publicly.
+          Already Here LLC is built for dispatches where remote teams need a competent onsite operator: someone who can follow scope, communicate site reality, document conditions, and escalate issues before they become rework.
         </p>
         <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {buyerReasons.map((reason) => (
@@ -113,15 +98,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Remediation block */}
       <section className="border-y border-borderBrand bg-white">
         <div className="container-shell py-16 lg:py-24">
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
-              <span className="eyebrow">Fixer / remediation block</span>
+              <span className="eyebrow">Remediation and recovery</span>
               <h2 className="section-title mt-5">When a rollout leaves loose ends, the field work still has to get finished properly.</h2>
               <p className="section-copy">
-                Already Here LLC is positioned for revisit work, remediation, post-install troubleshooting, store modernization cleanup, and field issues that need a clean onsite owner.
+                Already Here LLC supports revisit work, remediation, post-install troubleshooting, store modernization cleanup, and field issues that need a clean onsite owner.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -140,12 +124,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Social proof + closeout */}
       <section className="container-shell py-16 lg:py-24">
         <ProofBlock />
       </section>
 
-      {/* Who we support */}
       <section className="bg-white py-16 lg:py-24">
         <div className="container-shell grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
@@ -183,14 +165,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Service area */}
       <section className="border-y border-borderBrand bg-soft py-16 lg:py-24">
         <div className="container-shell grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
             <span className="eyebrow">Service area</span>
-            <h2 className="section-title mt-5">Arizona project markets with Phoenix at the center of the operating model.</h2>
+            <h2 className="section-title mt-5">Phoenix-based with project coverage available nationwide depending on client scope.</h2>
             <p className="section-copy">
-              Public positioning stays precise: Phoenix-based, with broader Arizona project support based on scope, scheduling, and travel requirements.
+              Public positioning stays precise: Phoenix-based field operations with broader project coverage determined by scope, schedule, access, travel, and buyer requirements.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy">
@@ -213,7 +194,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Final CTA */}
       <section className="container-shell py-16 lg:py-24">
         <div className="card bg-navy p-8 text-white sm:p-10 lg:p-12">
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
@@ -222,13 +202,13 @@ export default function HomePage() {
                 Ready to engage
               </span>
               <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
-                Need onsite execution in Arizona without inflated claims or messy closeout?
+                Need onsite infrastructure execution without inflated claims or messy closeout?
               </h2>
               <p className="mt-4 max-w-3xl text-base leading-7 text-white/80">
                 Send the scope, target city, schedule window, and any files that matter. If the coverage fit is right, the next step is simple: confirm the dispatch and execute the site work cleanly.
               </p>
               <p className="mt-3 text-sm text-white/60">
-                SDVOSB-certified · SAM.gov registered · EIN {siteConfig.ein}
+                SDVOSB-certified · SAM.gov registered · Commercially insured
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
