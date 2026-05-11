@@ -20,8 +20,9 @@ function NavLink({ href, label, pathname }: { href: string; label: string; pathn
   return (
     <Link
       href={href}
+      aria-current={active ? 'page' : undefined}
       className={`link-ring rounded-full px-4 py-2 text-sm font-medium transition ${
-        active ? 'bg-navy text-white' : 'text-slate-700 hover:bg-slate-100 hover:text-navy'
+        active ? 'bg-[#071B34] text-white' : 'text-[#071B34] hover:bg-slate-100 hover:text-[#071B34]'
       }`}
     >
       {label}
@@ -34,13 +35,13 @@ export function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-borderBrand/80 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-[#071B34]/30 bg-white">
       <div className="container-shell flex items-center justify-between gap-4 py-4">
         <Link href="/" className="link-ring flex min-w-0 items-center rounded-2xl" aria-label="Already Here LLC home">
           <BrandMark
             className="min-w-0"
             tagline="ONSITE INFRASTRUCTURE EXECUTION"
-            textColorClassName="text-navy"
+            textColorClassName="text-[#071B34]"
           />
         </Link>
 
@@ -53,7 +54,7 @@ export function Header() {
         <div className="hidden items-center gap-3 lg:flex">
           <a
             href={siteConfig.phoneHref}
-            className="link-ring flex items-center gap-2 rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-navy transition hover:border-action hover:text-action"
+            className="link-ring flex items-center gap-2 rounded-full border border-[#071B34] bg-white px-4 py-2 text-sm font-semibold text-[#071B34] transition hover:border-action hover:text-action"
             aria-label="Call for urgent same-day dispatch"
           >
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
@@ -63,7 +64,7 @@ export function Header() {
           </a>
           <Link
             href="/dispatch"
-            className="link-ring rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy"
+            className="link-ring rounded-full bg-[#1B66FF] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#071B34]"
           >
             Request Dispatch
           </Link>
@@ -71,7 +72,7 @@ export function Header() {
 
         <button
           type="button"
-          className="link-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-borderBrand text-navy lg:hidden"
+          className="link-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#071B34] bg-white text-[#071B34] lg:hidden"
           onClick={() => setOpen((c) => !c)}
           aria-expanded={open}
           aria-controls="mobile-nav"
@@ -82,31 +83,36 @@ export function Header() {
       </div>
 
       {open ? (
-        <div id="mobile-nav" className="border-t border-borderBrand bg-white lg:hidden">
+        <div id="mobile-nav" className="border-t border-[#071B34]/30 bg-white shadow-[0_24px_60px_rgba(7,27,52,0.22)] lg:hidden">
           <div className="container-shell flex flex-col gap-3 py-4">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`link-ring rounded-2xl px-4 py-3 text-sm font-medium ${
-                  pathname === item.href ? 'bg-navy text-white' : 'bg-slate-50 text-navy'
-                }`}
-                onClick={() => setOpen(false)}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? 'page' : undefined}
+                  data-active={active ? 'true' : 'false'}
+                  className={active
+                    ? 'link-ring rounded-2xl border border-[#071B34] bg-[#071B34] px-4 py-3 text-sm font-semibold text-white opacity-100'
+                    : 'link-ring rounded-2xl border border-[#D5DBE3] bg-white px-4 py-3 text-sm font-semibold text-[#071B34] opacity-100 shadow-sm hover:border-[#1B66FF] hover:bg-slate-50 hover:text-[#1B66FF]'}
+                  onClick={() => setOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
             <div className="grid grid-cols-2 gap-3 pt-2">
               <a
                 href={siteConfig.phoneHref}
-                className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-center text-sm font-medium text-navy"
+                className="link-ring rounded-2xl border border-[#071B34] bg-white px-4 py-3 text-center text-sm font-semibold text-[#071B34] opacity-100 shadow-sm"
                 onClick={() => setOpen(false)}
               >
                 {siteConfig.phoneDisplay}
               </a>
               <Link
                 href="/dispatch"
-                className="link-ring rounded-2xl bg-action px-4 py-3 text-center text-sm font-semibold text-white"
+                className="link-ring rounded-2xl border border-[#1B66FF] bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white opacity-100 shadow-sm"
                 onClick={() => setOpen(false)}
               >
                 Request Dispatch
