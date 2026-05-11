@@ -108,10 +108,20 @@ export function DispatchForm() {
             {dispatchTypes.map((type) => <option key={type} value={type}>{type}</option>)}
           </select>
         </label>
-        <label className="grid gap-2 text-sm font-medium text-navy">
-          Requested date / window
-          <input name="requestedWindow" maxLength={160} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="Date, time window, or due-by requirement" />
-        </label>
+        <div className="grid gap-3 text-sm font-medium text-navy">
+          Requested date / time window
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Date
+              <input name="requestedDate" type="date" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
+            </label>
+            <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Time
+              <input name="requestedTime" type="time" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
+            </label>
+          </div>
+          <input name="requestedWindow" maxLength={160} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="Optional: time window, due-by requirement, or access note" />
+        </div>
       </div>
       <label className="mt-6 grid gap-2 text-sm font-medium text-navy">
         Scope / ticket number
