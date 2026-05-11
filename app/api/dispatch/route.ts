@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -28,6 +29,11 @@ const rateLimitMax = 5;
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
 
 type ResendAttachment = { filename: string; content: string };
+
+function generateDispatchId(): string {
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  return `AH-${stamp}-${randomUUID().slice(0, 8).toUpperCase()}`;
+}
 
 function getClientKey(request: Request): string {
   const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
@@ -105,11 +111,56 @@ function validateFormData(formData: FormData): string | null {
   return null;
 }
 
-async function buildAttachments(formData: FormData): Promise<ResendAttachment[]> {
+function buildDispatchRecord(dispatchId: string, formData: FormData) {
   const attachment = getAttachmentFile(formData);
-  if (!attachment) return [];
-  const buffer = Buffer.from(await attachment.arrayBuffer());
-  return [{ filename: sanitizeFilename(attachment.name), content: buffer.toString('base64') }];
+  return {
+    dispatchId,
+    status: 'received',
+    source: 'website_dispatch_form',
+    submittedAt: new Date().toISOString(),
+    fullName: asCleanString(formData, 'fullName'),
+    company: asCleanString(formData, 'company'),
+    email: asCleanString(formData, 'email'),
+    phone: asCleanString(formData, 'phone'),
+    siteCity: asCleanString(formData, 'siteCity'),
+    siteZip: asCleanString(formData, 'siteZip'),
+    serviceType: asCleanString(formData, 'serviceType'),
+    requestedDate: asCleanString(formData, 'requestedDate'),
+    requestedTime: asCleanString(formData, 'requestedTime'),
+    requestedWindow: asCleanString(formData, 'requestedWindow'),
+    scheduleSummary: getScheduleSummary(formData),
+    ticketNumber: asCleanString(formData, 'ticketNumber'),
+    message: asCleanString(formData, 'message'),
+    attachment: attachment ? {
+      received: true,
+      filename: sanitizeFilename(attachment.name),
+      mimeType: attachment.type,
+      sizeBytes: attachment.size,
+      sizeDisplay: formatBytes(attachment.size),
+      delivery: 'attached_to_dispatch_email'
+    } : {
+      received: false,
+      delivery: 'none'
+    }
+  };
+}
+
+async function buildAttachments(formData: FormData, dispatchId: string): Promise<ResendAttachment[]> {
+  const attachments: ResendAttachment[] = [];
+  const attachment = getAttachmentFile(formData);
+
+  if (attachment) {
+    const buffer = Buffer.from(await attachment.arrayBuffer());
+    attachments.push({ filename: sanitizeFilename(attachment.name), content: buffer.toString('base64') });
+  }
+
+  const record = buildDispatchRecord(dispatchId, formData);
+  attachments.push({
+    filename: `${dispatchId}-dispatch-record.json`,
+    content: Buffer.from(JSON.stringify(record, null, 2)).toString('base64')
+  });
+
+  return attachments;
 }
 
 function renderRows(rows: Array<[string, string]>): string {
@@ -118,9 +169,11 @@ function renderRows(rows: Array<[string, string]>): string {
     .join('');
 }
 
-function getDispatchRows(formData: FormData): Array<[string, string]> {
+function getDispatchRows(formData: FormData, dispatchId: string): Array<[string, string]> {
   const attachment = getAttachmentFile(formData);
   return [
+    ['Dispatch ID', dispatchId],
+    ['Record location', 'Dispatch mailbox email + attached JSON dispatch record'],
     ['Full name', asCleanString(formData, 'fullName')],
     ['Company', asCleanString(formData, 'company')],
     ['Email', asCleanString(formData, 'email')],
@@ -149,14 +202,19 @@ function emailShell(title: string, subtitle: string, body: string): string {
     </div>`;
 }
 
-function buildDispatchHtml(formData: FormData): string {
+function buildDispatchHtml(formData: FormData, dispatchId: string): string {
   const submittedAt = new Date().toLocaleString('en-US', { timeZone: 'America/Phoenix' });
-  return emailShell('New Dispatch Request — Already Here LLC', `${submittedAt} MST`, `<table style="width:100%;border-collapse:collapse;font-size:14px">${renderRows(getDispatchRows(formData))}</table>`);
+  return emailShell(
+    `New Dispatch Request — ${dispatchId}`,
+    `${submittedAt} MST`,
+    `<table style="width:100%;border-collapse:collapse;font-size:14px">${renderRows(getDispatchRows(formData, dispatchId))}</table>`
+  );
 }
 
-function buildRequesterReceiptHtml(formData: FormData): string {
+function buildRequesterReceiptHtml(formData: FormData, dispatchId: string): string {
   const attachment = getAttachmentFile(formData);
   const rows: Array<[string, string]> = [
+    ['Dispatch ID', dispatchId],
     ['Company', asCleanString(formData, 'company')],
     ['Site city', asCleanString(formData, 'siteCity')],
     ['Service type', asCleanString(formData, 'serviceType')],
@@ -169,9 +227,9 @@ function buildRequesterReceiptHtml(formData: FormData): string {
     <p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.6">Thank you. Already Here LLC received your dispatch request and queued it for review.</p>
     <p style="margin:0 0 18px;color:#334155;font-size:15px;line-height:1.6">This receipt confirms submission only. A dispatch is not scheduled until scope, location, timing, and coverage are reviewed and confirmed by Already Here LLC.</p>
     <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:12px">${renderRows(rows)}</table>
-    <p style="margin:20px 0 0;color:#334155;font-size:14px;line-height:1.6">For urgent updates, reply to this email or contact ${dispatchAddress}.</p>`;
+    <p style="margin:20px 0 0;color:#334155;font-size:14px;line-height:1.6">For urgent updates, reply to this email and include Dispatch ID ${escapeHtml(dispatchId)}, or contact ${dispatchAddress}.</p>`;
 
-  return emailShell('Dispatch Request Received', 'Already Here LLC receipt confirmation', body);
+  return emailShell('Dispatch Request Received', `Already Here LLC receipt confirmation — ${dispatchId}`, body);
 }
 
 async function sendResendEmail(payload: Record<string, unknown>): Promise<void> {
@@ -188,34 +246,36 @@ async function sendResendEmail(payload: Record<string, unknown>): Promise<void> 
   }
 }
 
-async function sendViaResend(formData: FormData): Promise<void> {
+async function sendViaResend(formData: FormData, dispatchId: string): Promise<void> {
   const to = process.env.DISPATCH_TO_EMAIL!;
   const requesterEmail = asCleanString(formData, 'email');
   const serviceType = asCleanString(formData, 'serviceType');
   const siteCity = asCleanString(formData, 'siteCity');
   const company = asCleanString(formData, 'company');
-  const attachments = await buildAttachments(formData);
+  const attachments = await buildAttachments(formData, dispatchId);
 
   await sendResendEmail({
     from: dispatchFromEmail,
     to: [to],
-    subject: `Dispatch: ${serviceType} — ${siteCity} — ${company}`,
-    html: buildDispatchHtml(formData),
-    attachments: attachments.length ? attachments : undefined,
+    subject: `[${dispatchId}] Dispatch: ${serviceType} — ${siteCity} — ${company}`,
+    html: buildDispatchHtml(formData, dispatchId),
+    attachments,
     reply_to: requesterEmail
   });
 
   await sendResendEmail({
     from: dispatchFromEmail,
     to: [requesterEmail],
-    subject: 'Dispatch request received — Already Here LLC',
-    html: buildRequesterReceiptHtml(formData),
+    subject: `Dispatch request received — ${dispatchId}`,
+    html: buildRequesterReceiptHtml(formData, dispatchId),
     reply_to: dispatchAddress
   });
 }
 
-async function sendViaFormspree(formData: FormData): Promise<void> {
+async function sendViaFormspree(formData: FormData, dispatchId: string): Promise<void> {
   const endpoint = process.env.FORMSPREE_ENDPOINT!;
+  formData.set('dispatchId', dispatchId);
+  formData.set('recordLocation', 'Formspree submission payload');
   const res = await fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body: formData, cache: 'no-store' });
   if (!res.ok) {
     const payload = await res.json().catch(() => null) as { errors?: Array<{ message?: string }> } | null;
@@ -235,18 +295,24 @@ export async function POST(request: Request) {
   const hasFormspree = !!process.env.FORMSPREE_ENDPOINT;
   if (!hasResend && !hasFormspree) return NextResponse.json({ message: 'Dispatch endpoint not configured.' }, { status: 500 });
 
+  const dispatchId = generateDispatchId();
+
   try {
-    if (hasResend) await sendViaResend(formData);
-    else await sendViaFormspree(formData);
-    return NextResponse.json({ ok: true });
+    if (hasResend) await sendViaResend(formData, dispatchId);
+    else await sendViaFormspree(formData, dispatchId);
+    return NextResponse.json({ ok: true, dispatchId, recordLocation: hasResend ? 'dispatch_email_json_attachment' : 'formspree_payload' });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Dispatch submission failed.';
-    return NextResponse.json({ message }, { status: 502 });
+    return NextResponse.json({ message, dispatchId }, { status: 502 });
   }
 }
 
 export async function GET() {
   const hasResend = !!process.env.RESEND_API_KEY;
   const hasFormspree = !!process.env.FORMSPREE_ENDPOINT;
-  return NextResponse.json({ status: 'ok', delivery: hasResend ? 'resend' : hasFormspree ? 'formspree' : 'unconfigured' });
+  return NextResponse.json({
+    status: 'ok',
+    delivery: hasResend ? 'resend' : hasFormspree ? 'formspree' : 'unconfigured',
+    records: hasResend ? 'dispatch_email_json_attachment' : hasFormspree ? 'formspree_payload' : 'unconfigured'
+  });
 }
