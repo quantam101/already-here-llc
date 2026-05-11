@@ -28,17 +28,9 @@ body {
     linear-gradient(180deg, var(--ah-bg-deep) 0%, var(--ah-bg) 42%, #050b15 100%);
 }
 
-* {
-  box-sizing: border-box;
-}
-
-main {
-  min-height: calc(100vh - 200px);
-}
-
-.container-shell {
-  @apply mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8;
-}
+* { box-sizing: border-box; }
+main { min-height: calc(100vh - 200px); }
+.container-shell { @apply mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8; }
 
 .eyebrow {
   @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em];
@@ -47,80 +39,68 @@ main {
   color: #8fb6ff;
 }
 
-.section-title {
-  @apply text-3xl font-semibold tracking-tight sm:text-4xl;
-  color: #f8fafc;
-}
+.section-title { @apply text-3xl font-semibold tracking-tight sm:text-4xl; color: #f8fafc; }
+.section-copy { @apply mt-4 max-w-3xl text-base leading-7; color: var(--ah-muted); }
+.card { @apply rounded-3xl border shadow-panel; background: linear-gradient(180deg, rgba(16, 31, 52, 0.96), rgba(8, 17, 31, 0.96)); border-color: var(--ah-border); }
+.link-ring { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2; --tw-ring-offset-color: var(--ah-bg-deep); }
+.grid-label { @apply text-sm font-semibold uppercase tracking-[0.15em]; color: var(--ah-dim); }
 
-.section-copy {
-  @apply mt-4 max-w-3xl text-base leading-7;
-  color: var(--ah-muted);
-}
+.bg-white, .bg-soft { background-color: transparent !important; }
+.bg-navy { background-color: #040a14 !important; }
+.border-borderBrand, .border-borderBrand\/80, .border-y, .border-t, .border-b { border-color: var(--ah-border) !important; }
+.text-navy, .text-ink, .text-slate-700, .text-slate-600, .text-slate-500 { color: var(--ah-text) !important; }
+.text-slate-400 { color: var(--ah-dim) !important; }
+.hover\:bg-slate-100:hover, .hover\:bg-slate-50:hover { background-color: rgba(27, 102, 255, 0.1) !important; }
+.rounded-2xl.border, .rounded-3xl.border, .rounded-full.border { border-color: var(--ah-border) !important; }
 
-.card {
-  @apply rounded-3xl border shadow-panel;
-  background: linear-gradient(180deg, rgba(16, 31, 52, 0.96), rgba(8, 17, 31, 0.96));
-  border-color: var(--ah-border);
-}
-
-.link-ring {
-  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2;
-  --tw-ring-offset-color: var(--ah-bg-deep);
-}
-
-.grid-label {
-  @apply text-sm font-semibold uppercase tracking-[0.15em];
-  color: var(--ah-dim);
-}
-
-.bg-white,
-.bg-soft {
-  background-color: transparent !important;
-}
-
-.bg-navy {
-  background-color: #040a14 !important;
-}
-
-.border-borderBrand,
-.border-borderBrand\/80,
-.border-y,
-.border-t,
-.border-b {
-  border-color: var(--ah-border) !important;
-}
-
-.text-navy,
-.text-ink,
-.text-slate-700,
-.text-slate-600,
-.text-slate-500 {
-  color: var(--ah-text) !important;
-}
-
-.text-slate-400 {
-  color: var(--ah-dim) !important;
-}
-
-.hover\:bg-slate-100:hover,
-.hover\:bg-slate-50:hover {
-  background-color: rgba(27, 102, 255, 0.1) !important;
-}
-
-.rounded-2xl.border,
-.rounded-3xl.border,
-.rounded-full.border {
-  border-color: var(--ah-border) !important;
-}
-
-input,
-select,
-textarea {
+input, select, textarea {
   background: #07111f !important;
   color: var(--ah-text) !important;
   border-color: var(--ah-border) !important;
 }
 
-::placeholder {
-  color: #7e8a9a !important;
+::placeholder { color: #7e8a9a !important; }
+
+.proof-light,
+.proof-light .card,
+.proof-light .bg-white,
+.proof-light .bg-soft,
+.proof-light [data-proof-surface] {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color-scheme: light !important;
+}
+
+.proof-light,
+.proof-light p,
+.proof-light h2,
+.proof-light h3,
+.proof-light li,
+.proof-light span,
+.proof-light .text-navy,
+.proof-light .text-ink,
+.proof-light .text-slate-700,
+.proof-light .text-slate-600,
+.proof-light .text-slate-500,
+.proof-light .grid-label {
+  color: #071b34 !important;
+}
+
+.proof-light .proof-muted,
+.proof-light .text-slate-600,
+.proof-light .text-slate-500 {
+  color: #334155 !important;
+}
+
+.proof-light .proof-label,
+.proof-light .text-action {
+  color: #1b66ff !important;
+}
+
+.proof-light .border-borderBrand,
+.proof-light .rounded-2xl.border,
+.proof-light .rounded-3xl.border,
+.proof-light .rounded-full.border,
+.proof-light [data-proof-border] {
+  border-color: #19324d !important;
 }
