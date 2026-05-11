@@ -14,12 +14,9 @@ export function ProofBlock() {
         </p>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {representativeWork.map((item) => (
-            <div
-              key={item.scope}
-              className="rounded-3xl border border-borderBrand bg-soft p-6"
-            >
-              <span className="grid-label block mb-2">{item.tag}</span>
-              <p className="text-sm font-semibold text-navy leading-snug mb-2">{item.client}</p>
+            <div key={item.scope} className="rounded-3xl border border-borderBrand bg-soft p-6">
+              <span className="grid-label mb-2 block">{item.tag}</span>
+              <p className="mb-2 text-sm font-semibold leading-snug text-navy">{item.client}</p>
               <p className="text-sm leading-6 text-slate-600">{item.scope}</p>
             </div>
           ))}
@@ -30,16 +27,16 @@ export function ProofBlock() {
       </div>
 
       {/* Closeout documentation proof */}
-      <div className="card overflow-hidden">
+      <div className="card overflow-hidden bg-white">
         <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="border-b border-borderBrand bg-slate-50 p-6 lg:border-b-0 lg:border-r sm:p-8">
-            <div className="rounded-3xl border border-borderBrand bg-white p-6 shadow-sm">
-              <div className="flex items-start justify-between gap-4 border-b border-borderBrand pb-5">
+          <div className="border-b border-[#19324D] bg-white p-6 lg:border-b-0 lg:border-r sm:p-8">
+            <div className="rounded-3xl border border-[#19324D] bg-white p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-4 border-b border-[#19324D] pb-5">
                 <div>
-                  <p className="grid-label">Closeout packet</p>
-                  <h3 className="mt-2 text-xl font-semibold text-navy">Redacted field-work sample</h3>
+                  <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#475569]">Closeout packet</p>
+                  <h3 className="mt-2 text-xl font-bold leading-snug text-[#071B34]">Redacted field-work sample</h3>
                 </div>
-                <span className="rounded-full bg-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                <span className="rounded-full border border-[#CBD5E1] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#475569]">
                   Completed
                 </span>
               </div>
@@ -50,15 +47,15 @@ export function ProofBlock() {
                   ['Photo evidence', 'Before, during, and after photos captured when permitted by site policy.'],
                   ['Ticket closeout', 'Outcome, next action, and buyer-facing summary returned for dispatch closure.']
                 ].map(([label, value]) => (
-                  <div key={label} className="rounded-2xl border border-borderBrand bg-soft p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-action">{label}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{value}</p>
+                  <div key={label} className="rounded-2xl border border-[#19324D] bg-white p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1B66FF]">{label}</p>
+                    <p className="mt-2 text-sm font-medium leading-6 text-[#334155]">{value}</p>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-          <div className="p-8 sm:p-10">
+          <div className="bg-white p-8 sm:p-10">
             <span className="eyebrow">Documented closeout</span>
             <h2 className="mt-5 text-3xl font-semibold tracking-tight text-navy">
               Documented field execution, not vague capability claims
