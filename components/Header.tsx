@@ -10,15 +10,16 @@ const navItems = [
   { href: '/', label: 'Home' },
   { href: '/services', label: 'Services' },
   { href: '/who-we-serve', label: 'Who We Serve' },
-  { href: '/capability-statement', label: 'Capability Statement' },
-  { href: '/blog', label: 'Field Insights' },
+  { href: '/coverage', label: 'Coverage' },
+  { href: '/project-gallery', label: 'Gallery' },
+  { href: '/rfq', label: 'RFQ' },
   { href: '/dispatch', label: 'Dispatch' }
 ];
 
 function DesktopNavLink({ href, label, pathname }: { href: string; label: string; pathname: string }) {
   const active = pathname === href;
   return (
-    <Link href={href} aria-current={active ? 'page' : undefined} className={active ? 'link-ring rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#071B34]' : 'link-ring rounded-full px-4 py-2 text-sm font-semibold text-white hover:bg-white/10'}>
+    <Link href={href} aria-current={active ? 'page' : undefined} className={active ? 'link-ring rounded-full bg-white px-3 py-2 text-sm font-semibold text-[#071B34]' : 'link-ring rounded-full px-3 py-2 text-sm font-semibold text-white hover:bg-white/10'}>
       {label}
     </Link>
   );
@@ -35,7 +36,7 @@ export function Header() {
           <BrandMark className="min-w-0" tagline="ONSITE INFRASTRUCTURE EXECUTION" textColorClassName="text-white" />
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
+        <nav className="hidden items-center gap-1 xl:flex" aria-label="Primary navigation">
           {navItems.map((item) => <DesktopNavLink key={item.href} {...item} pathname={pathname} />)}
         </nav>
 
@@ -43,18 +44,18 @@ export function Header() {
           <a href={siteConfig.phoneHref} className="link-ring rounded-full border border-white/35 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">
             {siteConfig.phoneDisplay}
           </a>
-          <Link href="/dispatch" className="link-ring rounded-full bg-[#1B66FF] px-5 py-2.5 text-sm font-semibold text-white hover:bg-white hover:text-[#071B34]">
-            Request Dispatch
+          <Link href="/rfq" className="link-ring rounded-full bg-[#1B66FF] px-5 py-2.5 text-sm font-semibold text-white hover:bg-white hover:text-[#071B34]">
+            Request Quote
           </Link>
         </div>
 
-        <button type="button" className="link-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/45 text-white lg:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-nav" aria-label="Toggle navigation">
+        <button type="button" className="link-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/45 text-white xl:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-nav" aria-label="Toggle navigation">
           <span className="text-xl">{open ? '×' : '☰'}</span>
         </button>
       </div>
 
       {open ? (
-        <div id="mobile-nav" className="border-t border-white/10 bg-[#071B34] lg:hidden">
+        <div id="mobile-nav" className="border-t border-white/10 bg-[#071B34] xl:hidden">
           <div className="container-shell flex flex-col gap-3 py-4">
             {navItems.map((item) => {
               const active = pathname === item.href;
@@ -68,8 +69,8 @@ export function Header() {
               <a href={siteConfig.phoneHref} className="link-ring rounded-2xl border border-white/45 bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-white/10" onClick={() => setOpen(false)}>
                 {siteConfig.phoneDisplay}
               </a>
-              <Link href="/dispatch" className="link-ring rounded-2xl border border-[#1B66FF] bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white" onClick={() => setOpen(false)}>
-                Request Dispatch
+              <Link href="/rfq" className="link-ring rounded-2xl border border-[#1B66FF] bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white" onClick={() => setOpen(false)}>
+                Request Quote
               </Link>
             </div>
           </div>
