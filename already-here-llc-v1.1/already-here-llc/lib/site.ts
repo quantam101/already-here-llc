@@ -13,7 +13,7 @@ export const siteConfig = {
   email: 'dispatch@alreadyherellc.com',
   city: 'Phoenix, Arizona',
   address: { street: '429 N 18th Dr', city: 'Phoenix', state: 'AZ', zip: '85007', full: '429 N 18th Dr, Phoenix, AZ 85007' },
-  certifications: ['SDVOSB', 'Commercially Insured', 'SAM.gov Registered'],
+  certifications: ['SDVOSB Eligible', 'Commercially Insured', 'SAM.gov Registered'],
   trustBar: ['A+ BBB Rating', 'Operating Since 2013', 'Phoenix-Based', 'Commercial & Multi-Site Support', 'Rapid Onsite Dispatch']
 };
 
@@ -26,7 +26,7 @@ export const serviceGroups = [
   { title: 'Surveys and Site Assessment', description: 'Site assessments, infrastructure surveys, closeout photos, and documentation.', items: ['Infrastructure assessments', 'Documentation capture'], bestFit: 'Teams that need field verification.' }
 ] as const;
 
-export const buyerReasons = ['Reliable onsite execution for defined technical dispatches without consumer repair-shop positioning.', 'Technical field operations for MSPs, vendors, commercial sites, retail environments, and critical systems.', 'Structured closeout documentation with photos, field notes, equipment observations, and next-step escalation when required.', 'Procurement-ready profile with SDVOSB certification, SAM.gov registration, commercial insurance, and operating history.'] as const;
+export const buyerReasons = ['Reliable onsite execution for defined technical dispatches without consumer repair-shop positioning.', 'Technical field operations for MSPs, vendors, commercial sites, retail environments, and critical systems.', 'Structured closeout documentation with photos, field notes, equipment observations, and next-step escalation when required.', 'Procurement-ready profile with SAM.gov registration, commercial insurance, and active SDVOSB certification pursuit.'] as const;
 export const documentedWorkTypes = ['Smart hands support', 'Network troubleshooting', 'Onsite remediation', 'Rollout recovery', 'Infrastructure assessment', 'POS installs and upgrades', 'Payment device replacement', 'Endpoint refresh work', 'LAN migration support', 'Site surveys', 'Store modernization troubleshooting', 'Cradlepoint installs', 'Rack / stack support', 'Printer replacement', 'AV / media troubleshooting', 'Managed router installs', 'Wi-Fi troubleshooting', 'Low-voltage testing', 'Site verification', 'RFID reader surveys'] as const;
 export const environments = ['MSP client sites', 'Commercial sites', 'Retail', 'QSR / restaurant', 'Hospitality', 'Healthcare', 'Enterprise / office', 'AV / media environments', 'Data center / infrastructure', 'Critical systems environments'] as const;
 export const markets = ['Phoenix', 'Tempe', 'Chandler', 'Scottsdale', 'Glendale', 'Mesa', 'Peoria', 'Avondale', 'Buckeye', 'Goodyear', 'Surprise', 'Litchfield Park', 'Carefree', 'Page', 'Quartzsite', 'San Luis', 'Springerville', 'Nationwide project coverage by scope'] as const;
@@ -34,10 +34,10 @@ export const audience = [
   { title: 'MSPs and network operators', description: 'Extend field coverage for smart hands, network troubleshooting, router work, site visits, documentation collection, and remediation without carrying local headcount for every project market.' },
   { title: 'Vendors and prime contractors', description: 'Use Already Here LLC as the onsite execution layer when the scope, parts, and ticket flow are defined.' },
   { title: 'Retail and commercial operators', description: 'Support multi-site technology programs, POS work, endpoint refreshes, store modernization, and infrastructure tasks.' },
-  { title: 'Procurement teams', description: 'SDVOSB-certified and SAM.gov registered for appropriate subcontracting opportunities.' }
+  { title: 'Procurement teams', description: 'SAM.gov registered, commercially insured, and SDVOSB-eligible while actively pursuing certification for appropriate subcontracting opportunities.' }
 ] as const;
 export const closeoutItems = ['Arrival / departure notes', 'Action summary and field observations', 'Photos when permitted', 'Part swap or equipment notes', 'Escalation notes for unresolved items', 'Usable closeout language for the client-side ticket'] as const;
-export const dispatchTypes = ['Technical field operations', 'Smart hands support', 'Onsite infrastructure execution', 'Network troubleshooting', 'Rollout recovery', 'Remediation / revisit', 'POS / store tech', 'Survey / site verification', 'Healthcare / controlled environment', 'SDVOSB support', 'Critical systems support'] as const;
+export const dispatchTypes = ['Technical field operations', 'Smart hands support', 'Onsite infrastructure execution', 'Network troubleshooting', 'Rollout recovery', 'Remediation / revisit', 'POS / store tech', 'Survey / site verification', 'Healthcare / controlled environment', 'SDVOSB-eligible support', 'Critical systems support'] as const;
 export const representativeWork = [
   { client: 'National QSR chain', tag: 'POS / Retail', scope: 'POS hardware installation with documented closeout.' },
   { client: 'Enterprise infrastructure vendor', tag: 'Infrastructure', scope: 'Data center rack, cable, and verification engagement.' },
