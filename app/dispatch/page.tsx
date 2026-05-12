@@ -5,7 +5,7 @@ import { pricingTiers, siteConfig } from '@/lib/site';
 export const metadata: Metadata = {
   title: 'Request Dispatch',
   description:
-    'Submit field dispatch requests to Already Here LLC — Phoenix-based IT field execution for MSPs, vendors, healthcare-adjacent operators, and multi-site rollout programs. SDVOSB certified.',
+    'Submit field dispatch requests to Already Here LLC — Phoenix-based IT field execution for MSPs, vendors, healthcare-adjacent operators, and multi-site rollout programs.',
   alternates: { canonical: '/dispatch' }
 };
 
@@ -13,17 +13,14 @@ export default function DispatchPage() {
   return (
     <div className="container-shell py-16 lg:py-24">
       <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr]">
-
-        {/* Left rail — context, pricing, contact */}
         <div>
           <span className="eyebrow">Dispatch intake</span>
           <h1 className="section-title mt-5">Send scope. Get it handled.</h1>
           <p className="section-copy">
             Use this form to submit field work requests. Include site city, scope, schedule window, and any files that matter.
-            Coverage is confirmed against the actual scope — not assumed.
+            After submission, you receive a confirmation receipt with a dispatch ID. Scope, schedule, access, and coverage are reviewed before scheduling is confirmed.
           </p>
 
-          {/* Pricing signal — removes friction for budget-qualifying buyers */}
           <div className="mt-8 card p-6">
             <h2 className="grid-label mb-4">Commercial pricing</h2>
             <p className="text-sm text-slate-600 leading-7 mb-5">
@@ -44,7 +41,6 @@ export default function DispatchPage() {
             </div>
           </div>
 
-          {/* Urgent phone line */}
           <div className="mt-6 rounded-3xl border border-borderBrand bg-soft p-6">
             <h2 className="grid-label mb-3">Urgent / same-day requests</h2>
             <p className="text-sm text-slate-600 leading-7 mb-4">
@@ -61,28 +57,26 @@ export default function DispatchPage() {
             </a>
           </div>
 
-          {/* What happens after submission */}
           <div className="mt-6 rounded-3xl border border-borderBrand bg-soft p-6">
             <h2 className="grid-label mb-3">After you submit</h2>
-            <ol className="space-y-3 text-sm text-slate-600">
+            <ul className="space-y-3 text-sm text-slate-600">
               {[
-                'Scope is reviewed against current availability and coverage area.',
-                'You receive confirmation with scheduling details or a clarifying question.',
-                'Onsite execution with clear communication throughout.',
-                'Structured closeout documentation delivered per your ticket requirements.'
+                'Scope is reviewed against current availability, access needs, and coverage fit.',
+                'You receive confirmation with a dispatch ID, scheduling details, or a clarifying question.',
+                'Onsite execution proceeds with clear communication throughout the field window.',
+                'Structured closeout documentation is delivered per ticket requirements.'
               ].map((step, i) => (
                 <li key={step} className="flex gap-3">
                   <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-navy text-[10px] font-bold text-white mt-0.5">
                     {i + 1}
                   </span>
-                  {step}
+                  <span>{step}</span>
                 </li>
               ))}
-            </ol>
+            </ul>
           </div>
         </div>
 
-        {/* Right — form */}
         <div>
           <DispatchForm />
         </div>
