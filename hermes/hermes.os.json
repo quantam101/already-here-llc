@@ -12,7 +12,8 @@
       "no secrets in repository code",
       "auditable missions with hashed receipts",
       "safe failure with preserved production state",
-      "human-controlled policy gates for public content"
+      "human-controlled policy gates for public content",
+      "Socratic review before high-risk claims or public production changes"
     ]
   },
   "missionRegistry": {
@@ -47,6 +48,22 @@
       "risk": "low",
       "approvalRequired": false,
       "writes": [],
+      "receiptRequired": true
+    },
+    "socrates.review": {
+      "description": "Run SOCRATES readiness review against public claims, conversion paths, operational risk, security posture, and maintainability.",
+      "entrypoint": "node scripts/socrates-agent.mjs",
+      "risk": "low",
+      "approvalRequired": false,
+      "writes": [
+        "hermes/receipts/**"
+      ],
+      "blocksOn": [
+        "unsupported certification claims",
+        "secret literals in source",
+        "broken primary CTA paths",
+        "public copy exposing internal strategy"
+      ],
       "receiptRequired": true
     }
   },
