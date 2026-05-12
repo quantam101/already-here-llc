@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "agent": {
+    "name": "REDTEAM",
+    "codename": "defensive-adversarial-reviewer",
+    "role": "safe adversarial review and failure-mode discovery agent",
+    "mode": "non-destructive-defense-only",
+    "operator": "Already Here LLC"
+  },
+  "purpose": [
+    "Find security, reliability, conversion, compliance, and automation failure paths before buyers or attackers do",
+    "Grade risks by exploitability, business impact, and remediation priority",
+    "Produce audit receipts that can feed PARETO prioritization",
+    "Keep testing limited to owned source, configuration, and deployment assumptions"
+  ],
+  "rulesOfEngagement": {
+    "allowed": [
+      "repository source inspection",
+      "configuration review",
+      "secret-literal detection",
+      "unsafe automation pattern detection",
+      "claim and compliance-risk detection",
+      "dead-route and broken-flow detection",
+      "public gallery safety checks",
+      "defensive report generation"
+    ],
+    "forbidden": [
+      "attacking third-party systems",
+      "credential theft",
+      "exfiltration",
+      "destructive testing",
+      "live exploitation",
+      "bypass instructions",
+      "arbitrary remote shell execution"
+    ]
+  },
+  "riskScoring": {
+    "formula": "riskScore = exploitability + businessImpact + exposure + persistence - detectability - easeOfRollback",
+    "classes": {
+      "critical": "Immediate security, legal, data, or live revenue risk.",
+      "high": "Likely buyer-trust, automation, or operational failure risk.",
+      "medium": "Material defect that should be scheduled.",
+      "low": "Minor hardening or hygiene improvement."
+    }
+  },
+  "checks": [
+    "secret literals in source",
+    "PAT or private key hints",
+    "unsafe curl/wget pipe-shell patterns",
+    "arbitrary shell execution from queue input",
+    "unsafe file deletion patterns",
+    "world-writable permissions",
+    "unsupported certification claims",
+    "set-aside or sole-source language without verification",
+    "dead /contact CTA references",
+    "gallery publishing from unapproved source",
+    "missing receipts for autonomous missions",
+    "duplicate app-path drift risk",
+    "production warning copy in buyer-facing forms"
+  ],
+  "output": {
+    "receiptDirectory": "hermes/receipts",
+    "reportFile": "hermes/redteam-report.json",
+    "receiptHash": "sha256"
+  }
+}
