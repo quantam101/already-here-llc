@@ -1,0 +1,21 @@
+[Unit]
+Description=Already Here Gallery Rotation Agent
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=30
+EnvironmentFile=/etc/already-here/gallery-agent.env
+ExecStartPre=-/usr/bin/docker rm -f already-here-gallery-agent
+ExecStart=/usr/bin/docker run --name already-here-gallery-agent \
+  --env-file /etc/already-here/gallery-agent.env \
+  -v /opt/already-here-gallery/source:/opt/already-here-gallery/source:ro \
+  -v /opt/already-here-gallery/workspace:/workspace \
+  already-here-gallery-agent:latest
+ExecStop=/usr/bin/docker stop already-here-gallery-agent
+
+[Install]
+WantedBy=multi-user.target
