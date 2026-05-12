@@ -14,41 +14,14 @@
     "defaultTimeoutSeconds": 900
   },
   "allowedCommands": {
-    "health.check": {
-      "description": "Run Hermes health check.",
-      "command": ["node", "scripts/hermes-agentctl.mjs", "health"],
-      "risk": "low"
-    },
-    "socrates.review": {
-      "description": "Run SOCRATES readiness review.",
-      "command": ["node", "scripts/socrates-agent.mjs"],
-      "risk": "low"
-    },
-    "gallery.rotate": {
-      "description": "Run gallery rotation mission.",
-      "command": ["node", "scripts/oci-gallery-agent.mjs"],
-      "risk": "medium"
-    },
-    "drive.sync": {
-      "description": "Sync approved Google Drive gallery folder into the OCI approved source folder.",
-      "command": ["bash", "infra/oci-gallery-agent/sync-approved-drive.sh"],
-      "risk": "medium"
-    },
-    "git.status": {
-      "description": "Show repository status.",
-      "command": ["git", "status", "--short"],
-      "risk": "low"
-    }
+    "health.check": { "description": "Run Hermes health check.", "command": ["node", "scripts/hermes-agentctl.mjs", "health"], "risk": "low" },
+    "socrates.review": { "description": "Run SOCRATES readiness review.", "command": ["node", "scripts/socrates-agent.mjs"], "risk": "low" },
+    "pareto.prioritize": { "description": "Run PARETO leverage prioritization.", "command": ["node", "scripts/pareto-agent.mjs"], "risk": "low" },
+    "gallery.rotate": { "description": "Run gallery rotation mission.", "command": ["node", "scripts/oci-gallery-agent.mjs"], "risk": "medium" },
+    "drive.sync": { "description": "Sync approved Google Drive gallery folder into the OCI approved source folder.", "command": ["bash", "infra/oci-gallery-agent/sync-approved-drive.sh"], "risk": "medium" },
+    "git.status": { "description": "Show repository status.", "command": ["git", "status", "--short"], "risk": "low" }
   },
-  "forbidden": [
-    "curl pipe shell",
-    "wget pipe shell",
-    "rm -rf /",
-    "chmod 777",
-    "printing environment secrets",
-    "arbitrary bash command from queue",
-    "network listener remote shell"
-  ],
+  "forbidden": ["curl pipe shell", "wget pipe shell", "rm -rf /", "chmod 777", "printing environment secrets", "arbitrary bash command from queue", "network listener remote shell"],
   "queue": {
     "file": "hermes/runner-queue.json",
     "acceptedStatuses": ["queued"],
