@@ -1,9 +1,11 @@
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join } from 'node:path';
 
 const repoRoot = process.cwd();
 const manifestPath = join(repoRoot, 'data/gallery-manifest.json');
+const receiptsDir = join(repoRoot, 'hermes/receipts');
 const publicGalleryDir = join(repoRoot, 'public/gallery/rotating');
 const sourceDir = process.env.GALLERY_LOCAL_SOURCE_DIR || '/opt/already-here-gallery/source';
 const rotationDays = Number(process.env.GALLERY_ROTATION_DAYS || '21');
@@ -16,6 +18,48 @@ const deniedNamePatterns = [/do[-_\s]?not[-_\s]?publish/i, /private/i, /credenti
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function sha256(value) {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+function runGit(args, options = {}) {
+  return execFileSync('git', args, { cwd: repoRoot, stdio: options.stdio || 'pipe', encoding: 'utf8' });
+}
+
+function safeGit(args) {
+  try {
+    return runGit(args).trim();
+  } catch (error) {
+    return `git_error:${error.message}`;
+  }
+}
+
+function writeReceipt(status, detail = {}) {
+  mkdirSync(receiptsDir, { recursive: true });
+  const receipt = {
+    schemaVersion: 1,
+    mission: 'gallery.rotate',
+    startedAt: detail.startedAt,
+    finishedAt: nowIso(),
+    status,
+    detail,
+    gitStatus: safeGit(['status', '--short']),
+    changedFiles: safeGit(['diff', '--name-only']).split('\n').filter(Boolean),
+    environmentSummary: {
+      sourceDir,
+      rotationDays,
+      publishLimit,
+      gitBranch,
+      gitRemote
+    }
+  };
+  const canonical = JSON.stringify(receipt, null, 2);
+  const hash = sha256(canonical);
+  const file = join(receiptsDir, `${receipt.finishedAt.replace(/[:.]/g, '-')}-gallery-rotate.json`);
+  writeFileSync(file, JSON.stringify({ ...receipt, hash }, null, 2) + '\n');
+  return file;
 }
 
 function readManifest() {
@@ -97,13 +141,9 @@ function copySelected(selected) {
   });
 }
 
-function runGit(args, options = {}) {
-  return execFileSync('git', args, { cwd: repoRoot, stdio: options.stdio || 'pipe', encoding: 'utf8' });
-}
-
 function commitIfChanged() {
   runGit(['checkout', gitBranch], { stdio: 'inherit' });
-  runGit(['add', 'data/gallery-manifest.json', 'public/gallery/rotating'], { stdio: 'inherit' });
+  runGit(['add', 'data/gallery-manifest.json', 'public/gallery/rotating', 'hermes/receipts'], { stdio: 'inherit' });
   const diff = runGit(['diff', '--cached', '--name-only']).trim();
   if (!diff) return false;
   runGit(['commit', '-m', `${commitPrefix} ${nowIso().slice(0, 10)}`], { stdio: 'inherit' });
@@ -112,9 +152,12 @@ function commitIfChanged() {
 }
 
 function main() {
+  const startedAt = nowIso();
   const manifest = readManifest();
   if (!shouldRotate(manifest)) {
     console.log('Gallery rotation skipped; interval has not elapsed.');
+    writeReceipt('skipped', { startedAt, reason: 'interval_not_elapsed' });
+    commitIfChanged();
     return;
   }
 
@@ -126,6 +169,7 @@ function main() {
       audit: [...(manifest.audit || []), { at: nowIso(), event: 'rotation_skipped', detail: `No approved images found in ${sourceDir}` }].slice(-50)
     };
     writeManifest(next);
+    writeReceipt('skipped', { startedAt, reason: 'no_candidates', sourceDir });
     console.log('No candidate images found. Manifest audit updated.');
     commitIfChanged();
     return;
@@ -144,8 +188,14 @@ function main() {
     audit: [...(manifest.audit || []), { at: nowIso(), event: 'rotation_complete', detail: `Published ${images.length} gallery images from ${candidates.length} candidates.` }].slice(-50)
   };
   writeManifest(next);
+  writeReceipt('success', { startedAt, candidates: candidates.length, published: images.length, sourceDir });
   const committed = commitIfChanged();
   console.log(committed ? 'Gallery rotation committed and pushed.' : 'Gallery rotation produced no git changes.');
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  writeReceipt('failed', { startedAt: nowIso(), error: error instanceof Error ? error.message : 'unknown_error' });
+  throw error;
+}
