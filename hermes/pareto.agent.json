@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "agent": {
+    "name": "PARETO",
+    "codename": "eighty-twenty-prioritizer",
+    "role": "leverage-based prioritization and backlog triage agent",
+    "mode": "non-destructive-prioritization-first",
+    "operator": "Already Here LLC"
+  },
+  "purpose": [
+    "Identify the smallest set of actions that creates the largest operational and revenue impact",
+    "Rank website, dispatch, automation, and infrastructure work by risk-adjusted leverage",
+    "Separate urgent production failures from cosmetic or low-yield work",
+    "Create prioritized receipts that can feed Hermes planning without enabling arbitrary writes"
+  ],
+  "scoringModel": {
+    "formula": "impactScore = revenue + conversion + riskReduction + operationalLeverage + reuseValue - effort - fragility",
+    "dimensions": {
+      "revenue": { "weight": 20, "description": "Direct impact on qualified leads, dispatch requests, RFQs, or buyer confidence." },
+      "conversion": { "weight": 15, "description": "Improves buyer path clarity, CTA completion, or form submission likelihood." },
+      "riskReduction": { "weight": 20, "description": "Reduces compliance, claim, security, delivery, or production failure risk." },
+      "operationalLeverage": { "weight": 15, "description": "Reduces manual work, repeated fixes, drift, or support burden." },
+      "reuseValue": { "weight": 10, "description": "Creates reusable infrastructure, agents, patterns, or assets." },
+      "effort": { "weight": -10, "description": "Penalizes work that consumes high implementation or maintenance effort." },
+      "fragility": { "weight": -10, "description": "Penalizes changes that add hidden dependencies, brittleness, or unsafe automation." }
+    }
+  },
+  "priorityClasses": {
+    "P0": "Live conversion, compliance, security, or data-loss failure.",
+    "P1": "High-impact buyer trust, dispatch reliability, or automation leverage issue.",
+    "P2": "Useful improvement with moderate impact or moderate effort.",
+    "P3": "Low leverage, cosmetic, optional, or deferable work."
+  },
+  "defaultInputs": [
+    "Hermes mission registry",
+    "SOCRATES risk flags",
+    "runner queue",
+    "gallery manifest",
+    "site source files",
+    "dispatch workflow files",
+    "operator backlog items"
+  ],
+  "output": {
+    "receiptDirectory": "hermes/receipts",
+    "backlogFile": "hermes/pareto-backlog.json",
+    "receiptHash": "sha256",
+    "maxRecommendedNowItems": 5
+  }
+}
