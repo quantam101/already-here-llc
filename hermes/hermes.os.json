@@ -14,7 +14,8 @@
       "safe failure with preserved production state",
       "human-controlled policy gates for public content",
       "Socratic review before high-risk claims or public production changes",
-      "Pareto prioritization before expanding backlog or automation scope"
+      "Pareto prioritization before expanding backlog or automation scope",
+      "Red-team defensive review before trusting automation expansion"
     ]
   },
   "missionRegistry": {
@@ -52,6 +53,15 @@
       "approvalRequired": false,
       "writes": ["hermes/pareto-backlog.json", "hermes/receipts/**"],
       "receiptRequired": true
+    },
+    "redteam.review": {
+      "description": "Run REDTEAM defensive adversarial review against source, automation, public claims, and runner safety.",
+      "entrypoint": "node scripts/redteam-agent.mjs",
+      "risk": "low",
+      "approvalRequired": false,
+      "writes": ["hermes/redteam-report.json", "hermes/receipts/**"],
+      "blocksOn": ["secret literals", "arbitrary runner execution", "unsafe shell patterns", "unsupported public claims", "dead buyer routes"],
+      "receiptRequired": true
     }
   },
   "policyGates": {
@@ -61,7 +71,7 @@
     },
     "gitWrites": {
       "defaultBranch": "main",
-      "allowedPaths": ["data/**", "public/gallery/rotating/**", "hermes/receipts/**", "hermes/pareto-backlog.json"],
+      "allowedPaths": ["data/**", "public/gallery/rotating/**", "hermes/receipts/**", "hermes/pareto-backlog.json", "hermes/redteam-report.json"],
       "preserveOnFailure": true
     }
   },
