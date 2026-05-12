@@ -5,11 +5,14 @@ This agent runs continuously on an Oracle Cloud Infrastructure VM and rotates ap
 ## Operating model
 
 ```text
-Approved photo folder on OCI VM
-→ OCI gallery agent scans folder every few hours
-→ agent enforces 14/21 day rotation interval
+Google Drive approved gallery folder
+→ rclone copies approved photos to OCI local approved folder
+→ Hermes health check runs
+→ SOCRATES readiness review runs
+→ OCI gallery agent checks rotation interval
 → selected images are copied into public/gallery/rotating
 → data/gallery-manifest.json is updated
+→ hermes/receipts audit files are written
 → agent commits and pushes to GitHub
 → Vercel deploys production
 ```
@@ -32,49 +35,46 @@ serial
 secret
 ```
 
-Human review is still required before placing images in the approved source folder.
+Human review is required before placing images in the approved Google Drive source folder.
 
-## OCI VM setup
+## Fast install on OCI VM
 
-Create folders:
+Clone this repo on the Oracle VM, then run from the repository root:
 
 ```bash
-sudo mkdir -p /opt/already-here-gallery/source
-sudo mkdir -p /opt/already-here-gallery/workspace
-sudo mkdir -p /etc/already-here
+sudo bash infra/oci-gallery-agent/install-oci-agent.sh
 ```
 
-Copy approved photos into:
+The installer handles:
 
 ```text
-/opt/already-here-gallery/source
+Git install
+Docker install
+rclone install
+required folders
+systemd service files
+systemd timer files
+Docker image build
+service enablement
 ```
 
-## Build Docker image
+It creates this file if missing:
 
-From the repository root on the OCI VM:
-
-```bash
-docker build -f infra/oci-gallery-agent/Dockerfile -t already-here-gallery-agent:latest .
+```text
+/etc/already-here/gallery-agent.env
 ```
 
-## Environment file
+Edit it before starting the services.
 
-Create:
-
-```bash
-sudo nano /etc/already-here/gallery-agent.env
-```
-
-Use `gallery-agent.env.example` as the template.
-
-Required value:
+## Required environment value
 
 ```bash
 GALLERY_REPO_URL=https://x-access-token:<TOKEN>@github.com/quantam101/already-here-llc.git
 ```
 
-Recommended production values:
+Use a token with narrow repo write access. Do not commit the token.
+
+## Recommended production values
 
 ```bash
 GALLERY_GIT_BRANCH=main
@@ -83,56 +83,102 @@ GALLERY_ROTATION_DAYS=21
 GALLERY_PUBLISH_LIMIT=6
 GALLERY_SLEEP_SECONDS=21600
 GALLERY_FORCE_ROTATION=false
+RCLONE_REMOTE=alreadyhere-drive
+RCLONE_SOURCE_PATH=Already Here LLC/Website Gallery/Approved
+RCLONE_DESTINATION=/opt/already-here-gallery/source
 ```
 
-## Install systemd service
+## Configure Google Drive sync
+
+Run:
 
 ```bash
-sudo cp infra/oci-gallery-agent/already-here-gallery-agent.service /etc/systemd/system/already-here-gallery-agent.service
-sudo systemctl daemon-reload
-sudo systemctl enable already-here-gallery-agent
-sudo systemctl start already-here-gallery-agent
+sudo rclone config
 ```
 
-## Check status
-
-```bash
-sudo systemctl status already-here-gallery-agent
-sudo journalctl -u already-here-gallery-agent -f
-```
-
-## Force one rotation
-
-Temporarily set this in `/etc/already-here/gallery-agent.env`:
-
-```bash
-GALLERY_FORCE_ROTATION=true
-```
-
-Then restart:
-
-```bash
-sudo systemctl restart already-here-gallery-agent
-```
-
-After the first successful run, set it back to:
-
-```bash
-GALLERY_FORCE_ROTATION=false
-```
-
-## Google Drive sync option
-
-Use rclone or another Drive sync tool to mirror only your approved Google Drive gallery folder into:
+Create a Google Drive remote named:
 
 ```text
-/opt/already-here-gallery/source
+alreadyhere-drive
 ```
 
 Recommended Drive structure:
 
 ```text
 Already Here LLC / Website Gallery / Approved
+Already Here LLC / Website Gallery / Do Not Publish
+Already Here LLC / Website Gallery / Archive
 ```
 
-Only sync approved images into the OCI source folder. Do not sync private project archives directly into the publish source.
+Only the Approved folder should be configured as the rclone source.
+
+## Start services
+
+After editing `/etc/already-here/gallery-agent.env` and configuring rclone:
+
+```bash
+sudo systemctl start already-here-drive-sync.service
+sudo systemctl start already-here-drive-sync.timer
+sudo systemctl start already-here-gallery-agent.service
+```
+
+Enable on boot if not already enabled:
+
+```bash
+sudo systemctl enable already-here-drive-sync.timer
+sudo systemctl enable already-here-gallery-agent.service
+```
+
+## Check status
+
+```bash
+sudo systemctl status already-here-drive-sync.timer
+sudo systemctl status already-here-gallery-agent.service
+sudo journalctl -u already-here-drive-sync.service -n 100 --no-pager
+sudo journalctl -u already-here-gallery-agent.service -f
+```
+
+## Force one rotation
+
+Temporarily set:
+
+```bash
+GALLERY_FORCE_ROTATION=true
+```
+
+Restart:
+
+```bash
+sudo systemctl restart already-here-gallery-agent.service
+```
+
+After the first successful pushed commit, restore:
+
+```bash
+GALLERY_FORCE_ROTATION=false
+```
+
+Then restart again.
+
+## Verify successful operation
+
+A successful run should create or update:
+
+```text
+data/gallery-manifest.json
+public/gallery/rotating/*
+hermes/receipts/*
+```
+
+Then GitHub should receive a commit and Vercel should deploy.
+
+## Rollback
+
+If a bad photo publishes:
+
+```bash
+git revert <bad-gallery-commit>
+git push origin main
+```
+
+Then remove the bad image from the Google Drive Approved folder or move it into Do Not Publish.
