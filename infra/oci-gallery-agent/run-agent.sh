@@ -23,6 +23,9 @@ while true; do
   git reset --hard "origin/$GALLERY_GIT_BRANCH"
   node scripts/hermes-agentctl.mjs health || echo "[$(date -Is)] Hermes health check failed"
 
+  echo "[$(date -Is)] SOCRATES readiness review"
+  node scripts/socrates-agent.mjs || echo "[$(date -Is)] SOCRATES review requires attention"
+
   echo "[$(date -Is)] Starting gallery.rotate mission"
   node /agent/oci-gallery-agent.mjs || echo "[$(date -Is)] Gallery agent run failed"
 
