@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "source": "fallback",
+  "generatedAt": null,
+  "rotationDays": 21,
+  "images": [],
+  "audit": [
+    {
+      "at": null,
+      "event": "initial_manifest",
+      "detail": "OCI-hosted gallery rotation agent is ready for Drive configuration."
+    }
+  ]
+}
