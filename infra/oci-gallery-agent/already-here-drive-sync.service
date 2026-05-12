@@ -1,0 +1,14 @@
+[Unit]
+Description=Already Here Approved Gallery Drive Sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/already-here/gallery-agent.env
+ExecStart=/usr/local/bin/sync-approved-drive.sh
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
