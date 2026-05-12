@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": null,
+  "items": [
+    {
+      "id": "p0-verify-oci-agent-install",
+      "title": "Install and verify OCI Hermes/gallery runner on Oracle VM",
+      "class": "P0",
+      "status": "open",
+      "revenue": 15,
+      "conversion": 10,
+      "riskReduction": 20,
+      "operationalLeverage": 15,
+      "reuseValue": 10,
+      "effort": 8,
+      "fragility": 6,
+      "notes": "Automation is built in repo; value is not realized until VM install, env configuration, rclone setup, and first receipt are confirmed."
+    },
+    {
+      "id": "p1-add-approved-gallery-photos",
+      "title": "Populate approved gallery source with safe project photos",
+      "class": "P1",
+      "status": "open",
+      "revenue": 14,
+      "conversion": 15,
+      "riskReduction": 8,
+      "operationalLeverage": 8,
+      "reuseValue": 8,
+      "effort": 5,
+      "fragility": 4,
+      "notes": "Project Gallery currently falls back when no approved manifest images exist. Approved photos create immediate trust lift."
+    },
+    {
+      "id": "p1-test-rfq-dispatch-receipts",
+      "title": "Run RFQ and dispatch end-to-end receipt tests",
+      "class": "P1",
+      "status": "open",
+      "revenue": 18,
+      "conversion": 14,
+      "riskReduction": 18,
+      "operationalLeverage": 12,
+      "reuseValue": 8,
+      "effort": 4,
+      "fragility": 4,
+      "notes": "Submit test RFQ and dispatch with attachment; verify dispatch mailbox, requester receipt, JSON record, and file delivery."
+    },
+    {
+      "id": "p1-socrates-live-audit",
+      "title": "Run SOCRATES against live source after OCI runner starts",
+      "class": "P1",
+      "status": "open",
+      "revenue": 8,
+      "conversion": 8,
+      "riskReduction": 20,
+      "operationalLeverage": 12,
+      "reuseValue": 9,
+      "effort": 3,
+      "fragility": 3,
+      "notes": "Confirms current source has no overclaims, broken routes, or secret literals and writes receipt."
+    },
+    {
+      "id": "p2-add-case-study-captions",
+      "title": "Add structured captions and categories for approved gallery photos",
+      "class": "P2",
+      "status": "open",
+      "revenue": 8,
+      "conversion": 10,
+      "riskReduction": 4,
+      "operationalLeverage": 7,
+      "reuseValue": 8,
+      "effort": 6,
+      "fragility": 4,
+      "notes": "Improves gallery interpretation once real approved photos exist."
+    }
+  ]
+}
