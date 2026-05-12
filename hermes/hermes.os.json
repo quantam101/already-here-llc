@@ -13,7 +13,8 @@
       "auditable missions with hashed receipts",
       "safe failure with preserved production state",
       "human-controlled policy gates for public content",
-      "Socratic review before high-risk claims or public production changes"
+      "Socratic review before high-risk claims or public production changes",
+      "Pareto prioritization before expanding backlog or automation scope"
     ]
   },
   "missionRegistry": {
@@ -22,25 +23,10 @@
       "entrypoint": "node scripts/oci-gallery-agent.mjs",
       "risk": "medium",
       "approvalRequired": false,
-      "writes": [
-        "data/gallery-manifest.json",
-        "public/gallery/rotating/**"
-      ],
-      "forbiddenInputs": [
-        "Do Not Publish",
-        "private archives",
-        "client credentials",
-        "medical or patient records",
-        "license plates",
-        "faces without approval",
-        "badges",
-        "visible serial numbers"
-      ],
+      "writes": ["data/gallery-manifest.json", "public/gallery/rotating/**"],
+      "forbiddenInputs": ["Do Not Publish", "private archives", "client credentials", "medical or patient records", "license plates", "faces without approval", "badges", "visible serial numbers"],
       "receiptRequired": true,
-      "defaultSchedule": {
-        "checkEverySeconds": 21600,
-        "rotationDays": 21
-      }
+      "defaultSchedule": { "checkEverySeconds": 21600, "rotationDays": 21 }
     },
     "health.check": {
       "description": "Verify Hermes OS configuration, manifest availability, repo state, and gallery agent prerequisites.",
@@ -55,49 +41,33 @@
       "entrypoint": "node scripts/socrates-agent.mjs",
       "risk": "low",
       "approvalRequired": false,
-      "writes": [
-        "hermes/receipts/**"
-      ],
-      "blocksOn": [
-        "unsupported certification claims",
-        "secret literals in source",
-        "broken primary CTA paths",
-        "public copy exposing internal strategy"
-      ],
+      "writes": ["hermes/receipts/**"],
+      "blocksOn": ["unsupported certification claims", "secret literals in source", "broken primary CTA paths", "public copy exposing internal strategy"],
+      "receiptRequired": true
+    },
+    "pareto.prioritize": {
+      "description": "Run PARETO leverage prioritization across open backlog items and produce top recommended actions.",
+      "entrypoint": "node scripts/pareto-agent.mjs",
+      "risk": "low",
+      "approvalRequired": false,
+      "writes": ["hermes/pareto-backlog.json", "hermes/receipts/**"],
       "receiptRequired": true
     }
   },
   "policyGates": {
     "publicContent": {
       "default": "approved-folder-only",
-      "requiresHumanApprovalFor": [
-        "new client names",
-        "new claims of certification",
-        "case-study photos with identifiable details",
-        "regulated or confidential environments"
-      ]
+      "requiresHumanApprovalFor": ["new client names", "new claims of certification", "case-study photos with identifiable details", "regulated or confidential environments"]
     },
     "gitWrites": {
       "defaultBranch": "main",
-      "allowedPaths": [
-        "data/**",
-        "public/gallery/rotating/**",
-        "hermes/receipts/**"
-      ],
+      "allowedPaths": ["data/**", "public/gallery/rotating/**", "hermes/receipts/**", "hermes/pareto-backlog.json"],
       "preserveOnFailure": true
     }
   },
   "receipts": {
     "directory": "hermes/receipts",
     "hash": "sha256",
-    "include": [
-      "mission",
-      "startedAt",
-      "finishedAt",
-      "status",
-      "gitStatus",
-      "changedFiles",
-      "environmentSummary"
-    ]
+    "include": ["mission", "startedAt", "finishedAt", "status", "gitStatus", "changedFiles", "environmentSummary"]
   }
 }
