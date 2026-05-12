@@ -22,7 +22,7 @@ export const siteConfig = {
     zip: '85007',
     full: '429 N 18th Dr, Phoenix, AZ 85007'
   },
-  certifications: ['SDVOSB', 'Commercially Insured', 'SAM.gov Registered'],
+  certifications: ['SDVOSB Eligible', 'Commercially Insured', 'SAM.gov Registered'],
   trustBar: ['A+ BBB Rating', 'Operating Since 2013', 'Phoenix-Based', 'Commercial & Multi-Site Support', 'Rapid Onsite Dispatch']
 };
 
@@ -75,7 +75,7 @@ export const buyerReasons = [
   'Reliable onsite execution for defined technical dispatches without consumer repair-shop positioning.',
   'Technical field operations for MSPs, vendors, commercial sites, retail environments, and critical systems.',
   'Structured closeout documentation with photos, field notes, equipment observations, and next-step escalation when required.',
-  'Procurement-ready profile with SDVOSB certification, SAM.gov registration, commercial insurance, and operating history.'
+  'Procurement-ready profile with SAM.gov registration, commercial insurance, and active SDVOSB certification pursuit.'
 ] as const;
 
 export const documentedWorkTypes = [
@@ -162,9 +162,9 @@ export const audience = [
       'Support multi-site technology programs, POS work, endpoint refreshes, store modernization, rollout recovery, and commercial infrastructure tasks.'
   },
   {
-    title: 'Government primes and SDVOSB set-aside buyers',
+    title: 'Procurement teams',
     description:
-      'Already Here LLC is SDVOSB-certified and SAM.gov registered. Eligible for set-aside, sole-source, and subcontracting opportunities under federal and state procurement programs.'
+      'SAM.gov registered, commercially insured, and SDVOSB-eligible while actively pursuing certification for appropriate subcontracting opportunities.'
   }
 ] as const;
 
@@ -187,7 +187,7 @@ export const dispatchTypes = [
   'POS / store tech',
   'Survey / site verification',
   'Healthcare / controlled environment',
-  'Government / SDVOSB set-aside',
+  'SDVOSB-eligible support',
   'Critical systems support'
 ] as const;
 
