@@ -13,15 +13,19 @@ fi
 
 cd /workspace/repo
 
-git config user.name "Already Here Gallery Agent"
+git config user.name "Already Here Hermes Agent"
 git config user.email "dispatch@alreadyherellc.com"
 
 while true; do
-  echo "[$(date -Is)] Starting gallery rotation check"
+  echo "[$(date -Is)] Hermes health check"
   git fetch origin "$GALLERY_GIT_BRANCH"
   git checkout "$GALLERY_GIT_BRANCH"
   git reset --hard "origin/$GALLERY_GIT_BRANCH"
+  node scripts/hermes-agentctl.mjs health || echo "[$(date -Is)] Hermes health check failed"
+
+  echo "[$(date -Is)] Starting gallery.rotate mission"
   node /agent/oci-gallery-agent.mjs || echo "[$(date -Is)] Gallery agent run failed"
+
   echo "[$(date -Is)] Sleeping ${GALLERY_SLEEP_SECONDS}s"
   sleep "$GALLERY_SLEEP_SECONDS"
 done
