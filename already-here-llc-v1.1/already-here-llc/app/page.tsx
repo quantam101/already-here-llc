@@ -43,7 +43,7 @@ export default function HomePage() {
             <div className="mt-10 rounded-3xl border border-borderBrand bg-soft px-5 py-5">
               <p className="grid-label">Trust bar</p>
               <div className="mt-4 flex flex-wrap gap-2">
-                {['A+ BBB Rating', 'Operating Since 2013', 'Phoenix-Based', 'Commercial & Multi-Site Support', 'Rapid Onsite Dispatch'].map((item) => (
+                {['Commercially Insured', 'Operating Since 2013', 'Phoenix-Based', 'Commercial & Multi-Site Support', 'Rapid Onsite Dispatch'].map((item) => (
                   <span key={item} className="rounded-full border border-borderBrand bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">{item}</span>
                 ))}
               </div>
@@ -118,7 +118,7 @@ export default function HomePage() {
       <section className="container-shell py-16 lg:py-24">
         <div className="card bg-navy p-8 text-white sm:p-10 lg:p-12">
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div><span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/80">Ready to engage</span><h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">Need onsite infrastructure execution for a project site?</h2><p className="mt-4 max-w-3xl text-base leading-7 text-white/80">Send the scope, target city, schedule window, and any files that matter. Already Here LLC will assess coverage fit and execute the site work cleanly when the dispatch is confirmed.</p><p className="mt-3 text-sm text-white/60">SDVOSB-certified · SAM.gov registered</p></div>
+            <div><span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/80">Ready to engage</span><h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">Need onsite infrastructure execution for a project site?</h2><p className="mt-4 max-w-3xl text-base leading-7 text-white/80">Send the scope, target city, schedule window, and any files that matter. Already Here LLC will assess coverage fit and execute the site work cleanly when the dispatch is confirmed.</p><p className="mt-3 text-sm text-white/60">SDVOSB-certified Â· SAM.gov registered</p></div>
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col"><Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-navy transition hover:bg-slate-100">Request Dispatch</Link><a href={siteConfig.phoneHref} className="link-ring inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">{siteConfig.phoneDisplay}</a></div>
           </div>
         </div>
