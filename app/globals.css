@@ -124,3 +124,47 @@ textarea {
 ::placeholder {
   color: #7e8a9a !important;
 }
+
+.proof-light,
+.proof-light .card,
+.proof-light .bg-white,
+.proof-light .bg-soft,
+.proof-light [data-proof-surface] {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color-scheme: light !important;
+}
+
+.proof-light,
+.proof-light p,
+.proof-light h2,
+.proof-light h3,
+.proof-light li,
+.proof-light span,
+.proof-light .text-navy,
+.proof-light .text-ink,
+.proof-light .text-slate-700,
+.proof-light .text-slate-600,
+.proof-light .text-slate-500,
+.proof-light .grid-label {
+  color: #071b34 !important;
+}
+
+.proof-light .proof-muted,
+.proof-light .text-slate-600,
+.proof-light .text-slate-500 {
+  color: #334155 !important;
+}
+
+.proof-light .proof-label,
+.proof-light .text-action {
+  color: #1b66ff !important;
+}
+
+.proof-light .border-borderBrand,
+.proof-light .rounded-2xl.border,
+.proof-light .rounded-3xl.border,
+.proof-light .rounded-full.border,
+.proof-light [data-proof-border] {
+  border-color: #19324d !important;
+}
