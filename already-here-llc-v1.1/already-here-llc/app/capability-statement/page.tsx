@@ -3,34 +3,34 @@ import Link from 'next/link';
 import { naicsCodes, representativeWork, siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Capability Statement | SDVOSB Field Execution',
+  title: 'Capability Statement | Field Execution Partner',
   description:
-    'Already Here LLC capability statement — SDVOSB-certified Phoenix field execution partner for MSPs, government primes, healthcare-adjacent operators, and rollout programs. SAM.gov registered.',
+    'Already Here LLC capability statement â SAM.gov registered field execution partner for MSPs, government primes, healthcare-adjacent operators, and rollout programs. SAM.gov registered.',
   alternates: { canonical: '/capability-statement' }
 };
 
 const coreCompetencies = [
   'MSP smart-hands and remote team onsite follow-through',
-  'Infrastructure field work — rack/stack, patching, cabling, port verification',
+  'Infrastructure field work â rack/stack, patching, cabling, port verification',
   'POS, kiosk, and payment device installation and support',
   'Healthcare-adjacent and controlled environment field execution',
   'RFID reader surveys and multi-AP documentation runs',
   'Rollout, modernization, and multi-site program execution',
   'Documentation-driven closeout and photo verification per ticket',
   'Site surveys, store-level audits, and ground-truth verification',
-  'Managed router installs — Cradlepoint, SD-WAN, Starlink',
-  'Government-adjacent and SDVOSB set-aside field engagements'
+  'Managed router installs â Cradlepoint, SD-WAN, Starlink',
+  'Government-adjacent field engagements and federal program support'
 ];
 
 const differentiators = [
   'SDVOSB-certified for qualified subcontracting and procurement opportunities',
   'SAM.gov registered',
-  'Commercially insured — General Liability and Professional Liability',
+  'Commercially insured â General Liability and Professional Liability',
   'IT field experience across healthcare, enterprise, government-adjacent, retail, QSR, and data center environments',
   'Phoenix metro primary coverage with qualified Arizona statewide travel for project-based engagements',
   'Documented execution history across retail, infrastructure, healthcare-adjacent, and smart-hands work',
   'Structured closeout with photo documentation delivered per ticket',
-  'Field Nation and WorkMarket dispatch history — qualified buyer verification available on request'
+  'Field Nation and WorkMarket dispatch history â qualified buyer verification available on request'
 ];
 
 export default function CapabilityStatementPage() {
@@ -41,14 +41,14 @@ export default function CapabilityStatementPage() {
       <div className="card p-8 sm:p-10 mb-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <span className="eyebrow">Capability Statement · {year}</span>
+            <span className="eyebrow">Capability Statement Â· {year}</span>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-navy sm:text-5xl">Already Here LLC</h1>
             <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-600">
               Phoenix-based onsite infrastructure execution partner for MSPs, government primes, vendors, healthcare-adjacent operators, and rollout programs.
             </p>
           </div>
           <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end lg:gap-3 shrink-0">
-            <span className="rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-slate-600">SDVOSB Certified</span>
+            <span className="rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-slate-600">SDVOSB Eligible</span>
             <span className="rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-slate-600">SAM.gov Registered</span>
             <span className="rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-slate-600">Commercially Insured</span>
           </div>
