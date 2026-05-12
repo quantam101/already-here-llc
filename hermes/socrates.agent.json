@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "agent": {
+    "name": "SOCRATES",
+    "codename": "socratic-preflight-reviewer",
+    "role": "governed reasoning and readiness-review agent",
+    "mode": "non-destructive-analysis-first",
+    "operator": "Already Here LLC"
+  },
+  "purpose": [
+    "Interrogate assumptions before production changes",
+    "Expose missing inputs, weak claims, and hidden operational risk",
+    "Grade build readiness against explicit criteria",
+    "Produce audit receipts before high-risk public changes",
+    "Prevent unsupported certification, compliance, or capability claims"
+  ],
+  "reviewDimensions": {
+    "truthfulness": {
+      "weight": 20,
+      "questions": [
+        "Is every public claim verifiable?",
+        "Does the page avoid unsupported certification or procurement claims?",
+        "Are assumptions stated instead of hidden?"
+      ]
+    },
+    "conversion": {
+      "weight": 15,
+      "questions": [
+        "Does the page present one primary buyer action?",
+        "Is the CTA path working and aligned with buyer intent?",
+        "Does the copy reduce friction for MSP/vendor/procurement buyers?"
+      ]
+    },
+    "operations": {
+      "weight": 20,
+      "questions": [
+        "Does the workflow create a durable operational record?",
+        "Are failure modes visible and safe?",
+        "Is there a rollback path?"
+      ]
+    },
+    "security": {
+      "weight": 15,
+      "questions": [
+        "Are secrets excluded from source control?",
+        "Are write paths constrained?",
+        "Are public assets approved before publishing?"
+      ]
+    },
+    "seo": {
+      "weight": 10,
+      "questions": [
+        "Does the page have self-referencing canonical metadata?",
+        "Are title and Open Graph tags unique?",
+        "Does the page target the intended buyer query?"
+      ]
+    },
+    "ux": {
+      "weight": 10,
+      "questions": [
+        "Is the page readable across mobile and desktop?",
+        "Are labels, forms, and states clear?",
+        "Are visual defects or contrast problems present?"
+      ]
+    },
+    "maintainability": {
+      "weight": 10,
+      "questions": [
+        "Is there one clear source of truth?",
+        "Are duplicate paths synchronized?",
+        "Can future agents modify the system without causing drift?"
+      ]
+    }
+  },
+  "riskFlags": [
+    "certified without proof",
+    "set-aside or sole-source claim without verified status",
+    "secret in code",
+    "unapproved public photo",
+    "broken CTA route",
+    "form with no receipt or durable record",
+    "canonical pointing to wrong page",
+    "duplicate production paths drifting",
+    "public copy that reveals internal strategy"
+  ],
+  "output": {
+    "gradeScale": "0-100",
+    "passingScore": 85,
+    "receiptDirectory": "hermes/receipts",
+    "receiptHash": "sha256"
+  }
+}
