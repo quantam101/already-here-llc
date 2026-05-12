@@ -1,0 +1,17 @@
+[Unit]
+Description=Hermes OCI Allowlisted Runner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=30
+EnvironmentFile=/etc/already-here/hermes-runner.env
+WorkingDirectory=/opt/hermes-runner/repo
+ExecStart=/usr/local/bin/hermes-oci-runner-loop.sh
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
