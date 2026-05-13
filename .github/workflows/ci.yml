@@ -40,3 +40,12 @@ jobs:
 
       - name: Test
         run: npm run test --if-present
+
+      - name: Content guard
+        run: npm run qa:content --if-present
+
+      - name: SEO route audit
+        run: npm run qa:seo --if-present
+
+      - name: Quality gate
+        run: npm run qa:gate --if-present
