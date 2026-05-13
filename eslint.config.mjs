@@ -13,6 +13,14 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    ignores: [
+      "already-here-llc-v1.1/**",
+      "apply-patches.js",
+      ".next/**",
+      "node_modules/**"
+    ]
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 
