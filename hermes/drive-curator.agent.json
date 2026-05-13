@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "agent": {
+    "name": "DRIVE_CURATOR",
+    "codename": "approved-gallery-source-curator",
+    "role": "Google Drive photo-source curation agent for the public project gallery",
+    "mode": "local-rclone-governed-automation",
+    "operator": "Already Here LLC"
+  },
+  "purpose": [
+    "Scan Oracle-synced Google Drive candidate folders for possible project-gallery photos",
+    "Reject unsafe filenames and restricted categories before public staging",
+    "Stage only safe image files into the approved OCI gallery source folder",
+    "Write audit receipts for every curation run",
+    "Feed the gallery rotation agent without publishing arbitrary Drive content"
+  ],
+  "sourceModel": {
+    "driveRootFolderName": "already_here_llc",
+    "driveRootFolderId": "1Lp0LdpVer1hh39A6oCzbCAOgenWkAJxW",
+    "requiredDriveStructure": [
+      "already_here_llc/Website Gallery/Candidates",
+      "already_here_llc/Website Gallery/Approved",
+      "already_here_llc/Website Gallery/Current Projects",
+      "already_here_llc/Website Gallery/Archive",
+      "already_here_llc/Website Gallery/Do Not Publish"
+    ],
+    "oracleLocalPaths": {
+      "candidates": "/opt/already-here-gallery/drive-candidates",
+      "approved": "/opt/already-here-gallery/source",
+      "quarantine": "/opt/already-here-gallery/quarantine"
+    }
+  },
+  "allowedExtensions": [".jpg", ".jpeg", ".png", ".webp"],
+  "rejectPatterns": [
+    "do-not-publish",
+    "private",
+    "credential",
+    "badge",
+    "license",
+    "medical",
+    "patient",
+    "serial",
+    "secret",
+    "password",
+    "address",
+    "qr",
+    "face",
+    "id-card"
+  ],
+  "writes": [
+    "/opt/already-here-gallery/source/**",
+    "/opt/already-here-gallery/quarantine/**",
+    "hermes/receipts/**"
+  ],
+  "receiptRequired": true,
+  "publicSafety": {
+    "default": "reject-on-name-risk",
+    "humanReviewStillRequiredFor": [
+      "faces",
+      "badges",
+      "credentials",
+      "license plates",
+      "serial numbers",
+      "patient or medical context",
+      "client-identifiable facilities",
+      "screens containing private data"
+    ]
+  }
+}
