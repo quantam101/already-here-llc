@@ -26,22 +26,10 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['Inter', 'IBM Plex Sans', 'Arial', 'Helvetica', 'sans-serif']
-      },
-      typography: {
-        DEFAULT: {
-          css: {
-            color: '#B8C4D6',
-            maxWidth: 'none',
-            h2: { color: '#F8FAFC', fontWeight: '600' },
-            h3: { color: '#F8FAFC', fontWeight: '600' },
-            a: { color: '#6EA2FF' },
-            strong: { color: '#FFFFFF' }
-          }
-        }
       }
     }
   },
-  plugins: [require('@tailwindcss/typography')]
+  plugins: []
 };
 
 export default config;
