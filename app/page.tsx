@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BrandMark } from '@/components/BrandMark';
 import { ProofBlock } from '@/components/ProofBlock';
-import { audience, buyerReasons, documentedWorkTypes, environments, markets, serviceGroups, siteConfig } from '@/lib/site';
+import { getProfitEngineStatus } from '@/lib/profitengine';
+import { documentedWorkTypes, serviceGroups, siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
   alternates: { canonical: '/' },
@@ -22,16 +23,16 @@ export const metadata: Metadata = {
 
 const conversionCards = [
   {
-    title: 'Request a Project Quote',
-    description: 'Submit scope, timeline, site count, location, closeout requirements, and attachments for project-based bidding.',
-    href: '/rfq',
-    cta: 'Open RFQ'
+    title: 'Request Dispatch',
+    description: 'Submit site location, access notes, scope, schedule window, and closeout requirements for onsite field execution.',
+    href: '/dispatch',
+    cta: 'Open Dispatch Intake'
   },
   {
-    title: 'View Project Gallery',
-    description: 'Review redacted representative work and approved rotating project photos when available.',
-    href: '/project-gallery',
-    cta: 'View Gallery'
+    title: 'Request a Project Quote',
+    description: 'Send scope, timeline, site count, attachments, and compliance requirements for project-based bidding.',
+    href: '/rfq',
+    cta: 'Open RFQ'
   },
   {
     title: 'Check Coverage',
@@ -41,7 +42,22 @@ const conversionCards = [
   }
 ] as const;
 
-export default function HomePage() {
+const profitEngineChecks = [
+  'Dashboard/API surface exposed through Vercel status rendering',
+  'Oracle runtime checked without fabricating revenue or posting data',
+  'Revenue remains unverified until live platform balances or transactions confirm it',
+  'Public runtime still requires VM/OCI repair if Oracle endpoints remain offline'
+] as const;
+
+export default async function HomePage() {
+  const profitEngine = await getProfitEngineStatus();
+  const statusBadge =
+    profitEngine.state === 'online'
+      ? 'Online'
+      : profitEngine.state === 'degraded'
+        ? 'Degraded'
+        : 'Oracle Runtime Offline';
+
   return (
     <>
       <section className="border-b border-borderBrand bg-white">
@@ -64,34 +80,15 @@ export default function HomePage() {
               {siteConfig.heroDescription}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/dispatch"
-                className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-navy"
-              >
+              <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-navy">
                 Request Dispatch
               </Link>
-              <Link
-                href="/rfq"
-                className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action"
-              >
+              <Link href="/rfq" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action">
                 Request Project Quote
               </Link>
-              <Link
-                href="/capability-statement"
-                className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action"
-              >
+              <Link href="/capability-statement" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action">
                 Capability Statement
               </Link>
-            </div>
-            <div className="mt-10 rounded-3xl border border-borderBrand bg-soft px-5 py-5">
-              <p className="grid-label">Trust bar</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {siteConfig.trustBar.map((item) => (
-                  <span key={item} className="rounded-full border border-borderBrand bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
-                    {item}
-                  </span>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -114,57 +111,64 @@ export default function HomePage() {
       </section>
 
       <section className="container-shell py-16 lg:py-24">
-        <span className="eyebrow">Project intake paths</span>
-        <h2 className="section-title mt-5">Choose the right path before dispatch.</h2>
-        <p className="section-copy">Single-site work, project-based bidding, coverage planning, and buyer proof are separated so vendors and MSPs do not have to guess where to start.</p>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {conversionCards.map((card) => (
-            <Link key={card.href} href={card.href} className="card p-6 transition hover:border-action">
-              <h3 className="text-xl font-semibold text-navy">{card.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{card.description}</p>
-              <span className="mt-6 inline-flex rounded-full bg-action px-4 py-2 text-sm font-semibold text-white">{card.cta}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="container-shell py-16 lg:py-24">
-        <span className="eyebrow">Why buyers choose us</span>
-        <h2 className="section-title mt-5">Field execution that closes the gap between remote support and onsite reality.</h2>
-        <p className="section-copy">
-          MSPs, vendors, and multi-site operators get an onsite partner who can reach the location, verify conditions, complete defined technical work, and return clear closeout notes so tickets do not stall or cycle back.
-        </p>
-        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {buyerReasons.map((reason) => (
-            <div key={reason} className="card p-6">
-              <p className="text-sm leading-7 text-slate-700">{reason}</p>
+        <span className="eyebrow">ProfitEngine control surface</span>
+        <div className="mt-5 grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
+          <div>
+            <h2 className="section-title">Vercel-hosted status for the ProfitEngine runtime.</h2>
+            <p className="section-copy">
+              This public surface verifies the Oracle runtime from the deployed website without claiming false revenue or posting activity. If Oracle remains unreachable, Vercel stays live and reports the outage clearly.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <span className="inline-flex rounded-full border border-borderBrand bg-soft px-4 py-2 text-sm font-semibold text-navy">
+                Runtime: {statusBadge}
+              </span>
+              <span className="inline-flex rounded-full border border-borderBrand bg-soft px-4 py-2 text-sm font-semibold text-navy">
+                Checked: {new Date(profitEngine.checkedAt).toLocaleString('en-US', { timeZone: 'America/Phoenix' })} MST
+              </span>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="border-y border-borderBrand bg-white">
-        <div className="container-shell py-16 lg:py-24">
-          <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-            <div>
-              <span className="eyebrow">Operations layer</span>
-              <h2 className="section-title mt-5">The work starts where remote support runs out of reach.</h2>
-              <p className="section-copy">
-                Already Here LLC is positioned for onsite remediation, smart hands support, network troubleshooting, rollout recovery, infrastructure assessment, and closeout-heavy execution.
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                'Onsite remediation for issues remote teams cannot close remotely',
-                'Network, Wi-Fi, rack, endpoint, and commercial infrastructure support',
-                'Retail, commercial, MSP, vendor, and critical-systems field execution',
-                'Structured closeout with field notes, photos when permitted, and escalation detail'
-              ].map((item) => (
-                <div key={item} className="rounded-3xl border border-borderBrand bg-soft px-6 py-6 text-sm leading-7 text-slate-700">
-                  {item}
+          </div>
+          <div className="card p-6 sm:p-8">
+            <div className="grid gap-3">
+              {profitEngine.endpoints.map((endpoint) => (
+                <div key={endpoint.path} className="rounded-2xl border border-borderBrand bg-soft px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-navy">{endpoint.name}</p>
+                      <p className="mt-1 font-mono text-xs text-slate-500">{endpoint.path}</p>
+                    </div>
+                    <span className="rounded-full border border-borderBrand bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
+                      {endpoint.ok ? 'OK' : 'Failed'} {endpoint.status ? `(${endpoint.status})` : ''}
+                    </span>
+                  </div>
+                  {endpoint.error ? <p className="mt-2 text-xs leading-5 text-slate-500">{endpoint.error}</p> : null}
                 </div>
               ))}
             </div>
+            <p className="mt-5 text-sm leading-6 text-slate-600">{profitEngine.summary}</p>
+          </div>
+        </div>
+        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {profitEngineChecks.map((item) => (
+            <div key={item} className="rounded-3xl border border-borderBrand bg-white p-5 text-sm leading-7 text-slate-700">
+              {item}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-y border-borderBrand bg-soft py-16 lg:py-24">
+        <div className="container-shell">
+          <span className="eyebrow">Project intake paths</span>
+          <h2 className="section-title mt-5">Choose the right path before dispatch.</h2>
+          <p className="section-copy">Single-site work, project-based bidding, coverage planning, and buyer proof are separated so vendors and MSPs do not have to guess where to start.</p>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {conversionCards.map((card) => (
+              <Link key={card.href} href={card.href} className="card p-6 transition hover:border-action">
+                <h3 className="text-xl font-semibold text-navy">{card.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{card.description}</p>
+                <span className="mt-6 inline-flex rounded-full bg-action px-4 py-2 text-sm font-semibold text-white">{card.cta}</span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -174,18 +178,13 @@ export default function HomePage() {
       </section>
 
       <section className="bg-white py-16 lg:py-24">
-        <div className="container-shell grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="container-shell grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <span className="eyebrow">Who we support</span>
-            <h2 className="section-title mt-5">Built for MSP, vendor, government-prime, and multi-site dispatch realities.</h2>
-            <div className="mt-8 grid gap-4">
-              {audience.map((item) => (
-                <div key={item.title} className="card p-6">
-                  <h3 className="text-xl font-semibold text-navy">{item.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">{item.description}</p>
-                </div>
-              ))}
-            </div>
+            <span className="eyebrow">Operations layer</span>
+            <h2 className="section-title mt-5">The work starts where remote support runs out of reach.</h2>
+            <p className="section-copy">
+              Already Here LLC is positioned for onsite remediation, smart hands support, network troubleshooting, rollout recovery, infrastructure assessment, and closeout-heavy execution.
+            </p>
           </div>
           <div className="card p-8 sm:p-10">
             <h2 className="text-2xl font-semibold text-navy">Documented work types</h2>
@@ -196,45 +195,6 @@ export default function HomePage() {
                 </li>
               ))}
             </ul>
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold text-navy">Operating environments</h3>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {environments.map((environment) => (
-                  <span key={environment} className="rounded-full border border-borderBrand px-3 py-2 text-sm text-slate-700">
-                    {environment}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-y border-borderBrand bg-soft py-16 lg:py-24">
-        <div className="container-shell grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-          <div>
-            <span className="eyebrow">Service area</span>
-            <h2 className="section-title mt-5">Phoenix-based with project coverage available nationwide depending on client scope.</h2>
-            <p className="section-copy">
-              Public positioning stays precise: Phoenix-based, with nationwide project coverage available for qualified client scope, scheduling, and travel requirements.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/coverage" className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy">
-                Check Coverage
-              </Link>
-              <Link href="/who-we-serve" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-navy transition hover:border-action hover:text-action">
-                Who We Serve
-              </Link>
-            </div>
-          </div>
-          <div className="card p-8 sm:p-10">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {markets.map((market) => (
-                <div key={market} className="rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm font-medium text-slate-700">
-                  {market}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -251,9 +211,6 @@ export default function HomePage() {
               </h2>
               <p className="mt-4 max-w-3xl text-base leading-7 text-white/80">
                 Send the scope, target city, schedule window, and any files that matter. Already Here LLC will assess coverage fit and execute the site work cleanly when the dispatch is confirmed.
-              </p>
-              <p className="mt-3 text-sm text-white/60">
-                SAM.gov registered · Actively pursuing SDVOSB certification
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
