@@ -15,10 +15,20 @@
       "human-controlled policy gates for public content",
       "Socratic review before high-risk claims or public production changes",
       "Pareto prioritization before expanding backlog or automation scope",
-      "Red-team defensive review before trusting automation expansion"
+      "Red-team defensive review before trusting automation expansion",
+      "Drive curation before gallery publication"
     ]
   },
   "missionRegistry": {
+    "drive.curate-gallery": {
+      "description": "Curate Oracle-synced Google Drive gallery candidates into the approved local gallery source folder.",
+      "entrypoint": "node scripts/drive-curator-agent.mjs",
+      "risk": "medium",
+      "approvalRequired": false,
+      "writes": ["/opt/already-here-gallery/source/**", "/opt/already-here-gallery/quarantine/**", "hermes/receipts/**"],
+      "blocksOn": ["unsafe filename patterns", "unsupported file extensions", "empty files"],
+      "receiptRequired": true
+    },
     "gallery.rotate": {
       "description": "Rotate approved project-gallery photos into the website from the OCI approved source folder.",
       "entrypoint": "node scripts/oci-gallery-agent.mjs",
