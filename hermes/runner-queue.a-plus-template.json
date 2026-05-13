@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "queue": [
+    { "id": "aplus-001-health", "command": "health.check", "status": "queued" },
+    { "id": "aplus-002-content-guard", "command": "a-plus.content-guard", "status": "queued" },
+    { "id": "aplus-003-socrates", "command": "socrates.review", "status": "queued" },
+    { "id": "aplus-004-redteam", "command": "redteam.review", "status": "queued" },
+    { "id": "aplus-005-pareto", "command": "pareto.prioritize", "status": "queued" },
+    { "id": "aplus-006-live-smoke", "command": "a-plus.live-smoke-test", "status": "queued" },
+    { "id": "aplus-007-intake-dry-run", "command": "a-plus.intake-contract-smoke", "status": "queued" },
+    { "id": "aplus-008-drive-sync", "command": "drive.sync", "status": "queued" },
+    { "id": "aplus-009-gallery-rotate", "command": "gallery.rotate", "status": "queued" }
+  ]
+}
