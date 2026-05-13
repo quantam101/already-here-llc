@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
     "typecheck": "tsc --noEmit",
+    "test": "npm run test:dispatch",
     "test:dispatch": "node --experimental-strip-types tests/dispatch-contract.test.mjs"
   },
   "dependencies": {
