@@ -31,9 +31,13 @@ export function Footer() {
             <li><Link href="/services" className="hover:text-action">Services</Link></li>
             <li><Link href="/who-we-serve" className="hover:text-action">Who We Serve</Link></li>
             <li><Link href="/dispatch" className="hover:text-action">Dispatch</Link></li>
+            <li><Link href="/rfq" className="hover:text-action">Request a Quote</Link></li>
+            <li><Link href="/coverage" className="hover:text-action">Coverage Area</Link></li>
+            <li><Link href="/project-gallery" className="hover:text-action">Project Gallery</Link></li>
             <li><Link href="/capability-statement" className="hover:text-action">Capability Statement</Link></li>
             <li><Link href="/blog" className="hover:text-action">Field Insights</Link></li>
             <li><Link href="/privacy" className="hover:text-action">Privacy Policy</Link></li>
+            <li><Link href="/profitengine" className="hover:text-action">System Status</Link></li>
           </ul>
         </div>
 
