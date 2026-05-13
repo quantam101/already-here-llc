@@ -4,27 +4,33 @@ import { notFound } from 'next/navigation';
 import { getPostBySlug, getStaticPostParams } from '@/lib/blog';
 import { siteConfig } from '@/lib/site';
 
+type BlogPostPageProps = {
+  params: Promise<{ slug: string }>;
+};
+
 export async function generateStaticParams() {
   return getStaticPostParams();
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const post = getPostBySlug(params.slug);
+export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
   if (!post) return {};
   return {
     title: post.title,
     description: post.excerpt,
-    alternates: { canonical: `/blog/${params.slug}` },
+    alternates: { canonical: `/blog/${slug}` },
     openGraph: {
       title: `${post.title} | Already Here LLC`,
       description: post.excerpt,
-      url: `${siteConfig.url}/blog/${params.slug}`
+      url: `${siteConfig.url}/blog/${slug}`
     }
   };
 }
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = getPostBySlug(params.slug);
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
   if (!post) notFound();
 
   return (
@@ -40,20 +46,20 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
         <p className="text-lg leading-8 text-slate-600 mb-10 border-b border-borderBrand pb-10">
           {post.excerpt}
         </p>
-        <div className="prose prose-slate max-w-none text-sm leading-7"
-          dangerouslySetInnerHTML={{ __html: post.content }}
-        />
+        <article className="prose prose-slate max-w-none whitespace-pre-line text-sm leading-7">
+          {post.content}
+        </article>
       </div>
 
       <div className="mt-16 border-t border-borderBrand pt-10 grid gap-4 sm:flex sm:items-center sm:justify-between">
         <Link href="/blog" className="text-sm font-medium text-action hover:underline">
-          ← Back to Field Insights
+          Back to Field Insights
         </Link>
         <Link
           href="/dispatch"
           className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy"
         >
-          Request Field Coverage →
+          Request Field Coverage
         </Link>
       </div>
     </div>
