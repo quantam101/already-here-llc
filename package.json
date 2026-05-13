@@ -9,7 +9,13 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "npm run test:dispatch",
-    "test:dispatch": "node --experimental-strip-types tests/dispatch-contract.test.mjs"
+    "test:dispatch": "node --experimental-strip-types tests/dispatch-contract.test.mjs",
+    "qa:content": "node scripts/a-plus-content-guard.mjs",
+    "qa:live": "node scripts/live-smoke-test.mjs",
+    "qa:intake": "node scripts/intake-contract-smoke.mjs",
+    "qa:socrates": "node scripts/socrates-agent.mjs",
+    "qa:redteam": "node scripts/redteam-agent.mjs",
+    "qa:pareto": "node scripts/pareto-agent.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
