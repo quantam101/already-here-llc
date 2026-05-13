@@ -6,7 +6,17 @@ export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: 'ProfitEngine Status | Already Here LLC',
-  description: 'Live Vercel-rendered status surface for the ProfitEngine Oracle runtime.'
+  description: 'Private operational status surface for the ProfitEngine runtime.',
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true
+    }
+  }
 };
 
 type EndpointCheck = {
@@ -18,7 +28,7 @@ type EndpointCheck = {
   error: string | null;
 };
 
-const ORACLE_BASE_URL = (process.env.PROFITENGINE_ORACLE_BASE_URL || 'http://129.153.101.0:3000').replace(/\/$/, '');
+const runtimeBaseUrl = (process.env.PROFITENGINE_ORACLE_BASE_URL || 'http://129.153.101.0:3000').replace(/\/$/, '');
 
 const endpointTargets = [
   { name: 'Health', path: '/api/health' },
@@ -33,7 +43,7 @@ async function checkEndpoint(path: string): Promise<Omit<EndpointCheck, 'name' |
   const timeout = setTimeout(() => controller.abort(), 4500);
 
   try {
-    const response = await fetch(`${ORACLE_BASE_URL}${path}`, {
+    const response = await fetch(`${runtimeBaseUrl}${path}`, {
       cache: 'no-store',
       signal: controller.signal
     });
@@ -49,7 +59,7 @@ async function checkEndpoint(path: string): Promise<Omit<EndpointCheck, 'name' |
       ok: false,
       status: null,
       latencyMs: Date.now() - startedAt,
-      error: error instanceof Error ? error.message : 'Unknown runtime check error'
+      error: error instanceof Error ? error.message : 'Runtime check failed'
     };
   } finally {
     clearTimeout(timeout);
@@ -65,13 +75,13 @@ async function getProfitEngineStatus() {
   );
 
   const onlineCount = endpoints.filter((endpoint) => endpoint.ok).length;
-  const state = onlineCount === endpoints.length ? 'Online' : onlineCount > 0 ? 'Degraded' : 'Oracle Runtime Offline';
+  const state = onlineCount === endpoints.length ? 'Online' : onlineCount > 0 ? 'Degraded' : 'Runtime Offline';
   const summary =
     onlineCount === endpoints.length
-      ? 'ProfitEngine Oracle runtime is reachable from Vercel.'
+      ? 'ProfitEngine runtime is reachable from the Vercel status surface.'
       : onlineCount > 0
-        ? 'ProfitEngine is partially reachable. Do not trust automation or revenue data until all runtime checks pass.'
-        : 'ProfitEngine Oracle runtime is not reachable from Vercel. This page is live, but the VM/runtime still needs repair.';
+        ? 'ProfitEngine is partially reachable. Do not trust automation, posting, or revenue data until all checks pass.'
+        : 'ProfitEngine runtime is not reachable from the Vercel status surface. The status page is live, but the runtime still needs host-side repair.';
 
   return {
     checkedAt: new Date().toISOString(),
@@ -88,10 +98,10 @@ export default async function ProfitEngineStatusPage() {
     <main className="container-shell py-16 lg:py-24">
       <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="eyebrow">ProfitEngine control surface</span>
-          <h1 className="section-title mt-5">Vercel-hosted runtime status without fake revenue.</h1>
+          <span className="eyebrow">Private operations status</span>
+          <h1 className="section-title mt-5">ProfitEngine runtime status without fake revenue.</h1>
           <p className="section-copy">
-            Vercel can make this public dashboard/status layer live. It cannot restart the Oracle VM. This page checks the Oracle runtime and reports its actual condition without inventing posts, earnings, or automation state.
+            This page checks the runtime from the deployed Vercel site. It does not restart the host, and it does not invent posts, earnings, or automation state.
           </p>
         </div>
         <Link href="/" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-navy transition hover:border-action hover:text-action">
@@ -109,7 +119,6 @@ export default async function ProfitEngineStatusPage() {
               <p className="mt-4 text-xs text-slate-500">
                 Checked: {new Date(status.checkedAt).toLocaleString('en-US', { timeZone: 'America/Phoenix' })} MST
               </p>
-              <p className="mt-2 font-mono text-xs text-slate-500">Oracle base: {ORACLE_BASE_URL}</p>
             </div>
           </div>
 
@@ -138,13 +147,13 @@ export default async function ProfitEngineStatusPage() {
 
       <section className="mt-8 grid gap-4 md:grid-cols-3">
         <div className="rounded-3xl border border-borderBrand bg-white p-5 text-sm leading-7 text-slate-700">
-          Dashboard availability is separate from Oracle runtime availability. This Vercel page can be live while the VM is offline.
+          Status page availability is separate from runtime availability. Vercel can be healthy while the host runtime is offline.
         </div>
         <div className="rounded-3xl border border-borderBrand bg-white p-5 text-sm leading-7 text-slate-700">
           Revenue is not inferred. Real earnings require live Stripe, PayPal, affiliate, or platform confirmation.
         </div>
         <div className="rounded-3xl border border-borderBrand bg-white p-5 text-sm leading-7 text-slate-700">
-          Posting is not verified unless the runtime endpoints and platform-side publish records return current successful activity.
+          Posting is not verified unless runtime endpoints and platform-side publish records show current successful activity.
         </div>
       </section>
     </main>
