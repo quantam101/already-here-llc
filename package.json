@@ -15,7 +15,10 @@
     "qa:intake": "node scripts/intake-contract-smoke.mjs",
     "qa:socrates": "node scripts/socrates-agent.mjs",
     "qa:redteam": "node scripts/redteam-agent.mjs",
-    "qa:pareto": "node scripts/pareto-agent.mjs"
+    "qa:pareto": "node scripts/pareto-agent.mjs",
+    "qa:seo": "node scripts/seo-route-audit.mjs",
+    "qa:gate": "node scripts/quality-gate.mjs",
+    "qa:classify": "node scripts/ci-failure-classifier.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
