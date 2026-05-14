@@ -37,7 +37,7 @@ export function Header() {
         </Link>
 
         <nav className="hidden items-center gap-1 xl:flex" aria-label="Primary navigation">
-          {navItems.map((item) => <DesktopNavLink key={item.href} {...item} pathname={pathname} />)}
+          {navItems.map((item) => <DesktopNavLink key={item.href} {...item} pathname={pathname ?? '/'} />)}
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
@@ -50,7 +50,7 @@ export function Header() {
         </div>
 
         <button type="button" className="link-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/45 text-white xl:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-nav" aria-label="Toggle navigation">
-          <span className="text-xl">{open ? '×' : '☰'}</span>
+          <span className="text-xl">{open ? 'Ã' : 'â°'}</span>
         </button>
       </div>
 
