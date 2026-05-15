@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server.js';
 
 export const runtime = 'nodejs';
 
