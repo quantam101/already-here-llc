@@ -16,7 +16,7 @@ const navItems = [
   { href: '/dispatch', label: 'Dispatch' }
 ];
 
-function DesktopNavLink({ href, label, pathname }: { href: string; label: string; pathname: string }) {
+function DesktopNavLink({ href, label, pathname }: { href: string; label: string; pathname: string | null }) {
   const active = pathname === href;
   return (
     <Link href={href} aria-current={active ? 'page' : undefined} className={active ? 'link-ring rounded-full bg-white px-3 py-2 text-sm font-semibold text-[#071B34]' : 'link-ring rounded-full px-3 py-2 text-sm font-semibold text-white hover:bg-white/10'}>
@@ -26,7 +26,7 @@ function DesktopNavLink({ href, label, pathname }: { href: string; label: string
 }
 
 export function Header() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '';
   const [open, setOpen] = useState(false);
 
   return (

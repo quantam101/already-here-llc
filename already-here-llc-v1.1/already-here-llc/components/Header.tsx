@@ -15,7 +15,7 @@ const navItems = [
   { href: '/dispatch', label: 'Dispatch' }
 ];
 
-function NavLink({ href, label, pathname }: { href: string; label: string; pathname: string }) {
+function NavLink({ href, label, pathname }: { href: string; label: string; pathname: string | null }) {
   const active = pathname === href;
   return (
     <Link
@@ -50,7 +50,7 @@ function InlineBrandMark() {
 }
 
 export function Header() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '';
   const [open, setOpen] = useState(false);
 
   return (
