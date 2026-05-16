@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 const repoRoot = process.cwd();
 const receiptsDir = join(repoRoot, 'hermes/receipts');
 const ignoreDirs = new Set(['.git', 'node_modules', '.next', 'out', 'already-here-llc-v1.1']);
+const ignorePaths = new Set(['hermes/receipts']);
 const skipFiles = new Set([
   'scripts/a-plus-content-guard.mjs',
   'scripts/live-smoke-test.mjs',
@@ -38,9 +39,12 @@ function sha256(value) {
 
 function walk(dir, files = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (ignoreDirs.has(entry.name)) continue;
     const full = join(dir, entry.name);
-    if (entry.isDirectory()) walk(full, files);
+    const rel = relative(repoRoot, full);
+    if (entry.isDirectory()) {
+      if (ignoreDirs.has(entry.name) || ignorePaths.has(rel)) continue;
+      walk(full, files);
+    }
     if (entry.isFile()) {
       const ext = entry.name.includes('.') ? entry.name.slice(entry.name.lastIndexOf('.')) : '';
       if (inspectExtensions.has(ext) && statSync(full).size < 1024 * 1024) files.push(full);
