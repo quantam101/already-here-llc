@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "agent": "REDTEAM",
+  "mission": "redteam.review",
+  "startedAt": "2026-05-16T23:45:31.216Z",
+  "finishedAt": "2026-05-16T23:45:31.238Z",
+  "status": "critical_review_required",
+  "score": 0,
+  "findings": [
+    {
+      "id": "secret-literal",
+      "severity": "critical",
+      "file": "already-here-llc-v1.1/already-here-llc/app/api/dispatch/route.ts",
+      "description": "Potential secret literal or credential marker in source."
+    },
+    {
+      "id": "unsupported-certification",
+      "severity": "critical",
+      "file": "already-here-llc-v1.1/already-here-llc/content/blog/pos-kiosk-support-phoenix.md",
+      "description": "Unsupported SDVOSB certified wording found."
+    },
+    {
+      "id": "secret-literal",
+      "severity": "critical",
+      "file": "app/api/dispatch/route.ts",
+      "description": "Potential secret literal or credential marker in source."
+    },
+    {
+      "id": "set-aside-claim",
+      "severity": "high",
+      "file": "apply-patches.js",
+      "description": "Set-aside or sole-source language found; verify status before publishing."
+    },
+    {
+      "id": "dead-contact-route",
+      "severity": "high",
+      "file": "apply-patches.js",
+      "description": "Dead /contact route reference found."
+    },
+    {
+      "id": "secret-literal",
+      "severity": "critical",
+      "file": "deploy.sh",
+      "description": "Potential secret literal or credential marker in source."
+    },
+    {
+      "id": "set-aside-claim",
+      "severity": "high",
+      "file": "docs/A_PLUS_LAUNCH_CHECKLIST.md",
+      "description": "Set-aside or sole-source language found; verify status before publishing."
+    },
+    {
+      "id": "unsafe-delete",
+      "severity": "high",
+      "file": "hermes/REDTEAM.md",
+      "description": "Dangerous recursive root deletion pattern found."
+    },
+    {
+      "id": "world-writable",
+      "severity": "medium",
+      "file": "hermes/REDTEAM.md",
+      "description": "World-writable permission pattern found."
+    },
+    {
+      "id": "set-aside-claim",
+      "severity": "high",
+      "file": "hermes/REDTEAM.md",
+      "description": "Set-aside or sole-source language found; verify status before publishing."
+    },
+    {
+      "id": "set-aside-claim",
+      "severity": "high",
+      "file": "hermes/SOCRATES.md",
+      "description": "Set-aside or sole-source language found; verify status before publishing."
+    },
+    {
+      "id": "set-aside-claim",
+      "severity": "high",
+      "file": "hermes/redteam.agent.json",
+      "description": "Set-aside or sole-source language found; verify status before publishing."
+    },
+    {
+      "id": "unsafe-delete",
+      "severity": "high",
+      "file": "hermes/runner-policy.json",
+      "description": "Dangerous recursive root deletion pattern found."
+    },
+    {
+      "id": "world-writable",
+      "severity": "medium",
+      "file": "hermes/runner-policy.json",
+      "description": "World-writable permission pattern found."
+    },
+    {
+      "id": "set-aside-claim",
+      "severity": "high",
+      "file": "hermes/socrates.agent.json",
+      "description": "Set-aside or sole-source language found; verify status before publishing."
+    },
+    {
+      "id": "dead-contact-route",
+      "severity": "high",
+      "file": "rewrite-routes.sh",
+      "description": "Dead /contact route reference found."
+    },
+    {
+      "id": "unsupported-certification",
+      "severity": "critical",
+      "file": "scripts/a-plus-content-guard.mjs",
+      "description": "Unsupported SDVOSB certified wording found."
+    },
+    {
+      "id": "set-aside-claim",
+      "severity": "high",
+      "file": "scripts/a-plus-content-guard.mjs",
+      "description": "Set-aside or sole-source language found; verify status before publishing."
+    },
+    {
+      "id": "production-warning-copy",
+      "severity": "high",
+      "file": "scripts/a-plus-content-guard.mjs",
+      "description": "Buyer-facing production warning copy found."
+    },
+    {
+      "id": "unsupported-certification",
+      "severity": "critical",
+      "file": "scripts/live-smoke-test.mjs",
+      "description": "Unsupported SDVOSB certified wording found."
+    },
+    {
+      "id": "set-aside-claim",
+      "severity": "high",
+      "file": "scripts/live-smoke-test.mjs",
+      "description": "Set-aside or sole-source language found; verify status before publishing."
+    },
+    {
+      "id": "production-warning-copy",
+      "severity": "high",
+      "file": "scripts/live-smoke-test.mjs",
+      "description": "Buyer-facing production warning copy found."
+    },
+    {
+      "id": "secret-literal",
+      "severity": "critical",
+      "file": "scripts/redteam-agent.mjs",
+      "description": "Potential secret literal or credential marker in source."
+    },
+    {
+      "id": "pipe-shell",
+      "severity": "high",
+      "file": "scripts/redteam-agent.mjs",
+      "description": "Pipe-to-shell install pattern found."
+    },
+    {
+      "id": "unsupported-certification",
+      "severity": "critical",
+      "file": "scripts/redteam-agent.mjs",
+      "description": "Unsupported SDVOSB certified wording found."
+    },
+    {
+      "id": "set-aside-claim",
+      "severity": "high",
+      "file": "scripts/redteam-agent.mjs",
+      "description": "Set-aside or sole-source language found; verify status before publishing."
+    },
+    {
+      "id": "production-warning-copy",
+      "severity": "high",
+      "file": "scripts/redteam-agent.mjs",
+      "description": "Buyer-facing production warning copy found."
+    },
+    {
+      "id": "secret-literal",
+      "severity": "critical",
+      "file": "scripts/socrates-agent.mjs",
+      "description": "Potential secret literal or credential marker in source."
+    },
+    {
+      "id": "unsupported-certification",
+      "severity": "critical",
+      "file": "scripts/socrates-agent.mjs",
+      "description": "Unsupported SDVOSB certified wording found."
+    },
+    {
+      "id": "set-aside-claim",
+      "severity": "high",
+      "file": "scripts/socrates-agent.mjs",
+      "description": "Set-aside or sole-source language found; verify status before publishing."
+    }
+  ],
+  "inspectedFiles": 206
+}

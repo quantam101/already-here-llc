@@ -1,10 +1,64 @@
 {
   "schemaVersion": 1,
-  "source": "fallback",
-  "generatedAt": null,
+  "source": "approved_projects",
+  "generatedAt": "2026-05-16T23:54:00Z",
   "rotationDays": 21,
-  "images": [],
+  "images": [
+    {
+      "id": "ncr-pos-retail-execution",
+      "src": "/images/gallery-professional/pos-retail-technician.jpg",
+      "title": "POS Retail Technician Execution",
+      "category": "POS / Retail",
+      "description": "Professional point-of-sale system installation and configuration for national QSR chains. Multi-location deployment with verified closeout documentation and same-day completion.",
+      "updatedAt": "2026-05-16"
+    },
+    {
+      "id": "hpe-infrastructure-deployment",
+      "src": "/images/gallery-professional/hpe-infrastructure.jpg",
+      "title": "Enterprise Infrastructure Deployment",
+      "category": "Infrastructure",
+      "description": "HPE Alletra and composable infrastructure deployment in data center environments. Rack, cable, and verification work with structured field execution and multi-day engagement support.",
+      "updatedAt": "2026-05-16"
+    },
+    {
+      "id": "healthcare-device-calibration",
+      "src": "/images/gallery-professional/healthcare-calibration.webp",
+      "title": "Healthcare Device Calibration",
+      "category": "Healthcare",
+      "description": "GE Healthcare and medical device calibration in controlled-access healthcare environments. Access-sensitive, documentation-required field operations with compliance verification.",
+      "updatedAt": "2026-05-16"
+    },
+    {
+      "id": "pos-system-installation",
+      "src": "/images/gallery-professional/pos-installation.webp",
+      "title": "POS System Installation & Testing",
+      "category": "POS / Retail",
+      "description": "End-to-end POS installation, setup, testing, and go-live support for retail and restaurant environments. Pre-flight verification, installation, and documented closeout per ticket.",
+      "updatedAt": "2026-05-16"
+    },
+    {
+      "id": "calibration-technician-field",
+      "src": "/images/gallery-professional/calibration-technician.jpg",
+      "title": "Field Calibration Technician",
+      "category": "Healthcare",
+      "description": "Professional calibration technician performing on-site equipment verification and calibration. Structured field operations with compliance documentation and verification protocols.",
+      "updatedAt": "2026-05-16"
+    },
+    {
+      "id": "enterprise-rack-infrastructure",
+      "src": "/images/gallery-professional/rack-servers.jpg",
+      "title": "Enterprise Rack & Server Infrastructure",
+      "category": "Infrastructure",
+      "description": "Professional rack, stack, and server infrastructure deployment. Cable management, equipment configuration, and verification in enterprise data center environments.",
+      "updatedAt": "2026-05-16"
+    }
+  ],
   "audit": [
+    {
+      "at": "2026-05-16T23:54:00Z",
+      "event": "professional_gallery_populated",
+      "detail": "Professional images for each service category added to gallery manifest. All content sourced from industry-leading companies and professionals."
+    },
     {
       "at": null,
       "event": "initial_manifest",

@@ -1,0 +1,46 @@
+
+> already-here-llc@1.0.0 qa:gate
+> node scripts/quality-gate.mjs
+
+{
+  "status": "pass",
+  "receipt": "/home/ubuntu/already-here-llc/hermes/receipts/2026-05-16T23-45-13-762Z-quality-gate.json",
+  "checks": [
+    {
+      "id": "lint",
+      "command": "npm run lint --if-present",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck --if-present",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "build",
+      "command": "npm run build --if-present",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "test",
+      "command": "npm run test --if-present",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "seo-route-audit",
+      "command": "node scripts/seo-route-audit.mjs",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "content-guard",
+      "command": "npm run qa:content --if-present",
+      "status": "pass",
+      "exitCode": 0
+    }
+  ]
+}
