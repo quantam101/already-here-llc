@@ -3,9 +3,9 @@ import Link from 'next/link';
 import { naicsCodes, representativeWork, siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Capability Statement | SDVOSB Field Execution',
+  title: 'Capability Statement | SDVOSB-Eligible Field Execution',
   description:
-    'Already Here LLC capability statement — SDVOSB-certified Phoenix field execution partner for MSPs, government primes, healthcare-adjacent operators, and rollout programs. SAM.gov registered.',
+    'Already Here LLC capability statement — SDVOSB-eligible Phoenix field execution partner for MSPs, government primes, healthcare-adjacent operators, and rollout programs. SAM.gov registered.',
   alternates: { canonical: '/capability-statement' }
 };
 
@@ -21,11 +21,11 @@ const coreCompetencies = [
   'AV/media troubleshooting and digital signage support',
   'Site surveys, store-level audits, and ground-truth verification',
   'Managed router installs — Cradlepoint, SD-WAN, Starlink',
-  'Government-adjacent and SDVOSB set-aside field engagements'
+  'Government-adjacent and SDVOSB-eligible field engagements'
 ];
 
 const differentiators = [
-  'SDVOSB-certified — eligible for set-aside and sole-source contracts under federal and state procurement programs',
+  'SDVOSB-eligible — actively pursuing certification for federal and state procurement programs',
   'SAM.gov registered',
   'Commercially insured — General Liability and Professional Liability',
   '26+ years IT field experience: healthcare, enterprise, government-adjacent, retail, QSR, data center',
@@ -54,7 +54,7 @@ export default function CapabilityStatementPage() {
           </div>
           <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end lg:gap-3 shrink-0">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
-              SDVOSB Certified
+              SDVOSB Eligible
             </span>
             <span className="rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-slate-600">
               SAM.gov Registered
@@ -171,7 +171,7 @@ export default function CapabilityStatementPage() {
           <div>
             <h2 className="text-2xl font-semibold">Ready to engage?</h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-white/80">
-              Send scope, site, and timeline through dispatch intake. SDVOSB set-aside and sole-source inquiries welcome.
+              Send scope, site, and timeline through dispatch intake. SDVOSB-eligible procurement inquiries welcome.
               Capability statement PDF available on request.
             </p>
           </div>

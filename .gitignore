@@ -10,3 +10,4 @@ data/
 *.sqlite3
 backups/
 .env
+hermes/receipts/

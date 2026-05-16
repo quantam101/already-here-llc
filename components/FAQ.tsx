@@ -20,8 +20,8 @@ const faqs = [
     a: 'Arrival and departure notes, action summary and field observations, photos where permitted, part swap or equipment notes, escalation notes for unresolved items, and usable closeout language for the client-side ticket.'
   },
   {
-    q: 'Are you SDVOSB certified?',
-    a: 'Already Here LLC is SAM.gov registered and actively pursuing SDVOSB certification. Once certified, the firm will be eligible for set-aside and sole-source procurement opportunities under federal and state programs.'
+    q: 'Are you SDVOSB eligible?',
+    a: 'Already Here LLC is SAM.gov registered and actively pursuing SDVOSB certification. Once certified, the firm will be eligible for federal and state procurement opportunities.'
   },
   {
     q: 'Do you work with Field Nation or WorkMarket dispatches?',
