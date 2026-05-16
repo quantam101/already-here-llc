@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { naicsCodes, representativeWork, siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Capability Statement | SDVOSB Field Execution',
+  title: 'Capability Statement | SDVOSB-Eligible Field Execution',
   description:
     'Already Here LLC capability statement — SDVOSB-eligible Phoenix field execution partner for MSPs, government primes, healthcare-adjacent operators, and rollout programs. SAM.gov registered.',
   alternates: { canonical: '/capability-statement' }

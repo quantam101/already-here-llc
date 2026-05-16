@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 
 const repoRoot = process.cwd();
 const receiptsDir = join(repoRoot, 'hermes/receipts');
-const ignoreDirs = new Set(['.git', 'node_modules', '.next', 'out', 'already-here-llc-v1.1', 'receipts']);
+const ignoreDirs = new Set(['.git', 'node_modules', '.next', 'out', 'already-here-llc-v1.1']);
 const skipFiles = new Set([
   'scripts/a-plus-content-guard.mjs',
   'scripts/live-smoke-test.mjs',
