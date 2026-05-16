@@ -3,3 +3,10 @@ node_modules
 .env.local
 .vercel
 tsconfig.tsbuildinfo
+
+# GMAOS / EAOS
+__pycache__/
+data/
+*.sqlite3
+backups/
+.env
