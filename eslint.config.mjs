@@ -17,6 +17,7 @@ const eslintConfig = [
     ignores: [
       "already-here-llc-v1.1/**",
       "apply-patches.js",
+      "next-env.d.ts",
       ".next/**",
       "node_modules/**"
     ]
