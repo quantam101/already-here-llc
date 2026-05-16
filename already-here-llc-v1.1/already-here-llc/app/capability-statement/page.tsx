@@ -23,7 +23,7 @@ const coreCompetencies = [
 ];
 
 const differentiators = [
-  'SDVOSB-certified for qualified subcontracting and procurement opportunities',
+  'SDVOSB-eligible for qualified subcontracting and procurement opportunities',
   'SAM.gov registered',
   'Commercially insured â General Liability and Professional Liability',
   'IT field experience across healthcare, enterprise, government-adjacent, retail, QSR, and data center environments',

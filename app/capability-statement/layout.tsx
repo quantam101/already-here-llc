@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
-const title = 'Capability Statement | SDVOSB Field Execution — Already Here LLC';
-const description = 'Capability statement for Already Here LLC: SDVOSB-certified Arizona onsite infrastructure execution for MSPs, government primes, vendors, and rollout programs.';
+const title = 'Capability Statement | SDVOSB-Eligible Field Execution — Already Here LLC';
+const description = 'Capability statement for Already Here LLC: SDVOSB-eligible Arizona onsite infrastructure execution for MSPs, government primes, vendors, and rollout programs.';
 
 export const metadata: Metadata = {
   openGraph: {

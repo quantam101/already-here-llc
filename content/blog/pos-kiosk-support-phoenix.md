@@ -12,5 +12,5 @@ excerpt: POS and kiosk hardware work in retail, QSR, and hospitality environment
 <h2>Common POS and kiosk work types in the Phoenix market</h2>
 <p>Payment device replacement, POS terminal swaps, printer replacement and configuration, kiosk hardware troubleshooting, thin-client refresh work, and post-rollout remediation after missed or failed installations are the most common request types. Already Here LLC has documented execution history across QSR, retail, and hospitality environments in the Phoenix metro.</p>
 
-<h2>SDVOSB-certified field execution for procurement-eligible buyers</h2>
-<p>For vendors operating under government contracts or managing SDVOSB-eligible subcontracting requirements, Already Here LLC is SAM.gov registered and SDVOSB-certified. Submit dispatch requests with scope and schedule window.</p>
+<h2>SDVOSB-eligible field execution for procurement-eligible buyers</h2>
+<p>For vendors operating under government contracts or managing SDVOSB-eligible subcontracting requirements, Already Here LLC is SAM.gov registered and actively pursuing SDVOSB certification. Submit dispatch requests with scope and schedule window.</p>

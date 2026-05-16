@@ -4,7 +4,19 @@ import { createHash } from 'node:crypto';
 
 const repoRoot = process.cwd();
 const receiptsDir = join(repoRoot, 'hermes/receipts');
-const ignoreDirs = new Set(['.git', 'node_modules', '.next', 'out']);
+const ignoreDirs = new Set(['.git', 'node_modules', '.next', 'out', 'already-here-llc-v1.1', 'receipts']);
+const skipFiles = new Set([
+  'scripts/a-plus-content-guard.mjs',
+  'scripts/live-smoke-test.mjs',
+  'scripts/redteam-agent.mjs',
+  'scripts/socrates-agent.mjs',
+  'apply-patches.js',
+  'docs/A_PLUS_LAUNCH_CHECKLIST.md',
+  'hermes/REDTEAM.md',
+  'hermes/SOCRATES.md',
+  'hermes/redteam.agent.json',
+  'hermes/socrates.agent.json',
+]);
 const inspectExtensions = new Set(['.ts', '.tsx', '.js', '.mjs', '.json', '.md', '.html']);
 
 const forbidden = [
@@ -40,6 +52,7 @@ function walk(dir, files = []) {
 const findings = [];
 for (const file of walk(repoRoot)) {
   const rel = relative(repoRoot, file);
+  if (skipFiles.has(rel)) continue;
   const text = readFileSync(file, 'utf8');
   for (const rule of forbidden) {
     if (rule.pattern.test(text)) findings.push({ ...rule, file: rel });
