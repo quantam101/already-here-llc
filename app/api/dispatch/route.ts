@@ -232,7 +232,7 @@ function buildRequesterReceiptHtml(formData: FormData, dispatchId: string): stri
   return emailShell('Dispatch Request Received', `Already Here LLC receipt confirmation — ${dispatchId}`, body);
 }
 
-async function sendResendEmail(payload: Record<string, unknown>): Promise<void> {
+async function sendResendEmail(payload: Record<string, unknown>): Promise<string> {
   const apiKey = process.env.RESEND_API_KEY!;
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -244,9 +244,11 @@ async function sendResendEmail(payload: Record<string, unknown>): Promise<void> 
     const err = await res.json().catch(() => ({})) as { message?: string };
     throw new Error(err.message || 'Resend API rejected the request.');
   }
+  const data = await res.json().catch(() => ({} as {id?: string}));
+  return data.id ?? '';
 }
 
-async function sendViaResend(formData: FormData, dispatchId: string): Promise<void> {
+async function sendViaResend(formData: FormData, dispatchId: string): Promise<string> {
   const to = process.env.DISPATCH_TO_EMAIL!;
   const requesterEmail = asCleanString(formData, 'email');
   const serviceType = asCleanString(formData, 'serviceType');
@@ -254,7 +256,7 @@ async function sendViaResend(formData: FormData, dispatchId: string): Promise<vo
   const company = asCleanString(formData, 'company');
   const attachments = await buildAttachments(formData, dispatchId);
 
-  await sendResendEmail({
+  const resendEmailId = await sendResendEmail({
     from: dispatchFromEmail,
     to: [to],
     subject: `[${dispatchId}] Dispatch: ${serviceType} — ${siteCity} — ${company}`,
@@ -270,6 +272,7 @@ async function sendViaResend(formData: FormData, dispatchId: string): Promise<vo
     html: buildRequesterReceiptHtml(formData, dispatchId),
     reply_to: dispatchAddress
   });
+  return resendEmailId;
 }
 
 async function sendViaFormspree(formData: FormData, dispatchId: string): Promise<void> {
