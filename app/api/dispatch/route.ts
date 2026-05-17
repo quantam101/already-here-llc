@@ -311,11 +311,15 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  const hasResend = !!process.env.RESEND_API_KEY;
-  const hasFormspree = !!process.env.FORMSPREE_ENDPOINT;
   return NextResponse.json({
-    status: 'ok',
-    delivery: hasResend ? 'resend' : hasFormspree ? 'formspree' : 'unconfigured',
-    records: hasResend ? 'dispatch_email_json_attachment' : hasFormspree ? 'formspree_payload' : 'unconfigured'
+    ok: true,
+    service: 'dispatch',
+    env: {
+      RESEND_API_KEY: Boolean(process.env.RESEND_API_KEY),
+      DISPATCH_FROM_EMAIL: Boolean(process.env.DISPATCH_FROM_EMAIL),
+      DISPATCH_TO_EMAIL: Boolean(process.env.DISPATCH_TO_EMAIL),
+      NEXT_PUBLIC_SITE_URL: Boolean(process.env.NEXT_PUBLIC_SITE_URL),
+    },
+    timestamp: new Date().toISOString(),
   });
 }
