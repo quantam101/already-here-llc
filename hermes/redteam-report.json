@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "agent": "REDTEAM",
   "mission": "redteam.review",
-  "startedAt": "2026-05-16T23:45:31.216Z",
-  "finishedAt": "2026-05-16T23:45:31.238Z",
+  "startedAt": "2026-05-17T00:02:28.112Z",
+  "finishedAt": "2026-05-17T00:02:28.134Z",
   "status": "critical_review_required",
   "score": 0,
   "findings": [
@@ -12,12 +12,6 @@
       "severity": "critical",
       "file": "already-here-llc-v1.1/already-here-llc/app/api/dispatch/route.ts",
       "description": "Potential secret literal or credential marker in source."
-    },
-    {
-      "id": "unsupported-certification",
-      "severity": "critical",
-      "file": "already-here-llc-v1.1/already-here-llc/content/blog/pos-kiosk-support-phoenix.md",
-      "description": "Unsupported SDVOSB certified wording found."
     },
     {
       "id": "secret-literal",
@@ -71,6 +65,42 @@
       "id": "set-aside-claim",
       "severity": "high",
       "file": "hermes/SOCRATES.md",
+      "description": "Set-aside or sole-source language found; verify status before publishing."
+    },
+    {
+      "id": "unsupported-certification",
+      "severity": "critical",
+      "file": "hermes/receipts/2026-05-16T23-45-31-238Z-redteam-review.json",
+      "description": "Unsupported SDVOSB certified wording found."
+    },
+    {
+      "id": "set-aside-claim",
+      "severity": "high",
+      "file": "hermes/receipts/2026-05-16T23-45-31-238Z-redteam-review.json",
+      "description": "Set-aside or sole-source language found; verify status before publishing."
+    },
+    {
+      "id": "unsupported-certification",
+      "severity": "critical",
+      "file": "hermes/receipts/2026-05-16T23-46-56-389Z-a-plus-content-guard.json",
+      "description": "Unsupported SDVOSB certified wording found."
+    },
+    {
+      "id": "set-aside-claim",
+      "severity": "high",
+      "file": "hermes/receipts/2026-05-16T23-46-56-389Z-a-plus-content-guard.json",
+      "description": "Set-aside or sole-source language found; verify status before publishing."
+    },
+    {
+      "id": "unsupported-certification",
+      "severity": "critical",
+      "file": "hermes/redteam-report.json",
+      "description": "Unsupported SDVOSB certified wording found."
+    },
+    {
+      "id": "set-aside-claim",
+      "severity": "high",
+      "file": "hermes/redteam-report.json",
       "description": "Set-aside or sole-source language found; verify status before publishing."
     },
     {
@@ -188,5 +218,5 @@
       "description": "Set-aside or sole-source language found; verify status before publishing."
     }
   ],
-  "inspectedFiles": 206
+  "inspectedFiles": 226
 }
