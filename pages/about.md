@@ -1,5 +1,5 @@
-# About Already
+# About Already Here LLC
 
-Already helps people build passive income through AI-powered content, affiliate marketing, and print-on-demand.
+Already Here LLC helps people build passive income through AI-powered content, affiliate marketing, and print-on-demand.
 
 Contact: alreadyherellc@gmail.com
