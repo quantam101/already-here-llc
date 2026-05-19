@@ -17,7 +17,14 @@ const checks = [
 
 function runCheck(check) {
   const startedAt = new Date().toISOString();
-  const result = spawnSync(check.command, check.args, {
+  const commandLine = [check.command, ...check.args].join(' ');
+  const result = process.platform === 'win32'
+    ? spawnSync(commandLine, {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      shell: true
+    })
+    : spawnSync(check.command, check.args, {
     cwd: repoRoot,
     encoding: 'utf8',
     shell: false
@@ -25,11 +32,12 @@ function runCheck(check) {
 
   return {
     id: check.id,
-    command: [check.command, ...check.args].join(' '),
+    command: commandLine,
     startedAt,
     finishedAt: new Date().toISOString(),
     status: result.status === 0 ? 'pass' : 'fail',
     exitCode: result.status,
+    error: result.error?.message || '',
     stdout: result.stdout?.slice(-5000) || '',
     stderr: result.stderr?.slice(-5000) || ''
   };
@@ -46,7 +54,8 @@ const receipt = {
     id: result.id,
     command: result.command,
     status: result.status,
-    exitCode: result.exitCode
+    exitCode: result.exitCode,
+    error: result.error
   }))
 };
 

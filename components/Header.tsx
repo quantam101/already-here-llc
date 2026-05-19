@@ -50,7 +50,7 @@ export function Header() {
         </div>
 
         <button type="button" className="link-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/45 text-white xl:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-nav" aria-label="Toggle navigation">
-          <span className="text-xl">{open ? 'Ã' : 'â°'}</span>
+          <span className="text-xl" aria-hidden="true">{open ? '\u00d7' : '\u2630'}</span>
         </button>
       </div>
 

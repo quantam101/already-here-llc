@@ -26,9 +26,13 @@ const forbidden = [
   { id: 'set-aside', pattern: /set-aside|sole-source/i, reason: 'Do not use procurement set-aside or sole-source language without verified status.' },
   { id: 'endpoint-warning', pattern: /endpoint must be configured|before the form can deliver production/i, reason: 'Buyer-facing production warning copy is prohibited.' },
   { id: 'dead-contact-route', pattern: /href=["']\/contact["']|href=\{["']\/contact["']\}/i, reason: 'No /contact route exists; use /dispatch or /rfq.' },
-  { id: 'encoded-sdvosb', pattern: /SDVOSB-certified\s*Â·/i, reason: 'Encoded stale certification string is prohibited.' },
+  { id: 'encoded-sdvosb', pattern: /SDVOSB-certified\s*\u00c2\u00b7/i, reason: 'Encoded stale certification string is prohibited.' },
   { id: 'government-set-aside-option', pattern: /Government\s*\/\s*SDVOSB\s*set-aside/i, reason: 'Dispatch service options must not overclaim procurement status.' }
 ];
+
+function normalizePath(value) {
+  return value.replaceAll('\\', '/');
+}
 
 function nowIso() {
   return new Date().toISOString();
@@ -41,7 +45,7 @@ function sha256(value) {
 function walk(dir, files = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
-    const rel = relative(repoRoot, full);
+    const rel = normalizePath(relative(repoRoot, full));
     if (entry.isDirectory()) {
       if (ignoreDirs.has(entry.name) || ignorePaths.has(rel)) continue;
       walk(full, files);
@@ -56,7 +60,7 @@ function walk(dir, files = []) {
 
 const findings = [];
 for (const file of walk(repoRoot)) {
-  const rel = relative(repoRoot, file);
+  const rel = normalizePath(relative(repoRoot, file));
   if (skipFiles.has(rel)) continue;
   const text = readFileSync(file, 'utf8');
   for (const rule of forbidden) {

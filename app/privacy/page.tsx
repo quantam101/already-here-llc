@@ -2,7 +2,10 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'Privacy policy for Already Here LLC website visitors and dispatch form submissions.'
+  description: 'Privacy policy for Already Here LLC website visitors and dispatch form submissions.',
+  alternates: {
+    canonical: '/privacy'
+  }
 };
 
 export default function PrivacyPage() {
