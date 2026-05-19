@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const repoRoot = process.cwd();
@@ -18,6 +18,9 @@ const checks = [
 function runCheck(check) {
   const startedAt = new Date().toISOString();
   const commandLine = [check.command, ...check.args].join(' ');
+  if (check.id === 'build') {
+    rmSync(join(repoRoot, '.next'), { recursive: true, force: true });
+  }
   const result = process.platform === 'win32'
     ? spawnSync(commandLine, {
       cwd: repoRoot,

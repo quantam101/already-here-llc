@@ -22,7 +22,6 @@ export const metadata: Metadata = {
     'commercial IT field support',
     'retail infrastructure support',
     'government contractor IT services',
-    'SDVOSB IT services',
     'SAM.gov registered IT contractor',
     'field support for critical systems',
     'vendor field execution',
@@ -73,7 +72,6 @@ const localBusinessSchema = {
     'Rollout Recovery',
     'Retail Technology Support',
     'Critical Systems Field Support',
-    'SDVOSB',
     'SAM.gov Registered Contractor'
   ],
   hasOfferCatalog: {

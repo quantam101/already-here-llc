@@ -22,7 +22,7 @@ export const siteConfig = {
     zip: '85007',
     full: '429 N 18th Dr, Phoenix, AZ 85007'
   },
-  certifications: ['SDVOSB Eligible', 'Commercially Insured', 'SAM.gov Registered'],
+  certifications: ['Commercially Insured', 'SAM.gov Registered', 'Certification Pursuit'],
   trustBar: ['A+ BBB Rating', 'Operating Since 2013', 'Phoenix-Based', 'Commercial & Multi-Site Support', 'Rapid Onsite Dispatch']
 };
 
@@ -75,7 +75,7 @@ export const buyerReasons = [
   'Reliable onsite execution for defined technical dispatches without consumer repair-shop positioning.',
   'Technical field operations for MSPs, vendors, commercial sites, retail environments, and critical systems.',
   'Structured closeout documentation with photos, field notes, equipment observations, and next-step escalation when required.',
-  'Procurement-ready profile with SAM.gov registration, commercial insurance, and active SDVOSB certification pursuit.'
+  'Procurement-ready profile with SAM.gov registration, commercial insurance, and certification claims kept separate from public marketing copy.'
 ] as const;
 
 export const documentedWorkTypes = [
@@ -164,7 +164,7 @@ export const audience = [
   {
     title: 'Procurement teams',
     description:
-      'SAM.gov registered, commercially insured, and SDVOSB-eligible while actively pursuing certification for appropriate subcontracting opportunities.'
+      'SAM.gov registered and commercially insured, with certification pursuit handled separately from public buyer claims.'
   }
 ] as const;
 
@@ -187,7 +187,7 @@ export const dispatchTypes = [
   'POS / store tech',
   'Survey / site verification',
   'Healthcare / controlled environment',
-  'SDVOSB-eligible support',
+  'Procurement support',
   'Critical systems support'
 ] as const;
 
@@ -200,12 +200,12 @@ export const representativeWork = [
   {
     client: 'Enterprise infrastructure vendor',
     tag: 'Infrastructure',
-    scope: 'HPE Alletra MP deployment — Chandler, AZ data center. Rack, cable, and verification. Multi-day engagement with structured closeout.'
+    scope: 'HPE Alletra MP deployment - Chandler, AZ data center. Rack, cable, and verification. Multi-day engagement with structured closeout.'
   },
   {
     client: 'National retail brand',
     tag: 'Rollout / Survey',
-    scope: 'RFID reader survey — 55 readers, 4 APs, 61 data runs, HP Aruba switches. Chandler Fashion Center US0275. Full structured field execution with documentation.'
+    scope: 'RFID reader survey - 55 readers, 4 APs, 61 data runs, HP Aruba switches. Chandler Fashion Center US0275. Full structured field execution with documentation.'
   },
   {
     client: 'Medical device OEM',
@@ -215,12 +215,12 @@ export const representativeWork = [
   {
     client: 'National MSP',
     tag: 'Smart Hands',
-    scope: 'GoDaddy Phoenix campus block storage installs — multi-site smart-hands coordination with structured closeout per ticket.'
+    scope: 'GoDaddy Phoenix campus block storage installs - multi-site smart-hands coordination with structured closeout per ticket.'
   },
   {
     client: 'National QSR chain (NCR)',
     tag: 'POS / Retail',
-    scope: 'Starbucks POS upgrade execution — NCR Voyix WO. Mesa AZ. Pre-flight, install, and documented closeout.'
+    scope: 'Starbucks POS upgrade execution - NCR Voyix WO. Mesa AZ. Pre-flight, install, and documented closeout.'
   }
 ] as const;
 

@@ -3,15 +3,15 @@ import Link from 'next/link';
 import { naicsCodes, representativeWork, siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Capability Statement | SDVOSB-Eligible Field Execution',
+  title: 'Capability Statement | Field Execution Partner',
   description:
-    'Already Here LLC capability statement — SDVOSB-eligible Phoenix field execution partner for MSPs, government primes, healthcare-adjacent operators, and rollout programs. SAM.gov registered.',
+    'Already Here LLC capability statement - Phoenix field execution partner for MSPs, government primes, healthcare-adjacent operators, and rollout programs. SAM.gov registered.',
   alternates: { canonical: '/capability-statement' }
 };
 
 const coreCompetencies = [
   'MSP smart-hands and remote team onsite follow-through',
-  'Infrastructure field work — rack/stack, patching, cabling, port verification',
+  'Infrastructure field work - rack/stack, patching, cabling, port verification',
   'POS, kiosk, and payment device installation and support',
   'Healthcare-adjacent and controlled environment field execution',
   'Medical device calibration and NICU equipment support',
@@ -20,19 +20,19 @@ const coreCompetencies = [
   'Documentation-driven closeout and photo verification per ticket',
   'AV/media troubleshooting and digital signage support',
   'Site surveys, store-level audits, and ground-truth verification',
-  'Managed router installs — Cradlepoint, SD-WAN, Starlink',
-  'Government-adjacent and SDVOSB-eligible field engagements'
+  'Managed router installs - Cradlepoint, SD-WAN, Starlink',
+  'Government-adjacent field engagements'
 ];
 
 const differentiators = [
-  'SDVOSB-eligible — actively pursuing certification for federal and state procurement programs',
+  'SAM.gov registered with certification pursuit handled separately from public buyer claims',
   'SAM.gov registered',
-  'Commercially insured — General Liability and Professional Liability',
+  'Commercially insured - General Liability and Professional Liability',
   '26+ years IT field experience: healthcare, enterprise, government-adjacent, retail, QSR, data center',
-  'Phoenix metro primary coverage — qualified Arizona statewide and Western US travel for project-based engagements',
+  'Phoenix metro primary coverage - qualified Arizona statewide and Western US travel for project-based engagements',
   'Documented execution history: H&M RFID, HPE Alletra, GE Healthcare, NCR/Starbucks, GoDaddy, Wipro, Ingram Micro',
-  'Structured closeout with photo documentation delivered per ticket — not vague "work completed" notes',
-  'Field Nation and WorkMarket dispatch history — qualified buyer verification available on request'
+  'Structured closeout with photo documentation delivered per ticket - not vague "work completed" notes',
+  'Field Nation and WorkMarket dispatch history - qualified buyer verification available on request'
 ];
 
 export default function CapabilityStatementPage() {
@@ -43,7 +43,7 @@ export default function CapabilityStatementPage() {
       <div className="card p-8 sm:p-10 mb-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <span className="eyebrow">Capability Statement · {year}</span>
+            <span className="eyebrow">Capability Statement - {year}</span>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-navy sm:text-5xl">
               Already Here LLC
             </h1>
@@ -54,7 +54,7 @@ export default function CapabilityStatementPage() {
           </div>
           <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end lg:gap-3 shrink-0">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
-              SDVOSB Eligible
+              Certification Pursuit In Progress
             </span>
             <span className="rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-slate-600">
               SAM.gov Registered
@@ -171,7 +171,7 @@ export default function CapabilityStatementPage() {
           <div>
             <h2 className="text-2xl font-semibold">Ready to engage?</h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-white/80">
-              Send scope, site, and timeline through dispatch intake. SDVOSB-eligible procurement inquiries welcome.
+              Send scope, site, and timeline through dispatch intake. Procurement inquiries are reviewed against current verified registrations and certifications.
               Capability statement PDF available on request.
             </p>
           </div>

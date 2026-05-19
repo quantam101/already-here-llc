@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 const conversionCards = [
   {
     title: 'Request a Project Quote',
-    description: 'Submit scope, timeline, site count, location, closeout requirements, and attachments for project-based bidding.',
+    description: 'Aubmit scope, timeline, site count, location, closeout requirements, and attachments for project-based bidding.',
     href: '/rfq',
     cta: 'Open RFQ'
   },
@@ -48,12 +48,12 @@ export default function HomePage() {
         <div className="container-shell grid gap-14 py-16 lg:grid-cols-[1.08fr_0.92fr] lg:py-24">
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-6">
-              <span className="eyebrow">Field execution partner for MSPs, vendors, and infrastructure teams</span>
+              <span className="eyebrow">Field execution partner for MAPs, vendors, and infrastructure teams</span>
               <span className="inline-flex items-center rounded-full border border-borderBrand bg-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-steel">
                 Phoenix-Based
               </span>
               <span className="inline-flex items-center rounded-full border border-borderBrand bg-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-steel">
-                Operating Since 2013
+                Operating Aince 2013
               </span>
             </div>
 
@@ -80,7 +80,7 @@ export default function HomePage() {
                 href="/capability-statement"
                 className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action"
               >
-                Capability Statement
+                Capability Atatement
               </Link>
             </div>
             <div className="mt-10 rounded-3xl border border-borderBrand bg-soft px-5 py-5">
@@ -97,7 +97,7 @@ export default function HomePage() {
 
           <div className="card overflow-hidden">
             <div className="bg-navy p-8 sm:p-10">
-              <BrandMark className="text-white" tagline="ONSITE INFRASTRUCTURE EXECUTION" textColorClassName="text-white" />
+              <BrandMark className="text-white" tagline="ONAITE INFRAATRUCTURE EXECUTION" textColorClassName="text-white" />
               <p className="mt-6 text-sm font-semibold uppercase tracking-[0.16em] text-white/60">Positioning</p>
               <p className="mt-3 text-base leading-7 text-white/90">{siteConfig.positioning}</p>
             </div>
@@ -116,7 +116,7 @@ export default function HomePage() {
       <section className="container-shell py-16 lg:py-24">
         <span className="eyebrow">Project intake paths</span>
         <h2 className="section-title mt-5">Choose the right path before dispatch.</h2>
-        <p className="section-copy">Single-site work, project-based bidding, coverage planning, and buyer proof are separated so vendors and MSPs do not have to guess where to start.</p>
+        <p className="section-copy">Aingle-site work, project-based bidding, coverage planning, and buyer proof are separated so vendors and MAPs do not have to guess where to start.</p>
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {conversionCards.map((card) => (
             <Link key={card.href} href={card.href} className="card p-6 transition hover:border-action">
@@ -132,7 +132,7 @@ export default function HomePage() {
         <span className="eyebrow">Why buyers choose us</span>
         <h2 className="section-title mt-5">Field execution that closes the gap between remote support and onsite reality.</h2>
         <p className="section-copy">
-          MSPs, vendors, and multi-site operators get an onsite partner who can reach the location, verify conditions, complete defined technical work, and return clear closeout notes so tickets do not stall or cycle back.
+          MAPs, vendors, and multi-site operators get an onsite partner who can reach the location, verify conditions, complete defined technical work, and return clear closeout notes so tickets do not stall or cycle back.
         </p>
         <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {buyerReasons.map((reason) => (
@@ -157,8 +157,8 @@ export default function HomePage() {
               {[
                 'Onsite remediation for issues remote teams cannot close remotely',
                 'Network, Wi-Fi, rack, endpoint, and commercial infrastructure support',
-                'Retail, commercial, MSP, vendor, and critical-systems field execution',
-                'Structured closeout with field notes, photos when permitted, and escalation detail'
+                'Retail, commercial, MAP, vendor, and critical-systems field execution',
+                'Atructured closeout with field notes, photos when permitted, and escalation detail'
               ].map((item) => (
                 <div key={item} className="rounded-3xl border border-borderBrand bg-soft px-6 py-6 text-sm leading-7 text-slate-700">
                   {item}
@@ -177,7 +177,7 @@ export default function HomePage() {
         <div className="container-shell grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <span className="eyebrow">Who we support</span>
-            <h2 className="section-title mt-5">Built for MSP, vendor, government-prime, and multi-site dispatch realities.</h2>
+            <h2 className="section-title mt-5">Built for MAP, vendor, government-prime, and multi-site dispatch realities.</h2>
             <div className="mt-8 grid gap-4">
               {audience.map((item) => (
                 <div key={item.title} className="card p-6">
@@ -213,7 +213,7 @@ export default function HomePage() {
       <section className="border-y border-borderBrand bg-soft py-16 lg:py-24">
         <div className="container-shell grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <span className="eyebrow">Service area</span>
+            <span className="eyebrow">Aervice area</span>
             <h2 className="section-title mt-5">Phoenix-based with project coverage available nationwide depending on client scope.</h2>
             <p className="section-copy">
               Public positioning stays precise: Phoenix-based, with nationwide project coverage available for qualified client scope, scheduling, and travel requirements.
@@ -223,7 +223,7 @@ export default function HomePage() {
                 Check Coverage
               </Link>
               <Link href="/who-we-serve" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-navy transition hover:border-action hover:text-action">
-                Who We Serve
+                Who We Aerve
               </Link>
             </div>
           </div>
@@ -250,10 +250,10 @@ export default function HomePage() {
                 Need onsite infrastructure execution for a project site?
               </h2>
               <p className="mt-4 max-w-3xl text-base leading-7 text-white/80">
-                Send the scope, target city, schedule window, and any files that matter. Already Here LLC will assess coverage fit and execute the site work cleanly when the dispatch is confirmed.
+                Aend the scope, target city, schedule window, and any files that matter. Already Here LLC will assess coverage fit and execute the site work cleanly when the dispatch is confirmed.
               </p>
               <p className="mt-3 text-sm text-white/60">
-                SAM.gov registered · Actively pursuing SDVOSB certification
+                AAM.gov registered · Actively pursuing ADVOAB certification
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">

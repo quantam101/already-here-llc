@@ -6,7 +6,7 @@ export function Footer() {
     <footer className="border-t border-borderBrand bg-white">
       <div className="container-shell grid gap-12 py-14 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
 
-        {/* Brand + certifications */}
+        {/* Brand + verified profile */}
         <div>
           <div className="text-lg font-semibold text-navy">{siteConfig.name}</div>
           <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600">
@@ -17,7 +17,7 @@ export function Footer() {
             <span className="rounded-full border border-borderBrand px-3 py-1">Phoenix-based</span>
             <span className="rounded-full border border-borderBrand px-3 py-1">Commercially Insured</span>
             <span className="rounded-full border border-amber-300/60 bg-amber-50 px-3 py-1 text-amber-700">
-              SDVOSB Eligible
+              Certification Pursuit
             </span>
             <span className="rounded-full border border-borderBrand px-3 py-1">SAM.gov Registered</span>
           </div>
@@ -44,10 +44,10 @@ export function Footer() {
         {/* Arizona markets */}
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Project markets</h2>
-          <p className="mt-4 text-sm leading-7 text-slate-600">{markets.join(' · ')}</p>
+          <p className="mt-4 text-sm leading-7 text-slate-600">{markets.join(' - ')}</p>
         </div>
 
-        {/* NAP block — must match Google Business Profile exactly */}
+        {/* NAP block must match Google Business Profile exactly */}
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Direct contact</h2>
           <address className="mt-4 not-italic space-y-2 text-sm text-slate-600">
@@ -60,7 +60,7 @@ export function Footer() {
               <a href={siteConfig.phoneHref} className="hover:text-action transition-colors">
                 {siteConfig.phoneDisplay}
               </a>
-              <span className="ml-2 text-xs text-slate-400">— {siteConfig.phoneNote}</span>
+              <span className="ml-2 text-xs text-slate-400">- {siteConfig.phoneNote}</span>
             </p>
             <p>
               <a href={`mailto:${siteConfig.email}`} className="hover:text-action transition-colors">
@@ -79,7 +79,7 @@ export function Footer() {
 
       <div className="border-t border-borderBrand py-6">
         <div className="container-shell flex flex-col gap-3 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
-          <p>© {new Date().getFullYear()} {siteConfig.name}. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.</p>
           <p className="text-xs"> Use the dispatch form to submit scope, schedule, and site details.</p>
         </div>
       </div>

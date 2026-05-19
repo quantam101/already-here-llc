@@ -23,6 +23,7 @@ const inspectExtensions = new Set(['.ts', '.tsx', '.js', '.mjs', '.json', '.md',
 
 const forbidden = [
   { id: 'sdvosb-certified', pattern: /SDVOSB[-\s]certified|SDVOSB Certified/i, reason: 'Do not claim SDVOSB certification unless verified complete.' },
+  { id: 'sdvosb-eligible', pattern: /SDVOSB[-\s]eligible|SDVOSB Eligible/i, reason: 'Do not claim SDVOSB eligibility in public copy unless verified complete.' },
   { id: 'set-aside', pattern: /set-aside|sole-source/i, reason: 'Do not use procurement set-aside or sole-source language without verified status.' },
   { id: 'endpoint-warning', pattern: /endpoint must be configured|before the form can deliver production/i, reason: 'Buyer-facing production warning copy is prohibited.' },
   { id: 'dead-contact-route', pattern: /href=["']\/contact["']|href=\{["']\/contact["']\}/i, reason: 'No /contact route exists; use /dispatch or /rfq.' },
