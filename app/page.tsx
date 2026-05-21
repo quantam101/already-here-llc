@@ -158,4 +158,69 @@ export default function HomePage() {
               <h3>CIS Controls Aligned</h3>
               <p>Network troubleshooting, endpoint work, and infrastructure tasks follow CIS Controls-aligned field procedures for asset inventory and configuration management.</p>
             </div>
-            <div classNa
+            <div className="service-card">
+              <h3>SAM.gov Active</h3>
+              <p>Active federal registration. UEI available for qualified procurement buyers. NAICS: 541512, 541519, 561499, 238210. ADVOSB certification in pursuit.</p>
+            </div>
+          </div>
+          <p className="compliance-note"><strong>For procurement teams:</strong> Compliance alignment documentation, SAM.gov registration, insurance certificates, and NAICS listings available upon request. <Link href="/rfq">Begin qualification</Link></p>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container">
+          <h2>Field Execution Across Environments That Matter</h2>
+          <p className="section-sub">Clients include national retail technology vendors, enterprise infrastructure teams, healthcare-adjacent operators, and MSPs across the Phoenix metro and Western US.</p>
+          <div className="work-grid">
+            <div className="work-card">
+              <div className="work-tag">POS / Retail</div>
+              <h3>National QSR Chain</h3>
+              <p>POS hardware installation across 4 locations, Mesa AZ metro. NCR Voyix-issued scope. Confirmed closeout with photo documentation delivered same day.</p>
+            </div>
+            <div className="work-card">
+              <div className="work-tag">Infrastructure</div>
+              <h3>Enterprise Infrastructure Vendor</h3>
+              <p>HPE Alletra MP deployment — Chandler, AZ data center. Rack, cable, and verification. Multi-day engagement with structured closeout.</p>
+            </div>
+            <div className="work-card">
+              <div className="work-tag">Rollout / RFID</div>
+              <h3>National Retail Brand</h3>
+              <p>RFID reader survey — 55 readers, 4 APs, 61 data runs, HP Aruba switches. Chandler Fashion Center US0275. Inventory accuracy improved from 83% to 99.2%.</p>
+            </div>
+            <div className="work-card">
+              <div className="work-tag">Healthcare</div>
+              <h3>Medical Device OEM</h3>
+              <p>GE Healthcare Giraffe / MIC NICU equipment calibration across multiple healthcare sites, Western US. Access-sensitive, documentation-required environments.</p>
+            </div>
+            <div className="work-card">
+              <div className="work-tag">Smart Hands</div>
+              <h3>National MSP</h3>
+              <p>GoDaddy Phoenix campus block storage installs — multi-site smart-hands coordination with structured closeout per ticket.</p>
+            </div>
+            <div className="work-card">
+              <div className="work-tag">Network Recovery</div>
+              <h3>Commercial Property Operator</h3>
+              <p>50-endpoint network stabilization. Weekly ticket volume reduced 40% through structured remediation and documentation within 30 days.</p>
+            </div>
+          </div>
+          <div className="section-actions">
+            <Link href="/project-gallery" className="btn btn-secondary">View Project Gallery</Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="section section-cta">
+        <div className="container">
+          <h2>Need Onsite Infrastructure Execution for a Project Site?</h2>
+          <p>Send the scope, target city, schedule window, and any files that matter. Already Here LLC will assess coverage fit and execute the site work cleanly when the dispatch is confirmed.</p>
+          <p className="cta-badges">SAM.gov Registered &middot; Commercially Insured &middot; NIST SP 800-171 Aligned &middot; CMMC Baseline Ready &middot; ADVOSB Pursuit</p>
+          <div className="btn-group">
+            <Link href="/rfq" className="btn btn-primary">Request Project Quote</Link>
+            <Link href="/dispatch" className="btn btn-secondary">Request Dispatch</Link>
+            <a href="tel:+16028822920" className="btn btn-ghost">(602) 882-2920</a>
+          </div>
+        </div>
+      </section>
+    </>
+  )
+}
