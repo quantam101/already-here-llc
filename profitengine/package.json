@@ -1,0 +1,23 @@
+{
+  "name": "profitengine",
+  "version": "1.0.0",
+  "description": "ProfitEngine content generation and publishing pipeline",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "generate": "node agents/content-generator.js",
+    "health": "node -e \"require('http').get('http://localhost:' + (process.env.PORT||3000) + '/api/health', r => { process.exit(r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))\""
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "groq-sdk": "^0.8.0",
+    "node-cron": "^3.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

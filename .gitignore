@@ -11,3 +11,9 @@ data/
 backups/
 .env
 hermes/receipts/
+
+# ProfitEngine runtime
+profitengine/.env
+profitengine/node_modules/
+profitengine/logs/
+profitengine/data/
