@@ -64,14 +64,27 @@ app.get('/api/posts', (_req, res) => {
   }
 });
 
-// ── Earnings (placeholder — requires live platform data) ─────────────────────
+// ── Earnings ──────────────────────────────────────────────────────────────────
+// Reads from data/earnings.json when present (written by platform connectors).
+// Per revenue integrity policy, totals are unverified unless a connector sets verified: true.
 
 app.get('/api/earnings', (_req, res) => {
-  res.json({
-    note: 'Revenue requires live platform confirmation. Connect Stripe/PayPal/affiliate platform to populate.',
-    verified: false,
-    total: null
-  });
+  const earningsDb = path.join(__dirname, 'data', 'earnings.json');
+  if (!fs.existsSync(earningsDb)) {
+    return res.json({
+      verified: false,
+      total_usd: 0,
+      currency: 'USD',
+      sources: [],
+      note: 'No earnings data yet. Configure a platform connector to populate.'
+    });
+  }
+  try {
+    const data = JSON.parse(fs.readFileSync(earningsDb, 'utf8'));
+    res.json(data);
+  } catch {
+    res.status(500).json({ error: 'Could not read earnings data' });
+  }
 });
 
 // ── Manual trigger (POST /api/generate) ──────────────────────────────────────
