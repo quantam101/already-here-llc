@@ -3,6 +3,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const path = require('path');
 const scheduler = require('./scheduler');
@@ -11,6 +12,10 @@ const { runContentPipeline } = require('./pipeline');
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const app = express();
 app.use(express.json());
+
+const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false });
+const generateLimiter = rateLimit({ windowMs: 60 * 1000, max: 5, standardHeaders: true, legacyHeaders: false });
+app.use('/api/', apiLimiter);
 
 // ── Health ──────────────────────────────────────────────────────────────────
 
@@ -89,7 +94,7 @@ app.get('/api/earnings', (_req, res) => {
 
 // ── Manual trigger (POST /api/generate) ──────────────────────────────────────
 
-app.post('/api/generate', async (_req, res) => {
+app.post('/api/generate', generateLimiter, async (_req, res) => {
   try {
     const results = await runContentPipeline();
     res.json({ ok: true, results });
