@@ -1,275 +1,245 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
-import { BrandMark } from '@/components/BrandMark';
-import { ProofBlock } from '@/components/ProofBlock';
-import { audience, buyerReasons, documentedWorkTypes, environments, markets, serviceGroups, siteConfig } from '@/lib/site';
+import type { Metadata } from 'next'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
-  alternates: { canonical: '/' },
+  title: 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations',
+  description:
+    'Phoenix-based onsite infrastructure execution and technical field operations partner for MSPs, vendors, commercial sites, retail environments, and critical systems. NIST SP 800-171 aligned. SAM.gov registered. Project coverage available nationwide.',
+  alternates: {
+    canonical: 'https://www.alreadyherellc.com',
+  },
   openGraph: {
     title: 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations',
-    description: siteConfig.description,
-    url: '/',
-    siteName: siteConfig.name,
-    type: 'website'
+    description:
+      'Phoenix-based onsite infrastructure execution and technical field operations. NIST SP 800-171 aligned. SAM.gov registered.',
+    url: 'https://www.alreadyherellc.com',
+    siteName: 'Already Here LLC',
+    type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations',
-    description: siteConfig.description
-  }
-};
+    description:
+      'Phoenix-based onsite infrastructure execution and technical field operations. NIST SP 800-171 aligned. SAM.gov registered.',
+  },
+}
 
-const conversionCards = [
+const proofMetrics = [
   {
-    title: 'Request a Project Quote',
-    description: 'Aubmit scope, timeline, site count, location, closeout requirements, and attachments for project-based bidding.',
-    href: '/rfq',
-    cta: 'Open RFQ'
+    stat: '40%',
+    label: 'Ticket Reduction',
+    detail:
+      'Stabilized a chaotic 50-endpoint commercial network within 30 days, reducing weekly support tickets by 40% through structured remediation and full documentation.',
   },
   {
-    title: 'View Project Gallery',
-    description: 'Review redacted representative work and approved rotating project photos when available.',
-    href: '/project-gallery',
-    cta: 'View Gallery'
+    stat: '99.2%',
+    label: 'Inventory Accuracy',
+    detail:
+      'RFID infrastructure deployment — 55 readers, 61 data runs, 4 APs, 2 HP Aruba switches. Chandler Fashion Center US0275. Inventory accuracy improved from 83% to 99.2%.',
   },
   {
-    title: 'Check Coverage',
-    description: 'Use the Phoenix-centered Arizona coverage reference for dispatch planning and project fit.',
-    href: '/coverage',
-    cta: 'Check Coverage'
-  }
-] as const;
+    stat: '< 4 hrs',
+    label: 'Dispatch to Onsite',
+    detail:
+      'Same-day dispatch capability across Phoenix metro for confirmed scopes. Field closeout documentation returned within 2 hours of task completion.',
+  },
+  {
+    stat: '0',
+    label: 'Critical Go-Live Incidents',
+    detail:
+      'Zero critical incidents across all multi-site deployments. Pre-flight verification, structured execution, and immediate escalation protocols prevent surprise failures.',
+  },
+]
+
+const complianceFrameworks = [
+  {
+    name: 'NIST SP 800-171',
+    detail:
+      'Field operations and documentation practices aligned to NIST SP 800-171 CUI handling requirements — relevant for federal prime and subcontractor dispatch chains.',
+  },
+  {
+    name: 'CMMC Level 1 Baseline',
+    detail:
+      'Operational discipline maps to CMMC Level 1 practices: access control, media protection, and physical protection controls applied to all field engagements.',
+  },
+  {
+    name: 'CIS Controls Aligned',
+    detail:
+      'Network troubleshooting, endpoint work, and infrastructure tasks follow CIS Controls-aligned field procedures for asset inventory and configuration management.',
+  },
+  {
+    name: 'SAM.gov Active',
+    detail:
+      'Active federal registration. UEI available for qualified procurement buyers. NAICS: 541512, 541519, 561499, 238210. ADVOSB certification in pursuit.',
+  },
+]
+
+const physicalLayer = [
+  {
+    title: 'Structured Cabling & Validation',
+    items: [
+      'Cat 5e / 6 / 6A installation and certification',
+      'Cable tray, conduit, and pathway work',
+      'Punch-down, termination, and labeling',
+      'TDR / Fluke field testing and closeout reporting',
+    ],
+  },
+  {
+    title: 'Network Closet & IDF Engineering',
+    items: [
+      'Rack installation, cable management, and documentation',
+      'Patch panel organization and labeling',
+      'Switch and UPS placement and grounding verification',
+      'Before / after photography and rack diagram delivery',
+    ],
+  },
+  {
+    title: 'Physical Access & Facility Systems',
+    items: [
+      'Access control hardware installation and commissioning',
+      'Door hardware and credential reader positioning',
+      'Camera and sensor mounting — low-voltage adjacent',
+      'Physical security layer documentation for IT closeout packages',
+    ],
+  },
+  {
+    title: 'Site Survey & Ground-Truth Verification',
+    items: [
+      'Pre-deployment walkthrough and scope validation',
+      'As-built documentation and discrepancy reporting',
+      'Wi-Fi survey and AP placement verification',
+      'Physical layer sign-off before logical configuration',
+    ],
+  },
+]
+
+const caseStudies = [
+  {
+    tag: 'POS / Retail',
+    title: 'National QSR Chain',
+    body: 'POS hardware installation across 4 locations, Mesa AZ metro. NCR Voyix-issued scope. Confirmed closeout with photo documentation delivered same day.',
+  },
+  {
+    tag: 'Infrastructure',
+    title: 'Enterprise Infrastructure Vendor',
+    body: 'HPE Alletra MP deployment — Chandler, AZ data center. Rack, cable, and verification. Multi-day engagement with structured closeout.',
+  },
+  {
+    tag: 'Rollout / RFID',
+    title: 'National Retail Brand',
+    body: 'RFID reader survey — 55 readers, 4 APs, 61 data runs, HP Aruba switches. Chandler Fashion Center US0275. Inventory accuracy improved from 83% to 99.2%.',
+  },
+  {
+    tag: 'Healthcare',
+    title: 'Medical Device OEM',
+    body: 'GE Healthcare Giraffe / MIC NICU equipment calibration across multiple healthcare sites, Western US. Access-sensitive, documentation-required environments.',
+  },
+  {
+    tag: 'Smart Hands',
+    title: 'National MSP',
+    body: 'GoDaddy Phoenix campus block storage installs — multi-site smart-hands coordination with structured closeout per ticket.',
+  },
+  {
+    tag: 'Network Recovery',
+    title: 'Commercial Property Operator',
+    body: '50-endpoint network stabilization. Chaotic baseline remediated within 30 days. Weekly ticket volume reduced 40% through structured remediation and documentation.',
+  },
+]
 
 export default function HomePage() {
   return (
     <>
-      <section className="border-b border-borderBrand bg-white">
-        <div className="container-shell grid gap-14 py-16 lg:grid-cols-[1.08fr_0.92fr] lg:py-24">
-          <div>
-            <div className="flex flex-wrap items-center gap-3 mb-6">
-              <span className="eyebrow">Field execution partner for MAPs, vendors, and infrastructure teams</span>
-              <span className="inline-flex items-center rounded-full border border-borderBrand bg-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-steel">
-                Phoenix-Based
-              </span>
-              <span className="inline-flex items-center rounded-full border border-borderBrand bg-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-steel">
-                Operating Aince 2013
-              </span>
-            </div>
+      <section className="hero">
+        <div className="container">
+          <p className="eyebrow">Phoenix-Based · Operating Since 2013 · SAM.gov Registered</p>
+          <h1>
+            Phoenix-Based Onsite IT Field Execution for MSPs, Retail, and Infrastructure Teams
+          </h1>
+          <p className="hero-sub">
+            Already Here LLC delivers onsite remediation, smart hands support, network
+            troubleshooting, rollout recovery, and infrastructure execution from Phoenix for
+            Arizona and qualified project sites nationwide. We solve the technical issues remote
+            teams cannot close remotely — from the concrete up to the cloud.
+          </p>
+          <div className="btn-group">
+            <Link href="/dispatch" className="btn btn-primary">Request Dispatch</Link>
+            <Link href="/rfq" className="btn btn-secondary">Request Project Quote</Link>
+            <Link href="/capability-statement" className="btn btn-ghost">Capability Statement</Link>
+          </div>
+          <div className="trust-bar">
+            {[
+              'A+ BBB Rating',
+              'Operating Since 2013',
+              'Phoenix-Based',
+              'SAM.gov Registered',
+              'NIST SP 800-171 Aligned',
+              'CMMC Baseline Ready',
+              'Commercially Insured',
+            ].map((t) => (
+              <span key={t}>{t}</span>
+            ))}
+          </div>
+        </div>
+      </section>
 
-            <h1 className="mt-2 max-w-4xl text-4xl font-semibold tracking-tight text-navy sm:text-5xl lg:text-6xl">
-              {siteConfig.heroTitle}
-            </h1>
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-              {siteConfig.heroDescription}
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/dispatch"
-                className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-navy"
-              >
-                Request Dispatch
-              </Link>
-              <Link
-                href="/rfq"
-                className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action"
-              >
-                Request Project Quote
-              </Link>
-              <Link
-                href="/capability-statement"
-                className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action"
-              >
-                Capability Atatement
-              </Link>
-            </div>
-            <div className="mt-10 rounded-3xl border border-borderBrand bg-soft px-5 py-5">
-              <p className="grid-label">Trust bar</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {siteConfig.trustBar.map((item) => (
-                  <span key={item} className="rounded-full border border-borderBrand bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
-                    {item}
-                  </span>
-                ))}
+      <section className="section bg-alt">
+        <div className="container">
+          <h2>Hardened Proof of Execution</h2>
+          <p className="section-sub">
+            Documented field activity — not capability claims. Specific outcomes from real
+            engagements, anonymized per client agreements.
+          </p>
+          <div className="grid-4">
+            {proofMetrics.map((m) => (
+              <div key={m.stat} className="card card-metric">
+                <div className="metric-stat">{m.stat}</div>
+                <div className="metric-label">{m.label}</div>
+                <p className="metric-detail">{m.detail}</p>
               </div>
-            </div>
-          </div>
-
-          <div className="card overflow-hidden">
-            <div className="bg-navy p-8 sm:p-10">
-              <BrandMark className="text-white" tagline="ONAITE INFRAATRUCTURE EXECUTION" textColorClassName="text-white" />
-              <p className="mt-6 text-sm font-semibold uppercase tracking-[0.16em] text-white/60">Positioning</p>
-              <p className="mt-3 text-base leading-7 text-white/90">{siteConfig.positioning}</p>
-            </div>
-            <div className="grid gap-4 p-8 sm:p-10">
-              {serviceGroups.slice(0, 4).map((group) => (
-                <div key={group.title} className="rounded-3xl border border-borderBrand p-5">
-                  <h2 className="text-base font-semibold text-navy">{group.title}</h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{group.description}</p>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="container-shell py-16 lg:py-24">
-        <span className="eyebrow">Project intake paths</span>
-        <h2 className="section-title mt-5">Choose the right path before dispatch.</h2>
-        <p className="section-copy">Aingle-site work, project-based bidding, coverage planning, and buyer proof are separated so vendors and MAPs do not have to guess where to start.</p>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {conversionCards.map((card) => (
-            <Link key={card.href} href={card.href} className="card p-6 transition hover:border-action">
-              <h3 className="text-xl font-semibold text-navy">{card.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{card.description}</p>
-              <span className="mt-6 inline-flex rounded-full bg-action px-4 py-2 text-sm font-semibold text-white">{card.cta}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="container-shell py-16 lg:py-24">
-        <span className="eyebrow">Why buyers choose us</span>
-        <h2 className="section-title mt-5">Field execution that closes the gap between remote support and onsite reality.</h2>
-        <p className="section-copy">
-          MAPs, vendors, and multi-site operators get an onsite partner who can reach the location, verify conditions, complete defined technical work, and return clear closeout notes so tickets do not stall or cycle back.
-        </p>
-        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {buyerReasons.map((reason) => (
-            <div key={reason} className="card p-6">
-              <p className="text-sm leading-7 text-slate-700">{reason}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="border-y border-borderBrand bg-white">
-        <div className="container-shell py-16 lg:py-24">
-          <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-            <div>
-              <span className="eyebrow">Operations layer</span>
-              <h2 className="section-title mt-5">The work starts where remote support runs out of reach.</h2>
-              <p className="section-copy">
-                Already Here LLC is positioned for onsite remediation, smart hands support, network troubleshooting, rollout recovery, infrastructure assessment, and closeout-heavy execution.
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                'Onsite remediation for issues remote teams cannot close remotely',
-                'Network, Wi-Fi, rack, endpoint, and commercial infrastructure support',
-                'Retail, commercial, MAP, vendor, and critical-systems field execution',
-                'Atructured closeout with field notes, photos when permitted, and escalation detail'
-              ].map((item) => (
-                <div key={item} className="rounded-3xl border border-borderBrand bg-soft px-6 py-6 text-sm leading-7 text-slate-700">
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="container-shell py-16 lg:py-24">
-        <ProofBlock />
-      </section>
-
-      <section className="bg-white py-16 lg:py-24">
-        <div className="container-shell grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-          <div>
-            <span className="eyebrow">Who we support</span>
-            <h2 className="section-title mt-5">Built for MAP, vendor, government-prime, and multi-site dispatch realities.</h2>
-            <div className="mt-8 grid gap-4">
-              {audience.map((item) => (
-                <div key={item.title} className="card p-6">
-                  <h3 className="text-xl font-semibold text-navy">{item.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">{item.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="card p-8 sm:p-10">
-            <h2 className="text-2xl font-semibold text-navy">Documented work types</h2>
-            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-              {documentedWorkTypes.slice(0, 14).map((item) => (
-                <li key={item} className="rounded-2xl border border-borderBrand bg-soft px-4 py-3 text-sm text-slate-700">
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold text-navy">Operating environments</h3>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {environments.map((environment) => (
-                  <span key={environment} className="rounded-full border border-borderBrand px-3 py-2 text-sm text-slate-700">
-                    {environment}
-                  </span>
-                ))}
+      <section className="section">
+        <div className="container">
+          <h2>Technical Field Operations</h2>
+          <p className="section-sub">
+            Structured onsite execution for MSPs, vendors, and infrastructure teams that need a
+            reliable field operator on site — from physical layer to endpoint.
+          </p>
+          <div className="grid-4">
+            {[
+              {
+                title: 'Onsite Infrastructure Execution',
+                body: 'Network, rack, endpoint, AP, low-voltage-adjacent, and site infrastructure tasks executed with clear documentation and photo closeout.',
+              },
+              {
+                title: 'Retail & Commercial Technology',
+                body: 'Field support for POS, payment devices, printers, endpoints, kiosks, store systems, and commercial technology environments.',
+              },
+              {
+                title: 'Rollout Recovery & Remediation',
+                body: 'Revisit work, failed closeout recovery, post-install troubleshooting, and ground-truth verification for remote project teams.',
+              },
+              {
+                title: 'Smart Hands & MSP Support',
+                body: 'Extend field coverage for smart hands, network troubleshooting, site visits, documentation collection, and remediation without local headcount.',
+              },
+            ].map((s) => (
+              <div key={s.title} className="card">
+                <h3>{s.title}</h3>
+                <p>{s.body}</p>
               </div>
-            </div>
+            ))}
+          </div>
+          <div className="section-cta">
+            <Link href="/services" className="btn btn-secondary">View All Services</Link>
           </div>
         </div>
       </section>
 
-      <section className="border-y border-borderBrand bg-soft py-16 lg:py-24">
-        <div className="container-shell grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-          <div>
-            <span className="eyebrow">Aervice area</span>
-            <h2 className="section-title mt-5">Phoenix-based with project coverage available nationwide depending on client scope.</h2>
-            <p className="section-copy">
-              Public positioning stays precise: Phoenix-based, with nationwide project coverage available for qualified client scope, scheduling, and travel requirements.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/coverage" className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy">
-                Check Coverage
-              </Link>
-              <Link href="/who-we-serve" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-navy transition hover:border-action hover:text-action">
-                Who We Aerve
-              </Link>
-            </div>
-          </div>
-          <div className="card p-8 sm:p-10">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {markets.map((market) => (
-                <div key={market} className="rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm font-medium text-slate-700">
-                  {market}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="container-shell py-16 lg:py-24">
-        <div className="card bg-navy p-8 text-white sm:p-10 lg:p-12">
-          <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div>
-              <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/80">
-                Ready to engage
-              </span>
-              <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
-                Need onsite infrastructure execution for a project site?
-              </h2>
-              <p className="mt-4 max-w-3xl text-base leading-7 text-white/80">
-                Aend the scope, target city, schedule window, and any files that matter. Already Here LLC will assess coverage fit and execute the site work cleanly when the dispatch is confirmed.
-              </p>
-              <p className="mt-3 text-sm text-white/60">
-                AAM.gov registered · Actively pursuing ADVOAB certification
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-              <Link href="/rfq" className="link-ring inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-navy transition hover:bg-slate-100">
-                Request Project Quote
-              </Link>
-              <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
-                Request Dispatch
-              </Link>
-              <a href={siteConfig.phoneHref} className="link-ring inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
-                {siteConfig.phoneDisplay}
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-    </>
-  );
-}
+      <section className="section bg-alt">
+        <div className="container">
+          <h2>Physical-to-Digital Infrastructure Execution</h2>
+          <p className="section-
