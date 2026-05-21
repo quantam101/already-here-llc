@@ -1,13 +1,26 @@
 module:
   id: profitengine
   name: profitengine
-  version: 0.1.0
-  state: disabled_stale_scaffold
-  cost_mode: zero_spend
-  enabled: false
-  disabled_reason: "Placeholder module is not production ProfitEngine source. Keep disabled until replaced by verified backend/UI deployment."
+  version: 1.0.0
+  state: active
+  cost_mode: api_spend
+  enabled: true
+  app_dir: profitengine/
+  entry: profitengine/index.js
+  ecosystem_config: ops/profitengine/ecosystem.config.cjs
   requires_approval_for:
     - external_write
     - paid_call
     - production_change
-  healthcheck: null
+  healthcheck:
+    path: /api/health
+    port: 3000
+  env_required:
+    - GROQ_API_KEY
+  env_optional:
+    - GITHUB_TOKEN
+    - GITHUB_REPO_OWNER
+    - GITHUB_REPO_NAME
+    - DEVTO_API_KEY
+    - HASHNODE_TOKEN
+    - MEDIUM_TOKEN

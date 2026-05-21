@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'profitengine',
       script: 'index.js',
-      cwd: process.env.PROFITENGINE_APP_DIR || '/home/opc/profitengine',
+      cwd: process.env.PROFITENGINE_APP_DIR || require('path').join(__dirname, '../../profitengine'),
       env: {
         NODE_ENV: 'production',
         PORT: process.env.PORT || '3000'
