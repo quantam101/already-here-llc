@@ -18,6 +18,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Test SSH connectivity
+        run: |
+          nc -zv -w 10 ${{ secrets.ORACLE_VM_HOST }} 22 2>&1 || true
+          ssh-keyscan -T 10 ${{ secrets.ORACLE_VM_HOST }} 2>&1 || true
+
       - name: Deploy to Oracle VM
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -25,6 +30,7 @@ jobs:
           username: opc
           key: ${{ secrets.ORACLE_SSH_KEY }}
           port: 22
+          debug: true
           script: |
             set -e
 
