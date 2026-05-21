@@ -1,31 +1,18 @@
-import type { MetadataRoute } from 'next';
-import { siteConfig } from '@/lib/site';
-import { getAllPosts } from '@/lib/blog';
+import { MetadataRoute } from 'next'
+
+const BASE = 'https://www.alreadyherellc.com'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = siteConfig.url;
-  const now = new Date();
-
-  const staticRoutes: MetadataRoute.Sitemap = [
-    { url: base, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
-    { url: `${base}/services`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/who-we-serve`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/dispatch`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/rfq`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/coverage`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
-    { url: `${base}/project-gallery`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/capability-statement`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
-    { url: `${base}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${base}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 }
-  ];
-
-  const posts = getAllPosts();
-  const blogRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: `${base}/blog/${post.slug}`,
-    lastModified: post.date ? new Date(post.date) : now,
-    changeFrequency: 'monthly',
-    priority: 0.7
-  }));
-
-  return [...staticRoutes, ...blogRoutes];
+  return [
+    { url: BASE,                            lastModified: new Date(), changeFrequency: 'weekly',  priority: 1.0 },
+    { url: `${BASE}/services`,             lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${BASE}/who-we-serve`,         lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${BASE}/coverage`,             lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/capability-statement`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/project-gallery`,      lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/rfq`,                  lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${BASE}/dispatch`,             lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${BASE}/blog`,                 lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.7 },
+    { url: `${BASE}/privacy`,              lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.3 },
+  ]
 }
