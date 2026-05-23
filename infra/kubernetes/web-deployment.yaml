@@ -25,6 +25,11 @@ spec:
         app.kubernetes.io/component: frontend
     spec:
       terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: web
           image: ghcr.io/quantam101/already-here-llc-web:latest
@@ -38,6 +43,12 @@ spec:
             - secretRef:
                 name: gmaos-secrets
                 optional: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           resources:
             requests:
               cpu: 100m

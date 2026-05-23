@@ -25,6 +25,11 @@ spec:
         app.kubernetes.io/component: runtime
     spec:
       terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: runtime
           image: ghcr.io/quantam101/already-here-llc-runtime:latest
@@ -42,6 +47,14 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           resources:
             requests:
               cpu: 100m
@@ -76,3 +89,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: gmaos-data
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
