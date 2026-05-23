@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gmaos-config
+  namespace: gmaos
+  labels:
+    app.kubernetes.io/part-of: gmaos
+data:
+  GMAOS_MODE: "strict_zero_spend"
+  GMAOS_MAX_COST_USD: "0"
+  GMAOS_PAID_ADAPTERS_ENABLED: "false"
+  GMAOS_EMBEDDING_DIM: "384"
+  GMAOS_SEMANTIC_MATCH_FLOOR: "0.96"
+  GMAOS_LOCAL_MODEL_ENABLED: "false"
+  GMAOS_LOCAL_MODEL_ENDPOINT: "http://localhost:11434/v1/chat/completions"
+  NODE_ENV: "production"

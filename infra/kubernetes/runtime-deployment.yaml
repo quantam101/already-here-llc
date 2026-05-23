@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gmaos-runtime
+  namespace: gmaos
+  labels:
+    app.kubernetes.io/name: gmaos-runtime
+    app.kubernetes.io/part-of: gmaos
+    app.kubernetes.io/component: runtime
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gmaos-runtime
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gmaos-runtime
+        app.kubernetes.io/part-of: gmaos
+        app.kubernetes.io/component: runtime
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: runtime
+          image: ghcr.io/quantam101/already-here-llc-runtime:latest
+          command: ["python", "-m", "runtime.sovereign_core"]
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: gmaos-config
+            - secretRef:
+                name: gmaos-secrets
+                optional: true
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            exec:
+              command: ["python", "-c", "import runtime.sovereign_core"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command: ["python", "-c", "import runtime.sovereign_core"]
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: gmaos-data

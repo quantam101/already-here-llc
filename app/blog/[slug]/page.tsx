@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPostBySlug, getStaticPostParams } from '@/lib/blog';
+import { renderMarkdown } from '@/lib/markdown';
 import { siteConfig } from '@/lib/site';
 
 type BlogPostPageProps = {
@@ -33,6 +34,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const post = getPostBySlug(slug);
   if (!post) notFound();
 
+  const contentHtml = await renderMarkdown(post.content);
+
   return (
     <div className="container-shell py-16 lg:py-24">
       <div className="max-w-3xl">
@@ -46,9 +49,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <p className="text-lg leading-8 text-slate-600 mb-10 border-b border-borderBrand pb-10">
           {post.excerpt}
         </p>
-        <article className="prose prose-slate max-w-none whitespace-pre-line text-sm leading-7">
-          {post.content}
-        </article>
+        <article
+          className="prose prose-slate max-w-none text-sm leading-7"
+          dangerouslySetInnerHTML={{ __html: contentHtml }}
+        />
       </div>
 
       <div className="mt-16 border-t border-borderBrand pt-10 grid gap-4 sm:flex sm:items-center sm:justify-between">

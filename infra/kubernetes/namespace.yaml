@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gmaos
+  labels:
+    app.kubernetes.io/part-of: gmaos
+    app.kubernetes.io/managed-by: kubectl
