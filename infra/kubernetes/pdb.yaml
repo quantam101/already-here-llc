@@ -1,0 +1,27 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: gmaos-runtime-pdb
+  namespace: gmaos
+  labels:
+    app.kubernetes.io/part-of: gmaos
+    app.kubernetes.io/component: runtime
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gmaos-runtime
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: gmaos-web-pdb
+  namespace: gmaos
+  labels:
+    app.kubernetes.io/part-of: gmaos
+    app.kubernetes.io/component: frontend
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gmaos-web

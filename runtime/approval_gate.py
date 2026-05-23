@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Dict
 
@@ -26,7 +27,7 @@ class ApprovalGate:
 
     def require(self, action: str, reason: str, payload: Dict[str, Any]) -> str:
         approvals = self._load()
-        approval_id = f"approval-{int(time.time() * 1000)}"
+        approval_id = f"approval-{uuid.uuid4().hex[:12]}"
         approvals[approval_id] = {
             "action": action,
             "reason": reason,

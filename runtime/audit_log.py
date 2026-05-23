@@ -3,9 +3,15 @@ from __future__ import annotations
 import json
 import os
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+from .telemetry import TelemetryCollector, Severity
+
+
+def _now() -> float:
+    return time.time()
 
 
 @dataclass(frozen=True)
@@ -16,19 +22,23 @@ class AuditEvent:
     status: str
     details: Dict[str, Any]
     correlation_id: Optional[str] = None
-    timestamp: float = time.time()
+    timestamp: float = field(default_factory=_now)
 
 
 class AuditLog:
-    def __init__(self, path: Optional[str] = None) -> None:
+    def __init__(self, path: Optional[str] = None, telemetry: Optional[TelemetryCollector] = None) -> None:
         self.path = Path(path or os.getenv("GMAOS_AUDIT_LOG", "./data/audit.jsonl"))
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._telemetry = telemetry
 
     def write(self, event: AuditEvent) -> None:
         payload = asdict(event)
-        payload["timestamp"] = time.time()
         with self.path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(payload, sort_keys=True, ensure_ascii=False) + "\n")
+        if self._telemetry is not None:
+            severity = Severity.WARN if event.status == "blocked" else Severity.ERROR if event.status == "error" else Severity.INFO
+            span = self._telemetry.span(f"audit.{event.action}")
+            self._telemetry.emit(span, severity, event.action, {"actor": event.actor, "status": event.status})
 
     def info(self, actor: str, action: str, details: Dict[str, Any], correlation_id: Optional[str] = None) -> None:
         self.write(AuditEvent("info", actor, action, "ok", details, correlation_id))
