@@ -7,8 +7,8 @@ metadata:
     app.kubernetes.io/part-of: gmaos
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: 10Gi
-  storageClassName: oci-bv
+  storageClassName: oci-fss

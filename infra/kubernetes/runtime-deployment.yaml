@@ -28,7 +28,7 @@ spec:
       containers:
         - name: runtime
           image: ghcr.io/quantam101/already-here-llc-runtime:latest
-          command: ["python", "-m", "runtime.sovereign_core"]
+          command: ["python", "-m", "runtime.health_server"]
           ports:
             - containerPort: 8080
               name: http
@@ -50,17 +50,28 @@ spec:
               cpu: 500m
               memory: 512Mi
           readinessProbe:
-            exec:
-              command: ["python", "-c", "import runtime.sovereign_core"]
-            initialDelaySeconds: 5
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 3
+            failureThreshold: 3
           livenessProbe:
-            exec:
-              command: ["python", "-c", "import runtime.sovereign_core"]
+            httpGet:
+              path: /healthz
+              port: http
             initialDelaySeconds: 15
             periodSeconds: 30
             timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 12
       volumes:
         - name: data
           persistentVolumeClaim:
