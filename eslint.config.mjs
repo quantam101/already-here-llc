@@ -19,7 +19,9 @@ const eslintConfig = [
       "apply-patches.js",
       "next-env.d.ts",
       ".next/**",
-      "node_modules/**"
+      "node_modules/**",
+      "profitengine/**",
+      "ops/profitengine/**"
     ]
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
