@@ -19,6 +19,7 @@ const skipFiles = new Set([
   'hermes/socrates.agent.json',
   'hermes/redteam-report.json',
   '.agents/skills/testing/SKILL.md',
+  '.agents/skills/testing-already-here-llc/SKILL.md',
 ]);
 const inspectExtensions = new Set(['.ts', '.tsx', '.js', '.mjs', '.json', '.md', '.html']);
 
