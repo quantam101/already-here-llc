@@ -12,6 +12,7 @@ const navItems = [
   { href: '/who-we-serve', label: 'Who We Serve' },
   { href: '/coverage', label: 'Coverage' },
   { href: '/project-gallery', label: 'Gallery' },
+  { href: '/blog', label: 'Blog' },
   { href: '/rfq', label: 'RFQ' },
   { href: '/dispatch', label: 'Dispatch' }
 ];
