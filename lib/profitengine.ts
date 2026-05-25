@@ -3,13 +3,13 @@ const PROFITENGINE_URL = process.env.NEXT_PUBLIC_PROFITENGINE_URL ?? '';
 async function post(path: string, data: Record<string, unknown>): Promise<boolean> {
   if (!PROFITENGINE_URL) return false;
   try {
-    await fetch(`${PROFITENGINE_URL}${path}`, {
+    const res = await fetch(`${PROFITENGINE_URL}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
       signal: AbortSignal.timeout(8000),
     });
-    return true;
+    return res.ok;
   } catch {
     return false;
   }
