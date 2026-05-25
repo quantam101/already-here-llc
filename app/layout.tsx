@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { TrafficTracker } from '@/components/TrafficTracker';
 import { siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -97,6 +98,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           suppressHydrationWarning
           dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
         />
+        <TrafficTracker />
         <Header />
         <main>{children}</main>
         <Footer />
