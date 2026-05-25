@@ -1,15 +1,15 @@
 const PROFITENGINE_URL = process.env.PROFITENGINE_URL ?? process.env.NEXT_PUBLIC_PROFITENGINE_URL ?? '';
-const PROFITENGINE_WEBHOOK_SECRET = process.env.PROFITENGINE_WEBHOOK_SECRET ?? '';
+const PROFITENGINE_WEBHOOK_TOKEN = process.env.PROFITENGINE_WEBHOOK_TOKEN ?? process.env.PROFITENGINE_WEBHOOK_SECRET ?? '';
 
 async function post(path: string, data: Record<string, unknown>): Promise<boolean> {
-  if (!PROFITENGINE_URL || !PROFITENGINE_WEBHOOK_SECRET) return false;
+  if (!PROFITENGINE_URL || !PROFITENGINE_WEBHOOK_TOKEN) return false;
 
   try {
     const res = await fetch(`${PROFITENGINE_URL}${path}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${PROFITENGINE_WEBHOOK_SECRET}`,
+        'x-profitengine-token': PROFITENGINE_WEBHOOK_TOKEN,
       },
       body: JSON.stringify(data),
       signal: AbortSignal.timeout(8000),
