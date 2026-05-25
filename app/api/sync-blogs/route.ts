@@ -1,8 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getAllPosts } from '@/lib/blog';
 import { notifyBlogPost } from '@/lib/profitengine';
 
-export async function POST() {
+const SYNC_SECRET = process.env.SYNC_BLOGS_SECRET ?? '';
+
+export async function POST(req: NextRequest) {
+  const auth = req.headers.get('authorization') ?? '';
+  if (!SYNC_SECRET || auth !== `Bearer ${SYNC_SECRET}`) {
+    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  }
   const posts = getAllPosts();
   const results: Array<{ slug: string; sent: boolean }> = [];
 
