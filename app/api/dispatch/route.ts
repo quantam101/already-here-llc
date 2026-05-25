@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server.js';
-import { notifyDispatch } from '@/lib/profitengine';
 
 export const runtime = 'nodejs';
 
@@ -305,16 +304,18 @@ export async function POST(request: Request) {
     if (hasResend) await sendViaResend(formData, dispatchId);
     else await sendViaFormspree(formData, dispatchId);
 
-    notifyDispatch({
-      dispatchId,
-      fullName: asCleanString(formData, 'fullName'),
-      company: asCleanString(formData, 'company'),
-      email: asCleanString(formData, 'email'),
-      phone: asCleanString(formData, 'phone'),
-      siteCity: asCleanString(formData, 'siteCity'),
-      serviceType: asCleanString(formData, 'serviceType'),
-      message: asCleanString(formData, 'message'),
-    }).catch(() => {});
+    import('@/lib/profitengine').then((m) =>
+      m.notifyDispatch({
+        dispatchId,
+        fullName: asCleanString(formData, 'fullName'),
+        company: asCleanString(formData, 'company'),
+        email: asCleanString(formData, 'email'),
+        phone: asCleanString(formData, 'phone'),
+        siteCity: asCleanString(formData, 'siteCity'),
+        serviceType: asCleanString(formData, 'serviceType'),
+        message: asCleanString(formData, 'message'),
+      }),
+    ).catch(() => {});
 
     return NextResponse.json({ ok: true, dispatchId, recordLocation: hasResend ? 'dispatch_email_json_attachment' : 'formspree_payload' });
   } catch (error) {
