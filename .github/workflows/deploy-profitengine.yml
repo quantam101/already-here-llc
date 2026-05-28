@@ -24,7 +24,7 @@ jobs:
           ssh-keyscan -T 10 ${{ secrets.ORACLE_VM_HOST }} 2>&1 || true
 
       - name: Deploy to Oracle VM
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.ORACLE_VM_HOST }}
           username: opc
