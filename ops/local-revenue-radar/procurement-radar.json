@@ -1,0 +1,54 @@
+{
+  "id": "procurement-radar",
+  "categoryId": "procurement",
+  "enabled": true,
+  "approvedSources": [
+    {
+      "id": "sam-gov-contract-opportunities",
+      "type": "public_portal",
+      "url": "https://sam.gov/content/opportunities",
+      "allowedUse": "manual_review_or_authorized_api",
+      "notes": "Use saved searches or official API credentials through environment variables only."
+    },
+    {
+      "id": "arizona-procurement-portal",
+      "type": "public_portal",
+      "url": "https://app.az.gov/page/procurement",
+      "allowedUse": "manual_review",
+      "notes": "Human must verify vendor eligibility, insurance, certifications, and bid requirements."
+    },
+    {
+      "id": "tempe-procurement",
+      "type": "public_portal",
+      "url": "https://www.tempe.gov/government/financial-services/procurement",
+      "allowedUse": "manual_review",
+      "notes": "Track opportunities relevant to field services, transport, IT support, or facilities support."
+    }
+  ],
+  "includeTerms": [
+    "field technician",
+    "smart hands",
+    "dispatch support",
+    "courier",
+    "delivery",
+    "equipment transport",
+    "low voltage",
+    "camera installation",
+    "POS support",
+    "printer support",
+    "site survey"
+  ],
+  "excludeTerms": [
+    "construction bond required",
+    "licensed medical laboratory",
+    "hazmat transport",
+    "auto award",
+    "sealed bid submitted"
+  ],
+  "compliance": {
+    "autoSubmitBids": false,
+    "claimCertificationsAutomatically": false,
+    "requiresHumanEligibilityReview": true,
+    "secretHandling": "environment_variables_only"
+  }
+}

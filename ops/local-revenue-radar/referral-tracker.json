@@ -1,0 +1,38 @@
+{
+  "id": "referral-tracker",
+  "version": "2026-05-29",
+  "defaultStatus": "NEEDS_CONSENT_REVIEW",
+  "statuses": [
+    "NEEDS_CONSENT_REVIEW",
+    "PARTNER_MATCHED",
+    "PARTNER_ACCEPTED",
+    "REFERRED",
+    "DECLINED",
+    "WON",
+    "LOST",
+    "PAID"
+  ],
+  "requiredFields": [
+    "leadId",
+    "sourceId",
+    "customerConsent",
+    "partnerId",
+    "serviceCategory",
+    "referralTerms",
+    "lastReviewedAt"
+  ],
+  "compliance": {
+    "sellPersonalDataWithoutConsent": false,
+    "shareLeadBeforePartnerAcceptance": false,
+    "requiresSourceTermsReview": true,
+    "requiresWrittenReferralTerms": true
+  },
+  "auditFields": [
+    "createdAt",
+    "updatedAt",
+    "reviewedBy",
+    "consentEvidence",
+    "sourceTermsEvidence",
+    "payoutEvidence"
+  ]
+}
