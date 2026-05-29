@@ -6,7 +6,7 @@ export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: 'ProfitEngine Status | Already Here LLC',
-  description: 'Private operational status surface for the ProfitEngine runtime.',
+  description: 'Private operational status surface for the ProfitEngine v5 runtime.',
   robots: {
     index: false,
     follow: false,
@@ -28,13 +28,17 @@ type EndpointCheck = {
   error: string | null;
 };
 
-const runtimeBaseUrl = (process.env.PROFITENGINE_ORACLE_BASE_URL || 'http://129.153.101.0:3000').replace(/\/$/, '');
+// v5 backend — FastAPI on backend.alreadyherellc.com (OCI 129.146.167.73)
+// Override with PROFITENGINE_ORACLE_BASE_URL env var if needed.
+const runtimeBaseUrl = (
+  process.env.PROFITENGINE_ORACLE_BASE_URL || 'https://backend.alreadyherellc.com'
+).replace(/\/$/, '');
 
 const endpointTargets = [
-  { name: 'Health', path: '/api/health' },
-  { name: 'Status', path: '/api/status' },
-  { name: 'Posts', path: '/api/posts' },
-  { name: 'Earnings', path: '/api/earnings' }
+  { name: 'Health',        path: '/api/health' },
+  { name: 'System Status', path: '/api/status' },
+  { name: 'Revenue Stats', path: '/api/revenue/stats' },
+  { name: 'Proof of Work', path: '/api/proof/proof-of-work' },
 ] as const;
 
 async function checkEndpoint(path: string): Promise<Omit<EndpointCheck, 'name' | 'path'>> {
@@ -75,17 +79,23 @@ async function getProfitEngineStatus() {
   );
 
   const onlineCount = endpoints.filter((endpoint) => endpoint.ok).length;
-  const state = onlineCount === endpoints.length ? 'Online' : onlineCount > 0 ? 'Degraded' : 'Runtime Offline';
+  const state =
+    onlineCount === endpoints.length
+      ? 'Online'
+      : onlineCount > 0
+        ? 'Degraded'
+        : 'Runtime Offline';
   const summary =
     onlineCount === endpoints.length
-      ? 'ProfitEngine runtime is reachable from the Vercel status surface.'
+      ? 'ProfitEngine v5 runtime is reachable from the Vercel status surface.'
       : onlineCount > 0
-        ? 'ProfitEngine is partially reachable. Do not trust automation, posting, or revenue data until all checks pass.'
-        : 'ProfitEngine runtime is not reachable from the Vercel status surface. The status page is live, but the runtime still needs host-side repair.';
+        ? 'ProfitEngine v5 is partially reachable. Do not trust automation, posting, or revenue data until all checks pass.'
+        : 'ProfitEngine v5 runtime is not reachable from the Vercel status surface. Check backend.alreadyherellc.com and the OCI server (129.146.167.73).';
 
   return {
     checkedAt: new Date().toISOString(),
     state,
+    runtimeUrl: runtimeBaseUrl,
     endpoints,
     summary
   };
@@ -99,12 +109,22 @@ export default async function ProfitEngineStatusPage() {
       <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="eyebrow">Private operations status</span>
-          <h1 className="section-title mt-5">ProfitEngine runtime status without fake revenue.</h1>
+          <h1 className="section-title mt-5">ProfitEngine v5 runtime status.</h1>
           <p className="section-copy">
-            This page checks the runtime from the deployed Vercel site. It does not restart the host, and it does not invent posts, earnings, or automation state.
+            This page checks the FastAPI v5 backend from the deployed Vercel site. It does not
+            restart the host, and it does not invent posts, earnings, or automation state.
+          </p>
+          <p className="mt-2 font-mono text-xs text-slate-500">
+            Runtime:{' '}
+            <a href={status.runtimeUrl} className="underline" target="_blank" rel="noreferrer">
+              {status.runtimeUrl}
+            </a>
           </p>
         </div>
-        <Link href="/" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-navy transition hover:border-action hover:text-action">
+        <Link
+          href="/"
+          className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-navy transition hover:border-action hover:text-action"
+        >
           Back to Already Here LLC
         </Link>
       </div>
@@ -117,7 +137,11 @@ export default async function ProfitEngineStatusPage() {
               <p className="text-3xl font-semibold text-navy">{status.state}</p>
               <p className="mt-3 text-sm leading-6 text-slate-600">{status.summary}</p>
               <p className="mt-4 text-xs text-slate-500">
-                Checked: {new Date(status.checkedAt).toLocaleString('en-US', { timeZone: 'America/Phoenix' })} MST
+                Checked:{' '}
+                {new Date(status.checkedAt).toLocaleString('en-US', {
+                  timeZone: 'America/Phoenix',
+                })}{' '}
+                MST
               </p>
             </div>
           </div>
@@ -126,7 +150,10 @@ export default async function ProfitEngineStatusPage() {
             <p className="grid-label">Endpoint checks</p>
             <div className="mt-4 grid gap-3">
               {status.endpoints.map((endpoint) => (
-                <div key={endpoint.path} className="rounded-2xl border border-borderBrand bg-soft px-4 py-3">
+                <div
+                  key={endpoint.path}
+                  className="rounded-2xl border border-borderBrand bg-soft px-4 py-3"
+                >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-navy">{endpoint.name}</p>
@@ -136,7 +163,9 @@ export default async function ProfitEngineStatusPage() {
                       {endpoint.ok ? 'OK' : 'Failed'} {endpoint.status ? `(${endpoint.status})` : ''}
                     </span>
                   </div>
-                  {endpoint.error ? <p className="mt-2 text-xs leading-5 text-slate-500">{endpoint.error}</p> : null}
+                  {endpoint.error ? (
+                    <p className="mt-2 text-xs leading-5 text-slate-500">{endpoint.error}</p>
+                  ) : null}
                   <p className="mt-2 text-xs text-slate-500">Latency: {endpoint.latencyMs}ms</p>
                 </div>
               ))}
@@ -147,13 +176,16 @@ export default async function ProfitEngineStatusPage() {
 
       <section className="mt-8 grid gap-4 md:grid-cols-3">
         <div className="rounded-3xl border border-borderBrand bg-white p-5 text-sm leading-7 text-slate-700">
-          Status page availability is separate from runtime availability. Vercel can be healthy while the host runtime is offline.
+          Status page availability is separate from runtime availability. Vercel can be healthy
+          while the OCI host runtime is offline.
         </div>
         <div className="rounded-3xl border border-borderBrand bg-white p-5 text-sm leading-7 text-slate-700">
-          Revenue is not inferred. Real earnings require live Stripe, PayPal, affiliate, or platform confirmation.
+          Revenue is not inferred. Real earnings require live Stripe, PayPal, affiliate, or
+          platform confirmation from the FastAPI revenue endpoints.
         </div>
         <div className="rounded-3xl border border-borderBrand bg-white p-5 text-sm leading-7 text-slate-700">
-          Posting is not verified unless runtime endpoints and platform-side publish records show current successful activity.
+          Proof of work is cryptographic. Each published post creates a SHA-256 manifest and
+          append-only receipt in MongoDB via the ProofPublish engine.
         </div>
       </section>
     </main>
