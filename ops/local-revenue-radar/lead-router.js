@@ -1,0 +1,1 @@
+import {scoreLead,classify} from './lead-scoring-engine.js'; export function routeLead(lead){const score=scoreLead(lead);const route=classify(score);return {score,route,status:'QUALIFY'};}
