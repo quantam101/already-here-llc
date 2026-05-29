@@ -1,0 +1,106 @@
+{
+  "module": "local-revenue-radar",
+  "owner": "Already Here LLC",
+  "home_market": {
+    "city": "Tempe",
+    "state": "AZ",
+    "metro": "Phoenix",
+    "max_default_radius_miles": 60
+  },
+  "asset_profile": {
+    "cdl": true,
+    "trailer": "16ft",
+    "service_vehicle": true,
+    "field_it_capability": true,
+    "low_voltage_capability": true,
+    "pos_device_support": true
+  },
+  "lead_states": [
+    "WATCH",
+    "QUALIFY",
+    "CALL",
+    "QUOTE",
+    "BOOKED",
+    "ACTIVE",
+    "COMPLETED",
+    "RECURRING",
+    "REFER",
+    "SELL",
+    "REJECT"
+  ],
+  "decision_routes": [
+    "DO_IT",
+    "REFER_IT",
+    "SELL_IT",
+    "SUBCONTRACT_IT",
+    "IGNORE_IT"
+  ],
+  "categories": [
+    {
+      "id": "commercial-field-services",
+      "priority": 1,
+      "terms": ["smart hands", "field technician", "IT support", "rack and stack", "network refresh", "desktop deployment", "printer support", "POS install", "NCR", "Verifone", "Ingenico", "retail rollout"]
+    },
+    {
+      "id": "camera-cable-security",
+      "priority": 1,
+      "terms": ["security camera installation", "camera repair", "NVR", "DVR", "IP camera", "PoE camera", "cat6", "ethernet drop", "structured cabling", "low voltage", "data drops", "door lock", "smart lock", "access control"]
+    },
+    {
+      "id": "trailer-loads-hotshot",
+      "priority": 2,
+      "terms": ["hotshot", "trailer needed", "16 ft trailer", "equipment hauling", "pallet delivery", "same day freight", "local freight", "construction delivery", "LTL", "expedited"]
+    },
+    {
+      "id": "medical-courier-equipment",
+      "priority": 2,
+      "terms": ["medical courier", "blood transport", "specimen transport", "lab courier", "pharmacy courier", "DME delivery", "medical equipment delivery", "dialysis supplies"]
+    },
+    {
+      "id": "residential-services",
+      "priority": 3,
+      "terms": ["tv mounting", "tv repair", "computer repair", "pc setup", "wifi setup", "printer setup", "appliance delivery", "appliance install", "furniture assembly", "haul away", "junk removal", "moving help"]
+    }
+  ],
+  "sources": [
+    {
+      "id": "craigslist-phoenix-gigs",
+      "type": "rss",
+      "url": "https://phoenix.craigslist.org/search/ggg?format=rss",
+      "allowed_use": "public_rss"
+    },
+    {
+      "id": "craigslist-phoenix-labor",
+      "type": "rss",
+      "url": "https://phoenix.craigslist.org/search/lbg?format=rss",
+      "allowed_use": "public_rss"
+    },
+    {
+      "id": "facebook-marketplace",
+      "type": "manual_intake",
+      "allowed_use": "manual_or_authorized_api_only",
+      "note": "Do not scrape Facebook. Add leads manually or through authorized Meta tooling only."
+    },
+    {
+      "id": "nextdoor",
+      "type": "manual_intake",
+      "allowed_use": "manual_or_authorized_api_only",
+      "note": "Do not scrape Nextdoor. Add neighborhood service requests manually or through authorized channels only."
+    },
+    {
+      "id": "procurement-radar",
+      "type": "existing_pipeline",
+      "allowed_use": "public_portals_and_email_monitoring"
+    }
+  ],
+  "scoring_weights": {
+    "revenue": 0.22,
+    "margin": 0.18,
+    "urgency": 0.15,
+    "equipment_match": 0.13,
+    "skill_match": 0.13,
+    "distance": 0.08,
+    "repeatability": 0.07,
+    "risk_inverse": 0.04
+  }
+}
