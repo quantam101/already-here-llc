@@ -17,3 +17,9 @@ profitengine/.env
 profitengine/node_modules/
 profitengine/logs/
 profitengine/data/
+
+# ── ASI Engine ────────────────────────────────────────────────────────────────
+patches/
+canary_*.py
+bare_metal_fabric.bin
+enterprise_workload.py
