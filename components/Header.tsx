@@ -14,7 +14,8 @@ const navItems = [
   { href: '/project-gallery', label: 'Gallery' },
   { href: '/blog', label: 'Blog' },
   { href: '/rfq', label: 'RFQ' },
-  { href: '/dispatch', label: 'Dispatch' }
+  { href: '/dispatch', label: 'Dispatch' },
+  { href: '/daily-command', label: 'Daily Command' }
 ];
 
 function DesktopNavLink({ href, label, pathname }: { href: string; label: string; pathname: string | null }) {

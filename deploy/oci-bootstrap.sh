@@ -9,7 +9,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 apt-get update -y
-apt-get install -y ca-certificates curl git ufw fail2ban unzip jq python3 python3-venv python3-pip
+apt-get install -y ca-certificates curl git ufw fail2ban unzip jq python3 python3-venv python3-pip openssl nginx certbot python3-certbot-nginx
 
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
@@ -26,7 +26,19 @@ ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
 
-mkdir -p "$APP_DIR" /opt/gmaos-data/{logs,backups,uploads,vector-store,models}
+mkdir -p "$APP_DIR" /opt/gmaos-data/{logs,backups,uploads,vector-store,models} "$APP_DIR/nginx/certs" "$APP_DIR/nginx/certbot"
 chown -R "$SUDO_USER:${SUDO_USER:-root}" "$APP_DIR" /opt/gmaos-data || true
 
+if [[ ! -f "$APP_DIR/nginx/certs/fullchain.pem" || ! -f "$APP_DIR/nginx/certs/privkey.pem" ]]; then
+  openssl req -x509 -nodes -newkey rsa:2048 -sha256 \
+    -keyout "$APP_DIR/nginx/certs/privkey.pem" \
+    -out "$APP_DIR/nginx/certs/fullchain.pem" \
+    -days 365 \
+    -subj "/CN=alreadyherellc.com" \
+    -addext "subjectAltName=DNS:alreadyherellc.com,DNS:www.alreadyherellc.com" \
+    -addext "basicConstraints=CA:FALSE" >/dev/null 2>&1
+fi
+
 echo "Bootstrap complete. Copy repo to $APP_DIR, configure .env server-side, then run: docker compose up -d --build"
+
+echo "Replace the temporary certificate with Let\'s Encrypt using: sudo /opt/gmaos/deploy/renew-cert.sh"
