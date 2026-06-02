@@ -1,0 +1,43 @@
+{
+  "id": "medical-courier-radar",
+  "categoryId": "medical-courier",
+  "enabled": true,
+  "approvedSources": [
+    {
+      "id": "manual-healthcare-referral",
+      "type": "manual_intake",
+      "allowedUse": "direct_consent_only",
+      "notes": "Use when a clinic, pharmacy, lab, or equipment provider directly requests service."
+    },
+    {
+      "id": "authorized-courier-platform",
+      "type": "authorized_api",
+      "allowedUse": "contracted_api_only",
+      "envRequired": ["MEDICAL_COURIER_API_BASE_URL", "MEDICAL_COURIER_API_TOKEN"],
+      "notes": "Do not activate unless a written platform agreement permits API use."
+    }
+  ],
+  "includeTerms": [
+    "DME delivery",
+    "medical equipment delivery",
+    "pharmacy delivery",
+    "lab courier",
+    "specimen pickup",
+    "dialysis supplies",
+    "clinic courier"
+  ],
+  "excludeTerms": [
+    "controlled substance",
+    "hazmat",
+    "biohazard",
+    "blood transport without certification",
+    "emergency medical transport"
+  ],
+  "compliance": {
+    "autoAcceptRuns": false,
+    "requiresChainOfCustodyReview": true,
+    "requiresCertificationVerification": true,
+    "requiresInsuranceVerification": true,
+    "secretHandling": "environment_variables_only"
+  }
+}

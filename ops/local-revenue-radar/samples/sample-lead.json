@@ -1,0 +1,22 @@
+{
+  "sourceId": "direct-dispatch-form",
+  "intakeChannel": "first_party_form",
+  "title": "Phoenix retail POS refresh needs smart hands",
+  "description": "Two stores need Verifone terminal swap, printer test, cable cleanup, and closeout photos.",
+  "serviceArea": "Phoenix, AZ",
+  "categoryId": "field-service",
+  "estimatedRevenue": 1300,
+  "marginPercent": 68,
+  "urgencyHours": 18,
+  "distanceMiles": 14,
+  "equipmentMatch": 90,
+  "skillMatch": 92,
+  "repeatability": 75,
+  "risk": 22,
+  "evidenceUrl": "https://alreadyherellc.com/dispatch",
+  "capabilities": ["insured-driver", "field-it", "low-voltage-basic", "pos-device-support"],
+  "requiresCertification": false,
+  "requiresPartner": false,
+  "autoBid": false,
+  "autoContact": false
+}

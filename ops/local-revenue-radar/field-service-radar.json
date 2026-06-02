@@ -1,0 +1,58 @@
+{
+  "id": "field-service-radar",
+  "categoryId": "field-service",
+  "enabled": true,
+  "approvedSources": [
+    {
+      "id": "direct-dispatch-form",
+      "type": "first_party_form",
+      "allowedUse": "direct_consent_only",
+      "notes": "Lead originates from the Already Here dispatch/request forms."
+    },
+    {
+      "id": "craigslist-phoenix-computer-gigs",
+      "type": "rss",
+      "url": "https://phoenix.craigslist.org/search/cpg?format=rss",
+      "allowedUse": "public_rss"
+    },
+    {
+      "id": "manual-partner-intake",
+      "type": "manual_intake",
+      "allowedUse": "partner_submitted_or_authorized_api_only"
+    }
+  ],
+  "includeTerms": [
+    "smart hands",
+    "field technician",
+    "IT support",
+    "network refresh",
+    "desktop deployment",
+    "printer support",
+    "POS install",
+    "NCR",
+    "Verifone",
+    "Ingenico",
+    "retail rollout",
+    "camera installation",
+    "cat6",
+    "low voltage"
+  ],
+  "excludeTerms": [
+    "licensed electrician required",
+    "fire alarm certification",
+    "life safety inspection",
+    "union labor required"
+  ],
+  "assetFit": {
+    "fieldItCapability": true,
+    "lowVoltageBasic": true,
+    "posDeviceSupport": true,
+    "serviceVehicle": true,
+    "maxDefaultRadiusMiles": 75
+  },
+  "compliance": {
+    "autoContact": false,
+    "requiresScopeReview": true,
+    "requiresSiteAccessApproval": true
+  }
+}

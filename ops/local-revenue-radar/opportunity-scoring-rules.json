@@ -1,0 +1,61 @@
+{
+  "version": "2026-05-29",
+  "thresholds": {
+    "doItAt": 82,
+    "referAt": 68,
+    "sellAt": 55,
+    "ignoreBelow": 45
+  },
+  "weights": {
+    "revenue": 0.2,
+    "margin": 0.17,
+    "urgency": 0.14,
+    "equipment_match": 0.13,
+    "skill_match": 0.13,
+    "distance": 0.08,
+    "repeatability": 0.08,
+    "risk_inverse": 0.07
+  },
+  "penalties": {
+    "restrictedSource": 100,
+    "missingEvidenceUrl": 6
+  },
+  "categories": [
+    {
+      "id": "procurement",
+      "priorityBoost": 4,
+      "requiredCapabilities": ["proposal-review", "insurance-verification"],
+      "routeNotes": "Only monitor public portals, email notices, or manually supplied opportunities. Human must review eligibility before any response."
+    },
+    {
+      "id": "medical-courier",
+      "priorityBoost": 1,
+      "requiredCapabilities": ["insured-driver", "chain-of-custody"],
+      "routeNotes": "Do not claim HIPAA, specimen, hazmat, or controlled-substance authority unless verified in current compliance records."
+    },
+    {
+      "id": "hotshot",
+      "priorityBoost": 3,
+      "requiredCapabilities": ["insured-driver", "trailer-16ft"],
+      "routeNotes": "Verify cargo value, dimensions, loading equipment, and operating authority before quoting."
+    },
+    {
+      "id": "field-service",
+      "priorityBoost": 5,
+      "requiredCapabilities": ["field-it", "low-voltage-basic"],
+      "routeNotes": "Best fit for smart hands, retail rollout, POS, printer, camera, and low-voltage service calls."
+    },
+    {
+      "id": "referral",
+      "priorityBoost": 0,
+      "requiredCapabilities": [],
+      "routeNotes": "Referral sales require consent, source-term review, and partner acceptance before sharing lead details."
+    },
+    {
+      "id": "default",
+      "priorityBoost": 0,
+      "requiredCapabilities": [],
+      "routeNotes": "Fallback category for manually reviewed local service leads."
+    }
+  ]
+}

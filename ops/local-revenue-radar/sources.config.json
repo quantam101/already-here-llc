@@ -13,7 +13,16 @@
     "service_vehicle": true,
     "field_it_capability": true,
     "low_voltage_capability": true,
-    "pos_device_support": true
+    "pos_device_support": true,
+    "capabilities": [
+      "insured-driver",
+      "trailer-16ft",
+      "field-it",
+      "low-voltage-basic",
+      "pos-device-support",
+      "proposal-review",
+      "insurance-verification"
+    ]
   },
   "lead_states": [
     "WATCH",
@@ -37,22 +46,22 @@
   ],
   "categories": [
     {
-      "id": "commercial-field-services",
+      "id": "field-service",
       "priority": 1,
       "terms": ["smart hands", "field technician", "IT support", "rack and stack", "network refresh", "desktop deployment", "printer support", "POS install", "NCR", "Verifone", "Ingenico", "retail rollout"]
     },
     {
-      "id": "camera-cable-security",
+      "id": "field-service",
       "priority": 1,
       "terms": ["security camera installation", "camera repair", "NVR", "DVR", "IP camera", "PoE camera", "cat6", "ethernet drop", "structured cabling", "low voltage", "data drops", "door lock", "smart lock", "access control"]
     },
     {
-      "id": "trailer-loads-hotshot",
+      "id": "hotshot",
       "priority": 2,
       "terms": ["hotshot", "trailer needed", "16 ft trailer", "equipment hauling", "pallet delivery", "same day freight", "local freight", "construction delivery", "LTL", "expedited"]
     },
     {
-      "id": "medical-courier-equipment",
+      "id": "medical-courier",
       "priority": 2,
       "terms": ["medical courier", "blood transport", "specimen transport", "lab courier", "pharmacy courier", "DME delivery", "medical equipment delivery", "dialysis supplies"]
     },
@@ -91,6 +100,16 @@
       "id": "procurement-radar",
       "type": "existing_pipeline",
       "allowed_use": "public_portals_and_email_monitoring"
+    },
+    {
+      "id": "direct-dispatch-form",
+      "type": "first_party_form",
+      "allowed_use": "direct_consent_only"
+    },
+    {
+      "id": "manual-partner-intake",
+      "type": "manual_intake",
+      "allowed_use": "partner_submitted_or_authorized_api_only"
     }
   ],
   "scoring_weights": {

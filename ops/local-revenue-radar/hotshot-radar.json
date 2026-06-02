@@ -1,0 +1,48 @@
+{
+  "id": "hotshot-radar",
+  "categoryId": "hotshot",
+  "enabled": true,
+  "approvedSources": [
+    {
+      "id": "craigslist-phoenix-transport-gigs",
+      "type": "rss",
+      "url": "https://phoenix.craigslist.org/search/ggg?query=delivery&format=rss",
+      "allowedUse": "public_rss"
+    },
+    {
+      "id": "manual-shipper-intake",
+      "type": "manual_intake",
+      "allowedUse": "direct_consent_only",
+      "notes": "Use for shippers, contractors, and local businesses that directly request a quote."
+    }
+  ],
+  "includeTerms": [
+    "hotshot",
+    "same day freight",
+    "expedited",
+    "equipment haul",
+    "pallet delivery",
+    "construction delivery",
+    "trailer needed",
+    "local freight",
+    "LTL"
+  ],
+  "excludeTerms": [
+    "passenger transport",
+    "tow truck required",
+    "hazmat",
+    "oversize permit",
+    "CDL class A required"
+  ],
+  "assetFit": {
+    "trailer": "16ft",
+    "requiresCargoDimensions": true,
+    "requiresDeclaredValue": true,
+    "maxDefaultRadiusMiles": 60
+  },
+  "compliance": {
+    "autoQuote": false,
+    "requiresOperatingAuthorityReview": true,
+    "requiresInsuranceVerification": true
+  }
+}

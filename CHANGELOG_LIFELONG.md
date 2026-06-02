@@ -1,5 +1,18 @@
 # Lifelong Catch and Correct Changelog
 
+## 2026-05-29
+
+### Added
+
+- Added isolated Local Revenue Radar / Lead Network Exchange module under `ops/local-revenue-radar`.
+- Added procurement, medical courier, hotshot, field-service, referral, scoring, ingestion, RSS, CRM export, analytics, README, and sample lead artifacts.
+- Added `test:local-revenue-radar` and wired it into `npm test` to validate module imports and core lead workflow behavior.
+
+### Safety notes
+
+- Radar module does not modify live website routes, submit bids, contact third parties, scrape Facebook/Nextdoor, or embed static API keys.
+- Restricted sources require manual intake or authorized APIs, and referral export requires consent/source-term review before operational use.
+
 ## 2026-05-13
 
 ### Added
