@@ -11,7 +11,6 @@
 - ChatGPT + Codex = reasoning, architecture, debugging, refactors, review, security review
 - Cursor = primary engineering implementation
 - Lovable = fast front-end generation only
-- Manus = browser automation and workflow execution only
 - Replit = prototypes and lightweight experiments only
 
 ## Non-negotiable rules
