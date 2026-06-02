@@ -23,6 +23,10 @@ function parseFrontmatter(raw: string): { data: Record<string, string>; content:
   return { data, content: match[2] };
 }
 
+function safeSlug(name: string): string {
+  return name.replace(/[^a-zA-Z0-9_-]/g, '-');
+}
+
 export function getAllPosts(): Post[] {
   if (!fs.existsSync(BLOG_DIR)) return [];
   return fs
@@ -32,7 +36,7 @@ export function getAllPosts(): Post[] {
       const raw = fs.readFileSync(path.join(BLOG_DIR, file), 'utf8');
       const { data, content } = parseFrontmatter(raw);
       return {
-        slug: file.replace(/\.md$/, ''),
+        slug: safeSlug(file.replace(/\.md$/, '')),
         title: data.title ?? 'Untitled',
         date: data.date ?? '',
         excerpt: data.excerpt ?? '',
@@ -44,12 +48,13 @@ export function getAllPosts(): Post[] {
 }
 
 export function getPostBySlug(slug: string): Post | null {
-  const filePath = path.join(BLOG_DIR, `${slug}.md`);
+  const safe = safeSlug(slug);
+  const filePath = path.join(BLOG_DIR, `${safe}.md`);
   if (!fs.existsSync(filePath)) return null;
   const raw = fs.readFileSync(filePath, 'utf8');
   const { data, content } = parseFrontmatter(raw);
   return {
-    slug,
+    slug: safe,
     title: data.title ?? 'Untitled',
     date: data.date ?? '',
     excerpt: data.excerpt ?? '',
@@ -63,5 +68,5 @@ export function getStaticPostParams(): { slug: string }[] {
   return fs
     .readdirSync(BLOG_DIR)
     .filter((f) => f.endsWith('.md'))
-    .map((f) => ({ slug: f.replace(/\.md$/, '') }));
+    .map((f) => ({ slug: safeSlug(f.replace(/\.md$/, '')) }));
 }
