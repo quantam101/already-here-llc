@@ -139,30 +139,47 @@ class SecurityEnforcer:
                 )
         return clean_code
 
+    @staticmethod
+    def _numeric_literal(value: Any, default: str) -> str:
+        """Return a safe numeric code literal, rejecting non-numeric input.
+
+        Bounds are interpolated into generated code as expressions, so anything
+        that is not a plain int/float is a code-injection vector and is rejected.
+        ``bool`` is excluded explicitly (it subclasses ``int``).
+        """
+        if value is None:
+            return default
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise SecurityError(
+                f"Non-numeric assertion bound rejected: {value!r}"
+            )
+        return repr(value)
+
     @classmethod
     def build_assertion_block(cls, assertions: List[MetricAssertion]) -> str:
         if not assertions:
             return ""
         block = "\n# --- AUTOMATED INVARIANT ASSERTIONS ---\n"
         for asm in assertions:
+            col = asm.column  # interpolated only via !r (safe string literal)
             if asm.assertion_type == "not_null":
+                msg = f"Violation: Null found in {col}"
                 block += (
-                    f"assert df[{asm.column!r}].isnull().sum() == 0, "
-                    f"'Violation: Null found in {asm.column}'\n"
+                    f"assert df[{col!r}].isnull().sum() == 0, {msg!r}\n"
                 )
             elif asm.assertion_type == "range_bound":
-                min_v = asm.parameters.get("min", "-np.inf")
-                max_v = asm.parameters.get("max", "np.inf")
+                min_v = cls._numeric_literal(asm.parameters.get("min"), "float('-inf')")
+                max_v = cls._numeric_literal(asm.parameters.get("max"), "float('inf')")
+                msg = f"Violation: Range bounds broken in {col}"
                 block += (
-                    f"assert df[{asm.column!r}].min() >= {min_v} and "
-                    f"df[{asm.column!r}].max() <= {max_v}, "
-                    f"'Violation: Range bounds broken in {asm.column}'\n"
+                    f"assert df[{col!r}].min() >= {min_v} and "
+                    f"df[{col!r}].max() <= {max_v}, {msg!r}\n"
                 )
             elif asm.assertion_type == "type_invariance":
-                expected = asm.parameters.get("dtype", "object")
+                expected = str(asm.parameters.get("dtype", "object"))
+                msg = f"Violation: dtype invariance broken in {col}"
                 block += (
-                    f"assert str(df[{asm.column!r}].dtype) == {str(expected)!r}, "
-                    f"'Violation: dtype invariance broken in {asm.column}'\n"
+                    f"assert str(df[{col!r}].dtype) == {expected!r}, {msg!r}\n"
                 )
         return block
 
@@ -173,11 +190,19 @@ class SecurityEnforcer:
         assertions: List[MetricAssertion],
         preamble: bool = True,
     ) -> str:
-        """Validate code and append declarative invariant assertions."""
+        """Validate code and append declarative invariant assertions.
+
+        Defense-in-depth: each interpolated value is sanitized in
+        ``build_assertion_block`` (numeric bounds validated, all strings via
+        ``repr``), and the fully assembled program is re-verified so any
+        prohibited signature that slips into the assertion block is still caught.
+        """
         clean_code = cls.verify(raw_code)
         assertion_block = cls.build_assertion_block(assertions)
         header = "import pandas as pd\nimport numpy as np\n" if preamble else ""
-        return header + clean_code + assertion_block
+        combined = header + clean_code + assertion_block
+        cls.verify(combined)
+        return combined
 
 
 # ==========================================
