@@ -350,7 +350,12 @@ class AutonomousSwarmOrchestrator:
         self.cost_guard = cost_guard or CostGuard()
         self.gateway = FailoverInferenceGateway(self.cost_guard)
         self.telemetry = TelemetryCollector("swarm-orchestrator")
-        self.audit = AuditLog(telemetry=self.telemetry)
+        # AuditLog gained an optional telemetry hook later; stay compatible with
+        # runtimes whose AuditLog predates it.
+        try:
+            self.audit = AuditLog(telemetry=self.telemetry)
+        except TypeError:
+            self.audit = AuditLog()
 
     def _parse_plan(self, raw_inference: str) -> DeclarativeExecutionPlan:
         try:
