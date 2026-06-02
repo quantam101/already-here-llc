@@ -1,0 +1,9 @@
+{
+  "name": "Already Here LLC Daily Command",
+  "short_name": "Daily Command",
+  "start_url": "/web/index.html",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#1b66ff",
+  "description": "Local-first failover command center for Already Here LLC."
+}

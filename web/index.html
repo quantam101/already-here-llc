@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Already Here LLC Daily Command</title>
+    <link rel="manifest" href="/web/manifest.webmanifest" />
+    <link rel="stylesheet" href="/web/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <h1>Already Here LLC Daily Command</h1>
+        <p>Local-first operating command center for offline and degraded mode.</p>
+      </section>
+
+      <section class="command-panel">
+        <label for="command-input">Command prompt</label>
+        <textarea id="command-input" rows="5">Review system status and local command readiness.</textarea>
+        <div class="controls">
+          <button id="run-command">Run Command</button>
+          <button id="speak-result">Speak Result</button>
+          <button id="toggle-voice">Enable Voice</button>
+        </div>
+        <div id="status-line" class="status">Status: ready</div>
+      </section>
+
+      <section class="output-panel">
+        <h2>Response</h2>
+        <pre id="command-output"></pre>
+      </section>
+    </main>
+
+    <script src="/web/app.js"></script>
+  </body>
+</html>
