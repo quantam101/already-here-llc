@@ -20,8 +20,6 @@
 - OpenAI API
 - Anthropic API
 - Perplexity API
-- Devin
-- Manus
 - OpusClip Pro
 - Zapier paid
 - Stripe mutation
