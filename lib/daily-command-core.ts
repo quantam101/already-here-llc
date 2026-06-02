@@ -2,6 +2,17 @@ import crypto from 'crypto';
 
 export type DailyCommandMode = 'online_accelerated' | 'local_first' | 'quota_locked' | 'offline_survivable' | 'last_resort_static';
 
+export type SwarmRoute = 'cloud_swarm' | 'local_swarm';
+
+export interface SwarmCapability {
+  engine: 'vhll-multi-agent-swarm';
+  route: SwarmRoute;
+  parallelism: number;
+  zeroSpend: boolean;
+  failover: 'cloud_to_local';
+  description: string;
+}
+
 export interface DailyCommandResponse {
   ok: true;
   zeroDependency: true;
@@ -17,6 +28,7 @@ export interface DailyCommandResponse {
   };
   modeDetail: string;
   queuedActions: string[];
+  swarm: SwarmCapability;
 }
 
 export interface EcosystemStatusResponse {
@@ -100,6 +112,24 @@ function buildStatus(mode: DailyCommandMode) {
   };
 }
 
+const SWARM_LOCAL_LANES = 4;
+const SWARM_CLOUD_LANES = 8;
+
+export function getSwarmCapability(mode: DailyCommandMode): SwarmCapability {
+  const route: SwarmRoute = mode === 'online_accelerated' ? 'cloud_swarm' : 'local_swarm';
+  const zeroSpend = route === 'local_swarm';
+  return {
+    engine: 'vhll-multi-agent-swarm',
+    route,
+    parallelism: route === 'cloud_swarm' ? SWARM_CLOUD_LANES : SWARM_LOCAL_LANES,
+    zeroSpend,
+    failover: 'cloud_to_local',
+    description: zeroSpend
+      ? 'Local-first multi-agent swarm. Sandboxed parallel workers run on-box with zero spend; cloud inference stays gated.'
+      : 'Cloud-accelerated multi-agent swarm with automatic fail-over to local sandboxed workers on quota or outage.'
+  };
+}
+
 function getQueuedActions(): string[] {
   return [
     'Review approval queue for risky outbound actions',
@@ -166,7 +196,8 @@ export function getDailyCommandResponse(options: { prompt?: string; forceOffline
     summary,
     status: buildStatus(mode),
     modeDetail: `Prompt hash ${hashString(prompt)}. Mode: ${mode}.`,
-    queuedActions: getQueuedActions()
+    queuedActions: getQueuedActions(),
+    swarm: getSwarmCapability(mode)
   };
 }
 

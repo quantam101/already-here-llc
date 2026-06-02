@@ -17,6 +17,14 @@ type DailyCommandResponse = {
   };
   modeDetail: string;
   queuedActions: string[];
+  swarm: {
+    engine: string;
+    route: string;
+    parallelism: number;
+    zeroSpend: boolean;
+    failover: string;
+    description: string;
+  };
 };
 
 const localResponseFor = (prompt: string): DailyCommandResponse => {
@@ -43,7 +51,15 @@ const localResponseFor = (prompt: string): DailyCommandResponse => {
       'Queue recommended actions locally for later review',
       'Hold paid or risky outbound actions until approval',
       'Use cached status and local system context only'
-    ]
+    ],
+    swarm: {
+      engine: 'vhll-multi-agent-swarm',
+      route: 'local_swarm',
+      parallelism: 4,
+      zeroSpend: true,
+      failover: 'cloud_to_local',
+      description: 'Local-first multi-agent swarm. Sandboxed parallel workers run on-box with zero spend; cloud inference stays gated.'
+    }
   };
 };
 
@@ -255,6 +271,16 @@ export default function DailyCommandPage() {
                     <p className="text-sm font-semibold text-navy">Mode detail</p>
                     <p className="mt-2 text-sm leading-7 text-slate-700">{response.modeDetail}</p>
                   </div>
+                </div>
+                <div className="rounded-3xl border border-borderBrand bg-soft p-5">
+                  <p className="text-sm font-semibold text-navy">Swarm engine</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-700">{response.swarm.description}</p>
+                  <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
+                    <div><dt className="font-semibold text-slate-500">Route</dt><dd>{response.swarm.route}</dd></div>
+                    <div><dt className="font-semibold text-slate-500">Parallel lanes</dt><dd>{response.swarm.parallelism}</dd></div>
+                    <div><dt className="font-semibold text-slate-500">Zero-spend</dt><dd>{response.swarm.zeroSpend ? 'Yes' : 'No'}</dd></div>
+                    <div><dt className="font-semibold text-slate-500">Failover</dt><dd>{response.swarm.failover}</dd></div>
+                  </dl>
                 </div>
                 <div className="rounded-3xl border border-borderBrand bg-soft p-5">
                   <p className="text-sm font-semibold text-navy">Queued actions</p>
