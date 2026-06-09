@@ -16,14 +16,14 @@ export const aiAgentPackages: AgentPackage[] = [
     name: 'Launch Agent',
     setup: '$997 setup',
     monthly: '$197/mo management',
-    bestFor: 'Local service business that needs website lead capture, missed-call recovery, and quote intake now.',
-    delivery: '3-business-day standard implementation after intake is complete.',
+    bestFor: 'One-location service business that needs website lead capture, missed-call recovery, and quote intake now.',
+    delivery: '3-business-day standard implementation after intake, website access, and lead routing are confirmed.',
     includes: [
-      'Website chatbox installed on one website',
-      'Lead qualification flow for name, phone, service, city, urgency, and budget',
-      'Email alert routing to the owner or dispatcher',
-      'Lead receipt confirmation for the prospect',
-      'Monthly copy and conversion review'
+      'Website chatbox installed on one website or standalone lead-capture page',
+      'Lead qualification flow for name, phone, email, service, city, urgency, and budget',
+      'Owner or dispatcher email alert with structured lead record',
+      'Prospect receipt confirmation after successful lead capture',
+      'Monthly copy, question, and conversion review'
     ]
   },
   {
@@ -31,14 +31,14 @@ export const aiAgentPackages: AgentPackage[] = [
     name: 'Growth Agent',
     setup: '$1,997 setup',
     monthly: '$397/mo management',
-    bestFor: 'Service firms with repeat quote volume and a need to reduce missed opportunities.',
-    delivery: '5-business-day standard implementation after intake is complete.',
+    bestFor: 'Service firms with repeat quote volume, delayed callbacks, stale quotes, or multiple service categories.',
+    delivery: '5-business-day standard implementation after intake, website access, and lead routing are confirmed.',
     includes: [
       'Everything in Launch Agent',
-      'Quote-routing logic by service type, geography, urgency, and deal value',
-      'Dashboard-ready CSV and JSON lead records',
-      'Follow-up scripts for missed leads and stale quotes',
-      'Monthly lead-quality optimization review'
+      'Quote-routing logic by service type, geography, urgency, and estimated deal value',
+      'Dashboard-ready CSV and JSON lead records for review and export',
+      'Follow-up scripts for missed leads, stale quotes, and after-hours inquiries',
+      'Monthly lead-quality optimization review with next action recommendations'
     ]
   },
   {
@@ -46,26 +46,34 @@ export const aiAgentPackages: AgentPackage[] = [
     name: 'Network Agent',
     setup: '$4,500+ setup',
     monthly: '$997+/mo management',
-    bestFor: 'Multi-location operators, technician networks, and vendor dispatch groups that need intake, routing, and escalation.',
-    delivery: 'Scoped implementation after workflow review.',
+    bestFor: 'Multi-location operators, MSPs, technician networks, vendor dispatch groups, and white-label reseller partners.',
+    delivery: 'Scoped implementation after workflow, routing, access, compliance, and escalation review.',
     includes: [
       'Everything in Growth Agent',
-      'Multi-location routing and escalation rules',
-      'Dispatch-style intake with ticket, site, schedule, and closeout fields',
-      'Human approval gates for outbound responses and operational actions',
-      'Revenue operations review with conversion, leakage, and bottleneck notes'
+      'Multi-location routing, assignment, escalation, and approval-gate rules',
+      'Dispatch-style intake with ticket, site, schedule, scope, tools, and closeout fields',
+      'White-label MSP or reseller package with scoped branding and handoff rules',
+      'Revenue operations review covering conversion leakage, bottlenecks, and reusable vertical templates'
     ]
   }
 ];
 
 export const aiAgentIndustries = [
   'IT support and MSPs',
+  'Locksmiths and access control',
+  'Garage door companies',
+  'HVAC contractors',
+  'Plumbers and electricians',
+  'Appliance repair',
   'Hauling and delivery',
   'Roofing and home services',
-  'Clinic intake',
+  'Clinic and wellness intake',
   'Restaurant and retail service',
+  'Property managers',
+  'Mobile notaries',
   'Real estate investor intake',
-  'Field technician networks'
+  'Field technician networks',
+  'White-label agency partners'
 ] as const;
 
 export type AgentLeadPayload = {
