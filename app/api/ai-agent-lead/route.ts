@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server.js';
-import { scoreAgentLead, type AgentLeadPayload } from '@/lib/ai-agent-products';
+import { scoreAgentLead, type AgentLeadPayload } from '../../../lib/ai-agent-products';
 
 export const runtime = 'nodejs';
 
