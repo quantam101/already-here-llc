@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { RevenueAgentWidget } from '@/components/RevenueAgentWidget';
 import { TrafficTracker } from '@/components/TrafficTracker';
 import { siteConfig } from '@/lib/site';
 
@@ -27,7 +28,10 @@ export const metadata: Metadata = {
     'field support for critical systems',
     'vendor field execution',
     'Arizona onsite IT field execution',
-    'Phoenix technical field operations'
+    'Phoenix technical field operations',
+    'AI website chatbox setup',
+    'AI lead capture agent',
+    'small business AI agent setup'
   ]
 };
 
@@ -73,18 +77,21 @@ const localBusinessSchema = {
     'Rollout Recovery',
     'Retail Technology Support',
     'Critical Systems Field Support',
+    'AI Website Chatbox Setup',
+    'AI Lead Capture Agent',
     'SAM.gov Registered Contractor'
   ],
   hasOfferCatalog: {
     '@type': 'OfferCatalog',
-    name: 'Technical Field Operations and Infrastructure Execution Services',
+    name: 'Technical Field Operations, Infrastructure Execution, and AI Lead Capture Services',
     itemListElement: [
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Technical Field Operations' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Onsite Infrastructure Execution' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'MSP Smart Hands Support' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Network Troubleshooting' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Rollout Recovery and Remediation' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Infrastructure Assessment' } }
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Infrastructure Assessment' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'AI Website Chatbox and Lead Capture Agent Setup' } }
     ]
   }
 };
@@ -101,6 +108,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <TrafficTracker />
         <Header />
         <main>{children}</main>
+        <RevenueAgentWidget />
         <Footer />
       </body>
     </html>
