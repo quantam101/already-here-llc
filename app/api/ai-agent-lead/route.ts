@@ -37,6 +37,13 @@ type LeadRecord = AgentLeadPayload & {
   nextAction: string;
 };
 
+type ResendDeliveryResult = {
+  ownerEmailId: string;
+  receiptEmailId: string | null;
+  receiptDelivery: 'sent' | 'failed';
+  receiptError?: string;
+};
+
 function generateLeadId(): string {
   const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
   return `AIA-${stamp}-${randomUUID().slice(0, 8).toUpperCase()}`;
@@ -175,7 +182,7 @@ async function sendResendEmail(payload: Record<string, unknown>): Promise<string
   return data.id ?? '';
 }
 
-async function sendViaResend(record: LeadRecord): Promise<string> {
+async function sendViaResend(record: LeadRecord): Promise<ResendDeliveryResult> {
   const to = process.env.AI_AGENT_TO_EMAIL || process.env.DISPATCH_TO_EMAIL!;
   const ownerHtml = emailShell(
     `New AI Web Agent Lead — ${record.leadId}`,
@@ -189,7 +196,7 @@ async function sendViaResend(record: LeadRecord): Promise<string> {
     `<p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.6">Thank you. Already Here LLC received your AI Web Agent request.</p><p style="margin:0;color:#334155;font-size:15px;line-height:1.6">Your request is queued for review. A proposal is not active until scope, website access, lead routing, and monthly management terms are confirmed.</p>`
   );
 
-  const id = await sendResendEmail({
+  const ownerEmailId = await sendResendEmail({
     from: dispatchFromEmail,
     to: [to],
     subject: `[${record.leadId}] AI Agent Lead: ${record.company} — ${record.grade}`,
@@ -198,15 +205,20 @@ async function sendViaResend(record: LeadRecord): Promise<string> {
     reply_to: record.email
   });
 
-  await sendResendEmail({
-    from: dispatchFromEmail,
-    to: [record.email],
-    subject: `AI Web Agent request received — ${record.leadId}`,
-    html: receiptHtml,
-    reply_to: defaultLeadAddress
-  });
+  try {
+    const receiptEmailId = await sendResendEmail({
+      from: dispatchFromEmail,
+      to: [record.email],
+      subject: `AI Web Agent request received — ${record.leadId}`,
+      html: receiptHtml,
+      reply_to: defaultLeadAddress
+    });
 
-  return id;
+    return { ownerEmailId, receiptEmailId, receiptDelivery: 'sent' };
+  } catch (error) {
+    const receiptError = error instanceof Error ? error.message : 'Receipt email failed.';
+    return { ownerEmailId, receiptEmailId: null, receiptDelivery: 'failed', receiptError };
+  }
 }
 
 async function sendViaFormspree(record: LeadRecord): Promise<void> {
@@ -239,10 +251,18 @@ export async function POST(request: Request) {
   const record = buildLeadRecord(leadId, payload);
 
   try {
-    if (hasResend) await sendViaResend(record);
-    else await sendViaFormspree(record);
+    const resendDelivery = hasResend ? await sendViaResend(record) : null;
+    if (!hasResend) await sendViaFormspree(record);
 
-    return NextResponse.json({ ok: true, leadId, grade: record.grade, score: record.score, nextAction: record.nextAction, recordLocation: hasResend ? 'lead_email_json_attachment' : 'formspree_payload' });
+    return NextResponse.json({
+      ok: true,
+      leadId,
+      grade: record.grade,
+      score: record.score,
+      nextAction: record.nextAction,
+      recordLocation: hasResend ? 'lead_email_json_attachment' : 'formspree_payload',
+      receiptDelivery: resendDelivery?.receiptDelivery ?? 'not_applicable'
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'AI agent lead submission failed.';
     return NextResponse.json({ message, leadId }, { status: 502 });
