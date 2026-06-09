@@ -9,10 +9,10 @@ import { siteConfig } from '@/lib/site';
 const navItems = [
   { href: '/', label: 'Home' },
   { href: '/services', label: 'Services' },
+  { href: '/ai-agent', label: 'AI Agent' },
   { href: '/who-we-serve', label: 'Who We Serve' },
   { href: '/coverage', label: 'Coverage' },
   { href: '/project-gallery', label: 'Gallery' },
-  { href: '/blog', label: 'Blog' },
   { href: '/rfq', label: 'RFQ' },
   { href: '/dispatch', label: 'Dispatch' },
   { href: '/daily-command', label: 'Daily Command' }
@@ -46,8 +46,8 @@ export function Header() {
           <a href={siteConfig.phoneHref} className="link-ring rounded-full border border-white/35 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">
             {siteConfig.phoneDisplay}
           </a>
-          <Link href="/rfq" className="link-ring rounded-full bg-[#1B66FF] px-5 py-2.5 text-sm font-semibold text-white hover:bg-white hover:text-[#071B34]">
-            Request Quote
+          <Link href="/ai-agent" className="link-ring rounded-full bg-[#1B66FF] px-5 py-2.5 text-sm font-semibold text-white hover:bg-white hover:text-[#071B34]">
+            AI Agent Demo
           </Link>
         </div>
 
@@ -71,8 +71,8 @@ export function Header() {
               <a href={siteConfig.phoneHref} className="link-ring rounded-2xl border border-white/45 bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-white/10" onClick={() => setOpen(false)}>
                 {siteConfig.phoneDisplay}
               </a>
-              <Link href="/rfq" className="link-ring rounded-2xl border border-[#1B66FF] bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white" onClick={() => setOpen(false)}>
-                Request Quote
+              <Link href="/ai-agent" className="link-ring rounded-2xl border border-[#1B66FF] bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white" onClick={() => setOpen(false)}>
+                AI Agent Demo
               </Link>
             </div>
           </div>
