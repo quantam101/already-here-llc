@@ -3,10 +3,11 @@ import { siteConfig } from '@/lib/site';
 import { getAllPosts } from '@/lib/blog';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = siteConfig.url.replace(/\/$/, '');
+  const base = siteConfig.url.endsWith('/') ? siteConfig.url.slice(0, -1) : siteConfig.url;
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${base}/`,                        lastModified: new Date(), changeFrequency: 'weekly',  priority: 1.0 },
+    { url: `${base}/ai-agent`,                lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.95 },
     { url: `${base}/services`,                lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/who-we-serve`,            lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/dispatch`,                lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
