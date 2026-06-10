@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${base}/`,                        lastModified: new Date(), changeFrequency: 'weekly',  priority: 1.0 },
     { url: `${base}/ai-agent`,                lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.95 },
+    { url: `${base}/revenue-mesh`,            lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.92 },
     { url: `${base}/ai-agent-demo`,           lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
     { url: `${base}/ai-agent-ebook`,          lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
     { url: `${base}/ai-agent-resources`,      lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.8 },
