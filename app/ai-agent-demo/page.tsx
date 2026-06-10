@@ -55,6 +55,12 @@ const useCases = [
   'White-label AI intake for agencies or MSPs'
 ] as const;
 
+const resourceLinks = [
+  { href: '/ai-agent-ebook', label: 'Read Ebook', body: 'Buyer guide explaining why service businesses lose website leads and how the agent fixes the intake gap.' },
+  { href: '/ai-agent-resources', label: 'Open Resources', body: 'Sales content hub with target verticals, prospect links, and call talking points.' },
+  { href: '/blog/ai-website-agent-missed-leads-service-businesses', label: 'Read Blog', body: 'Blog post explaining the missed-lead problem and how AI website intake improves owner response.' }
+] as const;
+
 export default function AiAgentDemoPage() {
   return (
     <div className="proof-light bg-white">
@@ -142,6 +148,23 @@ export default function AiAgentDemoPage() {
               {useCase}
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="border-y border-borderBrand bg-white">
+        <div className="container-shell py-16">
+          <span className="eyebrow proof-label">Supporting content</span>
+          <h2 className="section-title mt-5">Use the demo with the ebook, blog, and resources hub.</h2>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {resourceLinks.map((resource) => (
+              <article key={resource.href} className="card flex flex-col p-6" data-proof-surface>
+                <p className="flex-1 text-sm leading-7 text-slate-600">{resource.body}</p>
+                <Link href={resource.href} className="mt-5 inline-flex justify-center rounded-full border border-borderBrand px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action">
+                  {resource.label}
+                </Link>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
