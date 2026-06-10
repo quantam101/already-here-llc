@@ -18,10 +18,17 @@
 html {
   scroll-behavior: smooth;
   background: var(--ah-bg-deep);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
   @apply bg-soft text-ink antialiased;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
   font-family: Arial, Helvetica, sans-serif;
   background:
     radial-gradient(circle at 12% 0%, rgba(27, 102, 255, 0.18), transparent 32rem),
@@ -32,16 +39,37 @@ body {
   box-sizing: border-box;
 }
 
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
 main {
   min-height: calc(100vh - 200px);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .container-shell {
   @apply mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8;
+  min-width: 0;
+}
+
+.container-shell > *,
+.card,
+.grid,
+.flex {
+  min-width: 0;
 }
 
 .eyebrow {
   @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em];
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
   border-color: rgba(27, 102, 255, 0.36);
   background: rgba(27, 102, 255, 0.1);
   color: #8fb6ff;
@@ -167,4 +195,50 @@ textarea {
 .proof-light .rounded-full.border,
 .proof-light [data-proof-border] {
   border-color: #19324d !important;
+}
+
+@media (max-width: 640px) {
+  .container-shell {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .container-shell h1,
+  .container-shell h2,
+  .container-shell h3,
+  .container-shell p,
+  .container-shell li,
+  .container-shell a,
+  .container-shell span,
+  .card h1,
+  .card h2,
+  .card h3,
+  .card p,
+  .card li,
+  .card a,
+  .card span {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .container-shell h1 {
+    font-size: clamp(2rem, 10vw, 3rem);
+    line-height: 1.08;
+  }
+
+  .section-title {
+    font-size: clamp(1.875rem, 8vw, 2.5rem);
+    line-height: 1.15;
+  }
+
+  .eyebrow,
+  .grid-label {
+    letter-spacing: 0.1em;
+    line-height: 1.45;
+  }
+
+  .rounded-full {
+    white-space: normal;
+    text-align: center;
+  }
 }
