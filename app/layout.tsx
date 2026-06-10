@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { RevenueAgentWidget } from '@/components/RevenueAgentWidget';
 import { TrafficTracker } from '@/components/TrafficTracker';
 import { siteConfig } from '@/lib/site';
 
@@ -108,7 +107,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <TrafficTracker />
         <Header />
         <main>{children}</main>
-        <RevenueAgentWidget />
         <Footer />
       </body>
     </html>
