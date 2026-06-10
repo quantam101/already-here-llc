@@ -6,6 +6,7 @@ export const runtime = 'nodejs';
 
 const dispatchFromEmail = 'Already Here AI Agents <dispatch@alreadyherellc.com>';
 const defaultLeadAddress = 'dispatch@alreadyherellc.com';
+
 const maxFieldLengths: Record<keyof AgentLeadPayload | 'websiteTrap', number> = {
   fullName: 120,
   company: 160,
@@ -16,6 +17,9 @@ const maxFieldLengths: Record<keyof AgentLeadPayload | 'websiteTrap', number> = 
   packageInterest: 80,
   urgency: 120,
   budget: 80,
+  preferredLanguage: 80,
+  additionalLanguages: 240,
+  languageMode: 180,
   goals: 3000,
   currentLeadProblem: 1200,
   sourcePath: 240,
@@ -32,6 +36,7 @@ type LeadGrade = 'A' | 'B' | 'C';
 type SalesBrief = {
   summary: string;
   recommendedOffer: string;
+  languagePlan: string;
   demoAngle: string;
   valuePitch: string;
   likelyNeeds: string[];
@@ -61,7 +66,7 @@ type ResendDeliveryResult = {
 };
 
 function generateLeadId(): string {
-  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  const stamp = new Date().toISOString().replaceAll('-', '').replaceAll(':', '').replaceAll('.', '');
   return `AIA-${stamp}-${randomUUID().slice(0, 8).toUpperCase()}`;
 }
 
@@ -86,13 +91,19 @@ function clean(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function isValidEmail(email: string): boolean {
+  const at = email.indexOf('@');
+  const dot = email.lastIndexOf('.');
+  return at > 0 && dot > at + 1 && dot < email.length - 1;
+}
+
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
 
 function normalizePayload(input: Record<string, unknown>): AgentLeadPayload {
@@ -106,6 +117,9 @@ function normalizePayload(input: Record<string, unknown>): AgentLeadPayload {
     packageInterest: clean(input.packageInterest),
     urgency: clean(input.urgency),
     budget: clean(input.budget),
+    preferredLanguage: clean(input.preferredLanguage) || 'English',
+    additionalLanguages: clean(input.additionalLanguages),
+    languageMode: clean(input.languageMode) || 'Auto-detect visitor language and respond in that language',
     goals: clean(input.goals),
     currentLeadProblem: clean(input.currentLeadProblem),
     sourcePath: clean(input.sourcePath) || '/ai-agent'
@@ -124,7 +138,7 @@ function validatePayload(payload: AgentLeadPayload, trap: string): string | null
     if (value.length > maxLength) return `${field} is too long.`;
   }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) return 'Invalid email address.';
+  if (!isValidEmail(payload.email)) return 'Invalid email address.';
   return null;
 }
 
@@ -136,14 +150,19 @@ function compactList(items: string[]): string[] {
   return Array.from(new Set(items.map((item) => item.trim()).filter(Boolean)));
 }
 
+function hasMultilingualNeed(payload: AgentLeadPayload): boolean {
+  const text = `${payload.preferredLanguage} ${payload.additionalLanguages} ${payload.languageMode} ${payload.goals} ${payload.currentLeadProblem}`.toLowerCase();
+  return payload.preferredLanguage !== 'English' || Boolean(payload.additionalLanguages.trim()) || includesAny(text, ['language', 'multilingual', 'translate', 'spanish', 'french', 'arabic', 'chinese', 'vietnamese', 'tagalog', 'korean', 'hindi', 'creole']);
+}
+
 function chooseRecommendedOffer(payload: AgentLeadPayload, grade: LeadGrade, score: number): string {
-  const text = `${payload.businessType} ${payload.packageInterest} ${payload.goals} ${payload.currentLeadProblem}`.toLowerCase();
+  const text = `${payload.businessType} ${payload.packageInterest} ${payload.goals} ${payload.currentLeadProblem} ${payload.languageMode}`.toLowerCase();
 
   if (includesAny(text, ['multi-location', 'multi location', 'reseller', 'white-label', 'white label', 'dispatch', 'routing', 'approval gate'])) {
     return 'Network Agent';
   }
 
-  if (grade === 'A' || score >= 76 || includesAny(text, ['marketing', 'blast', 'follow-up', 'follow up', 'email', 'message', 'missed', 'quote', 'crm'])) {
+  if (hasMultilingualNeed(payload) || grade === 'A' || score >= 76 || includesAny(text, ['marketing', 'blast', 'follow-up', 'follow up', 'email', 'message', 'missed', 'quote', 'crm'])) {
     return 'Growth Agent';
   }
 
@@ -151,66 +170,64 @@ function chooseRecommendedOffer(payload: AgentLeadPayload, grade: LeadGrade, sco
   return 'Launch Agent demo first';
 }
 
+function buildLanguagePlan(payload: AgentLeadPayload): string {
+  const primary = payload.preferredLanguage || 'English';
+  const additional = payload.additionalLanguages || 'None specified';
+  const mode = payload.languageMode || 'Auto-detect visitor language and respond in that language';
+  return `Primary language: ${primary}. Additional languages: ${additional}. Mode: ${mode}. Owner-facing lead records should remain readable in English while preserving the customer language and translated summary.`;
+}
+
 function buildSalesBrief(payload: AgentLeadPayload, scored: { score: number; grade: LeadGrade; nextAction: string }): SalesBrief {
-  const text = `${payload.businessType} ${payload.packageInterest} ${payload.goals} ${payload.currentLeadProblem} ${payload.budget}`.toLowerCase();
+  const text = `${payload.businessType} ${payload.packageInterest} ${payload.goals} ${payload.currentLeadProblem} ${payload.budget} ${payload.preferredLanguage} ${payload.additionalLanguages} ${payload.languageMode}`.toLowerCase();
+  const multilingual = hasMultilingualNeed(payload);
   const recommendedOffer = chooseRecommendedOffer(payload, scored.grade, scored.score);
+  const languagePlan = buildLanguagePlan(payload);
 
   const likelyNeeds = compactList([
     'A free trial or automated demo that shows the agent capturing a real lead and producing an owner-ready lead record.',
-    includesAny(text, ['send', 'receive', 'message', 'email', 'respond'])
-      ? 'Message and email intake with reply-ready drafts, not uncontrolled outbound sending.'
-      : '',
-    includesAny(text, ['marketing', 'blast', 'campaign'])
-      ? 'Approval-gated marketing or follow-up workflow after opt-in, offer, list source, and compliance rules are confirmed.'
-      : '',
-    includesAny(text, ['don\'t know where', 'dont know where', 'get them', 'leads', 'traffic'])
-      ? 'Lead-generation support beyond the agent itself: landing page offer, traffic source, follow-up path, and conversion tracking.'
-      : '',
-    includesAny(text, ['it', 'msp', 'dispatch', 'field', 'support'])
-      ? 'IT/service intake flow that qualifies service type, urgency, location, contact details, and handoff path.'
-      : '',
-    includesAny(text, ['quote', 'estimate', 'price'])
-      ? 'Quote-intake questions that collect scope, budget, urgency, location, and decision timeline before owner response.'
-      : ''
+    multilingual ? 'Multilingual intake that can either auto-detect the visitor language or let the visitor choose a language before starting.' : '',
+    multilingual ? 'English owner view with original-language customer text, translated summary, and clear next action.' : '',
+    includesAny(text, ['send', 'receive', 'message', 'email', 'respond']) ? 'Message and email intake with reply-ready drafts, not uncontrolled outbound sending.' : '',
+    includesAny(text, ['marketing', 'blast', 'campaign']) ? 'Approval-gated marketing or follow-up workflow after opt-in, offer, list source, and operating rules are confirmed.' : '',
+    includesAny(text, ['dont know where', 'get them', 'leads', 'traffic']) ? 'Lead-generation support beyond the agent itself: landing page offer, traffic source, follow-up path, and conversion tracking.' : '',
+    includesAny(text, ['it', 'msp', 'dispatch', 'field', 'support']) ? 'IT/service intake flow that qualifies service type, urgency, location, contact details, language, and handoff path.' : '',
+    includesAny(text, ['quote', 'estimate', 'price']) ? 'Quote-intake questions that collect scope, budget, urgency, location, language preference, and decision timeline before owner response.' : ''
   ]);
 
   const upsellOpportunities = compactList([
-    recommendedOffer === 'Launch Agent'
-      ? 'Upsell to Growth Agent after demo if they need routing, follow-up, reporting, or multiple service categories.'
-      : '',
-    recommendedOffer === 'Growth Agent'
-      ? 'Position Growth Agent as the paid next step: lead routing, follow-up scripts, lead-quality review, and monthly optimization.'
-      : '',
-    recommendedOffer === 'Network Agent'
-      ? 'Position Network Agent if they need multi-location routing, reseller/white-label use, dispatch workflows, or approval gates.'
-      : '',
-    includesAny(text, ['marketing', 'blast', 'campaign'])
-      ? 'Offer a separate campaign setup add-on: lead magnet, list segmentation, message templates, opt-in language, and reporting.'
-      : '',
-    includesAny(text, ['website', 'landing page', 'traffic', 'dont know where', 'get them'])
-      ? 'Offer a landing page and traffic-readiness add-on because the agent cannot convert visitors that never arrive.'
-      : '',
-    'Offer monthly management after trial: conversion review, question tuning, missed-lead analysis, and lead-quality recommendations.'
+    recommendedOffer === 'Launch Agent' ? 'Upsell to Growth Agent after demo if they need multilingual routing, follow-up, reporting, or multiple service categories.' : '',
+    recommendedOffer === 'Growth Agent' ? 'Position Growth Agent as the paid next step: multilingual intake, lead routing, follow-up scripts, lead-quality review, and monthly optimization.' : '',
+    recommendedOffer === 'Network Agent' ? 'Position Network Agent if they need multi-location language routing, reseller use, dispatch workflows, or approval gates.' : '',
+    multilingual ? 'Add multilingual response library and translated owner summaries as a premium feature because it expands reachable markets immediately.' : '',
+    includesAny(text, ['marketing', 'blast', 'campaign']) ? 'Offer a separate campaign setup add-on: lead magnet, list segmentation, message templates, opt-in language, multilingual variants, and reporting.' : '',
+    includesAny(text, ['website', 'landing page', 'traffic', 'dont know where', 'get them']) ? 'Offer a multilingual landing page and traffic-readiness add-on because the agent cannot convert visitors that never arrive.' : '',
+    'Offer monthly management after trial: conversion review, language tuning, question tuning, missed-lead analysis, and lead-quality recommendations.'
   ]);
 
-  const demoAngle = includesAny(text, ['marketing', 'blast', 'send', 'receive', 'message', 'email'])
-    ? 'Show a visitor entering a request, the agent qualifying the need, creating a lead record, and preparing an owner-approved reply or follow-up path.'
-    : 'Show a visitor entering a service request, the agent qualifying urgency and fit, then sending the owner a structured lead record.';
+  const demoAngle = multilingual
+    ? 'Show a visitor choosing or being detected in another language, completing the intake, receiving a clear response, and sending the owner an English lead summary with the original customer language preserved.'
+    : includesAny(text, ['marketing', 'blast', 'send', 'receive', 'message', 'email'])
+      ? 'Show a visitor entering a request, the agent qualifying the need, creating a lead record, and preparing an owner-approved reply or follow-up path.'
+      : 'Show a visitor entering a service request, the agent qualifying urgency and fit, then sending the owner a structured lead record.';
 
-  const valuePitch = `Based on the submission, sell this as a working revenue-intake system for ${payload.businessType || 'the business'}, not as a generic chatbot. The demo should prove lead capture, qualification, routing, and owner visibility before discussing paid setup.`;
+  const valuePitch = multilingual
+    ? `Position this as a multilingual revenue-intake system for ${payload.businessType || 'the business'}, not a generic chatbot. The demo should prove the agent can remove language friction, capture more leads, and keep the owner in control.`
+    : `Based on the submission, sell this as a working revenue-intake system for ${payload.businessType || 'the business'}, not as a generic chatbot. The demo should prove lead capture, qualification, routing, and owner visibility before discussing paid setup.`;
 
-  const summary = `${payload.fullName} from ${payload.company} is a ${scored.grade} lead scored ${scored.score}. They selected or fit ${payload.packageInterest || recommendedOffer}, but the entered goals suggest ${recommendedOffer} is the stronger commercial path.`;
+  const summary = `${payload.fullName} from ${payload.company} is a ${scored.grade} lead scored ${scored.score}. Recommended path: ${recommendedOffer}. Language plan: ${languagePlan}`;
 
   const suggestedReply = [
     `Hi ${payload.fullName},`,
     '',
     `I reviewed what you entered for ${payload.company}. The best first step is to show you a free AI Web Agent demo using your business context, so you can watch it capture a lead, ask the right questions, route the information, and generate an owner-ready lead record before you commit to a paid setup.`,
     '',
+    multilingual ? `I also noted the language requirement. I would demonstrate the agent with this language setup: ${languagePlan}` : 'For the first demo, I would keep the language path simple unless you want multilingual support included from the start.',
+    '',
     `For your use case, I would start by demonstrating: ${demoAngle}`,
     '',
-    `Based on your goals, the likely paid path after the demo is ${recommendedOffer}. If the demo proves the workflow, the next step would be confirming website access, lead-routing rules, approval rules, and what follow-up should stay human-approved.`,
+    `Based on your goals, the likely paid path after the demo is ${recommendedOffer}. If the demo proves the workflow, the next step would be confirming website access, lead-routing rules, language rules, approval rules, and what follow-up should stay human-approved.`,
     '',
-    'Before I set up the demo, please confirm the best website/domain to use, the main lead type you want captured, and whether responses should only be drafted for approval or sent automatically after rules are confirmed.',
+    'Before I set up the demo, please confirm the best website/domain to use, the main lead type you want captured, and whether multilingual responses should be automatic or drafted for approval first.',
     '',
     'Stephen Franklin',
     'Already Here LLC'
@@ -219,29 +236,34 @@ function buildSalesBrief(payload: AgentLeadPayload, scored: { score: number; gra
   const discoveryQuestions = compactList([
     'What exact lead type should the demo capture first?',
     'What questions must the agent ask before the owner responds?',
+    'Which language should the visitor see first?',
+    'Should the visitor choose a language manually, or should the agent auto-detect language?',
+    'Should the owner receive English-only summaries, original-language messages, or both?',
     'Where should the lead record go: email, CRM, spreadsheet, dispatcher, or all of the above?',
     'Should replies be drafted for approval only, or can any response be sent automatically after rules are approved?',
-    includesAny(payload.website.toLowerCase(), ['@']) ? 'The website field appears to contain an email address. What is the actual domain or website URL?' : '',
-    includesAny(text, ['marketing', 'blast', 'campaign']) ? 'Do they already have opted-in contacts for marketing messages, or do they need a compliant list-building flow first?' : '',
-    includesAny(text, ['dont know where', 'don\'t know where', 'get them']) ? 'What traffic source will feed the agent: ads, organic search, referrals, email list, directory listings, or social content?' : ''
+    payload.website.toLowerCase().includes('@') ? 'The website field appears to contain an email address. What is the actual domain or website URL?' : '',
+    includesAny(text, ['marketing', 'blast', 'campaign']) ? 'Do they already have opted-in contacts for marketing messages, and do those contacts need language-specific message variants?' : '',
+    includesAny(text, ['dont know where', 'get them']) ? 'What traffic source will feed the agent: ads, organic search, referrals, email list, directory listings, or social content?' : ''
   ]);
 
   const closePlan = scored.grade === 'A'
-    ? 'Call within 15 minutes. Lead with the free demo, then position Growth Agent or Network Agent if they need routing, follow-up, campaigns, or multi-step automation.'
+    ? 'Call within 15 minutes. Lead with the free multilingual demo, then position Growth Agent or Network Agent if they need routing, follow-up, campaigns, multiple languages, or multi-step automation.'
     : scored.grade === 'B'
-      ? 'Reply same day with the suggested message, collect missing details, and steer them into a Launch Agent demo.'
-      : 'Ask the discovery questions first. Do not quote until the use case, website/domain, lead source, and routing expectations are clear.';
+      ? 'Reply same day with the suggested message, collect missing details, and steer them into a Launch Agent or Growth Agent demo depending on language scope.'
+      : 'Ask the discovery questions first. Do not quote until the use case, website/domain, lead source, language scope, and routing expectations are clear.';
 
   const riskNotes = compactList([
     'Do not promise automatic outbound messages until approval rules, opt-in status, and client authorization are confirmed.',
-    'Do not treat the free demo as an active paid setup. Paid setup starts only after scope, access, routing, and monthly terms are approved.',
-    includesAny(payload.website.toLowerCase(), ['@']) ? 'Website/domain needs correction before any website-specific demo can be configured.' : '',
-    includesAny(text, ['marketing', 'blast', 'campaign']) ? 'Marketing-blast language requires list-source and consent review before implementation.' : ''
+    'Do not treat the free demo as an active paid setup. Paid setup starts only after scope, access, routing, language rules, and monthly terms are approved.',
+    multilingual ? 'Language responses should be tested with real business phrases before launch. Keep owner approval available for high-risk or high-value replies.' : '',
+    payload.website.toLowerCase().includes('@') ? 'Website/domain needs correction before any website-specific demo can be configured.' : '',
+    includesAny(text, ['marketing', 'blast', 'campaign']) ? 'Marketing-blast language requires list-source, consent, and language-variant review before implementation.' : ''
   ]);
 
   return {
     summary,
     recommendedOffer,
+    languagePlan,
     demoAngle,
     valuePitch,
     likelyNeeds,
@@ -255,29 +277,29 @@ function buildSalesBrief(payload: AgentLeadPayload, scored: { score: number; gra
 
 function rowsHtml(rows: Array<[string, string]>): string {
   return rows
-    .map(([label, value]) => `<tr><td style="padding:7px 12px;font-weight:700;color:#071B34;vertical-align:top;width:34%">${escapeHtml(label)}</td><td style="padding:7px 12px;color:#334155;white-space:pre-wrap">${escapeHtml(value || '—')}</td></tr>`)
+    .map(([label, value]) => `<tr><td style='padding:7px 12px;font-weight:700;color:#071B34;vertical-align:top;width:34%'>${escapeHtml(label)}</td><td style='padding:7px 12px;color:#334155;white-space:pre-wrap'>${escapeHtml(value || '—')}</td></tr>`)
     .join('');
 }
 
 function listHtml(items: string[]): string {
-  if (!items.length) return '<p style="margin:0;color:#64748B;font-size:14px">—</p>';
-  return `<ul style="margin:0;padding-left:20px;color:#334155;font-size:14px;line-height:1.6">${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+  if (!items.length) return `<p style='margin:0;color:#64748B;font-size:14px'>—</p>`;
+  return `<ul style='margin:0;padding-left:20px;color:#334155;font-size:14px;line-height:1.6'>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
 }
 
 function sectionHtml(title: string, body: string): string {
-  return `<div style="margin:0 0 18px;border:1px solid #DDE5EF;border-radius:12px;overflow:hidden"><div style="background:#F8FAFC;padding:10px 14px;font-weight:800;color:#071B34;font-size:13px;text-transform:uppercase;letter-spacing:.08em">${escapeHtml(title)}</div><div style="padding:14px">${body}</div></div>`;
+  return `<div style='margin:0 0 18px;border:1px solid #DDE5EF;border-radius:12px;overflow:hidden'><div style='background:#F8FAFC;padding:10px 14px;font-weight:800;color:#071B34;font-size:13px;text-transform:uppercase;letter-spacing:.08em'>${escapeHtml(title)}</div><div style='padding:14px'>${body}</div></div>`;
 }
 
 function emailShell(title: string, subtitle: string, body: string): string {
   return `
-    <div style="font-family:Arial,sans-serif;max-width:760px;margin:0 auto;background:#fff;border:1px solid #DDE5EF;border-radius:14px;overflow:hidden">
-      <div style="background:#071B34;padding:24px 32px">
-        <p style="margin:0;color:#fff;font-size:20px;font-weight:800;line-height:1.25">${escapeHtml(title)}</p>
-        <p style="margin:8px 0 0;color:rgba(255,255,255,0.72);font-size:13px">${escapeHtml(subtitle)}</p>
+    <div style='font-family:Arial,sans-serif;max-width:760px;margin:0 auto;background:#fff;border:1px solid #DDE5EF;border-radius:14px;overflow:hidden'>
+      <div style='background:#071B34;padding:24px 32px'>
+        <p style='margin:0;color:#fff;font-size:20px;font-weight:800;line-height:1.25'>${escapeHtml(title)}</p>
+        <p style='margin:8px 0 0;color:rgba(255,255,255,0.72);font-size:13px'>${escapeHtml(subtitle)}</p>
       </div>
-      <div style="padding:24px 32px">${body}</div>
-      <div style="padding:16px 32px;background:#F8FAFC;border-top:1px solid #DDE5EF">
-        <p style="margin:0;font-size:12px;color:#64748B">Already Here LLC · ${defaultLeadAddress}</p>
+      <div style='padding:24px 32px'>${body}</div>
+      <div style='padding:16px 32px;background:#F8FAFC;border-top:1px solid #DDE5EF'>
+        <p style='margin:0;font-size:12px;color:#64748B'>Already Here LLC · ${defaultLeadAddress}</p>
       </div>
     </div>`;
 }
@@ -311,6 +333,9 @@ function leadRows(record: LeadRecord): Array<[string, string]> {
     ['Package interest', record.packageInterest],
     ['Urgency', record.urgency],
     ['Budget', record.budget],
+    ['Preferred language', record.preferredLanguage],
+    ['Additional languages', record.additionalLanguages],
+    ['Language mode', record.languageMode],
     ['Current lead problem', record.currentLeadProblem],
     ['Goals', record.goals],
     ['Source path', record.sourcePath]
@@ -321,6 +346,7 @@ function buildOwnerHtml(record: LeadRecord): string {
   const brief = record.salesBrief;
   const briefRows: Array<[string, string]> = [
     ['Recommended offer', brief.recommendedOffer],
+    ['Language plan', brief.languagePlan],
     ['Close plan', brief.closePlan],
     ['Demo angle', brief.demoAngle],
     ['Value pitch', brief.valuePitch]
@@ -330,13 +356,13 @@ function buildOwnerHtml(record: LeadRecord): string {
     `New AI Web Agent Lead — ${record.leadId}`,
     `${record.grade} lead · ${record.company} · ${brief.recommendedOffer}`,
     [
-      sectionHtml('Operator sales brief', `<p style="margin:0 0 12px;color:#334155;font-size:14px;line-height:1.6">${escapeHtml(brief.summary)}</p><table style="width:100%;border-collapse:collapse;font-size:14px">${rowsHtml(briefRows)}</table>`),
-      sectionHtml('Suggested client reply / spiel', `<pre style="margin:0;white-space:pre-wrap;font-family:Arial,sans-serif;color:#334155;font-size:14px;line-height:1.6">${escapeHtml(brief.suggestedReply)}</pre>`),
+      sectionHtml('Operator sales brief', `<p style='margin:0 0 12px;color:#334155;font-size:14px;line-height:1.6'>${escapeHtml(brief.summary)}</p><table style='width:100%;border-collapse:collapse;font-size:14px'>${rowsHtml(briefRows)}</table>`),
+      sectionHtml('Suggested client reply / spiel', `<pre style='margin:0;white-space:pre-wrap;font-family:Arial,sans-serif;color:#334155;font-size:14px;line-height:1.6'>${escapeHtml(brief.suggestedReply)}</pre>`),
       sectionHtml('Likely needs', listHtml(brief.likelyNeeds)),
       sectionHtml('Upsell opportunities', listHtml(brief.upsellOpportunities)),
       sectionHtml('Discovery questions', listHtml(brief.discoveryQuestions)),
       sectionHtml('Risk / approval notes', listHtml(brief.riskNotes)),
-      sectionHtml('Original lead fields', `<table style="width:100%;border-collapse:collapse;font-size:14px">${rowsHtml(leadRows(record))}</table>`)
+      sectionHtml('Original lead fields', `<table style='width:100%;border-collapse:collapse;font-size:14px'>${rowsHtml(leadRows(record))}</table>`)
     ].join('')
   );
 }
@@ -364,7 +390,7 @@ async function sendViaResend(record: LeadRecord): Promise<ResendDeliveryResult> 
   const receiptHtml = emailShell(
     'AI Web Agent Free Trial / Demo Request Received',
     `Already Here LLC confirmation — ${record.leadId}`,
-    `<p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.6">Thank you. Already Here LLC received your AI Web Agent free trial/demo request.</p><p style="margin:0;color:#334155;font-size:15px;line-height:1.6">Your request is queued for review. A paid setup is not active until scope, website access, lead routing, approval rules, and monthly management terms are confirmed.</p>`
+    `<p style='margin:0 0 14px;color:#334155;font-size:15px;line-height:1.6'>Thank you. Already Here LLC received your AI Web Agent free trial/demo request.</p><p style='margin:0 0 14px;color:#334155;font-size:15px;line-height:1.6'>Preferred language noted: ${escapeHtml(record.preferredLanguage || 'English')}.</p><p style='margin:0;color:#334155;font-size:15px;line-height:1.6'>Your request is queued for review. A paid setup is not active until scope, website access, lead routing, language rules, approval rules, and monthly management terms are confirmed.</p>`
   );
 
   const ownerEmailId = await sendResendEmail({
@@ -399,7 +425,7 @@ function stringifyFormspreeValue(value: unknown): string {
 async function sendViaFormspree(record: LeadRecord): Promise<void> {
   const endpoint = process.env.FORMSPREE_ENDPOINT!;
   const form = new FormData();
-  for (const [key, value] of Object.entries(record)) form.set(key, stringifyFormspreeValue(value));
+  for (const [key, item] of Object.entries(record)) form.set(key, stringifyFormspreeValue(item));
   const res = await fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body: form, cache: 'no-store' });
   if (!res.ok) {
     const payload = (await res.json().catch(() => null)) as { errors?: Array<{ message?: string }> } | null;
@@ -436,6 +462,7 @@ export async function POST(request: Request) {
       score: record.score,
       nextAction: record.nextAction,
       recommendedOffer: record.salesBrief.recommendedOffer,
+      languagePlan: record.salesBrief.languagePlan,
       recordLocation: hasResend ? 'lead_email_json_attachment' : 'formspree_payload',
       receiptDelivery: resendDelivery?.receiptDelivery ?? 'not_applicable'
     });
