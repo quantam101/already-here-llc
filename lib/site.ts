@@ -4,11 +4,11 @@ export const siteConfig = {
   tagline: 'Onsite Infrastructure Execution',
   heroTitle: 'Phoenix-Based Onsite IT Field Execution for MSPs, Retail, and Infrastructure Teams',
   heroDescription:
-    'Already Here LLC delivers onsite remediation, smart hands support, network troubleshooting, rollout recovery, and infrastructure execution from Phoenix for Arizona and qualified project sites nationwide. We solve the technical issues remote teams cannot close remotely.',
+    'Already Here LLC delivers onsite remediation, smart hands support, network troubleshooting, rollout recovery, RFID and asset-tracking support, store decommissioning support, and infrastructure execution from Phoenix for Arizona and qualified project sites nationwide. We solve the technical issues remote teams cannot close remotely.',
   positioning:
     'Already Here LLC provides onsite infrastructure execution and technical field operations for MSPs, commercial sites, retail environments, and critical systems from Phoenix with project coverage available nationwide depending on client scope.',
   description:
-    'Phoenix-based onsite infrastructure execution and technical field operations partner for MSPs, vendors, commercial sites, retail environments, and critical systems, with project coverage available nationwide depending on scope.',
+    'Phoenix-based onsite infrastructure execution and technical field operations partner for MSPs, vendors, commercial sites, retail environments, and critical systems, including RFID, barcode, asset tracking, IT asset recovery, store decommissioning, inventory capture, and return logistics support by scope.',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://alreadyherellc.com',
   phoneHref: 'tel:+16028822920',
   phoneDisplay: '(602) 882-2920',
@@ -49,6 +49,20 @@ export const serviceGroups = [
     bestFit: 'Retail, QSR, hospitality, and multi-site commercial operators in qualified regional and project markets.'
   },
   {
+    title: 'RFID, Barcode, and Asset Tracking Field Support',
+    description:
+      'Onsite support for RFID readers, antennas, barcode scanners, label printers, inventory systems, asset tagging, validation, and structured closeout.',
+    items: ['RFID reader and antenna support', 'Barcode scanner and label-printer support', 'Asset tagging and inventory capture', 'Reader placement, validation, and closeout'],
+    bestFit: 'Retail, warehouse, healthcare, municipal, school, library, and facilities teams that need field execution for inventory and asset-tracking systems.'
+  },
+  {
+    title: 'Store Decommissioning, IT Asset Recovery, and Return Logistics',
+    description:
+      'Professional field support for store closures, remodels, relocations, and technology refreshes, including controlled IT equipment removal, asset inventory, serial/MAC capture, packing, labeling, return-material coordination, carrier handoff, and documented closeout.',
+    items: ['Store decommissioning support', 'IT equipment removal and recovery', 'Asset inventory and serial capture', 'Packing, labeling, and return-logistics handoff'],
+    bestFit: 'Retailers, vendors, project managers, property teams, and prime contractors closing locations, relocating technology assets, recovering equipment, or completing post-rollout asset reconciliation.'
+  },
+  {
     title: 'Rollout Recovery and Remediation',
     description:
       'Revisit work, failed closeout recovery, post-install troubleshooting, and ground-truth verification for remote project teams.',
@@ -65,7 +79,7 @@ export const serviceGroups = [
   {
     title: 'Surveys and Site Assessment',
     description:
-      'Operational site assessments, infrastructure surveys, closeout photos, and documentation for planning and remediation decisions.',
+      'Operational site assessments, infrastructure surveys, closeout photos, asset inventory, and documentation for planning and remediation decisions.',
     items: ['Infrastructure assessments', 'RFID and AP surveys', 'Documentation capture', 'Site readiness verification'],
     bestFit: 'Teams that need ground truth before dispatching parts, approving change orders, or closing a project.'
   }
@@ -74,7 +88,7 @@ export const serviceGroups = [
 export const buyerReasons = [
   'Reliable onsite execution for defined technical dispatches without consumer repair-shop positioning.',
   'Technical field operations for MSPs, vendors, commercial sites, retail environments, and critical systems.',
-  'Structured closeout documentation with photos, field notes, equipment observations, and next-step escalation when required.',
+  'Structured closeout documentation with photos, field notes, equipment observations, inventory detail, and next-step escalation when required.',
   'Procurement-ready profile with SAM.gov registration, commercial insurance, and certification claims kept separate from public marketing copy.'
 ] as const;
 
@@ -108,6 +122,11 @@ export const documentedWorkTypes = [
   'Exterior router mounting',
   'Automated locker system installs',
   'RFID reader surveys',
+  'RFID / barcode / scanner field support',
+  'Asset tagging and inventory capture',
+  'Store decommissioning support',
+  'IT equipment removal and recovery',
+  'Return-logistics and ship-out handoff',
   'Medical device calibration support'
 ] as const;
 
@@ -118,6 +137,8 @@ export const environments = [
   'QSR / restaurant',
   'Hospitality',
   'Healthcare',
+  'Warehouse / distribution',
+  'School / library / municipal facilities',
   'Enterprise / office',
   'AV / media environments',
   'Data center / infrastructure',
@@ -159,7 +180,7 @@ export const audience = [
   {
     title: 'Retail and commercial operators',
     description:
-      'Support multi-site technology programs, POS work, endpoint refreshes, store modernization, rollout recovery, and commercial infrastructure tasks.'
+      'Support multi-site technology programs, POS work, endpoint refreshes, store modernization, rollout recovery, RFID, asset tracking, decommissioning, and commercial infrastructure tasks.'
   },
   {
     title: 'Procurement teams',
@@ -173,6 +194,8 @@ export const closeoutItems = [
   'Action summary and field observations',
   'Photos when permitted',
   'Part swap or equipment notes',
+  'Inventory, serial, MAC, and asset-tag notes when in scope',
+  'Packing, labeling, return, and carrier-handoff notes when in scope',
   'Escalation notes for unresolved items',
   'Usable closeout language for the client-side ticket'
 ] as const;
@@ -185,6 +208,8 @@ export const dispatchTypes = [
   'Rollout recovery',
   'Remediation / revisit',
   'POS / store tech',
+  'RFID / barcode / asset tracking',
+  'IT asset recovery / return logistics',
   'Survey / site verification',
   'Healthcare / controlled environment',
   'Procurement support',
@@ -206,6 +231,11 @@ export const representativeWork = [
     client: 'National retail brand',
     tag: 'Rollout / Survey',
     scope: 'RFID reader survey - 55 readers, 4 APs, 61 data runs, HP Aruba switches. Chandler Fashion Center US0275. Full structured field execution with documentation.'
+  },
+  {
+    client: 'Retail technology program',
+    tag: 'Asset Recovery',
+    scope: 'Store technology recovery and closeout support, including device identification, inventory capture, packing, labeling, and return-logistics handoff by scope.'
   },
   {
     client: 'Medical device OEM',
