@@ -122,7 +122,8 @@ def test_numeric_range_bounds_are_interpolated():
 def test_gateway_is_local_first_in_zero_spend():
     gateway = FailoverInferenceGateway(CostGuard())
     assert gateway.cloud_active is False
-    raw = asyncio.run(gateway.generate_inference("p", "fallback prompt"))
+    raw, source = asyncio.run(gateway.generate_inference("p", "fallback prompt"))
+    assert source == "local"
     plan = DeclarativeExecutionPlan.from_dict(__import__("json").loads(raw))
     assert "fallback prompt" in plan.pure_python_script
 
@@ -158,12 +159,15 @@ def test_swarm_rejects_unsafe_generated_plan(monkeypatch):
     orchestrator = AutonomousSwarmOrchestrator(session_id="test")
 
     async def _malicious(prompt, fallback_prompt):
-        return __import__("json").dumps(
-            {
-                "analytical_rationale": "bad",
-                "pure_python_script": "import os\nos.listdir('/')",
-                "data_quality_assertions": [],
-            }
+        return (
+            __import__("json").dumps(
+                {
+                    "analytical_rationale": "bad",
+                    "pure_python_script": "import os\nos.listdir('/')",
+                    "data_quality_assertions": [],
+                }
+            ),
+            "cloud",
         )
 
     monkeypatch.setattr(orchestrator.gateway, "generate_inference", _malicious)
@@ -213,15 +217,64 @@ def test_cloud_plan_with_prohibited_keyword_still_rejected(monkeypatch):
     orchestrator = AutonomousSwarmOrchestrator(session_id="test")
 
     async def _cloud(prompt, fallback_prompt):
-        orchestrator.gateway.last_source = "cloud"
-        return __import__("json").dumps(
-            {
-                "analytical_rationale": "bad",
-                "pure_python_script": "import subprocess\nsubprocess.run('x')",
-                "data_quality_assertions": [],
-            }
+        return (
+            __import__("json").dumps(
+                {
+                    "analytical_rationale": "bad",
+                    "pure_python_script": "import subprocess\nsubprocess.run('x')",
+                    "data_quality_assertions": [],
+                }
+            ),
+            "cloud",
         )
 
     monkeypatch.setattr(orchestrator.gateway, "generate_inference", _cloud)
     result = asyncio.run(orchestrator.orchestrate_node_task("q", "ctx"))
     assert result["status"] == "rejected"
+
+
+def test_concurrent_mixed_sources_keep_trust_isolated(monkeypatch):
+    # Regression for the race condition: a single gateway is shared across all
+    # parallel workers. A trusted local task (whose query mentions a prohibited
+    # word) and an untrusted cloud task with a prohibited signature run together;
+    # the local task must NOT be scanned/rejected and the cloud task MUST be.
+    import json as _json
+
+    orchestrator = AutonomousSwarmOrchestrator(session_id="test")
+
+    async def _mixed(prompt, fallback_prompt):
+        if "subprocess" in fallback_prompt:
+            await asyncio.sleep(0.02)  # yield so a cloud task can interleave
+            script = (
+                f"objective = {fallback_prompt!r}\n"
+                "print('Local deterministic verification:', objective[:200])\n"
+            )
+            return (
+                _json.dumps(
+                    {
+                        "analytical_rationale": "local-task",
+                        "pure_python_script": script,
+                        "data_quality_assertions": [],
+                    }
+                ),
+                "local",
+            )
+        return (
+            _json.dumps(
+                {
+                    "analytical_rationale": "cloud-task",
+                    "pure_python_script": "import socket\nsocket.socket()",
+                    "data_quality_assertions": [],
+                }
+            ),
+            "cloud",
+        )
+
+    monkeypatch.setattr(orchestrator.gateway, "generate_inference", _mixed)
+    results = orchestrator.run_swarm(
+        ["Analyze subprocess throughput metrics", "do the cloud aggregation"],
+        schema_ctx="columns: x",
+    )
+    by = {r["rationale"]: r for r in results}
+    assert by["local-task"]["status"] == "success", by["local-task"]
+    assert by["cloud-task"]["status"] == "rejected", by["cloud-task"]

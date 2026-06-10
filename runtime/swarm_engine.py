@@ -220,12 +220,6 @@ class FailoverInferenceGateway:
         self.cost_guard = cost_guard or CostGuard()
         self.cloud_model = os.getenv("GMAOS_CLOUD_MODEL", "gemini-2.5-pro")
         self.client: Any = None
-        # Tracks which route served the most recent inference ("cloud" untrusted
-        # vs "local" trusted deterministic). Set by our own code, never by the
-        # inference payload, so it is safe to use as a trust signal. Defaults
-        # fail-closed to "cloud" so anything not produced by our own local
-        # generator is treated as untrusted and fully scanned.
-        self.last_source = "cloud"
         self.cloud_active = self._init_cloud()
 
     def _init_cloud(self) -> bool:
@@ -253,7 +247,15 @@ class FailoverInferenceGateway:
             logger.warning("Cloud core engine unreachable. Initializing local routing.")
             return False
 
-    async def generate_inference(self, prompt: str, fallback_prompt: str) -> str:
+    async def generate_inference(self, prompt: str, fallback_prompt: str) -> Tuple[str, str]:
+        """Return ``(raw_inference_text, source)`` where source is "cloud" or "local".
+
+        The trust signal is returned alongside the text rather than stored on the
+        instance: a single gateway is shared by all workers in
+        ``execute_parallel_swarm``, so instance state would race across the
+        ``await`` points below and a local worker could observe another worker's
+        "cloud" marker (and vice versa).
+        """
         if self.cloud_active and self.client is not None:
             try:
                 response = await asyncio.to_thread(
@@ -263,16 +265,14 @@ class FailoverInferenceGateway:
                 )
                 text = getattr(response, "text", None)
                 if text:
-                    self.last_source = "cloud"
-                    return text
+                    return text, "cloud"
                 logger.warning("Cloud inference returned empty payload. Failing over to local.")
             except Exception as exc:  # pragma: no cover - network/credential dependent
                 logger.error("Cloud channel severed (%s). Switching to local failover.", exc)
                 self.cloud_active = False
 
         logger.info("Executing via local edge inference engine (air-gapped mode).")
-        self.last_source = "local"
-        return await self._execute_local_inference(fallback_prompt)
+        return await self._execute_local_inference(fallback_prompt), "local"
 
     async def _execute_local_inference(self, prompt: str) -> str:
         """Deterministic local plan used when the cloud channel is unavailable.
@@ -390,11 +390,11 @@ class AutonomousSwarmOrchestrator:
             "Deconstruct this data prompt into a DeclarativeExecutionPlan JSON "
             f"schema: {sub_query}. Schema: {schema_ctx}"
         )
-        raw_inference = await self.gateway.generate_inference(prompt, fallback_prompt=sub_query)
+        raw_inference, source = await self.gateway.generate_inference(prompt, fallback_prompt=sub_query)
         plan = self._parse_plan(raw_inference)
 
         try:
-            if self.gateway.last_source == "local":
+            if source == "local":
                 # Trusted, deterministic fallback we generated ourselves: the query
                 # is embedded only as a repr-escaped string literal that cannot break
                 # out into code. Running the untrusted-code scanner over it would
