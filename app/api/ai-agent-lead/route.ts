@@ -27,14 +27,30 @@ const rateLimitWindowMs = 60_000;
 const rateLimitMax = 5;
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
 
+type LeadGrade = 'A' | 'B' | 'C';
+
+type SalesBrief = {
+  summary: string;
+  recommendedOffer: string;
+  demoAngle: string;
+  valuePitch: string;
+  likelyNeeds: string[];
+  upsellOpportunities: string[];
+  suggestedReply: string;
+  discoveryQuestions: string[];
+  closePlan: string;
+  riskNotes: string[];
+};
+
 type LeadRecord = AgentLeadPayload & {
   leadId: string;
   status: 'received';
   source: 'ai_web_agent';
   submittedAt: string;
   score: number;
-  grade: 'A' | 'B' | 'C';
+  grade: LeadGrade;
   nextAction: string;
+  salesBrief: SalesBrief;
 };
 
 type ResendDeliveryResult = {
@@ -112,15 +128,149 @@ function validatePayload(payload: AgentLeadPayload, trap: string): string | null
   return null;
 }
 
+function includesAny(text: string, terms: string[]): boolean {
+  return terms.some((term) => text.includes(term));
+}
+
+function compactList(items: string[]): string[] {
+  return Array.from(new Set(items.map((item) => item.trim()).filter(Boolean)));
+}
+
+function chooseRecommendedOffer(payload: AgentLeadPayload, grade: LeadGrade, score: number): string {
+  const text = `${payload.businessType} ${payload.packageInterest} ${payload.goals} ${payload.currentLeadProblem}`.toLowerCase();
+
+  if (includesAny(text, ['multi-location', 'multi location', 'reseller', 'white-label', 'white label', 'dispatch', 'routing', 'approval gate'])) {
+    return 'Network Agent';
+  }
+
+  if (grade === 'A' || score >= 76 || includesAny(text, ['marketing', 'blast', 'follow-up', 'follow up', 'email', 'message', 'missed', 'quote', 'crm'])) {
+    return 'Growth Agent';
+  }
+
+  if (payload.packageInterest.toLowerCase().includes('launch')) return 'Launch Agent';
+  return 'Launch Agent demo first';
+}
+
+function buildSalesBrief(payload: AgentLeadPayload, scored: { score: number; grade: LeadGrade; nextAction: string }): SalesBrief {
+  const text = `${payload.businessType} ${payload.packageInterest} ${payload.goals} ${payload.currentLeadProblem} ${payload.budget}`.toLowerCase();
+  const recommendedOffer = chooseRecommendedOffer(payload, scored.grade, scored.score);
+
+  const likelyNeeds = compactList([
+    'A free trial or automated demo that shows the agent capturing a real lead and producing an owner-ready lead record.',
+    includesAny(text, ['send', 'receive', 'message', 'email', 'respond'])
+      ? 'Message and email intake with reply-ready drafts, not uncontrolled outbound sending.'
+      : '',
+    includesAny(text, ['marketing', 'blast', 'campaign'])
+      ? 'Approval-gated marketing or follow-up workflow after opt-in, offer, list source, and compliance rules are confirmed.'
+      : '',
+    includesAny(text, ['don\'t know where', 'dont know where', 'get them', 'leads', 'traffic'])
+      ? 'Lead-generation support beyond the agent itself: landing page offer, traffic source, follow-up path, and conversion tracking.'
+      : '',
+    includesAny(text, ['it', 'msp', 'dispatch', 'field', 'support'])
+      ? 'IT/service intake flow that qualifies service type, urgency, location, contact details, and handoff path.'
+      : '',
+    includesAny(text, ['quote', 'estimate', 'price'])
+      ? 'Quote-intake questions that collect scope, budget, urgency, location, and decision timeline before owner response.'
+      : ''
+  ]);
+
+  const upsellOpportunities = compactList([
+    recommendedOffer === 'Launch Agent'
+      ? 'Upsell to Growth Agent after demo if they need routing, follow-up, reporting, or multiple service categories.'
+      : '',
+    recommendedOffer === 'Growth Agent'
+      ? 'Position Growth Agent as the paid next step: lead routing, follow-up scripts, lead-quality review, and monthly optimization.'
+      : '',
+    recommendedOffer === 'Network Agent'
+      ? 'Position Network Agent if they need multi-location routing, reseller/white-label use, dispatch workflows, or approval gates.'
+      : '',
+    includesAny(text, ['marketing', 'blast', 'campaign'])
+      ? 'Offer a separate campaign setup add-on: lead magnet, list segmentation, message templates, opt-in language, and reporting.'
+      : '',
+    includesAny(text, ['website', 'landing page', 'traffic', 'dont know where', 'get them'])
+      ? 'Offer a landing page and traffic-readiness add-on because the agent cannot convert visitors that never arrive.'
+      : '',
+    'Offer monthly management after trial: conversion review, question tuning, missed-lead analysis, and lead-quality recommendations.'
+  ]);
+
+  const demoAngle = includesAny(text, ['marketing', 'blast', 'send', 'receive', 'message', 'email'])
+    ? 'Show a visitor entering a request, the agent qualifying the need, creating a lead record, and preparing an owner-approved reply or follow-up path.'
+    : 'Show a visitor entering a service request, the agent qualifying urgency and fit, then sending the owner a structured lead record.';
+
+  const valuePitch = `Based on the submission, sell this as a working revenue-intake system for ${payload.businessType || 'the business'}, not as a generic chatbot. The demo should prove lead capture, qualification, routing, and owner visibility before discussing paid setup.`;
+
+  const summary = `${payload.fullName} from ${payload.company} is a ${scored.grade} lead scored ${scored.score}. They selected or fit ${payload.packageInterest || recommendedOffer}, but the entered goals suggest ${recommendedOffer} is the stronger commercial path.`;
+
+  const suggestedReply = [
+    `Hi ${payload.fullName},`,
+    '',
+    `I reviewed what you entered for ${payload.company}. The best first step is to show you a free AI Web Agent demo using your business context, so you can watch it capture a lead, ask the right questions, route the information, and generate an owner-ready lead record before you commit to a paid setup.`,
+    '',
+    `For your use case, I would start by demonstrating: ${demoAngle}`,
+    '',
+    `Based on your goals, the likely paid path after the demo is ${recommendedOffer}. If the demo proves the workflow, the next step would be confirming website access, lead-routing rules, approval rules, and what follow-up should stay human-approved.`,
+    '',
+    'Before I set up the demo, please confirm the best website/domain to use, the main lead type you want captured, and whether responses should only be drafted for approval or sent automatically after rules are confirmed.',
+    '',
+    'Stephen Franklin',
+    'Already Here LLC'
+  ].join('\n');
+
+  const discoveryQuestions = compactList([
+    'What exact lead type should the demo capture first?',
+    'What questions must the agent ask before the owner responds?',
+    'Where should the lead record go: email, CRM, spreadsheet, dispatcher, or all of the above?',
+    'Should replies be drafted for approval only, or can any response be sent automatically after rules are approved?',
+    includesAny(payload.website.toLowerCase(), ['@']) ? 'The website field appears to contain an email address. What is the actual domain or website URL?' : '',
+    includesAny(text, ['marketing', 'blast', 'campaign']) ? 'Do they already have opted-in contacts for marketing messages, or do they need a compliant list-building flow first?' : '',
+    includesAny(text, ['dont know where', 'don\'t know where', 'get them']) ? 'What traffic source will feed the agent: ads, organic search, referrals, email list, directory listings, or social content?' : ''
+  ]);
+
+  const closePlan = scored.grade === 'A'
+    ? 'Call within 15 minutes. Lead with the free demo, then position Growth Agent or Network Agent if they need routing, follow-up, campaigns, or multi-step automation.'
+    : scored.grade === 'B'
+      ? 'Reply same day with the suggested message, collect missing details, and steer them into a Launch Agent demo.'
+      : 'Ask the discovery questions first. Do not quote until the use case, website/domain, lead source, and routing expectations are clear.';
+
+  const riskNotes = compactList([
+    'Do not promise automatic outbound messages until approval rules, opt-in status, and client authorization are confirmed.',
+    'Do not treat the free demo as an active paid setup. Paid setup starts only after scope, access, routing, and monthly terms are approved.',
+    includesAny(payload.website.toLowerCase(), ['@']) ? 'Website/domain needs correction before any website-specific demo can be configured.' : '',
+    includesAny(text, ['marketing', 'blast', 'campaign']) ? 'Marketing-blast language requires list-source and consent review before implementation.' : ''
+  ]);
+
+  return {
+    summary,
+    recommendedOffer,
+    demoAngle,
+    valuePitch,
+    likelyNeeds,
+    upsellOpportunities,
+    suggestedReply,
+    discoveryQuestions,
+    closePlan,
+    riskNotes
+  };
+}
+
 function rowsHtml(rows: Array<[string, string]>): string {
   return rows
     .map(([label, value]) => `<tr><td style="padding:7px 12px;font-weight:700;color:#071B34;vertical-align:top;width:34%">${escapeHtml(label)}</td><td style="padding:7px 12px;color:#334155;white-space:pre-wrap">${escapeHtml(value || '—')}</td></tr>`)
     .join('');
 }
 
+function listHtml(items: string[]): string {
+  if (!items.length) return '<p style="margin:0;color:#64748B;font-size:14px">—</p>';
+  return `<ul style="margin:0;padding-left:20px;color:#334155;font-size:14px;line-height:1.6">${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+}
+
+function sectionHtml(title: string, body: string): string {
+  return `<div style="margin:0 0 18px;border:1px solid #DDE5EF;border-radius:12px;overflow:hidden"><div style="background:#F8FAFC;padding:10px 14px;font-weight:800;color:#071B34;font-size:13px;text-transform:uppercase;letter-spacing:.08em">${escapeHtml(title)}</div><div style="padding:14px">${body}</div></div>`;
+}
+
 function emailShell(title: string, subtitle: string, body: string): string {
   return `
-    <div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;background:#fff;border:1px solid #DDE5EF;border-radius:14px;overflow:hidden">
+    <div style="font-family:Arial,sans-serif;max-width:760px;margin:0 auto;background:#fff;border:1px solid #DDE5EF;border-radius:14px;overflow:hidden">
       <div style="background:#071B34;padding:24px 32px">
         <p style="margin:0;color:#fff;font-size:20px;font-weight:800;line-height:1.25">${escapeHtml(title)}</p>
         <p style="margin:8px 0 0;color:rgba(255,255,255,0.72);font-size:13px">${escapeHtml(subtitle)}</p>
@@ -133,7 +283,7 @@ function emailShell(title: string, subtitle: string, body: string): string {
 }
 
 function buildLeadRecord(leadId: string, payload: AgentLeadPayload): LeadRecord {
-  const scored = scoreAgentLead(payload);
+  const scored = scoreAgentLead(payload) as { score: number; grade: LeadGrade; nextAction: string };
   return {
     leadId,
     status: 'received',
@@ -142,7 +292,8 @@ function buildLeadRecord(leadId: string, payload: AgentLeadPayload): LeadRecord 
     ...payload,
     score: scored.score,
     grade: scored.grade,
-    nextAction: scored.nextAction
+    nextAction: scored.nextAction,
+    salesBrief: buildSalesBrief(payload, scored)
   };
 }
 
@@ -166,6 +317,30 @@ function leadRows(record: LeadRecord): Array<[string, string]> {
   ];
 }
 
+function buildOwnerHtml(record: LeadRecord): string {
+  const brief = record.salesBrief;
+  const briefRows: Array<[string, string]> = [
+    ['Recommended offer', brief.recommendedOffer],
+    ['Close plan', brief.closePlan],
+    ['Demo angle', brief.demoAngle],
+    ['Value pitch', brief.valuePitch]
+  ];
+
+  return emailShell(
+    `New AI Web Agent Lead — ${record.leadId}`,
+    `${record.grade} lead · ${record.company} · ${brief.recommendedOffer}`,
+    [
+      sectionHtml('Operator sales brief', `<p style="margin:0 0 12px;color:#334155;font-size:14px;line-height:1.6">${escapeHtml(brief.summary)}</p><table style="width:100%;border-collapse:collapse;font-size:14px">${rowsHtml(briefRows)}</table>`),
+      sectionHtml('Suggested client reply / spiel', `<pre style="margin:0;white-space:pre-wrap;font-family:Arial,sans-serif;color:#334155;font-size:14px;line-height:1.6">${escapeHtml(brief.suggestedReply)}</pre>`),
+      sectionHtml('Likely needs', listHtml(brief.likelyNeeds)),
+      sectionHtml('Upsell opportunities', listHtml(brief.upsellOpportunities)),
+      sectionHtml('Discovery questions', listHtml(brief.discoveryQuestions)),
+      sectionHtml('Risk / approval notes', listHtml(brief.riskNotes)),
+      sectionHtml('Original lead fields', `<table style="width:100%;border-collapse:collapse;font-size:14px">${rowsHtml(leadRows(record))}</table>`)
+    ].join('')
+  );
+}
+
 async function sendResendEmail(payload: Record<string, unknown>): Promise<string> {
   const apiKey = process.env.RESEND_API_KEY!;
   const res = await fetch('https://api.resend.com/emails', {
@@ -184,22 +359,18 @@ async function sendResendEmail(payload: Record<string, unknown>): Promise<string
 
 async function sendViaResend(record: LeadRecord): Promise<ResendDeliveryResult> {
   const to = process.env.AI_AGENT_TO_EMAIL || process.env.DISPATCH_TO_EMAIL!;
-  const ownerHtml = emailShell(
-    `New AI Web Agent Lead — ${record.leadId}`,
-    `${record.grade} lead · ${record.company}`,
-    `<table style="width:100%;border-collapse:collapse;font-size:14px">${rowsHtml(leadRows(record))}</table>`
-  );
+  const ownerHtml = buildOwnerHtml(record);
 
   const receiptHtml = emailShell(
-    'AI Web Agent Request Received',
+    'AI Web Agent Free Trial / Demo Request Received',
     `Already Here LLC confirmation — ${record.leadId}`,
-    `<p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.6">Thank you. Already Here LLC received your AI Web Agent request.</p><p style="margin:0;color:#334155;font-size:15px;line-height:1.6">Your request is queued for review. A proposal is not active until scope, website access, lead routing, and monthly management terms are confirmed.</p>`
+    `<p style="margin:0 0 14px;color:#334155;font-size:15px;line-height:1.6">Thank you. Already Here LLC received your AI Web Agent free trial/demo request.</p><p style="margin:0;color:#334155;font-size:15px;line-height:1.6">Your request is queued for review. A paid setup is not active until scope, website access, lead routing, approval rules, and monthly management terms are confirmed.</p>`
   );
 
   const ownerEmailId = await sendResendEmail({
     from: dispatchFromEmail,
     to: [to],
-    subject: `[${record.leadId}] AI Agent Lead: ${record.company} — ${record.grade}`,
+    subject: `[${record.leadId}] AI Agent Lead: ${record.company} — ${record.grade} — ${record.salesBrief.recommendedOffer}`,
     html: ownerHtml,
     attachments: [{ filename: `${record.leadId}-ai-agent-lead.json`, content: Buffer.from(JSON.stringify(record, null, 2)).toString('base64') }],
     reply_to: record.email
@@ -209,7 +380,7 @@ async function sendViaResend(record: LeadRecord): Promise<ResendDeliveryResult> 
     const receiptEmailId = await sendResendEmail({
       from: dispatchFromEmail,
       to: [record.email],
-      subject: `AI Web Agent request received — ${record.leadId}`,
+      subject: `AI Web Agent free trial/demo request received — ${record.leadId}`,
       html: receiptHtml,
       reply_to: defaultLeadAddress
     });
@@ -221,10 +392,14 @@ async function sendViaResend(record: LeadRecord): Promise<ResendDeliveryResult> 
   }
 }
 
+function stringifyFormspreeValue(value: unknown): string {
+  return typeof value === 'object' && value !== null ? JSON.stringify(value, null, 2) : String(value ?? '');
+}
+
 async function sendViaFormspree(record: LeadRecord): Promise<void> {
   const endpoint = process.env.FORMSPREE_ENDPOINT!;
   const form = new FormData();
-  for (const [key, value] of Object.entries(record)) form.set(key, String(value));
+  for (const [key, value] of Object.entries(record)) form.set(key, stringifyFormspreeValue(value));
   const res = await fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, body: form, cache: 'no-store' });
   if (!res.ok) {
     const payload = (await res.json().catch(() => null)) as { errors?: Array<{ message?: string }> } | null;
@@ -260,6 +435,7 @@ export async function POST(request: Request) {
       grade: record.grade,
       score: record.score,
       nextAction: record.nextAction,
+      recommendedOffer: record.salesBrief.recommendedOffer,
       recordLocation: hasResend ? 'lead_email_json_attachment' : 'formspree_payload',
       receiptDelivery: resendDelivery?.receiptDelivery ?? 'not_applicable'
     });
