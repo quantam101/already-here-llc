@@ -1,10 +1,17 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { HomeAiAgentAwareness } from '@/components/HomeAiAgentAwareness';
 import { TrafficTracker } from '@/components/TrafficTracker';
 import { siteConfig } from '@/lib/site';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover'
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
