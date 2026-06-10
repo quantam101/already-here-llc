@@ -5,7 +5,7 @@ import { closeoutItems, serviceGroups } from '@/lib/site';
 export const metadata: Metadata = {
   title: 'Services',
   description:
-    'Dispatches, recurring field support, rollout work, remediation, POS/store technology, networking, AV/media, surveys, and infrastructure-related onsite services in Arizona.',
+    'Dispatches, recurring field support, rollout work, remediation, POS/store technology, RFID, barcode, asset tracking, IT asset recovery, store decommissioning, return logistics, networking, AV/media, surveys, and infrastructure-related onsite services in Arizona.',
   alternates: { canonical: '/services' }
 };
 
@@ -42,7 +42,7 @@ export default function ServicesPage() {
         <span className="grid-label">Closeout standard</span>
         <h2 className="mt-4 text-2xl font-semibold text-navy">Structured ticket closeout is part of the service.</h2>
         <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-          The value is not only the onsite work. It is the combination of field execution, communication, photos or notes when permitted, and closeout language that lets the buyer finish the job internally.
+          The value is not only the onsite work. It is the combination of field execution, communication, photos or notes when permitted, inventory detail when applicable, return-logistics notes when applicable, and closeout language that lets the buyer finish the job internally.
         </p>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {closeoutItems.map((item) => (
