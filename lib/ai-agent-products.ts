@@ -76,6 +76,21 @@ export const aiAgentIndustries = [
   'White-label agency partners'
 ] as const;
 
+export const supportedLanguageOptions = [
+  'English',
+  'Spanish',
+  'French',
+  'Portuguese',
+  'Arabic',
+  'Mandarin Chinese',
+  'Vietnamese',
+  'Tagalog',
+  'Korean',
+  'Hindi',
+  'Haitian Creole',
+  'Other / custom'
+] as const;
+
 export type AgentLeadPayload = {
   fullName: string;
   company: string;
@@ -86,6 +101,9 @@ export type AgentLeadPayload = {
   packageInterest: string;
   urgency: string;
   budget: string;
+  preferredLanguage: string;
+  additionalLanguages: string;
+  languageMode: string;
   goals: string;
   currentLeadProblem: string;
   sourcePath: string;
@@ -93,7 +111,7 @@ export type AgentLeadPayload = {
 
 export function scoreAgentLead(payload: AgentLeadPayload): { score: number; grade: 'A' | 'B' | 'C'; nextAction: string } {
   let score = 40;
-  const text = `${payload.businessType} ${payload.goals} ${payload.currentLeadProblem} ${payload.urgency} ${payload.budget}`.toLowerCase();
+  const text = `${payload.businessType} ${payload.goals} ${payload.currentLeadProblem} ${payload.urgency} ${payload.budget} ${payload.preferredLanguage} ${payload.additionalLanguages} ${payload.languageMode}`.toLowerCase();
 
   if (payload.phone.trim()) score += 8;
   if (payload.website.trim()) score += 6;
@@ -103,6 +121,9 @@ export function scoreAgentLead(payload: AgentLeadPayload): { score: number; grad
   if (payload.budget.includes('$1,000') || payload.budget.includes('$2,500') || payload.budget.includes('$5,000')) score += 14;
   if (text.includes('missed') || text.includes('quote') || text.includes('dispatch') || text.includes('booking') || text.includes('lead')) score += 12;
   if (payload.goals.length > 140) score += 6;
+  if (payload.preferredLanguage && payload.preferredLanguage !== 'English') score += 6;
+  if (payload.additionalLanguages.trim()) score += 8;
+  if (text.includes('auto-detect') || text.includes('multilingual') || text.includes('translate') || text.includes('language')) score += 8;
 
   const bounded = Math.max(0, Math.min(100, score));
   if (bounded >= 76) return { score: bounded, grade: 'A', nextAction: 'Call within 15 minutes and offer Growth Agent or Network Agent.' };
