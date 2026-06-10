@@ -49,11 +49,11 @@ export const serviceGroups = [
     bestFit: 'Retail, QSR, hospitality, and multi-site commercial operators in qualified regional and project markets.'
   },
   {
-    title: 'RFID, Barcode, and Asset Tracking Field Support',
+    title: 'RFID, Barcode & Asset Tracking Field Support',
     description:
-      'Onsite support for RFID readers, antennas, barcode scanners, label printers, inventory systems, asset tagging, validation, and structured closeout.',
+      'RFID, Barcode & Asset Tracking Field Support for retail, warehouse, healthcare, municipal, school, and commercial environments. Onsite support includes RFID readers, antennas, barcode scanners, label printers, inventory systems, asset tagging, validation, and structured closeout.',
     items: ['RFID reader and antenna support', 'Barcode scanner and label-printer support', 'Asset tagging and inventory capture', 'Reader placement, validation, and closeout'],
-    bestFit: 'Retail, warehouse, healthcare, municipal, school, library, and facilities teams that need field execution for inventory and asset-tracking systems.'
+    bestFit: 'Retail, warehouse, healthcare, municipal, school, and commercial teams that need field execution for inventory and asset-tracking systems.'
   },
   {
     title: 'Store Decommissioning, IT Asset Recovery, and Return Logistics',
@@ -122,6 +122,7 @@ export const documentedWorkTypes = [
   'Exterior router mounting',
   'Automated locker system installs',
   'RFID reader surveys',
+  'RFID, Barcode & Asset Tracking Field Support',
   'RFID / barcode / scanner field support',
   'Asset tagging and inventory capture',
   'Store decommissioning support',
@@ -138,7 +139,7 @@ export const environments = [
   'Hospitality',
   'Healthcare',
   'Warehouse / distribution',
-  'School / library / municipal facilities',
+  'School / municipal facilities',
   'Enterprise / office',
   'AV / media environments',
   'Data center / infrastructure',
