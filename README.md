@@ -8,6 +8,7 @@ Lean multi-page B2B field-service website for Already Here LLC, built with Next.
 - TypeScript
 - Tailwind CSS
 - Level-4 resilient runtime layer for dispatch, health, runtime visibility, and LLM provider degradation
+- Revenue Mesh v1 for daily income-lane scoring, productized automation offers, approval-gated execution, and task-replacement escalation
 
 ## Pages
 
@@ -15,8 +16,29 @@ Lean multi-page B2B field-service website for Already Here LLC, built with Next.
 - Services
 - Who We Serve
 - Contact / Dispatch
+- AI Web Agent
+- Revenue Mesh v1
 - Privacy Policy
 - Thank You
+
+## Revenue Mesh v1
+
+Revenue Mesh v1 converts each work-search cycle into one of five concrete revenue outcomes:
+
+- same-day or next-day premium dispatch work
+- stackable local cash backup work
+- direct dispatch partner outreach targets
+- productized AI automation offers
+- task-replacement escalation when no income path survives scoring
+
+Implemented surfaces:
+
+- `lib/revenue-mesh.ts`: deterministic scoring engine, grade rules, daily-stack builder, backup-stack builder, productized offers, counter drafts, outreach drafts, approval-gate boundaries, and task-replacement recommendation logic.
+- `app/api/revenue-mesh/route.ts`: rate-limited JSON endpoint for scoring current opportunities and selecting the best productized offer from prospect text.
+- `app/revenue-mesh/page.tsx`: public-facing Revenue Mesh v1 offer page with operating economics, productized offers, approval safeguards, and conversion CTAs.
+- `tests/revenue-mesh.test.mjs`: CI coverage for premium dispatch scoring, low-rate counter detection, revenue-system failure escalation, productized offer selection, API GET, and API POST.
+
+Automation boundary: Revenue Mesh may find, rank, draft, prepare, score, and recommend. It does not accept work, send outreach, submit bids, sign agreements, move money, change credentials, or publish client-facing production claims without explicit approval.
 
 ## Level-4 Context Mesh integration
 
@@ -36,23 +58,15 @@ Important limitation: browser offline queuing does not persist uploaded attachme
 
 ## Environment variables
 
-Copy `.env.example` to `.env.local` and set the following values for production-equivalent local testing:
+Production secrets are configured as encrypted hosting/Vercel environment variables and must not be committed to this repository.
 
-```bash
-NEXT_PUBLIC_SITE_URL=https://www.alreadyherellc.com
-RESEND_API_KEY=
-DISPATCH_FROM_EMAIL=dispatch@alreadyherellc.com
-DISPATCH_TO_EMAIL=alreadyherellc@gmail.com
-FORMSPREE_ENDPOINT=
-GATEWAY_URL=
-LITELLM_MASTER_KEY=
-GROQ_API_KEY=
-GEMINI_API_KEY=
-PROFITENGINE_URL=
-PROFITENGINE_WEBHOOK_TOKEN=
-```
+Required operational variables by surface:
 
-Real secrets must be configured as encrypted hosting/Vercel environment variables. They must not be committed to this repository.
+- public site URL for canonical metadata
+- Resend delivery key and dispatch routing emails for lead/dispatch delivery
+- Formspree endpoint only when Resend delivery is not active
+- LLM gateway/provider keys only for configured provider routes
+- ProfitEngine URL and webhook token only when the ProfitEngine handoff is active
 
 ## Local development
 
@@ -77,6 +91,7 @@ Runtime verification endpoints:
 ```bash
 curl http://localhost:3000/api/health
 curl http://localhost:3000/api/runtime/status
+curl http://localhost:3000/api/revenue-mesh
 ```
 
 ## Deployment notes
@@ -87,7 +102,7 @@ curl http://localhost:3000/api/runtime/status
 2. Import the repository into Vercel.
 3. Add production environment variables in Vercel project settings.
 4. Deploy.
-5. Confirm `/api/health` and `/api/runtime/status` return valid JSON.
+5. Confirm `/api/health`, `/api/runtime/status`, and `/api/revenue-mesh` return valid JSON.
 
 ### Vercel CLI deployment
 
@@ -106,6 +121,8 @@ vercel --prod
 - Confirm uploaded PDF/JPG/PNG files are accepted while online.
 - Confirm offline attachment submissions display the reattachment warning.
 - Confirm `/api/health` reports Level-4 mode, provider status, queue depth, and dead-letter count.
+- Confirm `/api/revenue-mesh` reports productized offers, task-replacement escalation, and approval-gate boundaries.
+- Confirm `/revenue-mesh` loads on desktop and mobile.
 - Confirm no prohibited claims remain in public copy.
 
 ## Form processing
