@@ -29,6 +29,12 @@ export const metadata: Metadata = {
     'vendor field execution',
     'Arizona onsite IT field execution',
     'Phoenix technical field operations',
+    'RFID field support',
+    'barcode scanner support',
+    'asset tracking field support',
+    'IT asset recovery',
+    'store decommissioning support',
+    'return logistics support',
     'AI website chatbox setup',
     'AI lead capture agent',
     'small business AI agent setup'
@@ -76,6 +82,12 @@ const localBusinessSchema = {
     'Network Troubleshooting',
     'Rollout Recovery',
     'Retail Technology Support',
+    'RFID Field Support',
+    'Barcode Scanner Support',
+    'Asset Tracking Field Support',
+    'IT Asset Recovery',
+    'Store Decommissioning Support',
+    'Return Logistics Support',
     'Critical Systems Field Support',
     'AI Website Chatbox Setup',
     'AI Lead Capture Agent',
@@ -83,13 +95,15 @@ const localBusinessSchema = {
   ],
   hasOfferCatalog: {
     '@type': 'OfferCatalog',
-    name: 'Technical Field Operations, Infrastructure Execution, and AI Lead Capture Services',
+    name: 'Technical Field Operations, Infrastructure Execution, Retail Technology, Asset Recovery, and AI Lead Capture Services',
     itemListElement: [
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Technical Field Operations' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Onsite Infrastructure Execution' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'MSP Smart Hands Support' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Network Troubleshooting' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Rollout Recovery and Remediation' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'RFID, Barcode, and Asset Tracking Field Support' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Store Decommissioning, IT Asset Recovery, and Return Logistics' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Infrastructure Assessment' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'AI Website Chatbox and Lead Capture Agent Setup' } }
     ]
