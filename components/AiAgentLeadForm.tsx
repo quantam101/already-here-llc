@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
+import { supportedLanguageOptions } from '@/lib/ai-agent-products';
 
 const demoOptions = [
   'Automated presentation',
@@ -8,7 +9,8 @@ const demoOptions = [
   'Use my website as the demo context',
   'Show lead capture and owner alert',
   'Show quote intake and qualification',
-  'Show the lead record output'
+  'Show the lead record output',
+  'Show multilingual intake and response'
 ];
 
 const agentOptions = [
@@ -18,7 +20,8 @@ const agentOptions = [
   'Booking or dispatch triage',
   'FAQ and service qualification',
   'White-label reseller agent',
-  'Multi-location routing agent'
+  'Multi-location routing agent',
+  'Multilingual outreach and intake agent'
 ];
 
 const routingOptions = [
@@ -27,7 +30,16 @@ const routingOptions = [
   'Lead record export',
   'CRM-ready record',
   'Dispatcher review',
-  'Owner approval before action'
+  'Owner approval before action',
+  'Translate lead summary for owner'
+];
+
+const languageModes = [
+  'Auto-detect visitor language and respond in that language',
+  'Let visitor choose language before starting',
+  'English owner view with translated customer conversation',
+  'Draft multilingual replies for owner approval only',
+  'One-language demo first'
 ];
 
 const trialPaths = ['Free trial / automated demo first', 'Launch Agent', 'Growth Agent', 'Network Agent', 'Need recommendation'];
@@ -52,11 +64,11 @@ export function AiAgentLeadForm() {
   const [trialPath, setTrialPath] = useState('Free trial / automated demo first');
 
   const helperText = useMemo(() => {
-    if (trialPath === 'Network Agent') return 'Best fit when the demo needs routing, escalation, multiple locations, or reseller logic.';
-    if (trialPath === 'Growth Agent') return 'Best fit when the demo needs missed-lead recovery, quote routing, and lead-quality review.';
-    if (trialPath === 'Launch Agent') return 'Best fit when the demo only needs website chat, lead capture, receipt, and owner alert.';
-    if (trialPath === 'Need recommendation') return 'Use this when the business problem is clear but the right package is not.';
-    return 'Start with a free trial or automated presentation so the buyer can watch the agent capture, qualify, route, and generate a lead record before buying.';
+    if (trialPath === 'Network Agent') return 'Best fit when the demo needs routing, escalation, multiple locations, reseller logic, or multilingual workflows across teams.';
+    if (trialPath === 'Growth Agent') return 'Best fit when the demo needs missed-lead recovery, quote routing, multilingual follow-up drafts, and lead-quality review.';
+    if (trialPath === 'Launch Agent') return 'Best fit when the demo only needs website chat, lead capture, receipt, owner alert, and one or two language paths.';
+    if (trialPath === 'Need recommendation') return 'Use this when the business problem is clear but the right package or language coverage is not.';
+    return 'Start with a free trial or automated presentation so the buyer can watch the agent capture, qualify, route, translate, and generate a lead record before buying.';
   }, [trialPath]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -83,6 +95,9 @@ export function AiAgentLeadForm() {
     const packageInterest = value(formData, 'packageInterest') || 'Free trial / automated demo first';
     const urgency = value(formData, 'urgency') || 'This week';
     const budget = value(formData, 'budget') || 'Not ready to buy yet';
+    const preferredLanguage = value(formData, 'preferredLanguage') || 'English';
+    const additionalLanguages = values(formData, 'additionalLanguages');
+    const languageMode = value(formData, 'languageMode') || 'Auto-detect visitor language and respond in that language';
     const demoPreference = values(formData, 'demoPreference');
     const agentTypes = values(formData, 'agentTypes');
     const routingNeeds = values(formData, 'routingNeeds');
@@ -90,6 +105,9 @@ export function AiAgentLeadForm() {
     const goals = [
       `Trial / demo preference: ${demoPreference || 'Not specified'}`,
       `Agent type to demonstrate: ${agentTypes || 'Not specified'}`,
+      `Preferred language: ${preferredLanguage}`,
+      `Additional languages: ${additionalLanguages || 'None specified'}`,
+      `Language response mode: ${languageMode}`,
       `Install preference: ${value(formData, 'installPreference') || 'Not specified'}`,
       `Primary conversion goal: ${value(formData, 'primaryConversion') || 'Not specified'}`,
       `Questions the demo should ask: ${value(formData, 'qualificationFields') || 'Not specified'}`,
@@ -109,6 +127,9 @@ export function AiAgentLeadForm() {
       packageInterest,
       urgency,
       budget,
+      preferredLanguage,
+      additionalLanguages,
+      languageMode,
       goals,
       currentLeadProblem: value(formData, 'currentLeadProblem'),
       sourcePath: typeof window === 'undefined' ? '/ai-agent' : window.location.pathname,
@@ -142,7 +163,7 @@ export function AiAgentLeadForm() {
       <div className="mb-8 rounded-3xl border border-borderBrand bg-soft p-5">
         <p className="grid-label">Free trial / automated demo</p>
         <h2 className="mt-3 text-2xl font-semibold text-navy">Tell the agent what to demonstrate.</h2>
-        <p className="mt-3 text-sm leading-7 text-slate-600">This intake lets a buyer watch the AI Web Agent work before buying: lead capture, qualification, routing, owner alert, and lead record generation.</p>
+        <p className="mt-3 text-sm leading-7 text-slate-600">This intake lets a buyer watch the AI Web Agent work before buying: multilingual lead capture, qualification, routing, owner alert, and lead record generation.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -153,6 +174,18 @@ export function AiAgentLeadForm() {
         <label className="grid gap-2 text-sm font-medium text-navy">Website or domain<input name="website" type="url" maxLength={240} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="https://example.com" /></label>
         <label className="grid gap-2 text-sm font-medium text-navy">Business type <span className="text-action">*</span><input name="businessType" required maxLength={120} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="HVAC, MSP, access control, property management, etc." /></label>
       </div>
+
+      <div className="mt-8 grid gap-6 md:grid-cols-2">
+        <label className="grid gap-2 text-sm font-medium text-navy">Primary visitor language<select name="preferredLanguage" defaultValue="English" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink">{supportedLanguageOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+        <label className="grid gap-2 text-sm font-medium text-navy">Language response mode<select name="languageMode" defaultValue="Auto-detect visitor language and respond in that language" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink">{languageModes.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+      </div>
+
+      <fieldset className="mt-8 rounded-3xl border border-borderBrand p-5">
+        <legend className="px-2 text-sm font-semibold text-navy">Additional languages to support</legend>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {supportedLanguageOptions.filter((option) => option !== 'English').map((option) => <label key={option} className="flex items-start gap-3 rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-slate-700"><input type="checkbox" name="additionalLanguages" value={option} className="mt-1" /><span>{option}</span></label>)}
+        </div>
+      </fieldset>
 
       <fieldset className="mt-8 rounded-3xl border border-borderBrand p-5">
         <legend className="px-2 text-sm font-semibold text-navy">What do you want to watch first?</legend>
@@ -181,11 +214,11 @@ export function AiAgentLeadForm() {
         <label className="grid gap-2 text-sm font-medium text-navy">Primary conversion goal<input name="primaryConversion" maxLength={180} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="Quote request, booked call, dispatch intake, estimate request, etc." /></label>
       </div>
 
-      <label className="mt-6 grid gap-2 text-sm font-medium text-navy">What should the demo agent ask, capture, qualify, book, or route? <span className="text-action">*</span><textarea name="goals" required rows={6} maxLength={3000} className="link-ring rounded-3xl border border-borderBrand px-4 py-3 text-sm leading-6 text-ink placeholder:text-slate-400" placeholder="Describe the exact experience you want to watch." /></label>
+      <label className="mt-6 grid gap-2 text-sm font-medium text-navy">What should the demo agent ask, capture, qualify, book, or route? <span className="text-action">*</span><textarea name="goals" required rows={6} maxLength={3000} className="link-ring rounded-3xl border border-borderBrand px-4 py-3 text-sm leading-6 text-ink placeholder:text-slate-400" placeholder="Describe the exact experience you want to watch, including any language-specific questions or responses." /></label>
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
-        <label className="grid gap-2 text-sm font-medium text-navy">Current lead problem<textarea name="currentLeadProblem" rows={4} maxLength={1200} className="link-ring rounded-3xl border border-borderBrand px-4 py-3 text-sm leading-6 text-ink placeholder:text-slate-400" placeholder="Missed calls, slow quote response, unqualified leads, after-hours requests, no follow-up, etc." /></label>
-        <label className="grid gap-2 text-sm font-medium text-navy">Questions the trial should ask<textarea name="qualificationFields" rows={4} maxLength={1200} className="link-ring rounded-3xl border border-borderBrand px-4 py-3 text-sm leading-6 text-ink placeholder:text-slate-400" placeholder="Service type, city, urgency, budget, equipment, site count, access details, etc." /></label>
+        <label className="grid gap-2 text-sm font-medium text-navy">Current lead problem<textarea name="currentLeadProblem" rows={4} maxLength={1200} className="link-ring rounded-3xl border border-borderBrand px-4 py-3 text-sm leading-6 text-ink placeholder:text-slate-400" placeholder="Missed calls, language barriers, slow quote response, unqualified leads, after-hours requests, no follow-up, etc." /></label>
+        <label className="grid gap-2 text-sm font-medium text-navy">Questions the trial should ask<textarea name="qualificationFields" rows={4} maxLength={1200} className="link-ring rounded-3xl border border-borderBrand px-4 py-3 text-sm leading-6 text-ink placeholder:text-slate-400" placeholder="Service type, city, urgency, budget, equipment, site count, preferred language, access details, etc." /></label>
       </div>
 
       <fieldset className="mt-8 rounded-3xl border border-borderBrand p-5">
@@ -195,7 +228,7 @@ export function AiAgentLeadForm() {
         </div>
       </fieldset>
 
-      <label className="mt-6 grid gap-2 text-sm font-medium text-navy">Operating rules<textarea name="operatingRules" rows={4} maxLength={1200} className="link-ring rounded-3xl border border-borderBrand px-4 py-3 text-sm leading-6 text-ink placeholder:text-slate-400" placeholder="Example: collect leads only, no outbound action without owner approval, quote approval required, etc." /></label>
+      <label className="mt-6 grid gap-2 text-sm font-medium text-navy">Operating rules<textarea name="operatingRules" rows={4} maxLength={1200} className="link-ring rounded-3xl border border-borderBrand px-4 py-3 text-sm leading-6 text-ink placeholder:text-slate-400" placeholder="Example: collect leads only, translate customer response, no outbound action without owner approval, quote approval required, etc." /></label>
 
       {result.message ? <div className={result.type === 'error' ? 'mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700' : 'mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700'}>{result.message}</div> : null}
 
