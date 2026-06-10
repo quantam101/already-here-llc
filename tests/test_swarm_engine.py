@@ -169,3 +169,59 @@ def test_swarm_rejects_unsafe_generated_plan(monkeypatch):
     monkeypatch.setattr(orchestrator.gateway, "generate_inference", _malicious)
     result = asyncio.run(orchestrator.orchestrate_node_task("q", "ctx"))
     assert result["status"] == "rejected"
+
+
+def test_parse_plan_strips_markdown_code_fences():
+    orchestrator = AutonomousSwarmOrchestrator(session_id="test")
+    fenced = (
+        "```json\n"
+        '{"analytical_rationale": "fenced", '
+        '"pure_python_script": "print(1)", '
+        '"data_quality_assertions": []}\n'
+        "```"
+    )
+    plan = orchestrator._parse_plan(fenced)
+    assert plan.analytical_rationale == "fenced"
+    assert plan.pure_python_script == "print(1)"
+
+
+def test_parse_plan_handles_non_dict_json_gracefully():
+    orchestrator = AutonomousSwarmOrchestrator(session_id="test")
+    # Valid JSON that is not an object: json.loads succeeds but from_dict would
+    # raise AttributeError. Must fall back to the deterministic stub, not crash.
+    for payload in ("[1, 2, 3]", '"a bare string"', "null", "42", "true"):
+        plan = orchestrator._parse_plan(payload)
+        assert plan.analytical_rationale == "Fallback structural extraction"
+
+
+def test_local_fallback_query_with_prohibited_keyword_not_rejected():
+    # A benign analytical query that merely *mentions* a prohibited word must not
+    # be rejected: the local deterministic plan embeds it only as a repr-escaped
+    # string literal and is trusted, so the untrusted-code scanner is skipped.
+    orchestrator = AutonomousSwarmOrchestrator(session_id="test")
+    for query in (
+        "Analyze subprocess throughput metrics",
+        "Evaluate socket latency and eval the open positions",
+    ):
+        result = asyncio.run(orchestrator.orchestrate_node_task(query, "columns: x"))
+        assert result["status"] == "success", result
+        assert "Local deterministic verification" in result["telemetry"]
+
+
+def test_cloud_plan_with_prohibited_keyword_still_rejected(monkeypatch):
+    # Defense-in-depth: untrusted cloud output is still fully scanned.
+    orchestrator = AutonomousSwarmOrchestrator(session_id="test")
+
+    async def _cloud(prompt, fallback_prompt):
+        orchestrator.gateway.last_source = "cloud"
+        return __import__("json").dumps(
+            {
+                "analytical_rationale": "bad",
+                "pure_python_script": "import subprocess\nsubprocess.run('x')",
+                "data_quality_assertions": [],
+            }
+        )
+
+    monkeypatch.setattr(orchestrator.gateway, "generate_inference", _cloud)
+    result = asyncio.run(orchestrator.orchestrate_node_task("q", "ctx"))
+    assert result["status"] == "rejected"
