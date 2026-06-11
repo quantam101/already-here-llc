@@ -2,6 +2,7 @@ import { access, stat } from 'node:fs/promises';
 import { constants } from 'node:fs';
 
 const repoRoot = new URL('../', import.meta.url);
+const nextServerShim = new URL('./next-server-shim.mjs', import.meta.url);
 const candidateSuffixes = [
   '',
   '.ts',
@@ -57,6 +58,10 @@ async function resolveExistingFile(baseUrl, context, nextResolve) {
 }
 
 export async function resolve(specifier, context, nextResolve) {
+  if (specifier === 'next/server' || specifier === 'next/server.js') {
+    return nextResolve(nextServerShim.href, context);
+  }
+
   if (specifier.startsWith('@/')) {
     const target = new URL(specifier.slice(2), repoRoot);
     const resolved = await resolveExistingFile(target, context, nextResolve);
