@@ -1,5 +1,7 @@
-const WebResponse = global.Response;
-const WebHeaders = global.Headers;
+// eslint-disable-next-line no-undef
+const WebResponse = Response;
+// eslint-disable-next-line no-undef
+const WebHeaders = Headers;
 
 export function after(callback) {
   try {
