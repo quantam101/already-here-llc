@@ -1,3 +1,6 @@
+const WebResponse = globalThis.Response;
+const WebHeaders = globalThis.Headers;
+
 export function after(callback) {
   try {
     const result = callback();
@@ -10,14 +13,14 @@ export function after(callback) {
   }
 }
 
-export class NextResponse extends Response {
+export class NextResponse extends WebResponse {
   static json(body, init = {}) {
-    const headers = new Headers(init.headers || {});
+    const headers = new WebHeaders(init.headers || {});
     if (!headers.has('content-type')) {
       headers.set('content-type', 'application/json');
     }
 
-    return new Response(JSON.stringify(body), {
+    return new WebResponse(JSON.stringify(body), {
       ...init,
       headers
     });
