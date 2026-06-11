@@ -2,25 +2,7 @@ import { NextResponse } from 'next/server.js';
 
 export const runtime = 'nodejs';
 
-const tiers = {
-  basic: {
-    name: 'Basic Intake',
-    includes: ['webIntake', 'missedCallRecording', 'emailLeadDelivery'],
-    excludes: ['speechQualification', 'smsAutomation', 'calendarBooking', 'crmPipeline']
-  },
-  pro: {
-    name: 'Pro AI Receptionist',
-    includes: ['webIntake', 'missedCallRecording', 'emailLeadDelivery', 'speechQualification', 'smsLeadCapture', 'leadScoring'],
-    excludes: ['calendarBooking', 'crmPipeline']
-  },
-  officeManager: {
-    name: 'AI Office Manager',
-    includes: ['webIntake', 'missedCallRecording', 'emailLeadDelivery', 'speechQualification', 'smsLeadCapture', 'leadScoring', 'calendarBooking', 'crmPipeline', 'revenueReporting'],
-    excludes: []
-  }
-} as const;
-
-type Tier = keyof typeof tiers;
+type Tier = 'basic' | 'pro' | 'officeManager';
 
 function currentTier(): Tier {
   const value = (process.env.AI_RECEPTIONIST_TIER || 'pro').trim();
@@ -30,29 +12,28 @@ function currentTier(): Tier {
 
 export async function GET() {
   const tier = currentTier();
-  const plan = tiers[tier];
+  const isPro = tier === 'pro' || tier === 'officeManager';
+  const isOfficeManager = tier === 'officeManager';
 
   return NextResponse.json({
     ok: true,
     service: 'ai-receptionist-status',
     status: 'ready',
     currentTier: tier,
-    currentPlan: plan.name,
-    productLevel: tier === 'basic' ? 'level_1_intake' : tier === 'pro' ? 'level_2_autonomous_qualification' : 'level_4_ai_office_manager',
+    currentPlan: tier === 'basic' ? 'Basic Intake' : tier === 'pro' ? 'Pro AI Receptionist' : 'AI Office Manager',
+    productLevel: tier === 'basic' ? 'level_1_intake' : tier === 'pro' ? 'level_2_qualification' : 'level_4_office_manager',
     enabled: {
       webIntake: true,
       missedCallRecording: true,
       emailLeadDelivery: true,
-      speechQualification: plan.includes.includes('speechQualification'),
-      smsLeadCapture: plan.includes.includes('smsLeadCapture'),
-      leadScoring: plan.includes.includes('leadScoring'),
-      calendarBooking: plan.includes.includes('calendarBooking'),
-      crmPipeline: plan.includes.includes('crmPipeline'),
-      revenueReporting: plan.includes.includes('revenueReporting')
+      speechQualification: isPro,
+      smsLeadCapture: isPro,
+      leadScoring: isPro,
+      calendarBooking: isOfficeManager,
+      crmPipeline: isOfficeManager,
+      revenueReporting: isOfficeManager
     },
-    tiers,
-    tierRule: 'Features are enabled or blocked by purchased tier. Speech qualification starts at Pro. Booking, CRM, and reporting require Office Manager.',
-    nextUpgrade: 'calendar booking and CRM pipeline persistence',
+    tierRule: 'Basic includes intake and recording. Pro adds speech, SMS, and scoring. Office Manager adds booking, CRM, and reporting.',
     timestamp: new Date().toISOString()
   });
 }
