@@ -1,5 +1,5 @@
-const WebResponse = globalThis.Response;
-const WebHeaders = globalThis.Headers;
+const WebResponse = global.Response;
+const WebHeaders = global.Headers;
 
 export function after(callback) {
   try {
