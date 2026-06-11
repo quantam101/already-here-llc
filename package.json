@@ -23,7 +23,8 @@
     "qa:pareto": "node scripts/pareto-agent.mjs",
     "qa:seo": "node scripts/seo-route-audit.mjs",
     "qa:gate": "node scripts/quality-gate.mjs",
-    "qa:classify": "node scripts/ci-failure-classifier.mjs"
+    "qa:classify": "node scripts/ci-failure-classifier.mjs",
+    "qa:ecosystem": "node scripts/ecosystem-production-gate.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
