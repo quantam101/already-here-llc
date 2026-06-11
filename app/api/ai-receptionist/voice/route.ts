@@ -18,11 +18,14 @@ function baseUrl(request: Request): string {
 
 export async function GET(request: Request) {
   const root = baseUrl(request);
+  const action = `${root}/api/ai-receptionist/voice/recording`;
   return xmlResponse(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice">Thank you for calling Already Here LLC. This is the AI receptionist intake line. Please leave your name, company, phone number, city, service needed, urgency, and preferred callback window after the tone.</Say>
-  <Record action="${root}/api/ai-receptionist/voice/recording" method="POST" maxLength="180" playBeep="true" trim="trim-silence" />
-  <Say voice="alice">We did not receive a recording. Please call or text 602-882-2920, or submit the intake form at already here L L C dot com.</Say>
+  <Gather input="speech" action="${action}" method="POST" speechTimeout="auto" timeout="8">
+    <Say voice="alice">Thank you for calling Already Here LLC. I am the AI receptionist. Please say your name, company, phone number, city, service needed, urgency, preferred callback window, and any site or equipment notes. I will route the request for review.</Say>
+  </Gather>
+  <Say voice="alice">I did not hear enough information. Please leave the same details after the tone.</Say>
+  <Record action="${action}" method="POST" maxLength="180" playBeep="true" trim="trim-silence" />
 </Response>`);
 }
 
