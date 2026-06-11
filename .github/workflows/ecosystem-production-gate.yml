@@ -1,0 +1,32 @@
+name: Ecosystem Production Gate
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+jobs:
+  verify-production:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ecosystem production gate
+        run: npm run qa:ecosystem
+        env:
+          PROFITENGINE_HEALTH_URL: ${{ secrets.PROFITENGINE_HEALTH_URL }}
+          TOKENFORGE_HEALTH_URL: ${{ secrets.TOKENFORGE_HEALTH_URL }}
+          FIELD_NETWORK_DASHBOARD_URL: ${{ secrets.FIELD_NETWORK_DASHBOARD_URL }}
