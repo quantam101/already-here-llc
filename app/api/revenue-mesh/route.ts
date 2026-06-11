@@ -1,4 +1,12 @@
 import { NextResponse } from 'next/server';
+import {
+  buildRevenueMeshPlan,
+  productizedRevenueOffers,
+  revenueMeshOperatingRules,
+  selectBestProductizedOffer,
+  type RevenueLane,
+  type RevenueOpportunityInput
+} from '@/lib/revenue-mesh';
 
 export const runtime = 'nodejs';
 
@@ -6,31 +14,13 @@ const rateLimitWindowMs = 60_000;
 const rateLimitMax = 20;
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
 
-const productizedOffers = [
-  {
-    id: 'ai-missed-call-recovery',
-    name: 'AI Missed Call Recovery Agent',
-    setupFee: 0,
-    monthlyFee: 497,
-    lane: 'ai_automation_offer',
-    proofMetric: 'captured calls, booked jobs, recovered revenue'
-  },
-  {
-    id: 'dispatch-intake-agent',
-    name: 'Dispatch Intake and Quote Agent',
-    setupFee: 500,
-    monthlyFee: 750,
-    lane: 'premium_dispatch',
-    proofMetric: 'qualified scopes, faster quotes, booked work orders'
-  },
-  {
-    id: 'retainer-procurement-radar',
-    name: 'Retainer Procurement Radar',
-    setupFee: 1000,
-    monthlyFee: 1500,
-    lane: 'retainer_procurement',
-    proofMetric: 'new vendor targets, tracked bids, recurring opportunities'
-  }
+const allowedLanes: RevenueLane[] = [
+  'premium_dispatch',
+  'local_cash_backup',
+  'dispatch_partner',
+  'ai_automation_offer',
+  'retainer_procurement',
+  'payment_protection'
 ];
 
 function getClientKey(request: Request): string {
@@ -50,8 +40,8 @@ function isRateLimited(key: string): boolean {
   return current.count > rateLimitMax;
 }
 
-function clean(value: unknown): string | undefined {
-  return typeof value === 'string' ? value.trim().slice(0, 1200) : undefined;
+function clean(value: unknown, maxLength = 1200): string | undefined {
+  return typeof value === 'string' ? value.trim().slice(0, maxLength) || undefined : undefined;
 }
 
 function cleanNumber(value: unknown): number | undefined {
@@ -59,49 +49,62 @@ function cleanNumber(value: unknown): number | undefined {
   return Math.max(0, Math.round(value * 100) / 100);
 }
 
-function normalizeOpportunities(raw: unknown) {
+function cleanBoolean(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined;
+}
+
+function cleanLane(value: unknown): RevenueLane | undefined {
+  return typeof value === 'string' && allowedLanes.includes(value as RevenueLane) ? value as RevenueLane : undefined;
+}
+
+function cleanStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const items = value
+    .map((item) => clean(item, 240))
+    .filter((item): item is string => Boolean(item));
+  return items.length ? items.slice(0, 20) : undefined;
+}
+
+function cleanUrgency(value: unknown): RevenueOpportunityInput['urgency'] | undefined {
+  if (value === 'same_day' || value === 'next_day' || value === 'this_week' || value === 'pipeline') return value;
+  return undefined;
+}
+
+function normalizeOpportunities(raw: unknown): RevenueOpportunityInput[] {
   if (!Array.isArray(raw)) return [];
+
   return raw
-    .map((item) => {
+    .map((item): RevenueOpportunityInput | null => {
       if (!item || typeof item !== 'object') return null;
       const record = item as Record<string, unknown>;
-      const title = clean(record.title);
-      const source = clean(record.source);
+      const title = clean(record.title, 240);
+      const source = clean(record.source, 160);
       if (!title || !source) return null;
+
       return {
-        id: clean(record.id),
+        id: clean(record.id, 120),
         title,
         source,
-        buyer: clean(record.buyer),
-        location: clean(record.location),
-        schedule: clean(record.schedule),
+        lane: cleanLane(record.lane),
+        buyer: clean(record.buyer, 180),
+        location: clean(record.location, 180),
+        schedule: clean(record.schedule, 180),
+        contactRoute: clean(record.contactRoute, 240),
         fixedPay: cleanNumber(record.fixedPay),
         rate: cleanNumber(record.rate),
         estimatedHours: cleanNumber(record.estimatedHours),
-        scope: clean(record.scope)
+        travelMiles: cleanNumber(record.travelMiles),
+        scope: clean(record.scope, 2000),
+        requirements: cleanStringArray(record.requirements),
+        risks: cleanStringArray(record.risks),
+        urgency: cleanUrgency(record.urgency),
+        expectedSetupFee: cleanNumber(record.expectedSetupFee),
+        expectedMonthlyRevenue: cleanNumber(record.expectedMonthlyRevenue),
+        recurringPotential: cleanBoolean(record.recurringPotential)
       };
     })
-    .filter(Boolean)
+    .filter((item): item is RevenueOpportunityInput => Boolean(item))
     .slice(0, 50);
-}
-
-function buildPlan(opportunities: Array<Record<string, unknown>>) {
-  const totalEstimatedRevenue = opportunities.reduce((sum, item) => {
-    const fixedPay = typeof item.fixedPay === 'number' ? item.fixedPay : 0;
-    const rate = typeof item.rate === 'number' ? item.rate : 0;
-    const hours = typeof item.estimatedHours === 'number' ? item.estimatedHours : 0;
-    return sum + Math.max(fixedPay, rate * hours);
-  }, 0);
-
-  return {
-    status: opportunities.length ? 'opportunities-ready' : 'ready-for-intake',
-    opportunityCount: opportunities.length,
-    totalEstimatedRevenue,
-    topActions: opportunities.length
-      ? ['Prioritize highest-margin work', 'Confirm scope and schedule', 'Send quote or counter offer']
-      : ['Capture lead intake', 'Qualify buyer urgency', 'Route to dispatch or AI automation offer'],
-    taskReplacement: opportunities.length ? null : 'No new opportunities submitted. Use dispatch intake or procurement radar.'
-  };
 }
 
 export async function POST(request: Request) {
@@ -113,13 +116,17 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) return NextResponse.json({ ok: false, message: 'Invalid JSON payload.' }, { status: 400 });
 
-  const opportunities = normalizeOpportunities(body.opportunities) as Array<Record<string, unknown>>;
+  const opportunities = normalizeOpportunities(body.opportunities);
+  const prospectText = clean(body.prospectText, 3000) || opportunities.map((item) => `${item.title} ${item.scope ?? ''}`).join(' ');
+  const plan = buildRevenueMeshPlan(opportunities);
+  const selectedOffer = selectBestProductizedOffer(prospectText);
+
   return NextResponse.json({
     ok: true,
     service: 'revenue-mesh',
     status: 'ready',
-    plan: buildPlan(opportunities),
-    selectedOffer: productizedOffers[0],
+    plan,
+    selectedOffer,
     timestamp: new Date().toISOString()
   });
 }
@@ -129,11 +136,7 @@ export async function GET() {
     ok: true,
     service: 'revenue-mesh',
     status: 'ready',
-    operatingRules: [
-      'No fake live claims.',
-      'Use performance-aligned offers for small businesses.',
-      'Prioritize retained and recurring revenue.'
-    ],
+    operatingRules: revenueMeshOperatingRules,
     productizedOffers,
     taskReplacementWhenEmpty: 'No new opportunities submitted. Use dispatch intake or procurement radar.',
     timestamp: new Date().toISOString()
