@@ -77,7 +77,6 @@ function normalizeOpportunity(raw: unknown): RevenueOpportunityInput | null {
   const source = clean(record.source);
   const title = clean(record.title);
   if (!source || !title) return null;
-
   return {
     id: clean(record.id),
     source,
@@ -107,45 +106,44 @@ function normalizeOpportunities(raw: unknown): RevenueOpportunityInput[] {
 }
 
 export async function POST(request: Request) {
-  const clientKey = getClientKey(request);
-  if (isRateLimited(clientKey)) return NextResponse.json({ message: 'Too many revenue-mesh requests. Try again later.' }, { status: 429 });
-
-  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!body) return NextResponse.json({ message: 'Invalid JSON payload.' }, { status: 400 });
-
-  const opportunities = normalizeOpportunities(body.opportunities);
-  const plan = buildRevenueMeshPlan(opportunities);
-  const prospectText = clean(body.prospectText);
-  const selectedOffer = prospectText ? selectBestProductizedOffer(prospectText) : null;
-
-  return NextResponse.json({
-    ok: true,
-    service: 'revenue-mesh',
-    plan,
-    selectedOffer
-  });
+  try {
+    const clientKey = getClientKey(request);
+    if (isRateLimited(clientKey)) return NextResponse.json({ message: 'Too many revenue-mesh requests. Try again later.' }, { status: 429 });
+    const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+    if (!body) return NextResponse.json({ message: 'Invalid JSON payload.' }, { status: 400 });
+    const opportunities = normalizeOpportunities(body.opportunities);
+    const plan = buildRevenueMeshPlan(opportunities);
+    const prospectText = clean(body.prospectText);
+    const selectedOffer = prospectText ? selectBestProductizedOffer(prospectText) : null;
+    return NextResponse.json({ ok: true, service: 'revenue-mesh', plan, selectedOffer });
+  } catch {
+    return NextResponse.json({ ok: false, service: 'revenue-mesh', status: 'unavailable', timestamp: new Date().toISOString() });
+  }
 }
 
 export async function GET() {
-  const plan = buildRevenueMeshPlan([]);
-  const offerPreview = productizedRevenueOffers.map((offer) => ({
-    id: offer.id,
-    name: offer.name,
-    setupFee: offer.setupFee,
-    monthlyFee: offer.monthlyFee,
-    lane: offer.lane,
-    proofMetric: offer.proofMetric
-  }));
-
-  return NextResponse.json({
-    ok: true,
-    service: 'revenue-mesh',
-    status: 'ready',
-    operatingRules: revenueMeshOperatingRules,
-    productizedOffers: offerPreview,
-    taskReplacementWhenEmpty: plan.taskReplacement,
-    timestamp: new Date().toISOString()
-  });
+  try {
+    const plan = buildRevenueMeshPlan([]);
+    const offerPreview = productizedRevenueOffers.map((offer) => ({
+      id: offer.id,
+      name: offer.name,
+      setupFee: offer.setupFee,
+      monthlyFee: offer.monthlyFee,
+      lane: offer.lane,
+      proofMetric: offer.proofMetric
+    }));
+    return NextResponse.json({
+      ok: true,
+      service: 'revenue-mesh',
+      status: 'ready',
+      operatingRules: revenueMeshOperatingRules,
+      productizedOffers: offerPreview,
+      taskReplacementWhenEmpty: plan.taskReplacement,
+      timestamp: new Date().toISOString()
+    });
+  } catch {
+    return NextResponse.json({ ok: false, service: 'revenue-mesh', status: 'unavailable', productizedOffers: [], timestamp: new Date().toISOString() });
+  }
 }
 
 export function OPTIONS() {
