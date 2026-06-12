@@ -9,6 +9,13 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
+env:
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  ZAPIER_WEBHOOK_URL: ${{ secrets.ZAPIER_WEBHOOK_URL }}
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -46,3 +53,16 @@ jobs:
 
       - name: Quality gate
         run: npm run qa:gate --if-present
+
+      - name: Notify Slack/Zapier
+        if: always()
+        env:
+          ALERT_TITLE: Already Here LLC CI ${{ job.status }}
+          ALERT_STATUS: ${{ job.status }}
+          ALERT_PRIORITY: ${{ job.status == 'failure' && 'high' || 'normal' }}
+          ALERT_GRADE: ${{ job.status == 'failure' && 'A-action-required' || 'B-monitor' }}
+          ALERT_SUMMARY: CI completed with status `${{ job.status }}` for `${{ github.repository }}` on `${{ github.ref_name }}`.
+          ALERT_ACTION: ${{ job.status == 'failure' && 'Review failed GitHub Actions logs, fix blockers, and rerun validation before treating automation as live.' || 'No blocking action required unless this run was expected to release revenue automation.' }}
+          ALERT_SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ALERT_SOURCE: github-actions-ci
+        run: node scripts/notify-dispatch-alert.mjs
