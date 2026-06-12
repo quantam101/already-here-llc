@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/content", "destination": "https://quantam101.github.io/content/" },
-    { "source": "/content/(.*)", "destination": "https://quantam101.github.io/content/$1" }
+    { "source": "/content/(.*\\.[a-zA-Z0-9]+)", "destination": "https://quantam101.github.io/content/$1" },
+    { "source": "/content/(.*)", "destination": "https://quantam101.github.io/content/$1/" }
   ]
 }
