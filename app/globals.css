@@ -144,13 +144,16 @@ main {
 input,
 select,
 textarea {
-  background: #07111f !important;
-  color: var(--ah-text) !important;
+  background: #0b1728 !important;
+  color: #f8fafc !important;
+  caret-color: #8fb6ff !important;
   border-color: var(--ah-border) !important;
+  opacity: 1;
 }
 
 ::placeholder {
-  color: #7e8a9a !important;
+  color: #b8c4d6 !important;
+  opacity: 1;
 }
 
 .proof-light,
