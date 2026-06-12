@@ -200,6 +200,14 @@ textarea {
   border-color: #19324d !important;
 }
 
+.proof-light #ai-agent-free-trial input,
+.proof-light #ai-agent-free-trial select,
+.proof-light #ai-agent-free-trial textarea {
+  background-color: #0b1728 !important;
+  color: #f8fafc !important;
+  caret-color: #f8fafc !important;
+}
+
 @media (max-width: 640px) {
   .container-shell {
     padding-left: 1rem;
