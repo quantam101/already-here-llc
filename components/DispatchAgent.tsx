@@ -59,6 +59,10 @@ export function DispatchAgent() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   }
 
+  function openDispatchForm() {
+    window.location.assign('/dispatch');
+  }
+
   return (
     <>
       {/* Floating trigger */}
@@ -158,7 +162,7 @@ export function DispatchAgent() {
               </button>
             </div>
             <p className="mt-2 text-center text-[10px] text-slate-400">
-              AI assistant · <a href="/dispatch" className="underline hover:text-action">Open full dispatch form</a>
+              AI assistant · <button type="button" onClick={openDispatchForm} className="underline hover:text-action">Open full dispatch form</button>
             </p>
           </div>
         </div>
