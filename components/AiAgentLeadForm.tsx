@@ -46,6 +46,35 @@ const trialPaths = ['Free trial / automated demo first', 'Launch Agent', 'Growth
 const timingOptions = ['Show me now', 'This week', 'This month', 'Researching'];
 const budgetOptions = ['Not ready to buy yet', 'Under $1,000 after trial', '$1,000 - $2,500 after trial', '$2,500 - $5,000 after trial', '$5,000+ after trial'];
 const installOptions = ['Existing website', 'Standalone AI intake page', 'Embedded website widget', 'New landing page needed', 'Not sure yet'];
+const businessTypeOptions = [
+  'Online store / e-commerce',
+  'Local service business',
+  'Small business - call for special-case terms',
+  'Veteran-owned business - call for special-case terms',
+  'Disabled business owner - call for special-case terms',
+  'HVAC',
+  'Plumbing',
+  'Electrical contractor',
+  'Locksmith / access control',
+  'Garage door service',
+  'Appliance repair',
+  'Junk removal / hauling',
+  'Property management',
+  'Real estate / leasing',
+  'Home cleaning / organizing',
+  'Landscaping / lawn care',
+  'Roofing',
+  'Pest control',
+  'Auto service / mobile mechanic',
+  'IT services / MSP',
+  'Low-voltage / CCTV / cabling',
+  'Healthcare / clinic',
+  'Restaurant / food service',
+  'Retail store',
+  'Beauty / barber / wellness',
+  'Nonprofit / community organization',
+  'Other - type custom business type'
+];
 
 type ResultState = { type: 'idle' | 'success' | 'error'; message: string };
 type LeadResponse = { message?: string; leadId?: string; grade?: string; score?: number };
@@ -172,8 +201,15 @@ export function AiAgentLeadForm() {
         <label className="grid gap-2 text-sm font-medium text-navy">Business email <span className="text-action">*</span><input name="email" type="email" required autoComplete="email" maxLength={160} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="you@company.com" /></label>
         <label className="grid gap-2 text-sm font-medium text-navy">Phone <span className="text-action">*</span><input name="phone" type="tel" required autoComplete="tel" inputMode="tel" maxLength={40} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="Direct callback number" /></label>
         <label className="grid gap-2 text-sm font-medium text-navy">Website or domain<input name="website" type="url" maxLength={240} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="https://example.com" /></label>
-        <label className="grid gap-2 text-sm font-medium text-navy">Business type <span className="text-action">*</span><input name="businessType" required maxLength={120} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="HVAC, MSP, access control, property management, etc." /></label>
+        <label className="grid gap-2 text-sm font-medium text-navy">Business type <span className="text-action">*</span><input name="businessType" required list="business-type-options" maxLength={120} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="Choose from the list or type your own" /></label>
+        <datalist id="business-type-options">
+          {businessTypeOptions.map((option) => <option key={option} value={option} />)}
+        </datalist>
       </div>
+
+      <p className="mt-4 rounded-2xl border border-borderBrand bg-soft px-4 py-3 text-sm leading-6 text-slate-600">
+        Small businesses, veteran-owned businesses, and disabled business owners are reviewed by phone on a special-case basis. Call 602-882-2920 before assuming standard setup or monthly pricing.
+      </p>
 
       <div className="mt-8 grid gap-6 md:grid-cols-2">
         <label className="grid gap-2 text-sm font-medium text-navy">Primary visitor language<select name="preferredLanguage" defaultValue="English" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink">{supportedLanguageOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
