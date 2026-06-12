@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/content", "destination": "https://quantam101.github.io/content/" },
+    { "source": "/content/(.*)", "destination": "https://quantam101.github.io/content/$1" }
+  ]
+}
