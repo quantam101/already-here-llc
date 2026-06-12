@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          show-progress: false
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -31,10 +33,28 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --silent
 
       - name: Lint
-        run: npm run lint --if-present
+        shell: bash
+        run: |
+          set +e
+          npm run lint --if-present 2>&1 | tee eslint-output.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            echo "::group::eslint failure summary"
+            tail -n 160 eslint-output.log
+            echo "::endgroup::"
+          fi
+          exit "$status"
+
+      - name: Upload lint diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-output
+          path: eslint-output.log
+          if-no-files-found: ignore
 
       - name: Typecheck
         run: npm run typecheck --if-present
