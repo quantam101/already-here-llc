@@ -1,0 +1,2 @@
+Temporary write check for light form fields.
+background white color dark caret dark placeholder gray.
