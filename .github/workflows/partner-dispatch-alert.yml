@@ -1,0 +1,72 @@
+name: Partner Dispatch Alert
+
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: Alert title
+        required: false
+        default: Already Here LLC Dispatch Alert
+      status:
+        description: Alert status
+        required: false
+        default: info
+      grade:
+        description: Target grade or priority grade
+        required: false
+        default: B
+      priority:
+        description: Alert priority
+        required: false
+        default: normal
+      summary:
+        description: Short operational summary
+        required: false
+        default: Phoenix-area dispatch or revenue connection update.
+      action:
+        description: Exact next action
+        required: false
+        default: Review target, approve outreach, or update the dispatch tracker.
+      source_url:
+        description: Optional source URL
+        required: false
+        default: ''
+  repository_dispatch:
+    types:
+      - partner-alert
+      - dispatch-alert
+      - revenue-alert
+
+permissions:
+  contents: read
+
+env:
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  ZAPIER_WEBHOOK_URL: ${{ secrets.ZAPIER_WEBHOOK_URL }}
+
+jobs:
+  notify:
+    name: Send partner dispatch alert
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Send Slack/Zapier notification
+        env:
+          ALERT_TITLE: ${{ github.event.client_payload.title || github.event.inputs.title || 'Already Here LLC Dispatch Alert' }}
+          ALERT_STATUS: ${{ github.event.client_payload.status || github.event.inputs.status || 'info' }}
+          ALERT_GRADE: ${{ github.event.client_payload.grade || github.event.inputs.grade || 'B' }}
+          ALERT_PRIORITY: ${{ github.event.client_payload.priority || github.event.inputs.priority || 'normal' }}
+          ALERT_SUMMARY: ${{ github.event.client_payload.summary || github.event.inputs.summary || 'Phoenix-area dispatch or revenue connection update.' }}
+          ALERT_ACTION: ${{ github.event.client_payload.action || github.event.inputs.action || 'Review target, approve outreach, or update the dispatch tracker.' }}
+          ALERT_SOURCE_URL: ${{ github.event.client_payload.source_url || github.event.inputs.source_url || '' }}
+          ALERT_SOURCE: github-actions-partner-dispatch-alert
+        run: node scripts/notify-dispatch-alert.mjs
