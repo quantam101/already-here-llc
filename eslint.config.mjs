@@ -21,7 +21,13 @@ const eslintConfig = [
       ".next/**",
       "node_modules/**",
       "profitengine/**",
-      "ops/profitengine/**"
+      "ops/**",
+      "runtime/**",
+      "web/**",
+      "posts/**",
+      "docs/**",
+      "public/**",
+      "content/**"
     ]
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
