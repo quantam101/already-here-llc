@@ -12,6 +12,20 @@ const compat = new FlatCompat({
   allConfig: js.configs.all
 });
 
+const nodeGlobals = {
+  Buffer: "readonly",
+  URL: "readonly",
+  URLSearchParams: "readonly",
+  clearInterval: "readonly",
+  clearTimeout: "readonly",
+  console: "readonly",
+  fetch: "readonly",
+  global: "readonly",
+  process: "readonly",
+  setInterval: "readonly",
+  setTimeout: "readonly"
+};
+
 const eslintConfig = [
   {
     ignores: [
@@ -31,6 +45,18 @@ const eslintConfig = [
     ]
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    files: [
+      "scripts/**/*.{js,mjs,cjs}",
+      "tests/**/*.{js,mjs,cjs}",
+      "next.config.mjs",
+      "postcss.config.js",
+      "eslint.config.mjs"
+    ],
+    languageOptions: {
+      globals: nodeGlobals
+    }
+  }
 ];
 
 export default eslintConfig;
