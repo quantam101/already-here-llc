@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import {
   buildRevenueMeshPlan,
-  productizedRevenueOffers,
+  productizedRevenueOffers as productizedOffers,
   revenueMeshOperatingRules,
   selectBestProductizedOffer,
   type RevenueLane,
@@ -13,15 +13,6 @@ export const runtime = 'nodejs';
 const rateLimitWindowMs = 60_000;
 const rateLimitMax = 20;
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
-
-const allowedLanes: RevenueLane[] = [
-  'premium_dispatch',
-  'local_cash_backup',
-  'dispatch_partner',
-  'ai_automation_offer',
-  'retainer_procurement',
-  'payment_protection'
-];
 
 function getClientKey(request: Request): string {
   const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
@@ -54,7 +45,7 @@ function cleanBoolean(value: unknown): boolean | undefined {
 }
 
 function cleanLane(value: unknown): RevenueLane | undefined {
-  return typeof value === 'string' && allowedLanes.includes(value as RevenueLane) ? value as RevenueLane : undefined;
+  return typeof value === 'string' ? value as RevenueLane : undefined;
 }
 
 function cleanStringArray(value: unknown): string[] | undefined {
@@ -110,7 +101,7 @@ function normalizeOpportunities(raw: unknown): RevenueOpportunityInput[] {
 export async function POST(request: Request) {
   const clientKey = getClientKey(request);
   if (isRateLimited(clientKey)) {
-    return NextResponse.json({ ok: false, message: 'Too many revenue-mesh requests. Try again later.' }, { status: 429 });
+    return NextResponse.json({ ok: false, message: 'Request limit reached. Try again later.' }, { status: 429 });
   }
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
