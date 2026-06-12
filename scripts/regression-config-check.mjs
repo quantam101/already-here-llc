@@ -5,6 +5,8 @@ const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const packageLockText = fs.readFileSync('package-lock.json', 'utf8');
 const packageLock = JSON.parse(packageLockText);
 const eslintConfig = fs.readFileSync('eslint.config.mjs', 'utf8');
+const revenueMeshRoute = fs.readFileSync('app/api/revenue-mesh/route.ts', 'utf8');
+const nextServerShim = fs.readFileSync('tests/next-server-shim.mjs', 'utf8');
 
 const expectedLintScript = 'eslint app components lib tests scripts tailwind.config.ts next.config.mjs postcss.config.js eslint.config.mjs --max-warnings=0';
 
@@ -23,6 +25,17 @@ for (const ignoredPath of ['already-here-llc-v1.1/**', 'profitengine/**', 'ops/*
   assert.ok(eslintConfig.includes(ignoredPath), `eslint config must ignore non-production or generated surface: ${ignoredPath}`);
 }
 
+assert.ok(
+  eslintConfig.includes('const nodeGlobals') && eslintConfig.includes('tests/**/*.{js,mjs,cjs}') && eslintConfig.includes('scripts/**/*.{js,mjs,cjs}'),
+  'eslint config must define Node globals for script and test linting'
+);
+
+assert.ok(
+  revenueMeshRoute.includes('productizedRevenueOffers as productizedOffers') || revenueMeshRoute.includes('const productizedOffers = productizedRevenueOffers'),
+  'revenue-mesh route must bind productizedOffers to the imported productizedRevenueOffers export'
+);
+
+assert.ok(!nextServerShim.includes('eslint-disable'), 'next-server-shim must not keep stale eslint-disable comments');
 assert.ok(!packageLockText.includes('packages.applied-caas-gateway'), 'package-lock.json must not contain sandbox/internal npm mirror URLs');
 
 const rootLock = packageLock.packages?.[''];
