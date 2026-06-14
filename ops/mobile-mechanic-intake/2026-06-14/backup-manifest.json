@@ -2,36 +2,41 @@
   "created_date": "2026-06-14",
   "repo_target": "quantam101/already-here-llc",
   "backup_path": "ops/mobile-mechanic-intake/2026-06-14/",
-  "public_safety": "Sanitized for public repo. No raw private emails, credentials, invoices, payment data, private customer data, or precise private operating address.",
+  "public_safety": "Sanitized public-safe operational backup.",
   "files": [
     {
       "key": "pdf",
       "filename": "Already_Here_Mobile_Service_Vehicle_Intake_Pre_Work_Inspection.pdf",
+      "repo_backup_file": "Already_Here_Mobile_Service_Vehicle_Intake_Pre_Work_Inspection.pdf.b64",
+      "stored_in_repo": true,
       "size_bytes": 5867,
       "sha256": "e7b35305cce36b0cb6d46697663637078620aaf31fd9ac4437a697d373207dc5"
     },
     {
       "key": "pdf_preview",
       "filename": "Already_Here_Mobile_Service_Vehicle_Intake_Pre_Work_Inspection_preview.png",
+      "stored_in_repo": false,
       "size_bytes": 338125,
       "sha256": "092c7d979dfe25339200b569a1cc6c45c804852c0d86db1af6874be50cdb93d7"
     },
     {
       "key": "work_capture_xlsx",
       "filename": "Already_Here_Work_Capture_Prospects_Phoenix_Mechanic_Cleanout_2026-06-14.xlsx",
+      "stored_in_repo": false,
       "size_bytes": 19415,
       "sha256": "72624f097689f1df1527eb1e6cccbd91b75f515306288529c1dede3009eed0ac"
     },
     {
       "key": "work_capture_preview",
       "filename": "work_capture_dashboard_preview.png",
+      "stored_in_repo": false,
       "size_bytes": 205221,
       "sha256": "85b3ee6da792a5388450da0cf2c0669fa49c42631df6d66dcdb6ca8d9348b502"
     }
   ],
   "notes": [
-    "PDF and workbook are stored as base64 text backups for repository-safe restore.",
-    "Large preview PNG files are tracked by checksum in this manifest but not stored as repo base64 to avoid unnecessary repository bloat.",
-    "Current active automation inventory was summarized from the task list available on 2026-06-14."
+    "PDF is stored as base64 text for restore.",
+    "Workbook and preview images are checksum-tracked but not stored in this public repo.",
+    "Active task inventory was summarized from the task list available on 2026-06-14."
   ]
 }
