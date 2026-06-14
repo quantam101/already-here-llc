@@ -37,6 +37,7 @@ The core operating files are:
 | `STATUS_WORKFLOW.md` | Defines review, approval, monitor, pass, blocked, and done states. |
 | `SEARCH_QUERIES.md` | Stores reusable Gmail/GitHub query patterns. |
 | `DAILY_CHECKLIST.md` | Provides the one-pass checklist for running the system. |
+| `AUTOMATION_STACK.md` | Records the active task stack, combined tasks, disabled/absorbed tasks, and remaining active-task capacity. |
 | `PRIVATE_REPORT_POLICY.md` | Defines what can be public and what must stay private. |
 | `COMMAND_PROMPT.md` | Stores the master Daily Command generation prompt. |
 | `schema/daily-command-item.schema.json` | Defines the structured data model for Daily Command items. |
@@ -46,7 +47,7 @@ The core operating files are:
 
 Do not commit raw Gmail content, customer data, invoices, disputes, payment details, credentials, or private operational facts into a public repository.
 
-This repository stores the workflow, prompt, task catalog, runbook, schemas, action rules, and sanitized examples. Private daily reports should be stored only in an approved private repository or secure drive location.
+This repository stores the workflow, prompt, task catalog, runbook, automation stack, schemas, action rules, and sanitized examples. Private daily reports should be stored only in an approved private repository or secure drive location.
 
 ## Output standard
 
@@ -64,3 +65,4 @@ Every Daily Command Summary should include:
 - Current safe backup location: `quantam101/already-here-llc/daily-command/`
 - Data sensitivity status: sanitized public-safe framework only
 - Operating task catalog status: included
+- Automation stack status: included
