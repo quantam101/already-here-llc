@@ -8,8 +8,8 @@ import { siteConfig } from '@/lib/site';
 
 const navItems = [
   { href: '/', label: 'Home' },
+  { href: '/ai-lead-capture', label: 'AI Lead Capture' },
   { href: '/services', label: 'Services' },
-  { href: '/ai-agent', label: 'AI Agent' },
   { href: '/who-we-serve', label: 'Who We Serve' },
   { href: '/coverage', label: 'Coverage' },
   { href: '/project-gallery', label: 'Gallery' },
@@ -46,13 +46,13 @@ export function Header() {
           <a href={siteConfig.phoneHref} className="link-ring rounded-full border border-white/35 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">
             {siteConfig.phoneDisplay}
           </a>
-          <Link href="/ai-agent-demo" className="link-ring rounded-full bg-[#1B66FF] px-5 py-2.5 text-sm font-semibold text-white hover:bg-white hover:text-[#071B34]">
-            AI Agent Demo
+          <Link href="/ai-lead-capture#pilot-intake" className="link-ring rounded-full bg-[#1B66FF] px-5 py-2.5 text-sm font-semibold text-white hover:bg-white hover:text-[#071B34]">
+            AI Lead Capture Demo
           </Link>
         </div>
 
         <button type="button" className="link-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/45 text-white xl:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-nav" aria-label="Toggle navigation">
-          <span className="text-xl" aria-hidden="true">{open ? '\u00d7' : '\u2630'}</span>
+          <span className="text-sm font-semibold" aria-hidden="true">{open ? 'Close' : 'Menu'}</span>
         </button>
       </div>
 
@@ -71,8 +71,8 @@ export function Header() {
               <a href={siteConfig.phoneHref} className="link-ring rounded-2xl border border-white/45 bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-white/10" onClick={() => setOpen(false)}>
                 {siteConfig.phoneDisplay}
               </a>
-              <Link href="/ai-agent-demo" className="link-ring rounded-2xl border border-[#1B66FF] bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white" onClick={() => setOpen(false)}>
-                AI Agent Demo
+              <Link href="/ai-lead-capture#pilot-intake" className="link-ring rounded-2xl border border-[#1B66FF] bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white" onClick={() => setOpen(false)}>
+                AI Lead Capture Demo
               </Link>
             </div>
           </div>
