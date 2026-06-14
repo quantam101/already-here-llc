@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alreadyherellc.com/schemas/daily-command-item.schema.json",
+  "title": "Daily Command Summary Item",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "category",
+    "title",
+    "source",
+    "date",
+    "material_change",
+    "grade",
+    "risk_flags",
+    "exact_next_action"
+  ],
+  "properties": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "AH/Hot",
+        "AH/Needs-Action",
+        "Field Nation",
+        "WorkMarket",
+        "Dispatch Intake",
+        "Procurement",
+        "Billing/Payment",
+        "Website/GitHub Health",
+        "Drone/UAS",
+        "V2D/Vets to Drones",
+        "FAA Part 107",
+        "Paid Drone Work",
+        "Other"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "date": {
+      "type": "string",
+      "description": "Use ISO date when available. Otherwise preserve the source date text."
+    },
+    "deadline": {
+      "type": ["string", "null"]
+    },
+    "eligibility": {
+      "type": ["string", "null"]
+    },
+    "cost_free_status": {
+      "type": ["string", "null"]
+    },
+    "apply_contact_link": {
+      "type": ["string", "null"]
+    },
+    "material_change": {
+      "type": "string",
+      "minLength": 1
+    },
+    "grade": {
+      "type": "string",
+      "enum": ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"]
+    },
+    "risk_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "exact_next_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["new", "reviewed", "approved", "in_progress", "done", "passed", "blocked"],
+      "default": "new"
+    }
+  }
+}
