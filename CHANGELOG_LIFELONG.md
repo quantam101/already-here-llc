@@ -1,5 +1,18 @@
 # Lifelong Catch and Correct Changelog
 
+## 2026-06-14
+
+### Added
+
+- Added public-safe mobile mechanic / on-site vehicle service intake backup under `ops/mobile-mechanic-intake/2026-06-14`.
+- Added editable vehicle intake source, field workflow, active task inventory summary, backup manifest, and PDF base64 restore artifact.
+- Added work-capture-first operating sequence for mechanic/fleet and cleanout overflow prospects.
+
+### Safety notes
+
+- Backup excludes private operating details and keeps outreach, job acceptance, payments, and production changes approval-gated.
+- Public repo backup stores the generated PDF as base64 text and checksum-tracks larger generated workbook/preview artifacts without adding unnecessary binary bloat.
+
 ## 2026-05-29
 
 ### Added
