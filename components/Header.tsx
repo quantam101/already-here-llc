@@ -8,14 +8,14 @@ import { siteConfig } from '@/lib/site';
 
 const navItems = [
   { href: '/', label: 'Home' },
-  { href: '/ai-lead-capture', label: 'AI Lead Capture' },
+  { href: '/ai-agent', label: 'AI Lead Capture Demo - Pilot Access' },
   { href: '/services', label: 'Services' },
   { href: '/who-we-serve', label: 'Who We Serve' },
   { href: '/coverage', label: 'Coverage' },
   { href: '/project-gallery', label: 'Gallery' },
   { href: '/rfq', label: 'RFQ' },
   { href: '/dispatch', label: 'Dispatch' },
-  { href: '/daily-command', label: 'Daily Command' }
+  { href: '/daily-command', label: 'Daily Command - Internal Preview' }
 ];
 
 function DesktopNavLink({ href, label, pathname }: { href: string; label: string; pathname: string | null }) {
@@ -46,8 +46,8 @@ export function Header() {
           <a href={siteConfig.phoneHref} className="link-ring rounded-full border border-white/35 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">
             {siteConfig.phoneDisplay}
           </a>
-          <Link href="/ai-lead-capture#pilot-intake" className="link-ring rounded-full bg-[#1B66FF] px-5 py-2.5 text-sm font-semibold text-white hover:bg-white hover:text-[#071B34]">
-            AI Lead Capture Demo
+          <Link href="/ai-agent#free-trial" className="link-ring rounded-full bg-[#1B66FF] px-5 py-2.5 text-sm font-semibold text-white hover:bg-white hover:text-[#071B34]">
+            Request Pilot Setup
           </Link>
         </div>
 
@@ -71,8 +71,8 @@ export function Header() {
               <a href={siteConfig.phoneHref} className="link-ring rounded-2xl border border-white/45 bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-white/10" onClick={() => setOpen(false)}>
                 {siteConfig.phoneDisplay}
               </a>
-              <Link href="/ai-lead-capture#pilot-intake" className="link-ring rounded-2xl border border-[#1B66FF] bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white" onClick={() => setOpen(false)}>
-                AI Lead Capture Demo
+              <Link href="/ai-agent#free-trial" className="link-ring rounded-2xl border border-[#1B66FF] bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white" onClick={() => setOpen(false)}>
+                Request Pilot Setup
               </Link>
             </div>
           </div>
