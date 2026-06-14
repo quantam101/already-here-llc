@@ -20,12 +20,33 @@ The Daily Command Summary is the daily operating signal report for Already Here 
 - drone certifications
 - FAA Part 107 pathways
 - paid drone work leads
+- AI lead-capture proof-of-work
+- vendor outreach and partner pipeline
+
+## What makes it work
+
+The Daily Command is not just a saved prompt. It includes the operating task structure that defines how signals are scanned, filtered, ranked, suppressed, escalated, and closed.
+
+The core operating files are:
+
+| File | Purpose |
+|---|---|
+| `TASK_CATALOG.md` | Defines each recurring Daily Command task as an operator-ready task card. |
+| `RUNBOOK.md` | Defines the execution sequence for producing a Daily Command Summary. |
+| `ACTION_RULES.md` | Defines approval gates and actions that must not be executed without Stephen Franklin's approval. |
+| `STATUS_WORKFLOW.md` | Defines review, approval, monitor, pass, blocked, and done states. |
+| `SEARCH_QUERIES.md` | Stores reusable Gmail/GitHub query patterns. |
+| `DAILY_CHECKLIST.md` | Provides the one-pass checklist for running the system. |
+| `PRIVATE_REPORT_POLICY.md` | Defines what can be public and what must stay private. |
+| `COMMAND_PROMPT.md` | Stores the master Daily Command generation prompt. |
+| `schema/daily-command-item.schema.json` | Defines the structured data model for Daily Command items. |
+| `examples/sanitized-daily-command-summary.md` | Shows a public-safe example format. |
 
 ## Privacy rule
 
 Do not commit raw Gmail content, customer data, invoices, disputes, payment details, credentials, or private operational facts into a public repository.
 
-This repository stores the workflow, prompt, schema, and sanitized examples. Private daily reports should be stored only in an approved private repository or secure drive location.
+This repository stores the workflow, prompt, task catalog, runbook, schemas, action rules, and sanitized examples. Private daily reports should be stored only in an approved private repository or secure drive location.
 
 ## Output standard
 
@@ -38,7 +59,8 @@ Every Daily Command Summary should include:
 
 ## Current backup status
 
-- Dedicated repo requested: `daily-command`
+- Dedicated repo requested: `daily-command-private`
 - Dedicated repo creation status: blocked by available connector permissions/tools
 - Current safe backup location: `quantam101/already-here-llc/daily-command/`
 - Data sensitivity status: sanitized public-safe framework only
+- Operating task catalog status: included
