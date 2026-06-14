@@ -10,7 +10,7 @@ This folder stores a public-safe operational backup for the Already Here LLC mob
 - Liability-control workflow for on-site vehicle service.
 - Current scheduled task inventory summary as of 2026-06-14.
 - Base64 backup of the generated PDF intake sheet.
-- Base64 backup of the Phoenix mechanic/cleanout work-capture prospect workbook.
+- Checksum-tracked backup references for the generated workbook and preview images.
 
 ## Public-safety handling
 
@@ -25,14 +25,12 @@ This backup intentionally avoids raw private email content, credentials, invoice
 | `field-workflow.md` | Technician workflow for before-work documentation. |
 | `backup-manifest.json` | Checksums and file inventory. |
 | `Already_Here_Mobile_Service_Vehicle_Intake_Pre_Work_Inspection.pdf.b64` | Base64 backup of the generated PDF. |
-| `Already_Here_Work_Capture_Prospects_Phoenix_Mechanic_Cleanout_2026-06-14.xlsx.b64` | Base64 backup of the generated work-capture workbook. |
 
-## Restore commands
+## Restore command for the PDF
 
 ```bash
 base64 -d Already_Here_Mobile_Service_Vehicle_Intake_Pre_Work_Inspection.pdf.b64 > Already_Here_Mobile_Service_Vehicle_Intake_Pre_Work_Inspection.pdf
-base64 -d Already_Here_Work_Capture_Prospects_Phoenix_Mechanic_Cleanout_2026-06-14.xlsx.b64 > Already_Here_Work_Capture_Prospects_Phoenix_Mechanic_Cleanout_2026-06-14.xlsx
-sha256sum Already_Here_Mobile_Service_Vehicle_Intake_Pre_Work_Inspection.pdf Already_Here_Work_Capture_Prospects_Phoenix_Mechanic_Cleanout_2026-06-14.xlsx
+sha256sum Already_Here_Mobile_Service_Vehicle_Intake_Pre_Work_Inspection.pdf
 ```
 
-Compare the SHA-256 values against `backup-manifest.json` after restore.
+Compare the SHA-256 value against `backup-manifest.json` after restore.
