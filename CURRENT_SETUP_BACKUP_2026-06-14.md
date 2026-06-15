@@ -19,6 +19,21 @@ This is the root-level public-safe backup index for the current Already Here LLC
 | Search/query bank | Backed up | `daily-command/SEARCH_QUERIES.md` |
 | Daily checklist | Backed up | `daily-command/DAILY_CHECKLIST.md` |
 | Private-report policy | Backed up | `daily-command/PRIVATE_REPORT_POLICY.md` |
+| Root-level repo index | Backed up | `CURRENT_SETUP_BACKUP_2026-06-14.md` |
+
+## Google Drive root/main backup status
+
+Drive root/main folder has backup anchors confirmed. Public repo does not store private Drive URLs.
+
+| Drive item | Status | Purpose |
+|---|---|---|
+| Already Here 2026-06-14 Operating Index | Created in Drive root/main | Main operating backup marker |
+| AH Index 2026 06 14 B | Created in Drive root/main | Secondary neutral backup marker |
+| H&M Arizona Evidence Backup - Already Here LLC - 2026-06-14 | Created in Drive root/main | Private H&M evidence backup marker |
+| Already Here LLC - Vendor Acquisition Package | Existing in Drive root/main | Vendor acquisition package document |
+| Already Here LLC - Vendor Tracker | Existing in Drive root/main | Vendor tracking spreadsheet |
+
+Drive document-body writes were blocked by connector safety controls, so detailed public-safe content is stored in GitHub and Drive retains marker/index documents. Private originals remain in Gmail and Drive.
 
 ## Current active task capacity
 
