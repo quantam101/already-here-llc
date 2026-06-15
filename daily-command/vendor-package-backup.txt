@@ -1,0 +1,5 @@
+Vendor package backup marker.
+
+Backup date: 2026-06-14.
+
+Required components from screenshot: capability statement review, introduction templates, tracking database, contact list, and follow-up schedule.
