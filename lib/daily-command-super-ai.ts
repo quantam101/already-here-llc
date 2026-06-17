@@ -160,7 +160,11 @@ function priorityFor(text: string, estimatedValue: number): DailyCommandItem['pr
     score += 20;
   }
 
-  score += Math.min(10, Math.max(0, estimatedValue) / 100);
+  if (estimatedValue >= 500 || value.includes('$500')) {
+    score += 25;
+  } else {
+    score += Math.min(10, Math.max(0, estimatedValue) / 100);
+  }
 
   if (score >= 70) return 'P0';
   if (score >= 45) return 'P1';
