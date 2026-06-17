@@ -7,15 +7,21 @@ import numpy as np
 import pytest
 
 from runtime.proven_strategies import (
+    AgentDebate,
+    AlmgrenChrissExec,
     CombinedSignal,
     EnhancedOFI,
     IBSMeanReversion,
+    KAMATrend,
     MarketRegime,
     MasterSignalCombiner,
     RSI2Connors,
     RegimeDetector,
     RegimeState,
+    SentimentMomentum,
+    StatArbKalman,
     TurnaroundTuesday,
+    VWAPDeviation,
 )
 
 
@@ -376,3 +382,241 @@ class TestMasterSignalCombiner:
         tt_sig = result.strategy_signals.get("turnaround_tuesday", 0)
         # Should have picked up turnaround Tuesday signal
         assert tt_sig >= 0.0  # at minimum non-negative
+
+    def test_new_strategies_in_combiner(self):
+        prices = self._make_prices(210, trend=0.01)
+        result = MasterSignalCombiner.combine(
+            prices=prices,
+            highs=[p * 1.01 for p in prices],
+            lows=[p * 0.99 for p in prices],
+            volumes=[1000.0] * len(prices),
+            bids=[[prices[-1] - 0.1, 100.0]],
+            asks=[[prices[-1] + 0.1, 100.0]],
+            weekday=2,
+        )
+        # All 10 strategies should be present
+        assert "kama_trend" in result.strategy_signals
+        assert "vwap_deviation" in result.strategy_signals
+        assert "stat_arb" in result.strategy_signals
+        assert "sentiment" in result.strategy_signals
+        assert "agent_debate" in result.strategy_signals
+
+
+# ---------------------------------------------------------------------------
+# KAMA Trend
+# ---------------------------------------------------------------------------
+class TestKAMATrend:
+    def test_insufficient_data(self):
+        sig, meta = KAMATrend.signal([100.0] * 10)
+        assert sig == 0.0
+
+    def test_uptrend_positive_signal(self):
+        # Strong uptrend with enough data for both KAMA(10) and KAMA(20)
+        prices = [100.0 + 0.5 * i for i in range(100)]
+        sig, meta = KAMATrend.signal(prices)
+        assert sig >= 0.0  # fast KAMA should be above slow in uptrend
+
+    def test_downtrend_negative_signal(self):
+        # Strong downtrend
+        prices = [200.0 - 0.5 * i for i in range(100)]
+        sig, meta = KAMATrend.signal(prices)
+        assert sig <= 0.0  # fast KAMA below slow in downtrend
+
+    def test_signal_range(self):
+        np.random.seed(42)
+        prices = [100.0 + np.random.normal(0, 1) for _ in range(100)]
+        sig, _ = KAMATrend.signal(prices)
+        assert -1.0 <= sig <= 1.0
+
+    def test_metadata_has_kama_values(self):
+        prices = list(range(100, 150))
+        _, meta = KAMATrend.signal(prices)
+        assert "kama_fast" in meta
+        assert "kama_slow" in meta
+
+
+# ---------------------------------------------------------------------------
+# VWAP Deviation
+# ---------------------------------------------------------------------------
+class TestVWAPDeviation:
+    def test_at_vwap_neutral(self):
+        prices = [100.0] * 20
+        volumes = [1000.0] * 20
+        sig, meta = VWAPDeviation.signal(prices, volumes)
+        assert abs(sig) < 0.1
+
+    def test_below_vwap_buy(self):
+        # Start high, drop below VWAP
+        prices = [102.0] * 15 + [98.0, 97.5, 97.0, 96.5, 96.0]
+        volumes = [1000.0] * 20
+        sig, meta = VWAPDeviation.signal(prices, volumes)
+        assert sig > 0.0
+
+    def test_above_vwap_sell(self):
+        # Start low, spike above VWAP
+        prices = [98.0] * 15 + [102.0, 103.0, 104.0, 105.0, 106.0]
+        volumes = [1000.0] * 20
+        sig, meta = VWAPDeviation.signal(prices, volumes)
+        assert sig < 0.0
+
+    def test_empty_input(self):
+        sig, _ = VWAPDeviation.signal([], [])
+        assert sig == 0.0
+
+    def test_metadata_has_vwap(self):
+        prices = [100.0, 101.0, 99.0]
+        volumes = [100.0, 200.0, 150.0]
+        _, meta = VWAPDeviation.signal(prices, volumes)
+        assert "vwap" in meta
+        assert "z_score" in meta
+
+
+# ---------------------------------------------------------------------------
+# Statistical Arbitrage
+# ---------------------------------------------------------------------------
+class TestStatArbKalman:
+    def test_insufficient_data(self):
+        sig, _ = StatArbKalman.signal([100.0] * 10)
+        assert sig == 0.0
+
+    def test_mean_reverting_series(self):
+        # Price deviates then reverts
+        np.random.seed(42)
+        base = [100.0 + np.random.normal(0, 0.5) for _ in range(50)]
+        # Add extreme deviation at end
+        base.extend([100.0 + 5.0] * 5)  # way above mean
+        sig, meta = StatArbKalman.signal(base)
+        # Should detect overbought vs mean
+        assert "z_score" in meta
+
+    def test_with_benchmark(self):
+        np.random.seed(42)
+        prices = [100.0 + i * 0.1 + np.random.normal(0, 0.2) for i in range(50)]
+        bench = [100.0 + i * 0.1 for i in range(50)]
+        sig, meta = StatArbKalman.signal(prices, bench)
+        assert "beta" in meta
+        assert abs(meta["beta"] - 1.0) < 2.0  # roughly correlated
+
+    def test_signal_range(self):
+        np.random.seed(42)
+        prices = [100.0 + np.random.normal(0, 2) for _ in range(60)]
+        sig, _ = StatArbKalman.signal(prices)
+        assert -1.0 <= sig <= 1.0
+
+
+# ---------------------------------------------------------------------------
+# Sentiment Momentum
+# ---------------------------------------------------------------------------
+class TestSentimentMomentum:
+    def test_no_data_neutral(self):
+        sig, meta = SentimentMomentum.signal()
+        assert sig == 0.0
+        assert meta["source"] == "none"
+
+    def test_external_positive_sentiment(self):
+        scores = [0.1, 0.2, 0.3, 0.5, 0.7, 0.8]
+        sig, meta = SentimentMomentum.signal(sentiment_scores=scores)
+        assert sig > 0.0
+        assert meta["source"] == "external"
+
+    def test_external_negative_sentiment(self):
+        scores = [-0.1, -0.2, -0.3, -0.5, -0.7, -0.8]
+        sig, meta = SentimentMomentum.signal(sentiment_scores=scores)
+        assert sig < 0.0
+
+    def test_price_implied_fallback(self):
+        # Uptrend prices
+        prices = [100.0 + i * 0.5 for i in range(20)]
+        sig, meta = SentimentMomentum.signal(prices=prices)
+        assert sig > 0.0
+        assert meta["source"] == "price_implied"
+
+    def test_signal_range(self):
+        scores = [0.9, -0.9, 0.9, -0.9, 0.9, -0.9]
+        sig, _ = SentimentMomentum.signal(sentiment_scores=scores)
+        assert -1.0 <= sig <= 1.0
+
+
+# ---------------------------------------------------------------------------
+# Almgren-Chriss Execution
+# ---------------------------------------------------------------------------
+class TestAlmgrenChrissExec:
+    def test_basic_trajectory(self):
+        schedule, meta = AlmgrenChrissExec.optimal_trajectory(
+            shares=1000, total_periods=10, sigma=0.02,
+        )
+        assert len(schedule) == 10
+        assert sum(schedule) == 1000  # all shares executed
+        assert schedule[0] >= schedule[-1]  # front-loaded
+
+    def test_zero_shares(self):
+        schedule, _ = AlmgrenChrissExec.optimal_trajectory(0, 10, 0.02)
+        assert schedule == []
+
+    def test_urgency_signal(self):
+        urgency, meta = AlmgrenChrissExec.urgency_signal(
+            shares=1000, avg_daily_volume=10000, volatility=0.02,
+        )
+        assert 0.0 <= urgency <= 1.0
+        assert "participation_rate" in meta
+
+    def test_high_participation_urgent(self):
+        urgency, _ = AlmgrenChrissExec.urgency_signal(
+            shares=5000, avg_daily_volume=10000, volatility=0.05,
+        )
+        assert urgency > 0.5
+
+    def test_low_participation_patient(self):
+        urgency, _ = AlmgrenChrissExec.urgency_signal(
+            shares=10, avg_daily_volume=100000, volatility=0.01,
+        )
+        assert urgency < 0.5
+
+
+# ---------------------------------------------------------------------------
+# Agent Debate
+# ---------------------------------------------------------------------------
+class TestAgentDebate:
+    def test_oversold_bullish(self):
+        sig, meta = AgentDebate.debate(
+            rsi=25, macd_signal=0.1, trend_direction=1.0,
+            volume_ratio=1.5, regime="bull",
+        )
+        assert sig > 0.0
+        assert meta["bull_score"] > meta["bear_score"]
+
+    def test_overbought_bearish(self):
+        sig, meta = AgentDebate.debate(
+            rsi=75, macd_signal=-0.1, trend_direction=-1.0,
+            volume_ratio=1.5, regime="crisis",
+        )
+        assert sig < 0.0
+        assert meta["bear_score"] > meta["bull_score"]
+
+    def test_neutral_conditions(self):
+        sig, meta = AgentDebate.debate(
+            rsi=50, macd_signal=0.0, trend_direction=0.0,
+            volume_ratio=1.0, regime="choppy",
+        )
+        assert abs(sig) < 0.5
+
+    def test_regime_affects_conviction(self):
+        # Same signals, different regimes
+        bull_sig, bull_meta = AgentDebate.debate(
+            rsi=25, macd_signal=0.1, trend_direction=1.0,
+            volume_ratio=1.0, regime="bull",
+        )
+        crisis_sig, crisis_meta = AgentDebate.debate(
+            rsi=25, macd_signal=0.1, trend_direction=1.0,
+            volume_ratio=1.0, regime="crisis",
+        )
+        # Bull regime should favor bulls more than crisis regime
+        assert bull_meta["bull_score"] >= crisis_meta["bull_score"]
+
+    def test_signal_range(self):
+        sig, _ = AgentDebate.debate(
+            rsi=10, macd_signal=1.0, trend_direction=1.0,
+            volume_ratio=2.0, regime="bull",
+            orderbook_imbalance=0.5, sentiment=0.8,
+        )
+        assert -1.0 <= sig <= 1.0
