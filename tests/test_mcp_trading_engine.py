@@ -21,6 +21,7 @@ from runtime.mcp_trading_engine import (
     ZERO,
     MAX_RISK_PER_TRADE_PCT,
     MIN_SIGNAL_SCORE,
+    RSI_OVERBOUGHT_THRESHOLD,
 )
 
 
@@ -180,7 +181,7 @@ class TestTechnicalScanners:
 
     def test_rsi_score_mild_oversold(self):
         score = TechnicalScanners.rsi_score(33.0)
-        assert score == 0.65
+        assert score == 0.3
 
     def test_rsi_score_neutral(self):
         assert TechnicalScanners.rsi_score(55.0) == 0.0
@@ -317,12 +318,12 @@ class TestPositionSizing:
         assert shares == ZERO
         assert capital == ZERO
 
-    def test_stop_above_entry_returns_zero(self):
+    def test_short_side_position_sizing(self):
         shares, capital = compute_position_size(
-            Decimal("5000"), Decimal("100"), Decimal("101"), Decimal("500")
+            Decimal("5000"), Decimal("100"), Decimal("100.50"), Decimal("500")
         )
-        assert shares == ZERO
-        assert capital == ZERO
+        assert shares > ZERO
+        assert capital > ZERO
 
 
 # ---------------------------------------------------------------------------
@@ -343,7 +344,7 @@ class TestRiskSupervisor:
 
     def test_valid_buy_signal_rsi_oversold(self):
         rs, _, _ = self._make_supervisor()
-        ok, result = rs.audit_trade_setup("AAPL", Decimal("150.00"), 30.0, 0.10)
+        ok, result = rs.audit_trade_setup("AAPL", Decimal("150.00"), 25.0, 0.10)
         assert ok
         assert isinstance(result, TradeSetup)
         assert result.symbol == "AAPL"
@@ -367,14 +368,14 @@ class TestRiskSupervisor:
     def test_rejected_drawdown_limit(self):
         today = time.strftime("%Y-%m-%d", time.gmtime())
         rs, _, _ = self._make_supervisor(total_drawdown_today=Decimal("150.00"), last_reset_day=today)
-        ok, result = rs.audit_trade_setup("AAPL", Decimal("150.00"), 30.0, 0.25)
+        ok, result = rs.audit_trade_setup("AAPL", Decimal("150.00"), 25.0, 0.25)
         assert not ok
         assert "drawdown" in result.reason.lower()
 
     def test_rejected_duplicate_position(self):
         rs, _, pt = self._make_supervisor()
         pt.open(PositionRecord("AAPL", "buy", Decimal("150"), Decimal("500"), Decimal("147"), Decimal("156"), 0))
-        ok, result = rs.audit_trade_setup("AAPL", Decimal("150.00"), 30.0, 0.25)
+        ok, result = rs.audit_trade_setup("AAPL", Decimal("150.00"), 25.0, 0.25)
         assert not ok
         assert "already open" in result.reason.lower()
 
@@ -390,15 +391,32 @@ class TestRiskSupervisor:
         assert not ok
         assert "positive" in result.reason.lower()
 
-    def test_stop_loss_take_profit_math(self):
+    def test_stop_loss_take_profit_math_buy(self):
         rs, _, _ = self._make_supervisor()
-        ok, result = rs.audit_trade_setup("SPY", Decimal("100.00"), 30.0, 0.25)
+        ok, result = rs.audit_trade_setup("SPY", Decimal("100.00"), 25.0, 0.25)
         assert ok
         assert isinstance(result, TradeSetup)
-        # 100 * 0.992 = 99.20
-        assert result.hard_stop == Decimal("99.20")
-        # 100 * 1.045 = 104.50
-        assert result.hard_target == Decimal("104.50")
+        assert result.action == "buy"
+        # 100 * 0.995 = 99.50
+        assert result.hard_stop == Decimal("99.50")
+        # 100 * 1.035 = 103.50
+        assert result.hard_target == Decimal("103.50")
+
+    def test_bear_signal_rsi_overbought(self):
+        rs, _, _ = self._make_supervisor()
+        ok, result = rs.audit_trade_setup("TSLA", Decimal("200.00"), 75.0, 0.10)
+        assert ok
+        assert isinstance(result, TradeSetup)
+        assert result.action == "sell"
+        assert result.hard_stop > result.verified_entry
+        assert result.hard_target < result.verified_entry
+
+    def test_bear_signal_negative_imbalance(self):
+        rs, _, _ = self._make_supervisor()
+        ok, result = rs.audit_trade_setup("NVDA", Decimal("300.00"), 50.0, -0.30)
+        assert ok
+        assert isinstance(result, TradeSetup)
+        assert result.action == "sell"
 
     def test_trade_includes_signal_score(self):
         rs, _, _ = self._make_supervisor()
@@ -410,11 +428,11 @@ class TestRiskSupervisor:
 
     def test_trade_includes_position_sizing(self):
         rs, _, _ = self._make_supervisor()
-        ok, result = rs.audit_trade_setup("AAPL", Decimal("150.00"), 30.0, 0.25)
+        ok, result = rs.audit_trade_setup("AAPL", Decimal("150.00"), 25.0, 0.25)
         assert ok
         assert isinstance(result, TradeSetup)
         assert result.position_size_shares > ZERO
-        max_loss = result.position_size_shares * (result.verified_entry - result.hard_stop)
+        max_loss = result.position_size_shares * abs(result.verified_entry - result.hard_stop)
         risk_pct = max_loss / Decimal("5000")
         assert risk_pct <= MAX_RISK_PER_TRADE_PCT + Decimal("0.001")
 

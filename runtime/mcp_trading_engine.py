@@ -59,26 +59,31 @@ RH_PROTOCOL_VERSION: Final[str] = _env("MCP_RH_PROTOCOL_VERSION", "2026-04-27")
 MCP_API_KEY: Final[str] = _env("MCP_API_KEY", "")
 MCP_ENGINE_PORT: Final[int] = int(_env("MCP_ENGINE_PORT", "8000"))
 
-# Risk constants — < 1% max loss per trade
-BULL_STOP_MULT: Final[Decimal] = _dec("MCP_BULL_STOP_MULT", "0.992")
-BULL_TP_MULT: Final[Decimal] = _dec("MCP_BULL_TP_MULT", "1.045")
-RSI_OVERSOLD_THRESHOLD: Final[float] = float(_env("MCP_RSI_OVERSOLD", "35.0"))
+# Risk constants — aggressive but protected (<2% max loss per trade)
+BULL_STOP_MULT: Final[Decimal] = _dec("MCP_BULL_STOP_MULT", "0.995")
+BULL_TP_MULT: Final[Decimal] = _dec("MCP_BULL_TP_MULT", "1.035")
+BEAR_STOP_MULT: Final[Decimal] = _dec("MCP_BEAR_STOP_MULT", "1.005")
+BEAR_TP_MULT: Final[Decimal] = _dec("MCP_BEAR_TP_MULT", "0.965")
+RSI_OVERSOLD_THRESHOLD: Final[float] = float(_env("MCP_RSI_OVERSOLD", "30.0"))
+RSI_OVERBOUGHT_THRESHOLD: Final[float] = float(_env("MCP_RSI_OVERBOUGHT", "70.0"))
 IMBALANCE_THRESHOLD: Final[float] = float(_env("MCP_IMBALANCE_THRESHOLD", "0.20"))
-MAX_RISK_PER_TRADE_PCT: Final[Decimal] = _dec("MCP_MAX_RISK_PER_TRADE_PCT", "0.008")
-MIN_SIGNAL_SCORE: Final[float] = float(_env("MCP_MIN_SIGNAL_SCORE", "0.60"))
+MAX_RISK_PER_TRADE_PCT: Final[Decimal] = _dec("MCP_MAX_RISK_PER_TRADE_PCT", "0.02")
+MIN_SIGNAL_SCORE: Final[float] = float(_env("MCP_MIN_SIGNAL_SCORE", "0.45"))
+SCALP_MODE: Final[bool] = _env("MCP_SCALP_MODE", "true").lower() == "true"
+TRAILING_STOP_PCT: Final[Decimal] = _dec("MCP_TRAILING_STOP_PCT", "0.003")
 
-# Scanner weights for composite scoring
-W_RSI: Final[float] = float(_env("MCP_W_RSI", "0.20"))
-W_MACD: Final[float] = float(_env("MCP_W_MACD", "0.20"))
-W_BOLLINGER: Final[float] = float(_env("MCP_W_BOLLINGER", "0.15"))
-W_VWAP: Final[float] = float(_env("MCP_W_VWAP", "0.15"))
-W_MOMENTUM: Final[float] = float(_env("MCP_W_MOMENTUM", "0.15"))
-W_ORDERBOOK: Final[float] = float(_env("MCP_W_ORDERBOOK", "0.15"))
+# Scanner weights — heavier on fastest indicators for early detection
+W_RSI: Final[float] = float(_env("MCP_W_RSI", "0.15"))
+W_MACD: Final[float] = float(_env("MCP_W_MACD", "0.15"))
+W_BOLLINGER: Final[float] = float(_env("MCP_W_BOLLINGER", "0.10"))
+W_VWAP: Final[float] = float(_env("MCP_W_VWAP", "0.20"))
+W_MOMENTUM: Final[float] = float(_env("MCP_W_MOMENTUM", "0.20"))
+W_ORDERBOOK: Final[float] = float(_env("MCP_W_ORDERBOOK", "0.20"))
 
-# MACD defaults
-MACD_FAST: Final[int] = int(_env("MCP_MACD_FAST", "12"))
-MACD_SLOW: Final[int] = int(_env("MCP_MACD_SLOW", "26"))
-MACD_SIGNAL: Final[int] = int(_env("MCP_MACD_SIGNAL", "9"))
+# MACD defaults — faster periods for quicker crossover detection
+MACD_FAST: Final[int] = int(_env("MCP_MACD_FAST", "8"))
+MACD_SLOW: Final[int] = int(_env("MCP_MACD_SLOW", "21"))
+MACD_SIGNAL: Final[int] = int(_env("MCP_MACD_SIGNAL", "5"))
 
 # Bollinger defaults
 BB_PERIOD: Final[int] = int(_env("MCP_BB_PERIOD", "20"))
@@ -498,9 +503,9 @@ def compute_position_size(
 
     Returns (shares, capital_usd).
     """
-    if entry_price <= ZERO or stop_loss >= entry_price:
+    if entry_price <= ZERO:
         return ZERO, ZERO
-    risk_per_share = entry_price - stop_loss
+    risk_per_share = abs(entry_price - stop_loss)
     if risk_per_share <= ZERO:
         return ZERO, ZERO
     max_dollar_risk = (account_balance * MAX_RISK_PER_TRADE_PCT).quantize(
@@ -561,35 +566,41 @@ class RiskSupervisor:
                 current_price=float(entry),
             )
 
-        has_legacy_signal = rsi < RSI_OVERSOLD_THRESHOLD or imbalance > IMBALANCE_THRESHOLD
+        has_bull_signal = rsi < RSI_OVERSOLD_THRESHOLD or imbalance > IMBALANCE_THRESHOLD
+        has_bear_signal = rsi > RSI_OVERBOUGHT_THRESHOLD or imbalance < -IMBALANCE_THRESHOLD
         has_scanner_signal = effective_score >= MIN_SIGNAL_SCORE
 
-        if has_legacy_signal or has_scanner_signal:
+        if has_bull_signal or (has_scanner_signal and not has_bear_signal):
             stop_loss = (entry * BULL_STOP_MULT).quantize(PRECISION, rounding=ROUND_HALF_UP)
             take_profit = (entry * BULL_TP_MULT).quantize(PRECISION, rounding=ROUND_HALF_UP)
+            action = "buy"
+        elif has_bear_signal:
+            stop_loss = (entry * BEAR_STOP_MULT).quantize(PRECISION, rounding=ROUND_HALF_UP)
+            take_profit = (entry * BEAR_TP_MULT).quantize(PRECISION, rounding=ROUND_HALF_UP)
+            action = "sell"
+        else:
+            return False, RejectionReason("Market conditions do not match entry criteria.")
 
-            shares, capital = compute_position_size(
-                self._portfolio.account_balance,
-                entry,
-                stop_loss,
-                self._portfolio.cached_max_trade_value,
-            )
+        shares, capital = compute_position_size(
+            self._portfolio.account_balance,
+            entry,
+            stop_loss,
+            self._portfolio.cached_max_trade_value,
+        )
 
-            setup = TradeSetup(
-                symbol=symbol.upper(),
-                action="buy",
-                verified_entry=entry,
-                allocated_capital_usd=capital,
-                hard_stop=stop_loss,
-                hard_target=take_profit,
-                timestamp_ns=time.time_ns(),
-                signal_score=effective_score,
-                scanner_breakdown=effective_breakdown,
-                position_size_shares=shares,
-            )
-            return True, setup
-
-        return False, RejectionReason("Market conditions do not match entry criteria.")
+        setup = TradeSetup(
+            symbol=symbol.upper(),
+            action=action,
+            verified_entry=entry,
+            allocated_capital_usd=capital,
+            hard_stop=stop_loss,
+            hard_target=take_profit,
+            timestamp_ns=time.time_ns(),
+            signal_score=effective_score,
+            scanner_breakdown=effective_breakdown,
+            position_size_shares=shares,
+        )
+        return True, setup
 
 
 # ---------------------------------------------------------------------------
