@@ -23,6 +23,13 @@ const item = buildDailyCommandItem({
 assert.equal(item.priority, 'P0');
 assert.equal(item.lane, 'Dispatch');
 
+const minimumRevenueItem = buildDailyCommandItem({
+  prompt: 'Review $500 dispatch revenue opportunity.',
+  estimatedValue: 500
+});
+assert.equal(minimumRevenueItem.priority, 'P1');
+assert.equal(minimumRevenueItem.lane, 'Dispatch');
+
 const summary = runDailyCommandSuperAiOperation({
   operation: 'summarize_daily_command_queue',
   prompt: 'urgent same-day dispatch revenue opportunity by noon $500',
@@ -43,5 +50,6 @@ assert.ok(blocked.summary.includes('Blocked pending owner approval'));
 const daily = getDailyCommandResponse({ prompt: 'Review $500 dispatch revenue opportunity.' });
 assert.equal(daily.superAi.engine, 'already-here-super-ai-orchestrator');
 assert.equal(daily.superAiQueue.approvalRequired, true);
+assert.equal(daily.superAiQueue.item?.priority, 'P1');
 
 console.log('daily command super ai tests passed');
