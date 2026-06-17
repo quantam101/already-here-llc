@@ -1020,6 +1020,39 @@ if _HAS_FASTAPI:
 
         verdict = "STRONG_BUY" if score >= 0.8 else "BUY" if score >= MIN_SIGNAL_SCORE else "HOLD"
 
+        # Layer in proven strategies if enough data
+        proven_layer: Dict[str, Any] = {}
+        try:
+            from runtime.proven_strategies import MasterSignalCombiner
+            if prices_f and len(prices_f) >= 20:
+                highs_f = [float(h) for h in arguments.get("high_history", [])] if arguments.get("high_history") else None
+                lows_f = [float(l) for l in arguments.get("low_history", [])] if arguments.get("low_history") else None
+                bids_raw = arguments.get("orderbook_bids")
+                asks_raw = arguments.get("orderbook_asks")
+                combined = MasterSignalCombiner.combine(
+                    prices=prices_f,
+                    highs=highs_f,
+                    lows=lows_f,
+                    volumes=volumes_f,
+                    bids=bids_raw,
+                    asks=asks_raw,
+                    weekday=arguments.get("weekday"),
+                )
+                proven_layer = {
+                    "proven_direction": combined.direction,
+                    "proven_conviction": combined.conviction,
+                    "proven_score": combined.composite_score,
+                    "regime": combined.regime.value,
+                    "regime_confidence": combined.regime_confidence,
+                    "strategy_signals": combined.strategy_signals,
+                    "strategy_weights": combined.strategy_weights,
+                }
+                # Override verdict if proven strategies have high conviction
+                if combined.conviction >= 0.6:
+                    verdict = f"STRONG_{combined.direction}" if combined.conviction >= 0.8 else combined.direction
+        except ImportError:
+            pass
+
         return JSONResponse({
             "jsonrpc": "2.0",
             "id": req_id,
@@ -1029,6 +1062,7 @@ if _HAS_FASTAPI:
                 "composite_score": round(score, 4),
                 "min_required": MIN_SIGNAL_SCORE,
                 "scanner_breakdown": {k: round(v, 4) for k, v in breakdown.items()},
+                **proven_layer,
             },
         })
 
