@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "daily-command-super-ai-operation.schema.json",
+  "title": "Daily Command Super AI Operation",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "operation": {
+      "type": "string",
+      "enum": [
+        "ingest_daily_command_item",
+        "rank_daily_command_item",
+        "summarize_daily_command_queue",
+        "render_daily_command_snapshot",
+        "evaluate_daily_command_security_gate"
+      ]
+    },
+    "prompt": { "type": "string" },
+    "title": { "type": "string" },
+    "body": { "type": "string" },
+    "source": { "type": "string" },
+    "estimatedValue": { "type": "number" },
+    "requestedAction": { "type": "string" }
+  },
+  "required": ["operation"]
+}
