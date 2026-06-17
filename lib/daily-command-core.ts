@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { getDailyCommandSuperAiCapability, runDailyCommandSuperAiOperation } from './daily-command-super-ai';
 
 export type DailyCommandMode = 'online_accelerated' | 'local_first' | 'quota_locked' | 'offline_survivable' | 'last_resort_static';
 
@@ -29,6 +30,8 @@ export interface DailyCommandResponse {
   modeDetail: string;
   queuedActions: string[];
   swarm: SwarmCapability;
+  superAi: ReturnType<typeof getDailyCommandSuperAiCapability>;
+  superAiQueue: ReturnType<typeof runDailyCommandSuperAiOperation>;
 }
 
 export interface EcosystemStatusResponse {
@@ -134,7 +137,8 @@ function getQueuedActions(): string[] {
   return [
     'Review approval queue for risky outbound actions',
     'Queue next revenue opportunity for manual approval',
-    'Hold paid API calls until quota is available'
+    'Hold paid API calls until quota is available',
+    'Route Daily Command items through one-operation Super AI agents'
   ];
 }
 
@@ -185,6 +189,13 @@ export function getDailyCommandResponse(options: { prompt?: string; forceOffline
   const quotaLock = Boolean(options.quotaLock);
   const mode = getMode(forceOffline, quotaLock);
   const summary = getPrioritySummary(prompt);
+  const superAi = getDailyCommandSuperAiCapability();
+  const superAiQueue = runDailyCommandSuperAiOperation({
+    operation: 'summarize_daily_command_queue',
+    prompt,
+    source: 'daily-command-response',
+    estimatedValue: prompt.toLowerCase().includes('$500') ? 500 : 0
+  });
 
   return {
     ok: true,
@@ -195,9 +206,11 @@ export function getDailyCommandResponse(options: { prompt?: string; forceOffline
     message: buildMessage(mode),
     summary,
     status: buildStatus(mode),
-    modeDetail: `Prompt hash ${hashString(prompt)}. Mode: ${mode}.`,
+    modeDetail: `Prompt hash ${hashString(prompt)}. Mode: ${mode}. Super AI route: ${superAi.route}.`,
     queuedActions: getQueuedActions(),
-    swarm: getSwarmCapability(mode)
+    swarm: getSwarmCapability(mode),
+    superAi,
+    superAiQueue
   };
 }
 
