@@ -28,7 +28,7 @@ This file records the current active Daily Command automation stack, the combine
 | 7 | Find dispatch retainer partners | Daily 4:30 AM | Recurring dispatch, retainer, teaming, subcontractor partners |
 | 8 | Scan mechanic auto deals | Daily 6:30 AM / condition watch | AutoWorks, mobile mechanic, vehicle flip opportunities |
 | 9 | Scan high-margin local work | Hourly | Same-day local IT/AV/POS/access-control/cabling/smart-hands and backup income |
-| 10 | Monitor procurement opportunities | Weekdays 5:30 AM | Procurement, set-asides, cooperative contracts, subcontracting paths |
+| 10 | Monitor procurement opportunities | Weekdays 5:30 AM | Procurement, eligible small-business programs, cooperative contracts, subcontracting paths |
 
 ## Main combined task
 

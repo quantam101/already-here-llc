@@ -1,4 +1,4 @@
-"""Tests for the native MCP trading engine."""
+"""Tests for the native MCP trading engine (enhanced edition)."""
 
 import time
 from decimal import Decimal
@@ -13,10 +13,14 @@ from runtime.mcp_trading_engine import (
     PortfolioState,
     RejectionReason,
     RiskSupervisor,
+    TechnicalScanners,
     TradeAuditLog,
     TradeSetup,
+    compute_position_size,
     fast_book_distillation,
     ZERO,
+    MAX_RISK_PER_TRADE_PCT,
+    MIN_SIGNAL_SCORE,
 )
 
 
@@ -164,6 +168,164 @@ class TestCircuitBreaker:
 
 
 # ---------------------------------------------------------------------------
+# TechnicalScanners
+# ---------------------------------------------------------------------------
+class TestTechnicalScanners:
+    def test_rsi_score_deep_oversold(self):
+        assert TechnicalScanners.rsi_score(20.0) == 1.0
+
+    def test_rsi_score_moderate_oversold(self):
+        score = TechnicalScanners.rsi_score(28.0)
+        assert score == 0.85
+
+    def test_rsi_score_mild_oversold(self):
+        score = TechnicalScanners.rsi_score(33.0)
+        assert score == 0.65
+
+    def test_rsi_score_neutral(self):
+        assert TechnicalScanners.rsi_score(55.0) == 0.0
+
+    def test_rsi_score_boundary_invalid(self):
+        assert TechnicalScanners.rsi_score(0.0) == 0.0
+        assert TechnicalScanners.rsi_score(100.0) == 0.0
+
+    def test_orderbook_score_strong(self):
+        assert TechnicalScanners.orderbook_score(0.6) == 1.0
+
+    def test_orderbook_score_moderate(self):
+        assert TechnicalScanners.orderbook_score(0.35) == 0.75
+
+    def test_orderbook_score_threshold(self):
+        assert TechnicalScanners.orderbook_score(0.25) == 0.5
+
+    def test_orderbook_score_weak(self):
+        assert TechnicalScanners.orderbook_score(0.05) == 0.0
+
+    def test_macd_score_insufficient_data(self):
+        _, _, score = TechnicalScanners.macd_score([100.0] * 5)
+        assert score == 0.0
+
+    def test_macd_score_with_data(self):
+        prices = list(range(100, 150))  # 50 data points, uptrend
+        _, _, score = TechnicalScanners.macd_score(prices)
+        assert 0.0 <= score <= 1.0
+
+    def test_bollinger_score_below_lower_band(self):
+        prices = [100.0] * 19 + [80.0]
+        _, _, score = TechnicalScanners.bollinger_score(prices, 75.0)
+        assert score == 1.0
+
+    def test_bollinger_score_insufficient_data(self):
+        _, _, score = TechnicalScanners.bollinger_score([100.0] * 5, 100.0)
+        assert score == 0.0
+
+    def test_vwap_score_below_vwap(self):
+        prices = [100.0, 101.0, 102.0, 100.0]
+        volumes = [1000.0, 1000.0, 1000.0, 1000.0]
+        vwap, score = TechnicalScanners.vwap_score(prices, volumes, 97.0)
+        assert vwap > 0
+        assert score > 0
+
+    def test_vwap_score_empty(self):
+        vwap, score = TechnicalScanners.vwap_score([], [], 100.0)
+        assert vwap == 0.0
+        assert score == 0.0
+
+    def test_momentum_score_strong_drop(self):
+        prices = list(range(120, 100, -1)) + [94]  # declining
+        score = TechnicalScanners.momentum_score(prices)
+        assert score > 0.0
+
+    def test_momentum_score_insufficient_data(self):
+        assert TechnicalScanners.momentum_score([100.0] * 5) == 0.0
+
+    def test_composite_signal_rsi_only(self):
+        score, breakdown = TechnicalScanners.composite_signal(
+            rsi_14=20.0, imbalance=0.6
+        )
+        assert score > 0
+        assert "rsi" in breakdown
+        assert "orderbook" in breakdown
+        assert breakdown["rsi"] == 1.0
+        assert breakdown["orderbook"] == 1.0
+
+    def test_composite_signal_no_signal(self):
+        score, breakdown = TechnicalScanners.composite_signal(
+            rsi_14=55.0, imbalance=0.05
+        )
+        assert score == 0.0
+        assert breakdown["rsi"] == 0.0
+        assert breakdown["orderbook"] == 0.0
+
+    def test_composite_signal_with_price_history(self):
+        prices = [100.0 - i * 0.5 for i in range(40)]  # downtrend
+        volumes = [1000.0] * 40
+        score, breakdown = TechnicalScanners.composite_signal(
+            rsi_14=25.0,
+            imbalance=0.4,
+            prices=prices,
+            volumes=volumes,
+            current_price=80.0,
+        )
+        assert score > 0
+        assert "macd" in breakdown
+        assert "bollinger" in breakdown
+        assert "vwap" in breakdown
+        assert "momentum" in breakdown
+
+
+# ---------------------------------------------------------------------------
+# compute_position_size
+# ---------------------------------------------------------------------------
+class TestPositionSizing:
+    def test_basic_sizing(self):
+        shares, capital = compute_position_size(
+            account_balance=Decimal("5000"),
+            entry_price=Decimal("100.00"),
+            stop_loss=Decimal("99.20"),
+            max_trade_value=Decimal("500"),
+        )
+        assert shares > ZERO
+        assert capital > ZERO
+        max_loss = shares * (Decimal("100.00") - Decimal("99.20"))
+        assert max_loss <= Decimal("5000") * MAX_RISK_PER_TRADE_PCT + Decimal("0.01")
+
+    def test_risk_under_one_percent(self):
+        shares, capital = compute_position_size(
+            account_balance=Decimal("10000"),
+            entry_price=Decimal("200.00"),
+            stop_loss=Decimal("198.40"),
+            max_trade_value=Decimal("2000"),
+        )
+        max_loss = shares * (Decimal("200.00") - Decimal("198.40"))
+        risk_pct = max_loss / Decimal("10000")
+        assert risk_pct <= MAX_RISK_PER_TRADE_PCT + Decimal("0.001")
+
+    def test_caps_at_max_trade_value(self):
+        shares, capital = compute_position_size(
+            account_balance=Decimal("100000"),
+            entry_price=Decimal("10.00"),
+            stop_loss=Decimal("9.92"),
+            max_trade_value=Decimal("500"),
+        )
+        assert capital <= Decimal("500.01")
+
+    def test_zero_entry_returns_zero(self):
+        shares, capital = compute_position_size(
+            Decimal("5000"), Decimal("0"), Decimal("0"), Decimal("500")
+        )
+        assert shares == ZERO
+        assert capital == ZERO
+
+    def test_stop_above_entry_returns_zero(self):
+        shares, capital = compute_position_size(
+            Decimal("5000"), Decimal("100"), Decimal("101"), Decimal("500")
+        )
+        assert shares == ZERO
+        assert capital == ZERO
+
+
+# ---------------------------------------------------------------------------
 # RiskSupervisor
 # ---------------------------------------------------------------------------
 class TestRiskSupervisor:
@@ -233,10 +395,28 @@ class TestRiskSupervisor:
         ok, result = rs.audit_trade_setup("SPY", Decimal("100.00"), 30.0, 0.25)
         assert ok
         assert isinstance(result, TradeSetup)
-        # 100 * 0.985 = 98.50
-        assert result.hard_stop == Decimal("98.50")
+        # 100 * 0.992 = 99.20
+        assert result.hard_stop == Decimal("99.20")
         # 100 * 1.045 = 104.50
         assert result.hard_target == Decimal("104.50")
+
+    def test_trade_includes_signal_score(self):
+        rs, _, _ = self._make_supervisor()
+        ok, result = rs.audit_trade_setup("AAPL", Decimal("150.00"), 20.0, 0.50)
+        assert ok
+        assert isinstance(result, TradeSetup)
+        assert result.signal_score > 0.0
+        assert "rsi" in result.scanner_breakdown
+
+    def test_trade_includes_position_sizing(self):
+        rs, _, _ = self._make_supervisor()
+        ok, result = rs.audit_trade_setup("AAPL", Decimal("150.00"), 30.0, 0.25)
+        assert ok
+        assert isinstance(result, TradeSetup)
+        assert result.position_size_shares > ZERO
+        max_loss = result.position_size_shares * (result.verified_entry - result.hard_stop)
+        risk_pct = max_loss / Decimal("5000")
+        assert risk_pct <= MAX_RISK_PER_TRADE_PCT + Decimal("0.001")
 
 
 # ---------------------------------------------------------------------------
@@ -268,6 +448,15 @@ class TestTradeAuditLog:
         with open(log_path) as f:
             content = f.read()
         assert "broker_error" in content
+
+    def test_scanner_result_writes(self, tmp_path):
+        log_path = str(tmp_path / "audit.jsonl")
+        audit = TradeAuditLog(path=log_path)
+        audit.scanner_result("AAPL", 0.75, {"rsi": 1.0, "macd": 0.5})
+        with open(log_path) as f:
+            content = f.read()
+        assert "scanner_result" in content
+        assert "0.75" in content
 
 
 # ---------------------------------------------------------------------------

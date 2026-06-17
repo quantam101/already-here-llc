@@ -47,7 +47,7 @@ Current live state from task list:
 | 7 | Find dispatch retainer partners | Daily 4:30 AM | Recurring dispatch, retainers, on-call subcontracting, teaming partners |
 | 8 | Scan mechanic auto deals | Daily 6:30 AM / condition watch | AutoWorks, mobile mechanic, fleet, and vehicle flip opportunities |
 | 9 | Scan high-margin local work | Hourly | Phoenix metro IT/AV/POS/access-control/cabling/smart-hands and backup income |
-| 10 | Monitor procurement opportunities | Weekdays 5:30 AM | Procurement, set-asides, cooperative contracts, subcontracting paths |
+| 10 | Monitor procurement opportunities | Weekdays 5:30 AM | Procurement, eligible small-business programs, cooperative contracts, subcontracting paths |
 
 ## Hourly and frequent watch scope
 
