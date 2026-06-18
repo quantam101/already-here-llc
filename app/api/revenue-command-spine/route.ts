@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getRevenueCommandAgents, validateRevenueAgentCoverage } from '@/lib/revenue-command-agents';
 import { applyReviewAction, getRevenueCommandSpineResponse, type ReviewAction } from '@/lib/revenue-command-spine';
 
 function isReviewAction(value: unknown): value is ReviewAction {
@@ -6,7 +7,11 @@ function isReviewAction(value: unknown): value is ReviewAction {
 }
 
 export async function GET() {
-  return NextResponse.json(getRevenueCommandSpineResponse());
+  return NextResponse.json({
+    ...getRevenueCommandSpineResponse(),
+    agents: getRevenueCommandAgents(),
+    agentCoverage: validateRevenueAgentCoverage()
+  });
 }
 
 export async function POST(request: Request) {
@@ -14,5 +19,8 @@ export async function POST(request: Request) {
   const recordId = typeof body?.recordId === 'string' ? body.recordId : 'unknown-record';
   const action = isReviewAction(body?.action) ? body.action : 'review';
 
-  return NextResponse.json(applyReviewAction(recordId, action));
+  return NextResponse.json({
+    ...applyReviewAction(recordId, action),
+    agentCoverage: validateRevenueAgentCoverage()
+  });
 }
