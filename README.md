@@ -9,6 +9,7 @@ Lean multi-page B2B field-service website for Already Here LLC, built with Next.
 - Tailwind CSS
 - Level-4 resilient runtime layer for dispatch, health, runtime visibility, and LLM provider degradation
 - Revenue Mesh v1 for daily income-lane scoring, productized automation offers, approval-gated execution, and task-replacement escalation
+- Finnhub WebSocket runtime feed for paper/shadow trading proof-of-work, with Yahoo fallback when no Finnhub key is present
 
 ## Pages
 
@@ -56,9 +57,46 @@ Implemented surfaces:
 
 Important limitation: browser offline queuing does not persist uploaded attachment bytes. File metadata is captured and the user is warned to reattach files after recovery. This avoids unsafe hidden file retention and browser storage failures.
 
+## Finnhub WebSocket paper/shadow runtime
+
+`runtime/finnhub_feed.py` provides a real-time paper/shadow market-data feed. It is not a live-money execution path.
+
+Runtime order:
+
+```text
+Finnhub WebSocket -> Finnhub REST quote -> Yahoo fallback
+```
+
+Operational rules:
+
+- Set `FINNHUB_API_KEY` only as a local environment variable, OCI environment variable, or GitHub Actions secret.
+- Do not commit the Finnhub key to this repository.
+- When `FINNHUB_API_KEY` is present, `runtime/paper_trader.py` automatically prefers `FinnhubRealtimeFeed`.
+- When the key is absent, the paper trader falls back to Yahoo without breaking local proof runs.
+- Treat all Finnhub-backed runs as paper/shadow proof-of-work unless a separate human-approved live-execution gate is built and enabled.
+
+Local validation:
+
+```bash
+python -m pip install -r requirements.txt
+python -m pytest tests/test_finnhub_feed.py
+FINNHUB_API_KEY=local_key python runtime/paper_trader.py
+```
+
+Required proof markers for a valid Finnhub WebSocket paper test:
+
+```text
+source="finnhub_ws"
+WebSocket connected
+trades_received > 0
+paper_trader using FinnhubRealtimeFeed
+Yahoo fallback disabled during keyed run
+live_order_execution=false
+```
+
 ## Environment variables
 
-Production secrets are configured as encrypted hosting/Vercel environment variables and must not be committed to this repository.
+Production secrets are configured as encrypted hosting/Vercel, GitHub Actions, or OCI environment variables and must not be committed to this repository.
 
 Required operational variables by surface:
 
@@ -67,6 +105,7 @@ Required operational variables by surface:
 - Formspree endpoint only when Resend delivery is not active
 - LLM gateway/provider keys only for configured provider routes
 - ProfitEngine URL and webhook token only when the ProfitEngine handoff is active
+- Finnhub API key only for paper/shadow WebSocket market-data proof runs
 
 ## Local development
 
@@ -84,6 +123,7 @@ npm run lint
 npm run typecheck
 npm run build
 npm run test
+python -m pytest tests/test_finnhub_feed.py
 ```
 
 Runtime verification endpoints:
@@ -123,6 +163,8 @@ vercel --prod
 - Confirm `/api/health` reports Level-4 mode, provider status, queue depth, and dead-letter count.
 - Confirm `/api/revenue-mesh` reports productized offers, task-replacement escalation, and approval-gate boundaries.
 - Confirm `/revenue-mesh` loads on desktop and mobile.
+- Confirm Finnhub paper/shadow runtime reports `source="finnhub_ws"` only when `FINNHUB_API_KEY` is set.
+- Confirm no live-money trading path is enabled by the Finnhub runtime.
 - Confirm no prohibited claims remain in public copy.
 
 ## Form processing
