@@ -1,13 +1,14 @@
 """
 Paper Trading Simulator — Live Market Data + 11-Strategy Engine.
 
-Fetches real-time market data via Yahoo Finance, runs all 11 proven strategies
-with regime-adaptive weighting, and simulates paper trades starting from $100.
+Fetches real-time market data via Finnhub WebSocket (~50ms latency) with
+Yahoo Finance fallback, runs all 11 proven strategies with regime-adaptive
+weighting, and simulates paper trades starting from $100.
 
 Goal: Demonstrate time to reach $1000 (10x return).
 
 Architecture:
-- Market data: yfinance (1m/5m bars, live quotes during market hours)
+- Market data: Finnhub WebSocket (primary, ~50ms) → REST (secondary) → Yahoo (fallback)
 - Strategy engine: MasterSignalCombiner (11 strategies, regime-adaptive)
 - Risk management: 2% max risk/trade, trailing stops, daily drawdown limit
 - Execution: Paper fills at market price + realistic spread simulation
@@ -559,7 +560,18 @@ class PaperTradingOrchestrator:
     """Main orchestrator — fetches data, runs strategies, executes paper trades."""
 
     def __init__(self) -> None:
-        self.market_data = MarketDataFetcher()
+        # Use Finnhub real-time feed if API key is available, else Yahoo fallback
+        finnhub_key = os.environ.get("FINNHUB_API_KEY", "")
+        if finnhub_key:
+            from runtime.finnhub_feed import FinnhubRealtimeFeed
+            self.market_data = FinnhubRealtimeFeed(symbols=WATCHLIST, api_key=finnhub_key)
+            self._using_finnhub = True
+            logger.info("Using Finnhub real-time WebSocket feed (~50ms latency)")
+        else:
+            self.market_data = MarketDataFetcher()
+            self._using_finnhub = False
+            logger.info("Using Yahoo Finance feed (no FINNHUB_API_KEY set)")
+
         self.engine = PaperTradingEngine()
         self.audit = AuditLogger()
         self._running = False
@@ -568,6 +580,11 @@ class PaperTradingOrchestrator:
 
     async def start(self) -> None:
         self._running = True
+
+        # Start Finnhub WebSocket feed if available
+        if self._using_finnhub:
+            self.market_data.start()
+
         self.audit.log("paper_trader_started", {
             "starting_capital": STARTING_CAPITAL,
             "target_capital": TARGET_CAPITAL,
@@ -579,17 +596,24 @@ class PaperTradingOrchestrator:
             "take_profit_pct": TAKE_PROFIT_PCT,
             "trailing_stop_pct": TRAILING_STOP_PCT,
             "min_conviction": MIN_CONVICTION,
+            "data_source": "finnhub_ws" if self._using_finnhub else "yahoo",
         })
         logger.info(
-            "Paper Trading Started — $%.2f → $%.2f target | %d symbols | %ds interval",
+            "Paper Trading Started — $%.2f → $%.2f target | %d symbols | %ds interval | source=%s",
             STARTING_CAPITAL,
             TARGET_CAPITAL,
             len(WATCHLIST),
             int(SCAN_INTERVAL_SEC),
+            "finnhub_ws" if self._using_finnhub else "yahoo",
         )
 
     async def stop(self) -> None:
         self._running = False
+
+        # Stop Finnhub feed
+        if self._using_finnhub:
+            self.market_data.stop()
+
         status = self.engine.get_status()
         self.audit.log("paper_trader_stopped", status)
         logger.info("Paper Trading Stopped — Final balance: $%.2f (P&L: $%.2f)", self.engine.balance, self.engine.total_pnl)
@@ -643,6 +667,10 @@ class PaperTradingOrchestrator:
     async def _run_scan_cycle(self) -> None:
         """One full scan cycle: fetch data → run strategies → manage positions."""
         from runtime.proven_strategies import MasterSignalCombiner
+
+        # Reset Finnhub per-scan window for fresh OHLCV aggregation
+        if self._using_finnhub and hasattr(self.market_data, "reset_window"):
+            self.market_data.reset_window()
 
         # Fetch current prices for all watched symbols
         current_prices: Dict[str, float] = {}
@@ -752,9 +780,15 @@ class PaperTradingOrchestrator:
     def _log_status(self) -> None:
         """Log periodic status update."""
         status = self.engine.get_status()
+
+        # Add feed stats if using Finnhub
+        if self._using_finnhub and hasattr(self.market_data, "get_stats"):
+            status["feed_stats"] = self.market_data.get_stats()
+
         self.audit.log("status_update", status)
+        source = "finnhub" if self._using_finnhub else "yahoo"
         logger.info(
-            "Status: balance=$%.2f | pnl=$%.2f (%.1f%%) | trades=%d (%.0f%% win) | positions=%d | scans=%d",
+            "Status: balance=$%.2f | pnl=$%.2f (%.1f%%) | trades=%d (%.0f%% win) | positions=%d | scans=%d | src=%s",
             status["balance"],
             status["total_pnl"],
             status["total_pnl_pct"],
@@ -762,6 +796,7 @@ class PaperTradingOrchestrator:
             status["win_rate"],
             status["open_positions"],
             self._scan_count,
+            source,
         )
 
 
