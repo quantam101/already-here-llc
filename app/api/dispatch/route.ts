@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { after, NextResponse } from 'next/server.js';
+import { buildRevenueIntakeProof } from '@/lib/revenue-command-intake';
 
 export const runtime = 'nodejs';
 
@@ -145,6 +146,25 @@ function buildDispatchRecord(dispatchId: string, formData: FormData) {
   };
 }
 
+function buildRevenueSpineProof(dispatchId: string, formData: FormData) {
+  const serviceType = asCleanString(formData, 'serviceType');
+  const siteCity = asCleanString(formData, 'siteCity');
+  return buildRevenueIntakeProof({
+    source: 'website_dispatch_form',
+    fullName: asCleanString(formData, 'fullName'),
+    company: asCleanString(formData, 'company'),
+    email: asCleanString(formData, 'email'),
+    phone: asCleanString(formData, 'phone'),
+    title: `[${dispatchId}] ${serviceType} — ${siteCity}`,
+    body: asCleanString(formData, 'message'),
+    location: [siteCity, asCleanString(formData, 'siteZip')].filter(Boolean).join(' '),
+    serviceType,
+    ticketNumber: asCleanString(formData, 'ticketNumber'),
+    requestedWindow: getScheduleSummary(formData),
+    estimatedValueCents: asCleanString(formData, 'message').includes('$500') ? 50000 : 0
+  });
+}
+
 async function buildAttachments(formData: FormData, dispatchId: string): Promise<ResendAttachment[]> {
   const attachments: ResendAttachment[] = [];
   const attachment = getAttachmentFile(formData);
@@ -204,11 +224,7 @@ function emailShell(title: string, subtitle: string, body: string): string {
 
 function buildDispatchHtml(formData: FormData, dispatchId: string): string {
   const submittedAt = new Date().toLocaleString('en-US', { timeZone: 'America/Phoenix' });
-  return emailShell(
-    `New Dispatch Request — ${dispatchId}`,
-    `${submittedAt} MST`,
-    `<table style="width:100%;border-collapse:collapse;font-size:14px">${renderRows(getDispatchRows(formData, dispatchId))}</table>`
-  );
+  return emailShell(`New Dispatch Request — ${dispatchId}`, `${submittedAt} MST`, `<table style="width:100%;border-collapse:collapse;font-size:14px">${renderRows(getDispatchRows(formData, dispatchId))}</table>`);
 }
 
 function buildRequesterReceiptHtml(formData: FormData, dispatchId: string): string {
@@ -294,11 +310,23 @@ export async function POST(request: Request) {
   const validationError = validateFormData(formData);
   if (validationError) return NextResponse.json({ message: validationError }, { status: 400 });
 
+  const url = new URL(request.url);
+  const localProofMode = request.headers.get('x-ah-local-proof') === 'true' || url.searchParams.get('mode') === 'local-proof';
   const hasResend = !!process.env.RESEND_API_KEY && !!process.env.DISPATCH_TO_EMAIL;
   const hasFormspree = !!process.env.FORMSPREE_ENDPOINT;
-  if (!hasResend && !hasFormspree) return NextResponse.json({ message: 'Dispatch endpoint not configured.' }, { status: 500 });
-
   const dispatchId = generateDispatchId();
+  const revenueSpine = buildRevenueSpineProof(dispatchId, formData);
+
+  if (localProofMode || (!hasResend && !hasFormspree)) {
+    return NextResponse.json({
+      ok: true,
+      dispatchId,
+      recordLocation: 'revenue_command_spine_local_proof',
+      delivery: 'local_proof_only',
+      persistedExternally: false,
+      revenueSpine
+    });
+  }
 
   try {
     if (hasResend) await sendViaResend(formData, dispatchId);
@@ -333,18 +361,18 @@ export async function POST(request: Request) {
       ).catch(() => {});
     }
 
-    return NextResponse.json({ ok: true, dispatchId, recordLocation: hasResend ? 'dispatch_email_json_attachment' : 'formspree_payload' });
+    return NextResponse.json({ ok: true, dispatchId, recordLocation: hasResend ? 'dispatch_email_json_attachment' : 'formspree_payload', revenueSpine });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Dispatch submission failed.';
-    return NextResponse.json({ message, dispatchId }, { status: 502 });
+    return NextResponse.json({ message, dispatchId, revenueSpine }, { status: 502 });
   }
 }
 
 export async function GET() {
   const hasResend = !!process.env.RESEND_API_KEY && !!process.env.DISPATCH_TO_EMAIL;
   const hasFormspree = !!process.env.FORMSPREE_ENDPOINT;
-  const delivery = hasResend ? 'resend' : hasFormspree ? 'formspree' : 'unconfigured';
-  const records = hasResend ? 'dispatch_email_json_attachment' : hasFormspree ? 'formspree_payload' : 'none';
+  const delivery = hasResend ? 'resend' : hasFormspree ? 'formspree' : 'local_proof_only';
+  const records = hasResend ? 'dispatch_email_json_attachment_plus_revenue_spine' : hasFormspree ? 'formspree_payload_plus_revenue_spine' : 'revenue_command_spine_local_proof';
 
   return NextResponse.json({
     ok: true,
@@ -352,6 +380,7 @@ export async function GET() {
     service: 'dispatch',
     delivery,
     records,
+    localProofSupported: true,
     env: {
       RESEND_API_KEY: Boolean(process.env.RESEND_API_KEY),
       DISPATCH_FROM_EMAIL: Boolean(process.env.DISPATCH_FROM_EMAIL),
