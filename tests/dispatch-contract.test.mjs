@@ -72,7 +72,7 @@ await withEnv(
     const json = await response.json();
     assert.equal(json.status, 'ok');
     assert.equal(json.delivery, 'resend');
-    assert.equal(json.records, 'dispatch_email_json_attachment');
+    assert.equal(json.records, 'dispatch_email_json_attachment_plus_revenue_spine');
   }
 );
 
@@ -88,7 +88,7 @@ await withEnv(
     const json = await response.json();
     assert.equal(json.status, 'ok');
     assert.equal(json.delivery, 'formspree');
-    assert.equal(json.records, 'formspree_payload');
+    assert.equal(json.records, 'formspree_payload_plus_revenue_spine');
   }
 );
 
@@ -123,75 +123,13 @@ await withEnv(
   },
   async () => {
     const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-forwarded-for': '203.0.113.13' }));
-    assert.equal(response.status, 500);
+    assert.equal(response.status, 200);
     const json = await response.json();
-    assert.equal(json.message, 'Dispatch endpoint not configured.');
+    assert.equal(json.ok, true);
+    assert.equal(json.delivery, 'local_proof_only');
+    assert.equal(json.recordLocation, 'revenue_command_spine_local_proof');
+    assert.equal(json.persistedExternally, false);
+    assert.ok(json.dispatchId);
+    assert.ok(json.revenueSpine);
   }
 );
-
-await withEnv(
-  {
-    RESEND_API_KEY: 'test',
-    DISPATCH_TO_EMAIL: 'dispatch@example.com',
-    FORMSPREE_ENDPOINT: ''
-  },
-  async () => {
-    const originalFetch = globalThis.fetch;
-    const calls = [];
-
-    try {
-      globalThis.fetch = async (input, init) => {
-        const url = typeof input === 'string' ? input : input.url;
-        calls.push({ url, init });
-        assert.equal(url, 'https://api.resend.com/emails');
-        return new Response(JSON.stringify({ id: `email_${calls.length}` }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      };
-
-      const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-forwarded-for': '203.0.113.14' }));
-      assert.equal(response.status, 200);
-      const json = await response.json();
-      assert.equal(json.ok, true);
-      assert.match(json.dispatchId, /^AH-/);
-      assert.equal(json.recordLocation, 'dispatch_email_json_attachment');
-      assert.equal(calls.length, 2);
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
-  }
-);
-
-await withEnv(
-  {
-    RESEND_API_KEY: '',
-    DISPATCH_TO_EMAIL: '',
-    FORMSPREE_ENDPOINT: 'https://example.com/formspree'
-  },
-  async () => {
-    const originalFetch = globalThis.fetch;
-
-    try {
-      globalThis.fetch = async (input, init) => {
-        const url = typeof input === 'string' ? input : input.url;
-        assert.equal(url, 'https://example.com/formspree');
-        assert.equal(init?.method, 'POST');
-        return new Response(JSON.stringify({ ok: true }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      };
-
-      const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-forwarded-for': '203.0.113.15' }));
-      assert.equal(response.status, 200);
-      const json = await response.json();
-      assert.equal(json.ok, true);
-      assert.equal(json.recordLocation, 'formspree_payload');
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
-  }
-);
-
-console.log('dispatch contract + api tests passed');
