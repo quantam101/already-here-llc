@@ -439,7 +439,11 @@ class PaperTradingEngine:
         pnl_pct = pnl / (pos.entry_price * pos.shares) * 100.0
 
         # Update balance
-        proceeds = pos.shares * exit_price
+        if pos.side == "long":
+            proceeds = pos.shares * exit_price
+        else:
+            # Short: return reserved margin + realized P&L
+            proceeds = pos.shares * pos.entry_price + pnl
         self.balance += proceeds
 
         # Update peak
