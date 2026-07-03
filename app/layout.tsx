@@ -4,6 +4,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { HomeAiAgentAwareness } from '@/components/HomeAiAgentAwareness';
 import { TrafficTracker } from '@/components/TrafficTracker';
+import { FloatingRevenueCtas } from '@/components/FloatingRevenueCtas';
 import { siteConfig } from '@/lib/site';
 
 export const viewport: Viewport = {
@@ -131,6 +132,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <main>{children}</main>
         <HomeAiAgentAwareness />
         <Footer />
+        <FloatingRevenueCtas />
       </body>
     </html>
   );
