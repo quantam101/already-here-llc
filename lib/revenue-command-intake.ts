@@ -65,7 +65,7 @@ export function classifyRevenueIntake(input: RevenueIntakeInput): IntakeLane {
 }
 
 export function scoreRevenueIntake(input: RevenueIntakeInput, lane: IntakeLane): { priority: IntakePriority; score: number } {
-  const value = `${text(input)} ${input.requestedWindow || ''}`;
+  const value = `${text(input)} ${(input.requestedWindow || '').toLowerCase()}`;
   let score = 20;
   if (lane === 'Dispatch') score += 25;
   if (lane === 'AutoWorks' || lane === 'Hauling') score += 20;
