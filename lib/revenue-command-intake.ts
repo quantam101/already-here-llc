@@ -70,10 +70,11 @@ export function scoreRevenueIntake(input: RevenueIntakeInput, lane: IntakeLane):
   if (lane === 'Dispatch') score += 25;
   if (lane === 'AutoWorks' || lane === 'Hauling') score += 20;
   if (lane === 'Procurement') score += 15;
-  if (['urgent', 'today', 'same-day', 'by noon', 'asap'].some((term) => value.includes(term))) score += 30;
+  const urgent = ['urgent', 'today', 'same-day', 'by noon', 'asap'].some((term) => value.includes(term));
+  if (urgent) score += 30;
   if (['revenue', '$500', 'paid', 'quote', 'rfq', 'client', 'dispatch'].some((term) => value.includes(term))) score += 20;
   if ((input.estimatedValueCents || 0) >= 50000 || value.includes('$500')) score += 25;
-  if (score >= 85) return { priority: 'P0', score };
+  if (urgent && score >= 85) return { priority: 'P0', score };
   if (score >= 55) return { priority: 'P1', score };
   return { priority: 'P2', score };
 }
