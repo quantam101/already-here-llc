@@ -48,7 +48,7 @@ jobs:
             if ! python3 -m pip --version >/dev/null 2>&1; then
               curl -sS https://bootstrap.pypa.io/pip/3.8/get-pip.py | python3 - --user --quiet
             fi
-            python3 -m pip install --user --quiet fastapi httpx 'uvicorn[standard]' numpy
+            python3 -m pip install --user --quiet fastapi 'httpx[http2]' 'uvicorn[standard]' numpy
 
             mkdir -p runtime data
             touch runtime/.env
