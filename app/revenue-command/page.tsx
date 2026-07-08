@@ -88,7 +88,6 @@ export default function RevenueCommandPage() {
   const [actionResult, setActionResult] = useState<ActionResult | null>(null);
 
   const loadPayload = async () => {
-    setStatus('loading');
     try {
       const response = await fetch('/api/revenue-command-spine', { method: 'GET' });
       if (!response.ok) throw new Error('Revenue Command fetch failed');
@@ -102,6 +101,8 @@ export default function RevenueCommandPage() {
   };
 
   useEffect(() => {
+    // Initial data fetch on mount; state updates occur only after the awaited response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadPayload().catch(() => null);
   }, []);
 

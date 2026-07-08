@@ -231,6 +231,8 @@ export default function DailyCommandPage() {
     window.addEventListener('online', updateOnline);
     window.addEventListener('offline', updateOnline);
 
+    // Capability detection must run post-mount to stay hydration-safe (SSR renders false).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVoiceEnabled(Boolean(getSpeechRecognitionConstructor()) && 'speechSynthesis' in window);
 
     if ('serviceWorker' in navigator) {
