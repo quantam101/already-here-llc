@@ -100,7 +100,7 @@ CORS_ORIGINS: Final[str] = _env("MCP_CORS_ORIGINS", "*")
 # ---------------------------------------------------------------------------
 # DOMAIN MODELS
 # ---------------------------------------------------------------------------
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True)
 class MarketContext:
     symbol: str
     spot_price: Decimal
@@ -108,7 +108,7 @@ class MarketContext:
     orderbook_imbalance: float
 
 
-@dataclass(slots=True)
+@dataclass
 class PortfolioState:
     account_balance: Decimal
     total_drawdown_today: Decimal
@@ -124,7 +124,7 @@ class PortfolioState:
             logger.info("Daily drawdown reset for %s", today)
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True)
 class TradeSetup:
     symbol: str
     action: str
@@ -138,12 +138,12 @@ class TradeSetup:
     position_size_shares: Decimal = ZERO
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True)
 class RejectionReason:
     reason: str
 
 
-@dataclass(slots=True)
+@dataclass
 class PositionRecord:
     symbol: str
     side: str
