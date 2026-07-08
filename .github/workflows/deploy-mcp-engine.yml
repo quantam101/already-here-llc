@@ -42,13 +42,13 @@ jobs:
 
             cd ~/already-here-llc
 
-            # System python3 has no pip (Oracle Linux); use a dedicated venv, which
-            # bootstraps its own pip without root.
-            if [ ! -x "$HOME/.venvs/mcp/bin/pip" ]; then
-              python3 -m venv "$HOME/.venvs/mcp"
+            # No root on this host: venv/ensurepip are stripped, so bootstrap a
+            # user-site pip via get-pip.py and install into ~/.local.
+            export PATH="$HOME/.local/bin:$PATH"
+            if ! python3 -m pip --version >/dev/null 2>&1; then
+              curl -sS https://bootstrap.pypa.io/pip/3.8/get-pip.py | python3 - --user --quiet
             fi
-            "$HOME/.venvs/mcp/bin/pip" install --quiet --upgrade pip
-            "$HOME/.venvs/mcp/bin/pip" install --quiet fastapi httpx 'uvicorn[standard]' numpy
+            python3 -m pip install --user --quiet fastapi httpx 'uvicorn[standard]' numpy
 
             mkdir -p runtime data
             touch runtime/.env
@@ -82,7 +82,7 @@ jobs:
             if pm2 describe mcp-trading-engine > /dev/null 2>&1; then
               pm2 reload mcp-trading-engine --update-env
             else
-              pm2 start "$HOME/.venvs/mcp/bin/python -m uvicorn runtime.mcp_trading_engine:app --host 0.0.0.0 --port 8000" \
+              pm2 start "python3 -m uvicorn runtime.mcp_trading_engine:app --host 0.0.0.0 --port 8000" \
                 --name mcp-trading-engine \
                 --cwd ~/already-here-llc
             fi
