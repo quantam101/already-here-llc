@@ -49,6 +49,14 @@ Key pages to verify:
 - Verify imports: `python -c "from runtime.health_server import HealthHandler, main; print('ok')"`
 - The health server exposes `/healthz`, `/readyz`, `/metrics` on port 8080
 
+## Revenue Command Intake (dispatch form spine)
+
+- The dispatch form POSTs to `/api/dispatch`. With no `RESEND_API_KEY`/`FORMSPREE_ENDPOINT` set (typical local dev), it automatically returns a local-proof JSON response and the UI redirects to `/thank-you`.
+- To verify intake lane/priority/score without email providers, POST the same fields to `http://localhost:3000/api/dispatch?mode=local-proof` (or send header `x-ah-local-proof: true`) and inspect `revenueSpine.lane/priority/score` in the JSON.
+- Priority semantics: P0 requires an urgency term (`urgent`, `today`, `same-day`, `by noon`, `asap`) in title/body/serviceType/requestedWindow AND score >= 85; score >= 55 is P1; else P2. `requestedWindow` matching is case-insensitive.
+- Useful probe cases: non-urgent "$500 dispatch revenue opportunity" with Dispatch-lane serviceType → P1 (score 90); same + requestedWindow "Today by Noon" → P0 (120); generic inquiry → P2 (20).
+- `npm run test` runs 9 suites including `tests/revenue-command-intake.test.mjs`, which is the spec for this scoring — do not edit tests to make them pass.
+
 ## Common Gotchas
 
 - The favicon might return 404 on Vercel preview — this is pre-existing and unrelated to code changes
