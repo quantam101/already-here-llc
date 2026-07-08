@@ -117,29 +117,39 @@ class DailyStats:
 # MARKET DATA FETCHER
 # ---------------------------------------------------------------------------
 class MarketDataFetcher:
-    """Fetches live market data via yfinance."""
+    """Fetches live market data via yfinance.
+
+    Maintains separate daily history (for strategies like RSI-2 that need
+    200+ daily bars) and only updates the last bar in-place with intraday
+    data to prevent timeframe contamination.
+    """
 
     def __init__(self) -> None:
         self._cache: Dict[str, Dict[str, Any]] = {}
         self._last_fetch: Dict[str, float] = {}
+        # Daily history arrays (strategy calculations)
         self._price_history: Dict[str, List[float]] = {sym: [] for sym in WATCHLIST}
         self._volume_history: Dict[str, List[float]] = {sym: [] for sym in WATCHLIST}
         self._high_history: Dict[str, List[float]] = {sym: [] for sym in WATCHLIST}
         self._low_history: Dict[str, List[float]] = {sym: [] for sym in WATCHLIST}
+        self._daily_bar_count: Dict[str, int] = {}
 
     def fetch_live_data(self, symbol: str) -> Optional[Dict[str, Any]]:
         """Fetch latest price data for a symbol.
-        
-        Uses two timeframes combined:
+
+        Uses two timeframes:
         - 1y daily for deep history (200+ bars for RSI-2 Connors)
         - 5d 5m for intraday granularity and current price
+
+        The latest intraday close replaces (not appends to) the last daily
+        bar so strategy calculations use pure daily data + one live bar.
         """
         import yfinance as yf
 
         try:
             ticker = yf.Ticker(symbol)
-            
-            # First, get deep daily history for RSI-2 (needs 200+ bars)
+
+            # Load deep daily history once
             if not self._price_history.get(symbol) or len(self._price_history[symbol]) < 200:
                 daily = ticker.history(period="1y", interval="1d")
                 if not daily.empty and len(daily) >= 50:
@@ -147,8 +157,9 @@ class MarketDataFetcher:
                     self._volume_history[symbol] = [float(v) for v in daily["Volume"].dropna().tolist()[-250:]]
                     self._high_history[symbol] = [float(h) for h in daily["High"].dropna().tolist()[-250:]]
                     self._low_history[symbol] = [float(l) for l in daily["Low"].dropna().tolist()[-250:]]
+                    self._daily_bar_count[symbol] = len(self._price_history[symbol])
 
-            # Then get intraday for latest price
+            # Fetch intraday for current price
             hist = ticker.history(period="5d", interval="5m")
             if hist.empty:
                 hist = ticker.history(period="1mo", interval="1d")
@@ -163,18 +174,22 @@ class MarketDataFetcher:
             low = float(latest["Low"])
             open_price = float(latest["Open"])
 
-            # Update the latest price in history (append intraday close)
-            if self._price_history[symbol] and abs(close - self._price_history[symbol][-1]) > 0.001:
-                self._price_history[symbol].append(close)
-                self._volume_history[symbol].append(volume)
-                self._high_history[symbol].append(high)
-                self._low_history[symbol].append(low)
-                # Trim to 300 max
-                if len(self._price_history[symbol]) > 300:
-                    self._price_history[symbol] = self._price_history[symbol][-300:]
-                    self._volume_history[symbol] = self._volume_history[symbol][-300:]
-                    self._high_history[symbol] = self._high_history[symbol][-300:]
-                    self._low_history[symbol] = self._low_history[symbol][-300:]
+            # Replace (not append) last bar with live intraday price
+            # to keep the array pure daily + one live bar
+            if self._price_history.get(symbol):
+                daily_count = self._daily_bar_count.get(symbol, len(self._price_history[symbol]))
+                if len(self._price_history[symbol]) > daily_count:
+                    # Already have a live bar appended — replace it
+                    self._price_history[symbol][-1] = close
+                    self._volume_history[symbol][-1] = volume
+                    self._high_history[symbol][-1] = high
+                    self._low_history[symbol][-1] = low
+                else:
+                    # First intraday update — append one live bar
+                    self._price_history[symbol].append(close)
+                    self._volume_history[symbol].append(volume)
+                    self._high_history[symbol].append(high)
+                    self._low_history[symbol].append(low)
 
             self._cache[symbol] = {
                 "price": close,
@@ -290,16 +305,27 @@ class PaperTradingEngine:
             self.daily_pnl = 0.0
             self.daily_trades = 0
 
-    def _check_daily_drawdown(self) -> bool:
+    def _check_daily_drawdown(self, current_prices: Optional[Dict[str, float]] = None) -> bool:
         """Return True if daily drawdown limit is breached.
-        
-        Uses equity (cash + position value) not just cash balance,
-        since cash drops when positions are opened but that's not a loss.
+
+        Uses mark-to-market equity when current_prices are available,
+        otherwise falls back to entry-price-based notional.
         """
         if self.day_start_balance <= 0:
             return True
-        # Equity = cash + sum of position notional values
-        equity = self.balance + sum(p.entry_price * p.shares for p in self.positions.values())
+        # Mark-to-market equity = cash + sum of position market values
+        position_value = 0.0
+        for pos in self.positions.values():
+            if current_prices and pos.symbol in current_prices:
+                mkt_price = current_prices[pos.symbol]
+                if pos.side == "long":
+                    position_value += mkt_price * pos.shares
+                else:
+                    # Short: value = entry_notional + unrealized P&L
+                    position_value += pos.entry_price * pos.shares + (pos.entry_price - mkt_price) * pos.shares
+            else:
+                position_value += pos.entry_price * pos.shares
+        equity = self.balance + position_value
         dd = (self.day_start_balance - equity) / self.day_start_balance
         return dd >= DAILY_DRAWDOWN_LIMIT
 
@@ -311,12 +337,13 @@ class PaperTradingEngine:
         conviction: float,
         strategy_signals: Dict[str, float],
         regime: str,
+        current_prices: Optional[Dict[str, float]] = None,
     ) -> Optional[PaperPosition]:
         """Open a paper position with risk management."""
         self._check_daily_reset()
 
         # Safety checks
-        if self._check_daily_drawdown():
+        if self._check_daily_drawdown(current_prices):
             logger.warning("Daily drawdown limit hit — no new positions")
             return None
         if len(self.positions) >= MAX_POSITIONS:
@@ -760,6 +787,7 @@ class PaperTradingOrchestrator:
                     conviction=raw_conviction,
                     strategy_signals=combined.strategy_signals,
                     regime=combined.regime.value,
+                    current_prices=current_prices,
                 )
                 if position:
                     self.audit.log("trade_opened", {
