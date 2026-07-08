@@ -71,8 +71,10 @@ jobs:
             MCP_LIVE_APPROVAL_TOKEN=
             ENVEOF
 
+            export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+            export PATH="$HOME/.npm-global/bin:$PATH"
             if ! command -v pm2 &>/dev/null; then
-              npm install -g pm2 2>/dev/null || sudo npm install -g pm2
+              npm install -g pm2
             fi
 
             if pm2 describe mcp-trading-engine > /dev/null 2>&1; then

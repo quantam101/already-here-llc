@@ -53,7 +53,9 @@ jobs:
               echo "CONTENT_OUTPUT_DIR=../content/blog" >> .env
             fi
 
-            # Ensure PM2 is available
+            # Ensure PM2 is available (user prefix — global install needs root, sudo is blocked)
+            export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+            export PATH="$HOME/.npm-global/bin:$PATH"
             if ! command -v pm2 &>/dev/null; then
               npm install -g pm2
             fi
