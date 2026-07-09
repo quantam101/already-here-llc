@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alreadyherellc.com/schemas/revenue-pipeline-schema.json",
+  "title": "Already Here LLC Revenue Pipeline Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "created_at",
+    "updated_at",
+    "source",
+    "lane",
+    "product_or_offer_name",
+    "company_or_platform",
+    "affiliate_or_sales_path",
+    "target_buyer",
+    "pain_solved",
+    "estimated_commission_or_price",
+    "cost_required",
+    "profit_potential",
+    "time_to_revenue",
+    "content_angle",
+    "marketing_channel",
+    "stacking_fit",
+    "risk_flags",
+    "recommended_action",
+    "status",
+    "next_follow_up_date",
+    "notes",
+    "approval_required"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable unique record ID. Recommended format: rev_YYYYMMDD_slug_hash."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "string"
+    },
+    "lane": {
+      "type": "string",
+      "enum": [
+        "national_subcontract",
+        "phoenix_commercial",
+        "government_bid",
+        "ai_implementation",
+        "owned_digital_product",
+        "affiliate_referral",
+        "field_service_software",
+        "mechanic_light_duty",
+        "diagnostic_tools",
+        "hauling_trailer",
+        "low_voltage",
+        "drone_operations",
+        "it_msp",
+        "business_software",
+        "productivity_tools",
+        "marketplace",
+        "other"
+      ]
+    },
+    "product_or_offer_name": {
+      "type": "string"
+    },
+    "company_or_platform": {
+      "type": "string"
+    },
+    "affiliate_or_sales_path": {
+      "type": "string"
+    },
+    "target_buyer": {
+      "type": "string"
+    },
+    "pain_solved": {
+      "type": "string"
+    },
+    "estimated_commission_or_price": {
+      "type": "string"
+    },
+    "cost_required": {
+      "type": "string"
+    },
+    "profit_potential": {
+      "type": "string",
+      "enum": ["very_low", "low", "medium", "high", "very_high", "unknown"]
+    },
+    "time_to_revenue": {
+      "type": "string",
+      "enum": ["same_day", "fast", "medium", "long", "unknown"]
+    },
+    "content_angle": {
+      "type": "string"
+    },
+    "marketing_channel": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "website",
+          "landing_page",
+          "email",
+          "zoho_mail",
+          "gmail",
+          "slack",
+          "qr_code",
+          "social_post",
+          "vendor_conversation",
+          "proof_of_work_demo",
+          "blog",
+          "youtube",
+          "direct_call",
+          "marketplace",
+          "other"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "stacking_fit": {
+      "type": "string",
+      "enum": ["poor", "fair", "good", "strong", "excellent", "unknown"]
+    },
+    "risk_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recommended_action": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "researching",
+        "drafted",
+        "approval_required",
+        "approved_to_send",
+        "sent",
+        "replied",
+        "call_scheduled",
+        "quote_requested",
+        "submitted",
+        "won",
+        "lost",
+        "nurture",
+        "archived",
+        "blocked"
+      ]
+    },
+    "next_follow_up_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "approval_required": {
+      "type": "boolean"
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "total": { "type": "number", "minimum": 0, "maximum": 100 },
+        "speed_to_revenue": { "type": "number", "minimum": 0, "maximum": 20 },
+        "audience_fit": { "type": "number", "minimum": 0, "maximum": 15 },
+        "probability_to_convert": { "type": "number", "minimum": 0, "maximum": 15 },
+        "estimated_margin": { "type": "number", "minimum": 0, "maximum": 10 },
+        "recurring_potential": { "type": "number", "minimum": 0, "maximum": 10 },
+        "trust_risk_inverse": { "type": "number", "minimum": 0, "maximum": 10 },
+        "setup_time_inverse": { "type": "number", "minimum": 0, "maximum": 10 },
+        "compatibility_with_services": { "type": "number", "minimum": 0, "maximum": 10 }
+      }
+    },
+    "contact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "contact_name": { "type": "string" },
+        "target_role": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "website": { "type": "string" },
+        "linkedin": { "type": "string" },
+        "contact_method": { "type": "string" }
+      }
+    },
+    "outreach": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "subject": { "type": "string" },
+        "body": { "type": "string" },
+        "channel": { "type": "string" },
+        "approval_status": {
+          "type": "string",
+          "enum": ["draft_only", "approval_required", "approved_to_send", "sent", "blocked"]
+        },
+        "sent_at": { "type": "string", "format": "date-time" },
+        "reply_received_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "estimated_value": {
+      "type": "number",
+      "minimum": 0
+    },
+    "probability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    }
+  }
+}
