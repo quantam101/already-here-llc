@@ -1,0 +1,66 @@
+name: Revenue Pipeline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 15 * * *'
+  push:
+    paths:
+      - 'data/revenue-pipeline.json'
+      - 'data/revenue-pipeline-schema.json'
+      - 'scripts/revenue-pipeline-export.mjs'
+      - '.github/workflows/revenue-pipeline.yml'
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  validate-and-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Validate pipeline JSON syntax
+        run: node -e "JSON.parse(require('fs').readFileSync('data/revenue-pipeline.json','utf8')); JSON.parse(require('fs').readFileSync('data/revenue-pipeline-schema.json','utf8')); console.log('Pipeline JSON syntax valid')"
+
+      - name: Export revenue pipeline CSV and summary
+        run: node scripts/revenue-pipeline-export.mjs --input data/revenue-pipeline.json --out exports --format csv
+
+      - name: Export revenue pipeline JSON
+        run: node scripts/revenue-pipeline-export.mjs --input data/revenue-pipeline.json --out exports --format json
+
+      - name: Display current approval queue
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const files = fs.readdirSync('exports').filter((name) => name.includes('summary')).sort();
+          const latest = files.at(-1);
+          const summary = JSON.parse(fs.readFileSync(`exports/${latest}`, 'utf8'));
+          console.log(JSON.stringify({
+            generated_at: summary.generated_at,
+            total_records: summary.total_records,
+            approval_queue_count: summary.approval_queue_count,
+            hot_count: summary.hot_count,
+            approval_queue: summary.approval_queue,
+            hot_records: summary.hot_records
+          }, null, 2));
+          NODE
+
+      - name: Upload pipeline exports
+        uses: actions/upload-artifact@v4
+        with:
+          name: revenue-pipeline-${{ github.run_number }}
+          path: exports/
+          if-no-files-found: error
+          retention-days: 30
