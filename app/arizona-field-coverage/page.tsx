@@ -318,6 +318,12 @@ export default function ArizonaFieldCoveragePage() {
             >
               Industries We Serve
             </Link>
+            <Link
+              href="/project-gallery"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-400"
+            >
+              Proof of Work — Project Gallery
+            </Link>
           </div>
         </div>
       </section>

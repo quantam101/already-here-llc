@@ -7,12 +7,15 @@ export const metadata: Metadata = {
 };
 
 const industries = [
-  { title: 'MSPs and network operators', body: 'White-label onsite execution for client-site tickets, network checks, AP work, printer support, smart hands, and closeout documentation.' },
-  { title: 'Retail and restaurants', body: 'POS, payment devices, printers, kiosks, digital menu boards, cameras, APs, rollout recovery, and store-technology support.' },
-  { title: 'Data centers and critical environments', body: 'Smart hands, rack/stack, part swaps, asset photos, remote-engineer coordination, and controlled-site closeout.' },
-  { title: 'Healthcare-adjacent sites', body: 'Professional onsite support for regulated-site technology, workstations, printers, network devices, equipment-adjacent IT, and documentation-heavy work.' },
-  { title: 'Government and education', body: 'Procurement-ready field execution for defined onsite technical support, infrastructure, closeout, and project verification scopes.' },
-  { title: 'Warehouses and commercial facilities', body: 'RFID, barcode, asset tracking, APs, printers, cameras, cabling checks, site surveys, equipment recovery, and inventory capture.' }
+  { title: 'MSPs and network operators', href: '/industries/msps', body: 'White-label onsite execution for client-site tickets, network checks, AP work, printer support, smart hands, and closeout documentation.' },
+  { title: 'National dispatch partners', href: '/industries/national-dispatch', body: 'A standing Arizona bench for national field service companies: your SLAs, your deliverable format, photo-documented closeout every ticket.' },
+  { title: 'Restaurants', href: '/industries/restaurants', body: 'POS, payment devices, KDS, printers, digital menu boards, new store surveys, and rollout support for restaurant groups and their tech providers.' },
+  { title: 'Retail', href: '/industries/retail', body: 'Store technology assessments, device rollouts, kiosks, signage, cameras, and opening/remodel surveys executed to one standard across sites.' },
+  { title: 'Data centers and critical environments', href: '/industries/data-centers', body: 'Smart hands, rack/stack, part swaps, rack audits, asset photos, remote-engineer coordination, and controlled-site closeout.' },
+  { title: 'Healthcare', href: '/industries/healthcare', body: 'OEM installs, biomedical inventories, and documentation-heavy support for clinical environments across Arizona.' },
+  { title: 'AV and low voltage', href: '/industries/av-low-voltage', body: 'Overflow install labor, CCTV and access control audits, signage, and service calls for AV and security integrators.' },
+  { title: 'Government and education', href: '/dispatch', body: 'Procurement-ready field execution for defined onsite technical support, infrastructure, closeout, and project verification scopes.' },
+  { title: 'Warehouses and commercial facilities', href: '/dispatch', body: 'RFID, barcode, asset tracking, APs, printers, cameras, cabling checks, site surveys, equipment recovery, and inventory capture.' }
 ];
 
 export default function IndustriesPage() {
@@ -25,11 +28,12 @@ export default function IndustriesPage() {
       </p>
 
       <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {industries.map(({ title, body }) => (
-          <div key={title} className="card p-6">
+        {industries.map(({ title, href, body }) => (
+          <Link key={title} href={href} className="card block p-6 transition hover:border-action">
             <h2 className="text-xl font-semibold text-navy">{title}</h2>
             <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
-          </div>
+            <span className="mt-4 inline-block text-sm font-semibold text-action">Learn more →</span>
+          </Link>
         ))}
       </div>
 

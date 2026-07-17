@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { markets, siteConfig } from '@/lib/site';
+import { NewsletterSignup } from '@/components/NewsletterSignup';
 
 export function Footer() {
   return (
@@ -20,6 +21,17 @@ export function Footer() {
               Certification Pursuit
             </span>
             <span className="rounded-full border border-borderBrand px-3 py-1">SAM.gov Registered</span>
+          </div>
+          <div className="mt-6">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Field operations newsletter
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Arizona coverage updates, rate benchmarks, and field playbooks.
+            </p>
+            <div className="mt-3 max-w-md">
+              <NewsletterSignup />
+            </div>
           </div>
         </div>
 
