@@ -67,10 +67,10 @@ export default function RequestCoveragePage() {
               Continue to Dispatch Intake
             </Link>
             <Link
-              href="/dispatch"
+              href="/arizona-field-coverage"
               className="inline-flex items-center justify-center rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-white transition hover:border-slate-500 hover:bg-slate-900"
             >
-              Open Dispatch
+              Monthly Retainer Pricing
             </Link>
           </div>
 

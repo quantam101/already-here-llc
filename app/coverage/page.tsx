@@ -32,6 +32,9 @@ export default function CoveragePage() {
             <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy">
               Request Dispatch
             </Link>
+            <Link href="/arizona-field-coverage" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-navy transition hover:border-action hover:text-action">
+              Monthly Coverage Retainers
+            </Link>
             <Link href="/rfq" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-navy transition hover:border-action hover:text-action">
               Request Project Quote
             </Link>

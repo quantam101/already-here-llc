@@ -33,6 +33,8 @@ export function Footer() {
             <li><Link href="/dispatch" className="hover:text-action">Dispatch</Link></li>
             <li><Link href="/rfq" className="hover:text-action">Request a Quote</Link></li>
             <li><Link href="/coverage" className="hover:text-action">Coverage Area</Link></li>
+            <li><Link href="/arizona-field-coverage" className="hover:text-action">Coverage Retainers</Link></li>
+            <li><Link href="/services-catalog" className="hover:text-action">Service Catalog</Link></li>
             <li><Link href="/project-gallery" className="hover:text-action">Project Gallery</Link></li>
             <li><Link href="/capability-statement" className="hover:text-action">Capability Statement</Link></li>
             <li><Link href="/blog" className="hover:text-action">Field Insights</Link></li>
