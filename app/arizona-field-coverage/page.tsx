@@ -346,6 +346,17 @@ export default function ArizonaFieldCoveragePage() {
               dispatch@alreadyherellc.com
             </a>
           </div>
+          <p className="mt-6 text-sm leading-7 text-slate-400">
+            Still comparing options? Read the free{" "}
+            <a
+              href="https://quantam101.github.io/content/ebooks/arizona-field-coverage-guide/"
+              className="font-semibold text-white underline decoration-slate-500 underline-offset-4"
+            >
+              Arizona Field Coverage Buyer&apos;s Guide
+            </a>{" "}
+            — coverage models compared, 2026 price benchmarks, and the SLA terms
+            to demand from any provider.
+          </p>
         </div>
       </section>
     </main>
