@@ -288,6 +288,60 @@ export default function ArizonaFieldCoveragePage() {
       </section>
 
       <section className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Book instantly
+          </p>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+            Three services you can book online right now
+          </h2>
+          <p className="mt-4 max-w-3xl text-base leading-8 text-slate-700">
+            Pay online, and we contact you within one business day to schedule.
+            Full refund if we can&apos;t schedule your site.
+          </p>
+          <div className="mt-8 grid gap-5 md:grid-cols-3">
+            {[
+              {
+                name: "Network Health Assessment",
+                price: "$750",
+                blurb: "On-site network review with findings report, photos, and a prioritized fix list.",
+                url: "https://alreadyhere.gumroad.com/l/rrnqyql",
+              },
+              {
+                name: "Full Infrastructure Assessment",
+                price: "$1,500",
+                blurb: "One-day full-site assessment: network, racks, endpoints, physical security. Executive report + roadmap.",
+                url: "https://alreadyhere.gumroad.com/l/fyaryu",
+              },
+              {
+                name: "Smart Hands Half-Day",
+                price: "$400",
+                blurb: "Four hours of directed on-site work in the Phoenix metro, photo-documented.",
+                url: "https://alreadyhere.gumroad.com/l/iezxvf",
+              },
+            ].map((s) => (
+              <a
+                key={s.name}
+                href={s.url}
+                className="flex flex-col rounded-3xl border border-slate-200 bg-slate-50 p-6 transition hover:border-blue-600"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-lg font-semibold text-slate-950">{s.name}</h3>
+                  <span className="whitespace-nowrap rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold text-white">
+                    {s.price}
+                  </span>
+                </div>
+                <p className="mt-3 flex-1 text-sm leading-6 text-slate-700">{s.blurb}</p>
+                <span className="mt-4 text-sm font-semibold text-blue-600">
+                  Book online →
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
             Core services
