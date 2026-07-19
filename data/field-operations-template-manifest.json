@@ -1,0 +1,68 @@
+{
+  "version": "1.0.0",
+  "owner": "Already Here LLC",
+  "status": "internal_proof_build",
+  "approval_required_for_public_release": true,
+  "templates": [
+    {
+      "id": "customer-job-intake",
+      "name": "Customer and Job Intake",
+      "lane": ["field_service", "it_msp", "mechanic_light_duty", "low_voltage", "hauling_trailer"],
+      "required_fields": ["customer_name", "phone", "email", "service_address", "requested_service", "preferred_date", "authorization"]
+    },
+    {
+      "id": "technician-arrival",
+      "name": "Technician Arrival Record",
+      "lane": ["field_service", "it_msp", "mechanic_light_duty", "low_voltage"],
+      "required_fields": ["technician", "arrival_time", "location", "work_order", "site_contact", "condition_on_arrival"]
+    },
+    {
+      "id": "vehicle-site-condition",
+      "name": "Vehicle or Site Condition Report",
+      "lane": ["mechanic_light_duty", "field_service", "low_voltage", "hauling_trailer"],
+      "required_fields": ["vin_or_site_id", "location", "condition_summary", "pre_existing_damage", "photo_references", "customer_acknowledgement"]
+    },
+    {
+      "id": "required-photo-checklist",
+      "name": "Required Photo Checklist",
+      "lane": ["field_service", "mechanic_light_duty", "low_voltage", "hauling_trailer", "drone_operations"],
+      "required_fields": ["arrival_photo", "work_area_photo", "equipment_photo", "before_photo", "after_photo", "exception_note"]
+    },
+    {
+      "id": "authorization-consent",
+      "name": "Customer Authorization and Photo Consent",
+      "lane": ["field_service", "mechanic_light_duty", "it_msp", "low_voltage"],
+      "required_fields": ["scope_authorized", "photo_consent", "data_consent", "customer_name", "signature", "timestamp"]
+    },
+    {
+      "id": "it-dispatch-work-order",
+      "name": "IT Dispatch Work Order",
+      "lane": ["it_msp", "field_service"],
+      "required_fields": ["ticket_number", "site", "device_or_system", "reported_issue", "remote_contact", "scope", "closeout_requirements"]
+    },
+    {
+      "id": "low-voltage-qa",
+      "name": "Low-Voltage Installation QA Checklist",
+      "lane": ["low_voltage", "it_msp"],
+      "required_fields": ["cable_path", "labeling", "termination", "test_result", "rack_condition", "photo_references", "exceptions"]
+    },
+    {
+      "id": "equipment-inspection-calibration",
+      "name": "Equipment Inspection and Calibration Intake",
+      "lane": ["field_service", "it_msp", "low_voltage"],
+      "required_fields": ["asset_id", "manufacturer", "model", "serial_number", "condition", "calibration_due", "functional_check", "certificate_reference"]
+    },
+    {
+      "id": "trailer-hauling-pretrip",
+      "name": "Trailer and Hauling Pre-Trip Inspection",
+      "lane": ["hauling_trailer"],
+      "required_fields": ["tow_vehicle", "trailer_id", "hitch", "safety_chains", "lights", "tires", "load_securement", "photos", "driver_acknowledgement"]
+    },
+    {
+      "id": "technician-closeout",
+      "name": "Technician Closeout and Customer Sign-Off",
+      "lane": ["field_service", "it_msp", "mechanic_light_duty", "low_voltage", "hauling_trailer"],
+      "required_fields": ["work_completed", "parts_used", "test_results", "remaining_issues", "departure_time", "customer_name", "signature", "follow_up_required"]
+    }
+  ]
+}
