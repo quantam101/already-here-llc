@@ -4,10 +4,13 @@ import test from "node:test";
 import {
   AiActionInputSchema,
   ContactInputSchema,
+  DispatchInputSchema,
   LeadInputSchema,
   OpportunityInputSchema,
   OrganizationInputSchema,
+  RevenueEventInputSchema,
   ReviewActionInputSchema,
+  buildLeadDedupeKey,
 } from "../lib/owned-data/contracts.ts";
 
 test("organization input accepts a valid prospect", () => {
@@ -25,7 +28,7 @@ test("contact input requires an identity field", () => {
   assert.throws(() => ContactInputSchema.parse({ contactType: "prospect", metadata: {} }));
 });
 
-test("lead input enforces confidence and priority boundaries", () => {
+test("lead input enforces lane, confidence, and priority boundaries", () => {
   const valid = LeadInputSchema.parse({
     lane: "dispatch",
     title: "Emergency network outage",
@@ -36,12 +39,33 @@ test("lead input enforces confidence and priority boundaries", () => {
   });
 
   assert.equal(valid.priority, "P0");
+  assert.equal(valid.serviceLocation.countryCode, "US");
+  assert.throws(() => LeadInputSchema.parse({
+    lane: "diesel",
+    title: "Unsupported lane",
+    source: "website",
+  }));
   assert.throws(() => LeadInputSchema.parse({
     lane: "dispatch",
     title: "Invalid confidence",
     source: "website",
     aiConfidence: 1.2,
   }));
+});
+
+test("lead dedupe key prefers stable external identifiers", () => {
+  assert.equal(buildLeadDedupeKey({
+    source: "Gmail",
+    sourceExternalId: " Message-123 ",
+    lane: "dispatch",
+    title: "Ignored title",
+  }), "gmail:message-123");
+
+  assert.equal(buildLeadDedupeKey({
+    source: "Website",
+    lane: "field_service",
+    title: "  Network   Health Assessment ",
+  }), "website:field_service:network health assessment");
 });
 
 test("opportunity probability remains normalized", () => {
@@ -81,4 +105,40 @@ test("review actions allow controlled owner decisions", () => {
     });
     assert.equal(parsed.action, action);
   }
+});
+
+test("dispatch scheduling rejects reversed time windows", () => {
+  const valid = DispatchInputSchema.parse({
+    lane: "field_service",
+    serviceType: "Network health assessment",
+    serviceLocation: { city: "Phoenix", state: "AZ", postalCode: "85007" },
+    scheduledStart: "2026-07-20T16:00:00.000Z",
+    scheduledEnd: "2026-07-20T20:00:00.000Z",
+    quotedAmount: 750,
+  });
+  assert.equal(valid.serviceLocation.countryCode, "US");
+
+  assert.throws(() => DispatchInputSchema.parse({
+    serviceType: "Invalid schedule",
+    serviceLocation: { city: "Phoenix", state: "AZ", postalCode: "85007" },
+    scheduledStart: "2026-07-20T20:00:00.000Z",
+    scheduledEnd: "2026-07-20T16:00:00.000Z",
+  }));
+});
+
+test("revenue events permit refunds but reject invalid currency", () => {
+  const refund = RevenueEventInputSchema.parse({
+    lane: "products",
+    eventType: "refund",
+    amount: -30,
+    currency: "USD",
+  });
+  assert.equal(refund.amount, -30);
+
+  assert.throws(() => RevenueEventInputSchema.parse({
+    lane: "products",
+    eventType: "paid",
+    amount: 30,
+    currency: "US",
+  }));
 });
