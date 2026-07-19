@@ -239,15 +239,24 @@ textarea {
   border-color: #e2e8f0 !important;
 }
 
-.light-page .border-slate-700 {
+.light-page .border-slate-700,
+.light-page .rounded-2xl.border.border-slate-700,
+.light-page .rounded-3xl.border.border-slate-700,
+.light-page .rounded-full.border.border-slate-700 {
   border-color: #334155 !important;
 }
 
-.light-page .border-slate-300 {
+.light-page .border-slate-300,
+.light-page .rounded-2xl.border.border-slate-300,
+.light-page .rounded-3xl.border.border-slate-300,
+.light-page .rounded-full.border.border-slate-300 {
   border-color: #cbd5e1 !important;
 }
 
-.light-page .border-blue-600 {
+.light-page .border-blue-600,
+.light-page .rounded-2xl.border.border-blue-600,
+.light-page .rounded-3xl.border.border-blue-600,
+.light-page .rounded-full.border.border-blue-600 {
   border-color: #2563eb !important;
 }
 
