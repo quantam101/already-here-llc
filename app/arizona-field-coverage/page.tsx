@@ -123,7 +123,7 @@ const coreServices = [
 
 export default function ArizonaFieldCoveragePage() {
   return (
-    <main className="bg-white text-slate-950">
+    <main className="light-page bg-white text-slate-950">
       <section className="border-b border-slate-200 bg-slate-950 text-white">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
