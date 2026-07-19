@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+export const RevenueLaneSchema = z.enum([
+  "field_service",
+  "dispatch",
+  "autoworks",
+  "hauling",
+  "procurement",
+  "products",
+  "affiliate",
+  "retainer",
+]);
 export const PrioritySchema = z.enum(["P0", "P1", "P2", "P3"]);
 export const LeadStatusSchema = z.enum(["new", "qualified", "passed", "converted", "closed", "archived"]);
 export const OpportunityStageSchema = z.enum([
@@ -29,6 +39,20 @@ export const ReviewActionSchema = z.enum([
 
 const OptionalUuid = z.string().uuid().nullable().optional();
 const OptionalMoney = z.number().finite().nonnegative().nullable().optional();
+const Money = z.number().finite().min(-1_000_000_000).max(1_000_000_000);
+
+export const LocationSchema = z.object({
+  name: z.string().trim().min(1).max(200).optional(),
+  addressLine1: z.string().trim().min(1).max(250).optional(),
+  addressLine2: z.string().trim().min(1).max(250).optional(),
+  city: z.string().trim().min(1).max(120).optional(),
+  state: z.string().trim().min(2).max(80).optional(),
+  postalCode: z.string().trim().min(3).max(20).optional(),
+  countryCode: z.string().trim().length(2).default("US"),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  accessNotes: z.string().trim().max(2_000).optional(),
+});
 
 export const OrganizationInputSchema = z.object({
   legalName: z.string().trim().min(2).max(200),
@@ -60,12 +84,12 @@ export const ContactInputSchema = z.object({
 export const LeadInputSchema = z.object({
   organizationId: OptionalUuid,
   contactId: OptionalUuid,
-  lane: z.string().trim().min(2).max(80),
+  lane: RevenueLaneSchema,
   title: z.string().trim().min(3).max(240),
   description: z.string().trim().max(8000).nullable().optional(),
   source: z.string().trim().min(2).max(100),
   sourceExternalId: z.string().trim().max(240).nullable().optional(),
-  serviceLocation: z.record(z.string(), z.unknown()).default({}),
+  serviceLocation: LocationSchema.default({ countryCode: "US" }),
   estimatedValue: OptionalMoney,
   urgency: z.enum(["low", "normal", "high", "emergency"]).default("normal"),
   priority: PrioritySchema.default("P2"),
@@ -79,7 +103,7 @@ export const OpportunityInputSchema = z.object({
   leadId: OptionalUuid,
   organizationId: OptionalUuid,
   contactId: OptionalUuid,
-  lane: z.string().trim().min(2).max(80),
+  lane: RevenueLaneSchema,
   title: z.string().trim().min(3).max(240),
   stage: OpportunityStageSchema.default("qualified"),
   expectedValue: OptionalMoney,
@@ -111,12 +135,62 @@ export const ReviewActionInputSchema = z.object({
   payload: z.record(z.string(), z.unknown()).default({}),
 });
 
+export const DispatchInputSchema = z.object({
+  opportunityId: OptionalUuid,
+  organizationId: OptionalUuid,
+  contactId: OptionalUuid,
+  routeStackId: OptionalUuid,
+  lane: RevenueLaneSchema.default("field_service"),
+  serviceType: z.string().trim().min(2).max(250),
+  serviceLocation: LocationSchema,
+  technicianId: OptionalUuid,
+  scheduledStart: z.string().datetime().nullable().optional(),
+  scheduledEnd: z.string().datetime().nullable().optional(),
+  slaDueAt: z.string().datetime().nullable().optional(),
+  quotedAmount: OptionalMoney,
+  estimatedCost: OptionalMoney,
+  metadata: z.record(z.string(), z.unknown()).default({}),
+}).superRefine((value, ctx) => {
+  if (value.scheduledStart && value.scheduledEnd && Date.parse(value.scheduledEnd) <= Date.parse(value.scheduledStart)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "scheduledEnd must be after scheduledStart",
+      path: ["scheduledEnd"],
+    });
+  }
+});
+
+export const RevenueEventInputSchema = z.object({
+  organizationId: OptionalUuid,
+  contactId: OptionalUuid,
+  opportunityId: OptionalUuid,
+  dispatchId: OptionalUuid,
+  lane: RevenueLaneSchema,
+  eventType: z.enum(["quoted", "booked", "invoiced", "paid", "commission", "affiliate", "refund", "expense", "adjustment"]),
+  amount: Money,
+  currency: z.string().trim().length(3).default("USD"),
+  occurredAt: z.string().datetime().nullable().optional(),
+  source: z.string().trim().max(100).nullable().optional(),
+  externalReference: z.string().trim().max(250).nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).default({}),
+});
+
 export type OrganizationInput = z.infer<typeof OrganizationInputSchema>;
 export type ContactInput = z.infer<typeof ContactInputSchema>;
 export type LeadInput = z.infer<typeof LeadInputSchema>;
 export type OpportunityInput = z.infer<typeof OpportunityInputSchema>;
 export type AiActionInput = z.infer<typeof AiActionInputSchema>;
 export type ReviewActionInput = z.infer<typeof ReviewActionInputSchema>;
+export type DispatchInput = z.infer<typeof DispatchInputSchema>;
+export type RevenueEventInput = z.infer<typeof RevenueEventInputSchema>;
+
+export function buildLeadDedupeKey(input: Pick<LeadInput, "source" | "sourceExternalId" | "title" | "lane">): string {
+  const external = input.sourceExternalId?.trim().toLowerCase();
+  if (external) return `${input.source.trim().toLowerCase()}:${external}`;
+  return [input.source, input.lane, input.title]
+    .map((value) => value.trim().toLowerCase().replace(/\s+/g, " "))
+    .join(":");
+}
 
 export interface OwnedRecord {
   id: string;
