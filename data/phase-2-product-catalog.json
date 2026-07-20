@@ -1,0 +1,138 @@
+{
+  "version": "2026-07-20",
+  "status": "internal_build",
+  "approval_required_before_publish": true,
+  "products": [
+    {
+      "id": "field-operations-template-library",
+      "name": "Field Operations Template Library",
+      "priority": 1,
+      "target_buyer": "Field-service companies, technicians, mechanics, low-voltage contractors, MSPs, hauling operators and inspectors",
+      "problem": "Inconsistent intake, documentation, authorization, photos, closeout and follow-up",
+      "deliverables": [
+        "Customer and job intake",
+        "Technician arrival checklist",
+        "Vehicle or site condition record",
+        "Required photo workflow",
+        "Authorization and consent",
+        "Technician closeout",
+        "Follow-up tracker"
+      ],
+      "pricing": {
+        "basic": "$49",
+        "professional": "$99",
+        "company_license": "$299",
+        "configuration": "$399",
+        "implementation": "$1,250",
+        "monthly_support": "$199/month"
+      },
+      "proof_of_work_status": "required",
+      "landing_page_status": "content_required",
+      "publication_status": "approval_required"
+    },
+    {
+      "id": "field-service-profit-tracker",
+      "name": "Field Service Profit & Job Cost Tracker",
+      "priority": 2,
+      "target_buyer": "Independent technicians, contractors, mechanics, MSP subcontractors and hauling operators",
+      "problem": "Job revenue is known but true profit after labor, travel, materials, fees and unpaid invoices is unclear",
+      "deliverables": [
+        "Job revenue tracker",
+        "Labor and travel cost calculation",
+        "Material and platform fee tracking",
+        "Gross margin and net profit",
+        "Effective hourly rate",
+        "Invoice status and follow-up"
+      ],
+      "pricing": {
+        "basic": "$29",
+        "professional": "$79",
+        "company_license": "$249",
+        "configuration": "$349",
+        "implementation": "$750",
+        "monthly_support": "$99/month"
+      },
+      "proof_of_work_status": "required",
+      "landing_page_status": "content_required",
+      "publication_status": "approval_required"
+    },
+    {
+      "id": "mechanic-digital-intake-system",
+      "name": "Mechanic Digital Intake System",
+      "priority": 3,
+      "target_buyer": "Mobile mechanics and small light-duty repair operations",
+      "problem": "Missing VIN, arrival condition, battery state, photos, authorization and repair closeout",
+      "deliverables": [
+        "VIN and customer intake",
+        "Arrival condition record",
+        "Under-hood and interior photos",
+        "Battery and warning-light record",
+        "Customer authorization",
+        "Repair notes and closeout"
+      ],
+      "pricing": {
+        "basic": "$49",
+        "professional": "$99",
+        "company_license": "$299",
+        "configuration": "$399",
+        "implementation": "$950",
+        "monthly_support": "$149/month"
+      },
+      "proof_of_work_status": "required",
+      "landing_page_status": "content_required",
+      "publication_status": "approval_required"
+    },
+    {
+      "id": "low-voltage-closeout-kit",
+      "name": "Low-Voltage Project Closeout Kit",
+      "priority": 4,
+      "target_buyer": "Low-voltage installers, MSPs, network contractors and deployment teams",
+      "problem": "Incomplete site records, labeling, test evidence, photos, punch lists and customer sign-off",
+      "deliverables": [
+        "Site arrival and scope confirmation",
+        "Cable and equipment inventory",
+        "Labeling and port records",
+        "Photo requirements",
+        "Testing and exception records",
+        "Punch list and sign-off"
+      ],
+      "pricing": {
+        "basic": "$59",
+        "professional": "$129",
+        "company_license": "$399",
+        "configuration": "$499",
+        "implementation": "$1,500",
+        "monthly_support": "$199/month"
+      },
+      "proof_of_work_status": "required",
+      "landing_page_status": "content_required",
+      "publication_status": "approval_required"
+    },
+    {
+      "id": "technician-dispatch-crm",
+      "name": "Technician Dispatch CRM",
+      "priority": 5,
+      "target_buyer": "Small MSPs, field-service companies and deployment coordinators",
+      "problem": "Technician availability, skills, geography, credentials, dispatch history and closeout quality are disconnected",
+      "deliverables": [
+        "Technician profile database",
+        "Skills and credential tracking",
+        "Availability and service-area tracking",
+        "Job matching",
+        "Dispatch history",
+        "Performance and closeout tracking"
+      ],
+      "pricing": {
+        "basic": "$199",
+        "professional": "$499",
+        "company_license": "$999",
+        "configuration": "$750",
+        "implementation": "$2,500",
+        "monthly_support": "$299/month"
+      },
+      "proof_of_work_status": "required",
+      "landing_page_status": "content_required",
+      "publication_status": "approval_required"
+    }
+  ]
+}
