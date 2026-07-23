@@ -6,6 +6,17 @@ const RUNTIME_API_URL =
   process.env.RUNTIME_API_URL?.trim() ||
   "https://profitengine-runtime.onrender.com";
 
+function isValidEmail(value: string): boolean {
+  if (value.length > 254) return false;
+  const at = value.indexOf("@");
+  if (at <= 0 || at === value.length - 1) return false;
+  const local = value.slice(0, at);
+  const domain = value.slice(at + 1);
+  if (domain.length > 253 || !domain.includes(".")) return false;
+  const tld = domain.slice(domain.lastIndexOf(".") + 1);
+  return Boolean(local) && Boolean(tld);
+}
+
 export async function POST(req: Request) {
   let email = "";
   let firstName = "";
@@ -23,7 +34,7 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ ok: false, error: "invalid request" }, { status: 400 });
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isValidEmail(email)) {
     return NextResponse.json({ ok: false, error: "valid email required" }, { status: 400 });
   }
   try {
