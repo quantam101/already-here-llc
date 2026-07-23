@@ -32,7 +32,7 @@ function dispatchForm(overrides = {}) {
   const fields = {
     fullName: 'Taylor Buyer',
     company: 'Already Here LLC',
-    email: 'test@example.com',
+    email: 'test@alreadyherellc.invalid',
     phone: '602-555-0100',
     siteCity: 'Phoenix',
     siteZip: '85007',
@@ -63,7 +63,7 @@ function formRequest(formData, headers = {}) {
 await withEnv(
   {
     RESEND_API_KEY: 'test',
-    DISPATCH_TO_EMAIL: 'dispatch@example.com',
+    DISPATCH_TO_EMAIL: 'dispatch@alreadyherellc.invalid',
     FORMSPREE_ENDPOINT: ''
   },
   async () => {
@@ -80,7 +80,7 @@ await withEnv(
   {
     RESEND_API_KEY: '',
     DISPATCH_TO_EMAIL: '',
-    FORMSPREE_ENDPOINT: 'https://example.com/formspree'
+    FORMSPREE_ENDPOINT: 'https://alreadyherellc.invalid/formspree'
   },
   async () => {
     const response = await dispatchApiGet();
