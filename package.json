@@ -35,7 +35,7 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "next": "16.2.10",
-    "react": "18.2.0",
+    "react": "19.2.8",
     "react-dom": "18.2.0",
     "remark": "^15.0.1",
     "remark-html": "^16.0.1",
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@types/node": "26.1.1",
-    "@types/react": "18.2.66",
+    "@types/react": "19.2.17",
     "@types/react-dom": "18.2.22",
     "autoprefixer": "10.5.2",
     "eslint": "9.39.4",
