@@ -28,7 +28,7 @@ WATCHLIST: Final[List[str]] = [
     if s.strip()
 ]
 SCAN_INTERVAL_SEC: Final[float] = float(_env("MCP_SCAN_INTERVAL", "30"))
-ENGINE_URL: Final[str] = _env("MCP_ENGINE_URL", "http://127.0.0.1:8000")
+ENGINE_URL: Final[str] = _env("MCP_ENGINE_URL", "http://mcp-engine:8000")
 RH_MCP_URL: Final[str] = _env("MCP_RH_GATEWAY_URL", "https://agent.robinhood.com/mcp/trading")
 API_KEY: Final[str] = _env("MCP_API_KEY", "")
 DATA_DIR: Final[str] = _env("MCP_DATA_DIR", "./data")

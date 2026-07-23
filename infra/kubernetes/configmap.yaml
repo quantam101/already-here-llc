@@ -12,5 +12,5 @@ data:
   GMAOS_EMBEDDING_DIM: "384"
   GMAOS_SEMANTIC_MATCH_FLOOR: "0.96"
   GMAOS_LOCAL_MODEL_ENABLED: "false"
-  GMAOS_LOCAL_MODEL_ENDPOINT: "http://localhost:11434/v1/chat/completions"
+  GMAOS_LOCAL_MODEL_ENDPOINT: "http://ollama:11434/v1/chat/completions"
   NODE_ENV: "production"
