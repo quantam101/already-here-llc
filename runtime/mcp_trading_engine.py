@@ -1067,7 +1067,7 @@ if _HAS_FASTAPI:
         })
 
 
-def serve(host: str = "127.0.0.1", port: int = MCP_ENGINE_PORT) -> None:
+def serve(host: str = "0.0.0.0", port: int = MCP_ENGINE_PORT) -> None:
     """Run the engine as a standalone process."""
     if not _HAS_FASTAPI:
         raise RuntimeError("FastAPI/httpx/uvicorn not installed — pip install fastapi httpx uvicorn[standard]")

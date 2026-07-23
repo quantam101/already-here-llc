@@ -66,7 +66,7 @@ async function main() {
     ...dispatchInitialValues,
     fullName: "  Taylor Buyer  ",
     company: "  Already Here LLC  ",
-    email: "  TEST@EXAMPLE.COM ",
+    email: "  TEST@ALREADYHERELLC.INVALID ",
     phone: " (602) 555-0100 ",
     fullSiteAddress: " 123 Main St ",
     requestedDate: "2026-04-13",
@@ -75,17 +75,17 @@ async function main() {
     priority: "Urgent",
     onsiteContactName: "  Jamie Site  ",
     onsiteContactPhone: "602-555-0101",
-    onsiteContactEmail: " SITE@EXAMPLE.COM ",
+    onsiteContactEmail: " SITE@ALREADYHERELLC.INVALID ",
     billingContactName: "  Pat Billing ",
     billingContactPhone: "602-555-0102",
-    billingContactEmail: " BILLING@EXAMPLE.COM ",
+    billingContactEmail: " BILLING@ALREADYHERELLC.INVALID ",
     oneLineScopeSummary: "  Replace failed device and confirm closeout. ",
   });
 
   assert.equal(payload.fullName, "Taylor Buyer");
-  assert.equal(payload.email, "test@example.com");
-  assert.equal(payload.onsiteContactEmail, "site@example.com");
-  assert.equal(payload.billingContactEmail, "billing@example.com");
+  assert.equal(payload.email, "test@alreadyherellc.invalid");
+  assert.equal(payload.onsiteContactEmail, "site@alreadyherellc.invalid");
+  assert.equal(payload.billingContactEmail, "billing@alreadyherellc.invalid");
   assert.equal(validateDispatchPayload(payload).invalidFields.length, 0);
 
   const fullEnv = getMissingDispatchEnvVars({

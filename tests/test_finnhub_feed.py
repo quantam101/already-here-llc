@@ -118,7 +118,7 @@ def test_get_current_price_stale():
     feed._last_trade_price["AAPL"] = 295.00
     feed._last_trade_time["AAPL"] = time.time() - 60
 
-    # Without API key and Yahoo mock, should return None
+    # Without API key and Yahoo fallback, should return None
     with patch.object(feed, "_yahoo_fallback", return_value=None):
         price = feed.get_current_price("AAPL")
         assert price is None

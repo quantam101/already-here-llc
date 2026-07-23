@@ -8,6 +8,7 @@ import { siteConfig } from '@/lib/site';
 
 const navItems = [
   { href: '/', label: 'Home' },
+  { href: '/products', label: 'Products' },
   { href: '/emergency-dispatch', label: 'Same-Day Dispatch' },
   { href: '/services', label: 'Services' },
   { href: '/industries', label: 'Industries' },
