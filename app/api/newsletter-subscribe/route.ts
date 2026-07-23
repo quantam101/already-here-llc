@@ -10,9 +10,16 @@ export async function POST(req: Request) {
   let email = "";
   let firstName = "";
   try {
-    const body = await req.json();
-    email = String(body.email ?? "").trim();
-    firstName = String(body.first_name ?? "").trim().slice(0, 80);
+    const contentType = req.headers.get("content-type") || "";
+    if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
+      const form = await req.formData();
+      email = String(form.get("email") ?? "").trim();
+      firstName = String(form.get("first_name") ?? "").trim().slice(0, 80);
+    } else {
+      const body = await req.json();
+      email = String(body.email ?? "").trim();
+      firstName = String(body.first_name ?? "").trim().slice(0, 80);
+    }
   } catch {
     return NextResponse.json({ ok: false, error: "invalid request" }, { status: 400 });
   }
