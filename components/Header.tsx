@@ -10,6 +10,7 @@ const navItems = [
   { href: '/', label: 'Home' },
   { href: '/emergency-dispatch', label: 'Same-Day Dispatch' },
   { href: '/services', label: 'Services' },
+  { href: '/operations-products', label: 'Products' },
   { href: '/industries', label: 'Industries' },
   { href: '/partner-with-us', label: 'Partners' },
   { href: '/government-contracting', label: 'Government' },
