@@ -11,6 +11,7 @@ const navItems = [
   { href: '/emergency-dispatch', label: 'Same-Day Dispatch' },
   { href: '/services', label: 'Services' },
   { href: '/operations-products', label: 'Products' },
+  { href: '/mobility', label: 'Mobility' },
   { href: '/industries', label: 'Industries' },
   { href: '/partner-with-us', label: 'Partners' },
   { href: '/government-contracting', label: 'Government' },
