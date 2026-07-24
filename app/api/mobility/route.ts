@@ -62,7 +62,7 @@ export async function POST(request: Request) {
   const error = validate(formData);
   if (error) return NextResponse.json({ message: error }, { status: 400 });
 
-  const mobilityId = `MOB-${new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)}-${randomUUID().slice(0, 8).toUpperCase()}`;
+  const mobilityId = `MOB-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
   const interests = formData.getAll('interests').map(String).filter((value) => allowedInterests.has(value));
   const record = {
     mobilityId,
