@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alreadyherellc.com/schemas/applicant-record-schema.json",
+  "title": "Already Here LLC Applicant Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "applicantId",
+    "status",
+    "source",
+    "submittedAt",
+    "fullName",
+    "email",
+    "phone",
+    "city",
+    "state",
+    "workerPath",
+    "workLanes",
+    "skills",
+    "availability",
+    "travelRadiusMiles",
+    "transportation",
+    "consent"
+  ],
+  "properties": {
+    "applicantId": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": [
+        "received",
+        "screening",
+        "information_requested",
+        "interview_requested",
+        "qualified_pool",
+        "approved_vendor",
+        "employee_candidate",
+        "not_selected",
+        "withdrawn",
+        "archived"
+      ]
+    },
+    "source": { "type": "string" },
+    "submittedAt": { "type": "string", "format": "date-time" },
+    "fullName": { "type": "string", "maxLength": 120 },
+    "email": { "type": "string", "format": "email", "maxLength": 160 },
+    "phone": { "type": "string", "maxLength": 40 },
+    "city": { "type": "string", "maxLength": 120 },
+    "state": { "type": "string", "maxLength": 40 },
+    "zipCode": { "type": "string", "maxLength": 20 },
+    "workerPath": {
+      "type": "string",
+      "enum": ["1099_contractor", "employee", "either", "partner_company"]
+    },
+    "workLanes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "skills": { "type": "string", "maxLength": 3000 },
+    "certifications": { "type": "string", "maxLength": 2000 },
+    "tools": { "type": "string", "maxLength": 2000 },
+    "availability": { "type": "string", "maxLength": 1000 },
+    "travelRadiusMiles": { "type": "integer", "minimum": 0, "maximum": 3000 },
+    "transportation": { "type": "string", "maxLength": 500 },
+    "yearsExperience": { "type": "number", "minimum": 0, "maximum": 70 },
+    "hourlyRate": { "type": "string", "maxLength": 120 },
+    "preferredContact": { "type": "string", "maxLength": 80 },
+    "resume": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "received": { "type": "boolean" },
+        "filename": { "type": "string" },
+        "mimeType": { "type": "string" },
+        "sizeBytes": { "type": "integer", "minimum": 0 },
+        "delivery": { "type": "string" }
+      }
+    },
+    "consent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contact", "dataProcessing", "truthfulInformation"],
+      "properties": {
+        "contact": { "type": "boolean", "const": true },
+        "dataProcessing": { "type": "boolean", "const": true },
+        "truthfulInformation": { "type": "boolean", "const": true }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fitScore": { "type": "number", "minimum": 0, "maximum": 100 },
+        "reviewedBy": { "type": "string" },
+        "reviewedAt": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" },
+        "nextAction": { "type": "string" },
+        "nextFollowUpDate": { "type": "string", "format": "date" }
+      }
+    }
+  }
+}
