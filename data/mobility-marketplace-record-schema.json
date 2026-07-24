@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alreadyherellc.com/schemas/mobility-marketplace-record-schema.json",
+  "title": "Already Here Mobility Marketplace Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mobilityId", "submittedAt", "source", "participantType", "status", "contact", "interests", "consents"],
+  "properties": {
+    "mobilityId": { "type": "string" },
+    "submittedAt": { "type": "string", "format": "date-time" },
+    "source": { "type": "string" },
+    "participantType": {
+      "type": "string",
+      "enum": [
+        "vehicle_owner",
+        "business_needs_vehicles",
+        "business_needs_deliveries",
+        "driver_needs_vehicle",
+        "scooter_renter",
+        "fleet_partner",
+        "vehicle_seller"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["new", "screening", "qualified", "match_pending", "matched", "agreement_pending", "active", "declined", "archived"]
+    },
+    "contact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fullName", "email", "phone", "city", "state"],
+      "properties": {
+        "fullName": { "type": "string" },
+        "company": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "zipCode": { "type": "string" },
+        "preferredContact": { "type": "string" }
+      }
+    },
+    "vehicle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "vehicleType": { "type": "string" },
+        "year": { "type": "string" },
+        "make": { "type": "string" },
+        "model": { "type": "string" },
+        "mileage": { "type": "string" },
+        "condition": { "type": "string" },
+        "ownershipConfirmed": { "type": "boolean" },
+        "registrationCurrent": { "type": "boolean" },
+        "insuranceCurrent": { "type": "boolean" },
+        "availability": { "type": "string" },
+        "askingPrice": { "type": "string" },
+        "preferredDeal": { "type": "string" }
+      }
+    },
+    "demand": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "vehiclesNeeded": { "type": "integer", "minimum": 0 },
+        "vehicleTypesNeeded": { "type": "string" },
+        "deliveryVolume": { "type": "string" },
+        "serviceArea": { "type": "string" },
+        "schedule": { "type": "string" },
+        "driverNeeded": { "type": "boolean" },
+        "cargoRequirements": { "type": "string" },
+        "budget": { "type": "string" },
+        "startDate": { "type": "string" }
+      }
+    },
+    "interests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "sell_vehicle",
+          "rent_vehicle",
+          "lease_vehicle",
+          "revenue_share",
+          "managed_fleet",
+          "delivery_capacity",
+          "driver_with_vehicle",
+          "vehicle_without_driver",
+          "scooter_rental",
+          "doordash",
+          "uber_eats",
+          "local_courier",
+          "business_delivery_overflow"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "notes": { "type": "string" },
+    "match": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fitScore": { "type": "number", "minimum": 0, "maximum": 100 },
+        "matchedRecordIds": { "type": "array", "items": { "type": "string" } },
+        "nextAction": { "type": "string" },
+        "reviewerNotes": { "type": "string" }
+      }
+    },
+    "consents": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contact", "data", "truth"],
+      "properties": {
+        "contact": { "type": "boolean" },
+        "data": { "type": "boolean" },
+        "truth": { "type": "boolean" }
+      }
+    }
+  }
+}
