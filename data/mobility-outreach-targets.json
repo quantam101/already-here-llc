@@ -1,0 +1,90 @@
+{
+  "version": "2026-07-24",
+  "approval_required_before_contact": true,
+  "records": [
+    {
+      "id": "mobility_target_crossroads_courier_phx",
+      "company": "Crossroads Courier",
+      "lane": "courier_driver_demand",
+      "market": "Phoenix, Arizona",
+      "public_signal": "Public Phoenix courier-driver posting requests independent contractors using their own cars, minivans, or SUVs.",
+      "collaboration_angle": "Offer screened vehicle-owner and driver referrals; ask whether the company accepts drivers using approved rented vehicles and whether it needs overflow vehicle capacity.",
+      "recommended_action": "Prepare partnership inquiry for approval; confirm current onboarding, insurance, MVR, vehicle, and background requirements.",
+      "status": "approval_required",
+      "source_url": "https://www.indeed.com/viewjob?jk=ad376c777150df75",
+      "risk_flags": ["Posting terms may change", "Do not promise earnings", "Drivers must meet company and insurance requirements"]
+    },
+    {
+      "id": "mobility_target_rowleys_routes",
+      "company": "Rowley's Routes",
+      "lane": "medical_equipment_delivery",
+      "market": "Phoenix metro, Arizona",
+      "public_signal": "Public employment page seeks 1099 drivers with their own vehicles for medication and equipment delivery routes.",
+      "collaboration_angle": "Discuss driver referrals, approved vehicle access, overflow routes, and reciprocal referrals for people who need vehicles.",
+      "recommended_action": "Prepare vendor/driver-supply collaboration email for approval.",
+      "status": "approval_required",
+      "source_url": "https://www.rowleysroutes.com/employment/",
+      "risk_flags": ["Medical delivery may involve special handling", "Verify insurance and route requirements", "Do not imply regulated medical courier authority"]
+    },
+    {
+      "id": "mobility_target_couriers_phoenix",
+      "company": "Couriers Phoenix",
+      "lane": "same_day_delivery",
+      "market": "Phoenix, Arizona",
+      "public_signal": "Public site advertises 24/7 same-day, scheduled, rush, legal-document, medical, and larger-vehicle delivery capacity.",
+      "collaboration_angle": "Ask about overflow subcontracting, driver referrals, vehicle needs, and route-capacity exchange.",
+      "recommended_action": "Prepare partnership inquiry for approval and request written vendor requirements.",
+      "status": "approval_required",
+      "source_url": "https://couriersphoenix.com/",
+      "risk_flags": ["Verify subcontracting policy", "Specialized cargo may require additional authority or training"]
+    },
+    {
+      "id": "mobility_target_quisqueya_logistics",
+      "company": "Quisqueya Logistics LLC",
+      "lane": "final_mile_and_overflow",
+      "market": "Phoenix metro, Arizona",
+      "public_signal": "Public site states routes are open and promotes final-mile subcontracting, dedicated routes, and overflow coverage using a box truck with lift gate.",
+      "collaboration_angle": "Explore reciprocal overflow referrals, smaller-vehicle feeder routes, appliance/furniture support, and owner-operator network sharing.",
+      "recommended_action": "Prepare a direct owner-to-owner collaboration message for approval.",
+      "status": "approval_required",
+      "source_url": "https://quisqueyalogistics.com/",
+      "risk_flags": ["Confirm cargo, liability, and carrier-authority boundaries", "Avoid representing heavy-freight capability without suitable equipment"]
+    },
+    {
+      "id": "mobility_target_krossfleet",
+      "company": "KrossFleet LLC",
+      "lane": "secure_transport_and_subcontracting",
+      "market": "Arizona and regional routes",
+      "public_signal": "Public site describes veteran-owned mobility solutions and subcontracting for courier, B2B, legal-document, and scheduled logistics routes.",
+      "collaboration_angle": "Explore veteran-business reciprocal referrals, subcontract driver/vehicle capacity, and route handoffs by equipment and geography.",
+      "recommended_action": "Prepare veteran-business partnership inquiry for approval.",
+      "status": "approval_required",
+      "source_url": "https://krossfleetllc.com/transport-services",
+      "risk_flags": ["Verify regulated cargo scope", "Confirm authority, insurance, and subcontracting requirements"]
+    },
+    {
+      "id": "mobility_target_turo_host",
+      "company": "Turo",
+      "lane": "peer_to_peer_vehicle_sharing",
+      "market": "Phoenix, Arizona",
+      "public_signal": "Official host program allows eligible owners to list vehicles; Phoenix uses variable host-share rules and Arizona peer-to-peer car-sharing requirements apply.",
+      "collaboration_angle": "Offer vehicle-owner readiness, listing preparation, photo intake, maintenance coordination, and host operations support rather than direct unstructured rental.",
+      "recommended_action": "Evaluate internal proof-of-work and prepare owner-education content; do not enroll or list without approval.",
+      "status": "researching",
+      "source_url": "https://turo.com/us/en/car-rental/united-states/list-your-car",
+      "risk_flags": ["Platform approval and eligibility", "Arizona tax rules", "Financing/lease restrictions", "Insurance and damage responsibility", "Variable Phoenix host share"]
+    },
+    {
+      "id": "mobility_target_coop_ryder",
+      "company": "COOP by Ryder",
+      "lane": "commercial_vehicle_sharing",
+      "market": "Phoenix, Arizona",
+      "public_signal": "Official Phoenix page supports business rentals and listings for qualifying trucks, vans, tractors, and trailers associated with Ryder lease or maintenance programs.",
+      "collaboration_angle": "Use as a commercial-vehicle supply or demand path for qualifying fleet partners and business clients.",
+      "recommended_action": "Research eligibility before recommending; prepare a commercial-vehicle readiness checklist.",
+      "status": "researching",
+      "source_url": "https://www.coop.com/commercial-vehicle-rentals/phoenix-trucks",
+      "risk_flags": ["Vehicle eligibility restrictions", "Business account requirements", "Commercial insurance and mileage charges"]
+    }
+  ]
+}
