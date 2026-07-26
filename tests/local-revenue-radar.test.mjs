@@ -9,13 +9,13 @@ import { readinessSnapshot, summarizePipeline } from '../ops/local-revenue-radar
 
 const require = createRequire(import.meta.url);
 const sourcesConfig = require('../ops/local-revenue-radar/sources.config.json');
-const sampleLead = require('../ops/local-revenue-radar/samples/sample-lead.json');
+const fixtureLead = require('../ops/local-revenue-radar/samples/sample-lead.json');
 const fieldServiceRadar = require('../ops/local-revenue-radar/field-service-radar.json');
 
-const validation = validateLeadInput(sampleLead, sourcesConfig);
+const validation = validateLeadInput(fixtureLead, sourcesConfig);
 assert.equal(validation.valid, true);
 
-const ingested = ingestLead(sampleLead, sourcesConfig);
+const ingested = ingestLead(fixtureLead, sourcesConfig);
 assert.equal(ingested.accepted, true);
 assert.equal(ingested.lead.categoryId, 'field-service');
 assert.equal(ingested.routing.route, 'DO_IT');
@@ -28,7 +28,7 @@ assert.equal(routeLead(ingested.lead).guardrails.includes('No auto-bidding'), tr
 
 const blockedSocialLead = ingestLead(
   {
-    ...sampleLead,
+    ...fixtureLead,
     sourceId: 'facebook-marketplace',
     intakeChannel: 'scrape',
     title: 'Scraped social post',
@@ -44,13 +44,13 @@ const xml = `
     <item>
       <title>POS install smart hands needed</title>
       <description>Retail rollout in Phoenix</description>
-      <link>https://example.com/lead-1</link>
+      <link>https://alreadyherellc.invalid/lead-1</link>
       <pubDate>Fri, 29 May 2026 10:00:00 GMT</pubDate>
     </item>
     <item>
       <title>Licensed electrician required</title>
       <description>Life safety inspection</description>
-      <link>https://example.com/lead-2</link>
+      <link>https://alreadyherellc.invalid/lead-2</link>
     </item>
   </channel></rss>
 `;
@@ -59,7 +59,7 @@ assert.equal(parsedRss.length, 2);
 assert.equal(filterRssItems(parsedRss, fieldServiceRadar).length, 1);
 assert.ok(approvedRssSources(sourcesConfig).every((source) => source.allowed_use === 'public_rss'));
 
-const batch = ingestLeads([sampleLead], sourcesConfig);
+const batch = ingestLeads([fixtureLead], sourcesConfig);
 const crmJson = exportCrmJson(batch);
 const crmCsv = exportCrmCsv(batch);
 assert.equal(crmJson[0].route, 'DO_IT');

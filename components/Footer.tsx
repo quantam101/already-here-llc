@@ -40,6 +40,7 @@ export function Footer() {
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Navigation</h2>
           <ul className="mt-4 space-y-3 text-sm text-slate-700">
             <li><Link href="/" className="hover:text-action">Home</Link></li>
+            <li><Link href="/products" className="hover:text-action">Products</Link></li>
             <li><Link href="/services" className="hover:text-action">Services</Link></li>
             <li><Link href="/who-we-serve" className="hover:text-action">Who We Serve</Link></li>
             <li><Link href="/dispatch" className="hover:text-action">Dispatch</Link></li>

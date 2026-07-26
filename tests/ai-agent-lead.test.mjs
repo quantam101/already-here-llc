@@ -23,9 +23,9 @@ function payload(overrides = {}) {
   return {
     fullName: 'Taylor Owner',
     company: 'Phoenix Service Company',
-    email: 'owner@example.com',
+    email: 'owner@alreadyherellc.invalid',
     phone: '602-555-0100',
-    website: 'https://example.com',
+    website: 'https://alreadyherellc.invalid',
     businessType: 'Local service business',
     packageInterest: 'Growth Agent',
     urgency: 'This week',
@@ -54,7 +54,7 @@ function request(body, ip = '203.0.113.90') {
   assert.ok(result.score >= 76);
 }
 
-await withEnv({ RESEND_API_KEY: 'test', AI_AGENT_TO_EMAIL: 'agent@example.com', DISPATCH_TO_EMAIL: '', FORMSPREE_ENDPOINT: '' }, async () => {
+await withEnv({ RESEND_API_KEY: 'test', AI_AGENT_TO_EMAIL: 'agent@alreadyherellc.invalid', DISPATCH_TO_EMAIL: '', FORMSPREE_ENDPOINT: '' }, async () => {
   const response = await leadApiGet();
   assert.equal(response.status, 200);
   const json = await response.json();
@@ -83,7 +83,7 @@ await withEnv({ RESEND_API_KEY: '', AI_AGENT_TO_EMAIL: '', DISPATCH_TO_EMAIL: ''
   assert.equal(json.message, 'AI agent lead endpoint not configured.');
 });
 
-await withEnv({ RESEND_API_KEY: 'test', AI_AGENT_TO_EMAIL: 'agent@example.com', DISPATCH_TO_EMAIL: '', FORMSPREE_ENDPOINT: '' }, async () => {
+await withEnv({ RESEND_API_KEY: 'test', AI_AGENT_TO_EMAIL: 'agent@alreadyherellc.invalid', DISPATCH_TO_EMAIL: '', FORMSPREE_ENDPOINT: '' }, async () => {
   const originalFetch = globalThis.fetch;
   const calls = [];
   try {
