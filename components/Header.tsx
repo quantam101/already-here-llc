@@ -12,6 +12,7 @@ const navItems = [
   { href: '/services', label: 'Services' },
   { href: '/operations-products', label: 'Products' },
   { href: '/mobility', label: 'Mobility' },
+  { href: '/scooter-rentals', label: 'Scooter Rentals' },
   { href: '/industries', label: 'Industries' },
   { href: '/partner-with-us', label: 'Partners' },
   { href: '/government-contracting', label: 'Government' },

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { MobilityMarketplaceForm } from '@/components/MobilityMarketplaceForm';
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ const paths = [
   },
   {
     title: 'Rent a scooter or delivery vehicle',
-    copy: 'Individuals can register interest in personal transportation, DoorDash, Uber Eats, local courier work, or short-term mobility.'
+    copy: 'Individuals can register interest in personal transportation, DoorDash, Uber Eats, local courier work, or short-term mobility. Gig delivery scooter rentals are now available at /scooter-rentals.'
   },
   {
     title: 'Partner as a fleet or vendor',
@@ -40,6 +41,11 @@ export default function MobilityPage() {
           <section key={path.title} className="card p-6 sm:p-8">
             <h2 className="text-xl font-semibold text-navy">{path.title}</h2>
             <p className="mt-3 text-sm leading-7 text-slate-600">{path.copy}</p>
+            {path.title === 'Rent a scooter or delivery vehicle' ? (
+              <Link href="/scooter-rentals" className="mt-4 inline-flex rounded-full bg-action px-4 py-2 text-sm font-semibold text-white hover:bg-navy">
+                View scooter rentals
+              </Link>
+            ) : null}
           </section>
         ))}
       </div>
