@@ -89,6 +89,10 @@ export async function POST(request: Request) {
       deliveryPlatforms: clean(formData, 'deliveryPlatforms', 200)
     },
     addOns,
+    proDeliveryKit: clean(formData, 'proDeliveryKit') === 'true',
+    waitlist: clean(formData, 'joinWaitlist') === 'true',
+    payDepositNow: clean(formData, 'payDepositNow') === 'true',
+    referralCode: clean(formData, 'referralCode', 80),
     notes: clean(formData, 'notes', 2000),
     consents: { contact: true, data: true, terms: true }
   };
@@ -108,7 +112,11 @@ export async function POST(request: Request) {
     ['Location', `${record.contact.city}, ${record.contact.state} ${record.contact.zipCode}`.trim()],
     ['License', record.driver.licenseNumber],
     ['Platforms', record.driver.deliveryPlatforms],
+    ['Pro Delivery Kit', record.proDeliveryKit ? 'Yes' : 'No'],
     ['Add-ons', addOns.join(', ') || '—'],
+    ['Waitlist', record.waitlist ? 'Yes' : 'No'],
+    ['Deposit pre-pay', record.payDepositNow ? 'Yes' : 'No'],
+    ['Referral code', record.referralCode || '—'],
     ['Notes', record.notes]
   ];
   const html = `<div style="font-family:Arial,sans-serif;max-width:720px;margin:auto"><h2>New scooter rental request — ${escapeHtml(rentalId)}</h2><table style="width:100%;border-collapse:collapse">${rows.map(([label, value]) => `<tr><td style="padding:8px;border-bottom:1px solid #ddd;font-weight:700">${escapeHtml(label)}</td><td style="padding:8px;border-bottom:1px solid #ddd;white-space:pre-wrap">${escapeHtml(value)}</td></tr>`).join('')}</table><pre style="margin-top:20px;padding:16px;background:#f8fafc;overflow:auto">${escapeHtml(JSON.stringify(record, null, 2))}</pre></div>`;

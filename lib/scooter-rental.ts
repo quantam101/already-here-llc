@@ -1,10 +1,18 @@
 export const rentalPricing = {
   weeklyRate: 155,
   monthlyRate: 550,
+  monthlyEffectiveWeekly: 137.5,
   onboardingCharge: 305,
   securityDeposit: 150,
-  firstWeekRent: 155
+  firstWeekRent: 155,
+  proDeliveryKitWeekly: 25
 } as const;
+
+export const fleetAvailability: { totalUnits: number; availableNow: number; waitlistOpen: boolean } = {
+  totalUnits: 3,
+  availableNow: 3,
+  waitlistOpen: true
+};
 
 export const baseInclusions = [
   'Registered & inspected scooter',
@@ -23,6 +31,14 @@ export const addOnItems = [
   { name: 'DOT-approved helmet (+ sanitary liner)', weekly: 5, purchase: null }
 ] as const;
 
+export const proDeliveryKit = {
+  name: 'Pro Delivery Kit',
+  weekly: 25,
+  contents: ['Wireless fast-charging phone mount', 'LED flashing active safety vest', 'Touchscreen all-weather riding gloves', 'All-weather phone rain cover', 'USB-C / Lightning fast-charge cable'],
+  standaloneValue: 17,
+  savingsCopy: 'Bundle essentials and save $4/week'
+} as const;
+
 export const replacementFees = [
   { item: 'Rear cargo trunk box', fee: 100, note: 'Includes box, mounting rack, and key/lock barrel' },
   { item: 'Hardwired cellular GPS tracker', fee: 85, note: 'Unit replacement, wiring setup, SIM re-activation' },
@@ -31,6 +47,8 @@ export const replacementFees = [
   { item: 'Ignition key / key fob', fee: 35, note: 'Blank key cutting and pairing labor' },
   { item: 'Phone mount / wireless mount', fee: 30, note: 'Standard or wireless mount replacement' },
   { item: 'High-vis / LED vest', fee: 25, note: 'Vest replacement' },
+  { item: 'All-weather phone rain cover', fee: 12, note: 'Kit item only; not sold separately' },
+  { item: 'USB-C / Lightning fast-charge cable', fee: 15, note: 'Kit item only; not sold separately' },
   { item: 'GPS tampering penalty', fee: 150, note: 'Direct breach; immediate remote vehicle immobilization' }
 ] as const;
 

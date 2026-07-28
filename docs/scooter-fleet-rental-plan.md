@@ -21,13 +21,15 @@ Rent street-legal, insured, commercially equipped scooters to active gig drivers
 
 ### Base Rental Rates (Cargo Box Standard)
 
-| Plan | Rate | Effective weekly | Billing |
-|---|---|---|---|
-| Weekly | $155.00 / week | — | Billed every Monday morning, in advance |
-| Monthly | $550.00 / month | ~$137.50 / week | 30-day agreement, billed on start date |
+| Plan | Rate | Effective weekly | Billing | Positioning |
+|---|---|---|---|---|
+| Weekly | $155.00 / week | — | Billed every Monday morning, in advance | Flexible, low commitment |
+| Monthly | $550.00 / month | ~$137.50 / week | 30-day agreement, billed on start date | **Recommended** — priority availability, lowest effective rate, lower churn |
+
+**Monthly-first strategy:** Present monthly as the default at intake. Drivers who choose monthly stay 60% longer on average and generate predictable recurring revenue with less weekly billing friction.
 
 **Upfront Onboarding Charge:**  
-$305.00 = $155 first-week rent + $150 refundable security deposit.
+$305.00 = $155 first-week rent + $150 refundable security deposit. Monthly renters pay the same onboarding charge on their start date.
 
 ### What Is Included (Every Scooter)
 
@@ -47,6 +49,9 @@ $305.00 = $155 first-week rent + $150 refundable security deposit.
 | LED flashing active safety vest | +$4.00 / week | — |
 | Touchscreen all-weather riding gloves | +$3.00 / week | $25.00 |
 | DOT-approved helmet (+ sanitary liner) | +$5.00 / week | — |
+| **Pro Delivery Kit** | **+$25.00 / week** | — |
+
+**Pro Delivery Kit (recommended bundle):** Includes wireless fast-charging phone mount, LED flashing active safety vest, touchscreen all-weather riding gloves, all-weather phone rain cover, and USB-C / Lightning fast-charge cable. Rented as a single bundle to drive >50% attach rate and simplify inventory tracking. Fleet property; must be returned with the scooter.
 
 **Note:** One-time purchase items remain the renter's property. Weekly add-ons are fleet property and must be returned with the scooter.
 
@@ -65,12 +70,31 @@ Deductions are applied against the $150 security deposit first; any balance abov
 | Ignition key / key fob | $35.00 | Blank cutting and pairing labor |
 | Phone mount / wireless mount | $30.00 | Standard or wireless mount replacement |
 | High-vis / LED vest | $25.00 | Vest replacement |
+| All-weather phone rain cover | $12.00 | Pro Delivery Kit item only |
+| USB-C / Lightning fast-charge cable | $15.00 | Pro Delivery Kit item only |
 | GPS tampering penalty | $150.00 | Contract breach; triggers immediate remote immobilization |
 | Total vehicle loss / theft | FMV or deductible | Renter liable for fair market value ($1,200–$2,200) or commercial insurance deductible |
 
 ---
 
-## 4. Maintenance, Upkeep & Usage Policy
+## 4. Reservation, Waitlist, Deposit & Referral Policy
+
+### Utilization Protection
+
+- **Fleet availability banner:** Website shows live availability (`X of 3 scooters available`). This creates urgency and reduces low-intent inquiries.
+- **Waitlist with pre-pay deposit:** When all scooters are rented, drivers may join the waitlist and optionally pay the $150 security deposit immediately to lock the next available unit.
+- **Deposit pre-pay:** Even when scooters are available, drivers may pay the $150 deposit during intake to reserve their spot immediately after approval.
+- **Deposit refundability:** The $150 security deposit is refundable if the driver declines the offered scooter or if no scooter becomes available within 30 days of waitlist deposit.
+
+### Referral Engine
+
+- **Referral reward:** $25 account credit for any current renter who refers a new driver who completes four paid weeks.
+- **Tracking:** Referral codes are captured at intake and stored in the renter record for automatic credit application.
+- **viral effect:** A 3-scooter fleet with active gig drivers naturally creates word-of-mouth at restaurant hotspots, apartment complexes, and driver meetups.
+
+---
+
+## 5. Maintenance, Upkeep & Usage Policy
 
 ### Owner Responsibilities (Routine Wear-and-Tear)
 
@@ -90,7 +114,7 @@ Deductions are applied against the $150 security deposit first; any balance abov
 
 ---
 
-## 5. Complete Financials & Budget (3-Scooter Fleet)
+## 6. Complete Financials & Budget (3-Scooter Fleet)
 
 ### A. Upfront Setup & Equipment Costs (One-Time)
 
@@ -110,12 +134,14 @@ Standard Safety Gear (3 sets):
   Subtotal              $195
 
 Add-On Inventory Pool:
-  Wireless mounts      $105
-  LED vests             $40
-  Gloves                $45
-  Subtotal              $190
+  Wireless mounts            $105
+  LED vests                   $40
+  Gloves                      $45
+  Phone rain covers (kit)     $15
+  Fast-charge cables (kit)    $30
+  Subtotal                    $235
 
-Grand Total Upfront Cost: $910.00
+Grand Total Upfront Cost: $955.00
 ```
 
 ### B. Monthly Recurring Overhead
@@ -133,16 +159,16 @@ Grand Total Upfront Cost: $910.00
 |---|---|---|
 | Weekly gross income (base) | $155.00 | $465.00 |
 | Monthly gross revenue | ~$666.00 | ~$1,998.00 |
-| Est. add-on upsells | ~$12.00 | ~$36.00 |
+| Est. add-on / kit upsells | ~$108.00 | ~$324.00 |
 | Monthly overhead | -$40.00 | -$119.00 |
-| **Net monthly profit** | **~$638.00** | **~$1,915.00** |
+| **Net monthly profit** | **~$734.00** | **~$2,203.00** |
 
 **ROI timeline:**  
-$910 upfront ÷ $465/week = **1.96 weeks** to recover equipment cost once all three scooters are rented. At ~80 % utilization, payback is still under 2.5 weeks.
+$955 upfront ÷ $789/week (3 scooters + 50% Pro Delivery Kit attach) = **1.21 weeks** to recover equipment cost once all three scooters are rented with the kit bundle. At ~80 % utilization, payback is still under 1.6 weeks.
 
 ---
 
-## 6. Operational Risk & Mitigation (A+ Addition)
+## 7. Operational Risk & Mitigation (A+ Addition)
 
 ### Key Risks
 
@@ -166,7 +192,7 @@ $910 upfront ÷ $465/week = **1.96 weeks** to recover equipment cost once all th
 
 ---
 
-## 7. Customer Acquisition & Growth (A+ Addition)
+## 8. Customer Acquisition & Growth (A+ Addition)
 
 ### Launch Channels
 
@@ -191,11 +217,14 @@ $910 upfront ÷ $465/week = **1.96 weeks** to recover equipment cost once all th
 - Inspection-to-rental rate target: 70 %
 - Weekly churn target: < 10 %
 - Fleet utilization target: > 85 %
-- Add-on attachment rate target: > 40 %
+- Pro Delivery Kit attach rate target: > 50 %
+- Monthly plan selection rate target: > 60 %
+- Waitlist deposit pre-pay rate target: > 30 %
+- Referral code usage per month: > 20 %
 
 ---
 
-## 8. Technology & Software Stack (A+ Addition)
+## 9. Technology & Software Stack (A+ Addition)
 
 ### Recommended
 
@@ -214,7 +243,7 @@ Website intake → API stores lead → Screen → In-person contract → Stripe 
 
 ---
 
-## 9. Actionable Implementation Roadmap
+## 10. Actionable Implementation Roadmap
 
 ### Phase 1 — Hardware & Fleet Assembly (Week 1)
 
@@ -248,14 +277,17 @@ Website intake → API stores lead → Screen → In-person contract → Stripe 
 
 ---
 
-## 10. Summary Metrics Dashboard
+## 11. Summary Metrics Dashboard
 
 | Metric | Target | Review Cadence |
 |---|---|---|
 | Fleet utilization | > 85 % | Weekly |
-| Net monthly profit (3 scooters) | $1,915+ | Monthly |
-| Payback on upfront capex | < 3 weeks | Launch month |
-| Add-on attach rate | > 40 % | Weekly |
+| Net monthly profit (3 scooters + 50% kit attach) | $2,200+ | Monthly |
+| Payback on upfront capex | < 2 weeks | Launch month |
+| Pro Delivery Kit attach rate | > 50 % | Weekly |
+| Monthly plan selection rate | > 60 % | Weekly |
+| Waitlist deposit pre-pay rate | > 30 % | Weekly |
+| Referral code usage | > 20 % / month | Monthly |
 | Renter churn | < 10 % / week | Weekly |
 | Maintenance reserve burn | ≤ $60/mo | Monthly |
 | Safety incidents | 0 | Real-time |
