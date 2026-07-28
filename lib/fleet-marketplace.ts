@@ -1,3 +1,5 @@
+import { VerificationBadge } from '@/lib/badges';
+
 export const marketplaceMission = 'One place to list, rent, lease, sell, share, or request any vehicle or fleet asset — from scooters and delivery vehicles to farm equipment, construction machines, party and entertainment vehicles, RVs, trailers, and fleet overflow.';
 
 export const marketplaceCategories = [
@@ -103,3 +105,23 @@ export const howItWorks = [
   ['Operate', 'Written agreement, payment terms, and operating rules are confirmed before any handoff.'],
   ['Track', 'Condition photos, inspection checkpoints, and telemetry keep both sides protected.']
 ] as const;
+
+export const sampleListings: Array<{
+  id: string;
+  title: string;
+  category: string;
+  type: string;
+  price: string;
+  status: 'available' | 'waitlist' | 'coming_soon';
+  location: string;
+  description: string;
+  href: string;
+  badges: VerificationBadge[];
+}> = [
+  { id: 'scooter-001', title: 'Gig delivery scooter', category: 'Delivery & gig vehicles', type: 'Scooter', price: '$155/week or $550/month', status: 'available', location: 'Phoenix / Tempe / Scottsdale', description: 'Turnkey scooter for DoorDash, Uber Eats, Grubhub. Cargo box, GPS, helmet, lock, vest, mount, maintenance included.', href: '/scooter-rentals', badges: ['inspection', 'insurance', 'payment'] },
+  { id: 'trailer-001', title: 'Utility trailer rental', category: 'Construction & landscaping', type: 'Utility / cargo trailer', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix metro', description: 'Short-term utility and cargo trailer rentals for contractors, movers, and haulers.', href: '/fleet-marketplace', badges: ['identity'] },
+  { id: 'rv-001', title: 'Camper van / RV', category: 'Camping & outdoor', type: 'RV / camper van', price: 'Submit for quote', status: 'coming_soon', location: 'Arizona', description: 'Weekend and overland camper van and RV rentals for road trips and outdoor adventures.', href: '/fleet-marketplace', badges: ['identity'] },
+  { id: 'event-001', title: 'Party / event vehicle', category: 'Parties & celebrations', type: 'Party bus / limo van', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix metro', description: 'Party buses, limo vans, and specialty vehicles for celebrations, tailgates, and events.', href: '/fleet-marketplace', badges: ['identity'] },
+  { id: 'farm-001', title: 'Tractor / UTV rental', category: 'Farming & agriculture', type: 'Tractor / UTV', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix / rural Arizona', description: 'Seasonal tractor, UTV, and farm equipment rentals for ranches, orchards, and farms.', href: '/fleet-marketplace', badges: ['identity'] },
+  { id: 'food-001', title: 'Food truck / mobile kitchen', category: 'Entertainment & events', type: 'Food truck', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix metro', description: 'Food truck and mobile kitchen rentals or revenue-share for events, catering, and pop-ups.', href: '/fleet-marketplace', badges: ['identity'] }
+];

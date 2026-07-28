@@ -1,9 +1,15 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { addOnItems, fleetAvailability, proDeliveryKit, rentalPricing } from '@/lib/scooter-rental';
+import { isValidReferralCode } from '@/lib/referral';
 
 export function ScooterRentalForm() {
+  const searchParams = useSearchParams() ?? new URLSearchParams();
+  const urlRef = searchParams.get('ref');
+  const validatedRef = urlRef && isValidReferralCode(urlRef) ? urlRef : '';
+
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -154,7 +160,7 @@ export function ScooterRentalForm() {
 
       <label className="mt-6 grid gap-2 text-sm font-medium text-navy">
         Referral code (optional)
-        <input name="referralCode" maxLength={80} placeholder="If a current renter referred you, enter their code" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
+        <input name="referralCode" defaultValue={validatedRef} maxLength={80} placeholder="If a current renter referred you, enter their code" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
       </label>
 
       <label className="mt-6 grid gap-2 text-sm font-medium text-navy">

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { ScooterRentalForm } from '@/components/ScooterRentalForm';
 import { addOnItems, baseInclusions, fleetAvailability, fleetFinancials, ownerResponsibilities, proDeliveryKit, rentalPricing, renterResponsibilities } from '@/lib/scooter-rental';
@@ -185,7 +186,9 @@ export default function ScooterRentalsPage() {
               before applying.
             </p>
           </div>
-          <ScooterRentalForm />
+          <Suspense fallback={<div className="card p-8 text-sm text-slate-600">Loading rental form...</div>}>
+            <ScooterRentalForm />
+          </Suspense>
         </div>
       </section>
     </div>

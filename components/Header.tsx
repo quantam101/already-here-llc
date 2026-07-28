@@ -16,6 +16,7 @@ const navItems = [
   { href: '/connect', label: 'Find Work' },
   { href: '/scooter-rentals', label: 'Scooter Rentals' },
   { href: '/industries', label: 'Industries' },
+  { href: '/dashboard', label: 'Dashboard' },
   { href: '/partner-with-us', label: 'Partners' },
   { href: '/government-contracting', label: 'Government' },
   { href: '/technician-network', label: 'Tech Network' },
