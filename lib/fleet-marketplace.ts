@@ -50,6 +50,18 @@ export const marketplaceCategories = [
     title: 'Specialty & unique',
     examples: 'Classic cars, motorcycles, scooters, vintage trucks, mobile workshops',
     audience: 'Enthusiasts, collectors, creators, marketers, film productions'
+  },
+  {
+    id: 'bounce_houses',
+    title: 'Bounce houses & party inflatables',
+    examples: 'Bounce houses, water slides, obstacle courses, inflatable games, combo units',
+    audience: 'Party hosts, event planners, schools, churches, community events, festival organizers'
+  },
+  {
+    id: 'water_sports',
+    title: 'Water sports & bicycles',
+    examples: 'Kayaks, paddleboards, jet skis, boats, pontoons, bicycles, e-bikes, watersport trailers',
+    audience: 'Outdoor enthusiasts, lake/river renters, tourists, fitness groups, event rentals'
   }
 ] as const;
 
@@ -86,6 +98,13 @@ export const vehicleTypes = [
   'Car hauler / equipment trailer',
   'ATV / motorcycle trailer',
   'Boat / watercraft trailer',
+  'Bounce house / inflatable',
+  'Water slide / inflatable obstacle course',
+  'Kayak / paddleboard',
+  'Jet ski / personal watercraft',
+  'Boat / pontoon',
+  'Bicycle / e-bike',
+  'Watersport / bike trailer',
   'Specialty / other'
 ] as const;
 
@@ -123,5 +142,8 @@ export const sampleListings: Array<{
   { id: 'rv-001', title: 'Camper van / RV', category: 'Camping & outdoor', type: 'RV / camper van', price: 'Submit for quote', status: 'coming_soon', location: 'Arizona', description: 'Weekend and overland camper van and RV rentals for road trips and outdoor adventures.', href: '/fleet-marketplace', badges: ['identity'] },
   { id: 'event-001', title: 'Party / event vehicle', category: 'Parties & celebrations', type: 'Party bus / limo van', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix metro', description: 'Party buses, limo vans, and specialty vehicles for celebrations, tailgates, and events.', href: '/fleet-marketplace', badges: ['identity'] },
   { id: 'farm-001', title: 'Tractor / UTV rental', category: 'Farming & agriculture', type: 'Tractor / UTV', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix / rural Arizona', description: 'Seasonal tractor, UTV, and farm equipment rentals for ranches, orchards, and farms.', href: '/fleet-marketplace', badges: ['identity'] },
-  { id: 'food-001', title: 'Food truck / mobile kitchen', category: 'Entertainment & events', type: 'Food truck', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix metro', description: 'Food truck and mobile kitchen rentals or revenue-share for events, catering, and pop-ups.', href: '/fleet-marketplace', badges: ['identity'] }
+  { id: 'food-001', title: 'Food truck / mobile kitchen', category: 'Entertainment & events', type: 'Food truck', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix metro', description: 'Food truck and mobile kitchen rentals or revenue-share for events, catering, and pop-ups.', href: '/fleet-marketplace', badges: ['identity'] },
+  { id: 'bounce-001', title: 'Bounce house / water slide', category: 'Bounce houses & party inflatables', type: 'Bounce house / inflatable', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix metro', description: 'Bounce houses, water slides, obstacle courses, and inflatable games for parties and events.', href: '/fleet-marketplace', badges: ['identity'] },
+  { id: 'kayak-001', title: 'Kayak / paddleboard rental', category: 'Water sports & bicycles', type: 'Kayak / paddleboard', price: 'Submit for quote', status: 'coming_soon', location: 'Arizona lakes and rivers', description: 'Kayak, paddleboard, and water sport equipment rentals for lake days and river trips.', href: '/fleet-marketplace', badges: ['identity'] },
+  { id: 'bike-001', title: 'Bicycle / e-bike rental', category: 'Water sports & bicycles', type: 'Bicycle / e-bike', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix / Tempe / Scottsdale', description: 'Bike and e-bike rentals for commuting, events, tourism, and recreation.', href: '/fleet-marketplace', badges: ['identity'] }
 ];

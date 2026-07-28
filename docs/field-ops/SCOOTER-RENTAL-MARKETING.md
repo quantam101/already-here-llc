@@ -185,6 +185,22 @@ Plan something memorable. Limo-style vans, mobile bars, photo-booth trailers, ta
 
 Request a party vehicle: https://www.alreadyherellc.com/fleet-marketplace
 
+### Bounce Houses & Party Inflatables
+
+**Title:** Bounce House, Water Slide & Inflatable Party Rentals
+
+Make your next party or festival unforgettable. Rent bounce houses, water slides, obstacle courses, and inflatable games by the day or weekend. Screened owners, delivery, setup, and takedown coordination available.
+
+Request inflatable rentals: https://www.alreadyherellc.com/fleet-marketplace
+
+### Water Sports & Bicycles
+
+**Title:** Kayak, Paddleboard, Jet Ski, Boat & E-Bike Rentals
+
+Get on the water or around town without the ownership cost. Rent kayaks, paddleboards, jet skis, boats, pontoons, bicycles, and e-bikes. Owners can list equipment; renters get screened terms and condition documentation.
+
+Request water sports or bike rentals: https://www.alreadyherellc.com/fleet-marketplace
+
 ---
 
 ## General Marketplace Outreach Email
