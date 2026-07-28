@@ -13,6 +13,7 @@ const allowedInterests = new Set([
 ]);
 const allowedCategories = new Set(['delivery', 'farming', 'construction', 'entertainment', 'camping', 'parties', 'fleet', 'specialty', 'bounce_houses', 'water_sports', 'housing', 'storage']);
 const allowedArrangements = new Set(['rent', 'lease', 'sell', 'revenue_share', 'managed_fleet', 'service']);
+const allowedRentalLengths = new Set(['one_day', 'few_days', 'one_week', 'few_weeks', 'one_month', 'few_months', 'six_months_plus', 'ongoing']);
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
 
 function clean(formData: FormData, field: string, max = 3000): string {
@@ -50,6 +51,8 @@ function validate(formData: FormData): string | null {
   if (category && !allowedCategories.has(category)) return 'Invalid marketplace category.';
   const arrangement = clean(formData, 'arrangement');
   if (arrangement && !allowedArrangements.has(arrangement)) return 'Invalid arrangement type.';
+  const rentalLength = clean(formData, 'rentalLength');
+  if (rentalLength && !allowedRentalLengths.has(rentalLength)) return 'Invalid rental length.';
   if (clean(formData, 'consentContact') !== 'true' || clean(formData, 'consentData') !== 'true' || clean(formData, 'consentTruth') !== 'true') return 'Required consent is missing.';
   return null;
 }
@@ -83,6 +86,12 @@ export async function POST(request: Request) {
     status: 'new',
     category: clean(formData, 'marketplaceCategory'),
     arrangement: clean(formData, 'arrangement'),
+    dates: {
+      startDate: clean(formData, 'startDate', 20),
+      endDate: clean(formData, 'endDate', 20),
+      rentalLength: clean(formData, 'rentalLength', 40),
+      dateFlexible: clean(formData, 'dateFlexible') === 'true'
+    },
     contact: {
       fullName: clean(formData, 'fullName', 120),
       company: clean(formData, 'company', 160),
@@ -127,6 +136,10 @@ export async function POST(request: Request) {
     ['Type', record.participantType],
     ['Category', record.category || '—'],
     ['Arrangement', record.arrangement || '—'],
+    ['Start date', record.dates.startDate || '—'],
+    ['End date', record.dates.endDate || '—'],
+    ['Rental length', record.dates.rentalLength ? record.dates.rentalLength.replace(/_/g, ' ') : '—'],
+    ['Dates flexible', record.dates.dateFlexible ? 'Yes' : '—'],
     ['Name', record.contact.fullName],
     ['Company', record.contact.company || '—'],
     ['Email', record.contact.email],

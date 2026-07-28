@@ -133,6 +133,32 @@ export function MobilityMarketplaceForm() {
             ))}
           </select>
         </label>
+        <label className="grid gap-2 text-sm font-medium text-navy">
+          Start date
+          <input name="startDate" type="date" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
+        </label>
+        <label className="grid gap-2 text-sm font-medium text-navy">
+          End date
+          <input name="endDate" type="date" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
+        </label>
+        <label className="grid gap-2 text-sm font-medium text-navy">
+          Estimated rental length
+          <select name="rentalLength" defaultValue="" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink">
+            <option value="" disabled>Select estimated length</option>
+            <option value="one_day">One day</option>
+            <option value="few_days">A few days</option>
+            <option value="one_week">One week</option>
+            <option value="few_weeks">A few weeks</option>
+            <option value="one_month">One month</option>
+            <option value="few_months">A few months</option>
+            <option value="six_months_plus">6+ months</option>
+            <option value="ongoing">Ongoing / indefinite</option>
+          </select>
+        </label>
+        <label className="flex items-center gap-3 rounded-2xl border border-borderBrand bg-soft p-4 text-sm text-slate-700">
+          <input type="checkbox" name="dateFlexible" value="true" className="mt-0.5" />
+          <span>My dates are flexible</span>
+        </label>
       </div>
 
       <fieldset className="mt-6">
