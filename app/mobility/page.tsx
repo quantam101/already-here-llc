@@ -43,6 +43,9 @@ export default function MobilityPage() {
         <Link href="/scooter-rentals" className="link-ring inline-flex rounded-full border border-action px-6 py-3 text-sm font-semibold text-action hover:bg-action/5">
           Rent a scooter
         </Link>
+        <Link href="/connect" className="link-ring inline-flex rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-600 hover:border-action hover:text-action">
+          Find work / workers
+        </Link>
       </div>
 
       <div className="mt-10 grid gap-5 md:grid-cols-2">

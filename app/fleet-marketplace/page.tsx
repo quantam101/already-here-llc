@@ -19,7 +19,7 @@ export default function FleetMarketplacePage() {
         {marketplaceMission}
       </p>
 
-      <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+      <div className="mt-8 flex flex-col gap-4 sm:flex-row flex-wrap">
         <Link href="#list-vehicle" className="link-ring inline-flex rounded-full bg-action px-6 py-3 text-sm font-semibold text-white hover:bg-navy">
           List an asset
         </Link>
@@ -28,6 +28,9 @@ export default function FleetMarketplacePage() {
         </Link>
         <Link href="/scooter-rentals" className="link-ring inline-flex rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-600 hover:border-action hover:text-action">
           Rent a scooter
+        </Link>
+        <Link href="/connect" className="link-ring inline-flex rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-600 hover:border-action hover:text-action">
+          Find work / workers
         </Link>
       </div>
 

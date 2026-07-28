@@ -13,6 +13,7 @@ const navItems = [
   { href: '/operations-products', label: 'Products' },
   { href: '/mobility', label: 'Mobility' },
   { href: '/fleet-marketplace', label: 'Fleet Marketplace' },
+  { href: '/connect', label: 'Find Work' },
   { href: '/scooter-rentals', label: 'Scooter Rentals' },
   { href: '/industries', label: 'Industries' },
   { href: '/partner-with-us', label: 'Partners' },
