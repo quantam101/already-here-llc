@@ -9,9 +9,9 @@ const allowedInterests = new Set([
   'sell_vehicle', 'rent_vehicle', 'lease_vehicle', 'revenue_share', 'managed_fleet', 'delivery_capacity',
   'driver_with_vehicle', 'vehicle_without_driver', 'scooter_rental', 'doordash', 'uber_eats', 'local_courier',
   'business_delivery_overflow', 'farm_equipment', 'construction_equipment', 'event_entertainment', 'camping_rv',
-  'party_rental', 'bounce_house_rental', 'water_sports_rental', 'bike_rental', 'fleet_overflow'
+  'party_rental', 'bounce_house_rental', 'water_sports_rental', 'bike_rental', 'apartment_rental', 'storage_rental', 'fleet_overflow'
 ]);
-const allowedCategories = new Set(['delivery', 'farming', 'construction', 'entertainment', 'camping', 'parties', 'fleet', 'specialty', 'bounce_houses', 'water_sports']);
+const allowedCategories = new Set(['delivery', 'farming', 'construction', 'entertainment', 'camping', 'parties', 'fleet', 'specialty', 'bounce_houses', 'water_sports', 'housing', 'storage']);
 const allowedArrangements = new Set(['rent', 'lease', 'sell', 'revenue_share', 'managed_fleet', 'service']);
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
 

@@ -201,6 +201,22 @@ Get on the water or around town without the ownership cost. Rent kayaks, paddleb
 
 Request water sports or bike rentals: https://www.alreadyherellc.com/fleet-marketplace
 
+### Apartments & Rooms
+
+**Title:** Furnished Apartments, Guest Suites & Short-Term Rooms for Rent
+
+Flexible stays for gig workers, students, travelers, and relocating families. Rent furnished apartments, private rooms, shared rooms, and vacation suites by the week or month. Screened listings and clear rental terms.
+
+Request housing: https://www.alreadyherellc.com/fleet-marketplace
+
+### Storage & Parking
+
+**Title:** Storage Units, Garage Bays & Parking Spaces for Rent
+
+Find self-storage units, garage bays, covered RV/boat storage, parking spaces, and warehouse space. List your unused space or reserve storage for vehicles, equipment, and belongings.
+
+Request storage or parking: https://www.alreadyherellc.com/fleet-marketplace
+
 ---
 
 ## General Marketplace Outreach Email

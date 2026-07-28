@@ -25,6 +25,8 @@ const interests = [
   ['bounce_house_rental', 'Bounce house / inflatable rental'],
   ['water_sports_rental', 'Water sports / boat / jet ski rental'],
   ['bike_rental', 'Bicycle / e-bike rental'],
+  ['apartment_rental', 'Apartment / room rental'],
+  ['storage_rental', 'Storage / parking space'],
   ['fleet_overflow', 'Fleet overflow / corporate vehicle']
 ] as const;
 

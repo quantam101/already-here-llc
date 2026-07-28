@@ -62,6 +62,18 @@ export const marketplaceCategories = [
     title: 'Water sports & bicycles',
     examples: 'Kayaks, paddleboards, jet skis, boats, pontoons, bicycles, e-bikes, watersport trailers',
     audience: 'Outdoor enthusiasts, lake/river renters, tourists, fitness groups, event rentals'
+  },
+  {
+    id: 'housing',
+    title: 'Apartments & rooms',
+    examples: 'Short-term apartments, guest rooms, shared rooms, furnished suites, vacation rentals',
+    audience: 'Travelers, students, temporary workers, relocating families, gig workers'
+  },
+  {
+    id: 'storage',
+    title: 'Storage & parking',
+    examples: 'Self-storage units, parking spaces, garage bays, covered RV/boat storage, warehouse space',
+    audience: 'Residents, vehicle owners, small businesses, contractors, fleet operators'
   }
 ] as const;
 
@@ -105,6 +117,13 @@ export const vehicleTypes = [
   'Boat / pontoon',
   'Bicycle / e-bike',
   'Watersport / bike trailer',
+  'Apartment / suite',
+  'Room / shared room',
+  'Vacation rental / guest house',
+  'Self-storage unit',
+  'Parking space / garage bay',
+  'Covered RV / boat storage',
+  'Warehouse / commercial space',
   'Specialty / other'
 ] as const;
 
@@ -145,5 +164,8 @@ export const sampleListings: Array<{
   { id: 'food-001', title: 'Food truck / mobile kitchen', category: 'Entertainment & events', type: 'Food truck', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix metro', description: 'Food truck and mobile kitchen rentals or revenue-share for events, catering, and pop-ups.', href: '/fleet-marketplace', badges: ['identity'] },
   { id: 'bounce-001', title: 'Bounce house / water slide', category: 'Bounce houses & party inflatables', type: 'Bounce house / inflatable', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix metro', description: 'Bounce houses, water slides, obstacle courses, and inflatable games for parties and events.', href: '/fleet-marketplace', badges: ['identity'] },
   { id: 'kayak-001', title: 'Kayak / paddleboard rental', category: 'Water sports & bicycles', type: 'Kayak / paddleboard', price: 'Submit for quote', status: 'coming_soon', location: 'Arizona lakes and rivers', description: 'Kayak, paddleboard, and water sport equipment rentals for lake days and river trips.', href: '/fleet-marketplace', badges: ['identity'] },
-  { id: 'bike-001', title: 'Bicycle / e-bike rental', category: 'Water sports & bicycles', type: 'Bicycle / e-bike', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix / Tempe / Scottsdale', description: 'Bike and e-bike rentals for commuting, events, tourism, and recreation.', href: '/fleet-marketplace', badges: ['identity'] }
+  { id: 'bike-001', title: 'Bicycle / e-bike rental', category: 'Water sports & bicycles', type: 'Bicycle / e-bike', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix / Tempe / Scottsdale', description: 'Bike and e-bike rentals for commuting, events, tourism, and recreation.', href: '/fleet-marketplace', badges: ['identity'] },
+  { id: 'apt-001', title: 'Furnished apartment / suite', category: 'Apartments & rooms', type: 'Apartment / suite', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix metro', description: 'Short-term furnished apartments, guest suites, and vacation rentals.', href: '/fleet-marketplace', badges: ['identity'] },
+  { id: 'room-001', title: 'Room / shared room', category: 'Apartments & rooms', type: 'Room / shared room', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix / Tempe / Scottsdale', description: 'Private or shared rooms for gig workers, students, travelers, and temporary stays.', href: '/fleet-marketplace', badges: ['identity'] },
+  { id: 'storage-001', title: 'Self-storage / garage / parking', category: 'Storage & parking', type: 'Self-storage unit', price: 'Submit for quote', status: 'coming_soon', location: 'Phoenix metro', description: 'Self-storage units, garage bays, parking spaces, and covered storage for vehicles, boats, and RVs.', href: '/fleet-marketplace', badges: ['identity'] }
 ];
