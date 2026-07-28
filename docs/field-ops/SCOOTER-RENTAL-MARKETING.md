@@ -1,4 +1,4 @@
-# Scooter Rental & Fleet Marketplace Marketing Kit
+# Vehicle & Fleet Marketplace Marketing Kit
 
 Paste-ready copy for Craigslist, Facebook Marketplace, local gig-driver groups, LinkedIn, and email outreach. Update [brackets] with market-specific details.
 
@@ -140,3 +140,75 @@ Destination: https://www.alreadyherellc.com/fleet-marketplace
 ## Referral Message for Current Renters
 
 Refer another driver and get $25 off your next week after they complete four paid weeks. Give them your referral code at checkout.
+
+---
+
+## Additional Marketplace Category Listings
+
+### Farming & Agriculture
+
+**Title:** Farm Equipment & UTV Rental / Lease – Tractors, ATVs, Trailers
+
+Need a tractor, UTV, sprayer, or flatbed trailer for the season? Already Here LLC connects farmers, ranchers, and agricultural contractors with vetted equipment owners for short-term rental, seasonal lease, or revenue-share arrangements. We verify ownership, condition, and operating terms before any match.
+
+List or request equipment: https://www.alreadyherellc.com/fleet-marketplace
+
+### Construction & Landscaping
+
+**Title:** Skid Steer, Mini Excavator, Dump Trailer & Work Truck Rentals
+
+Contractors and landscapers: rent the equipment you need for the job without buying it. Skid steers, mini excavators, dump trailers, utility trailers, and work trucks. Screened owners, written terms, and optional maintenance coordination.
+
+Request equipment: https://www.alreadyherellc.com/fleet-marketplace
+
+### Entertainment & Events
+
+**Title:** Party Bus, Sprinter Van, Food Truck & Mobile Stage Rentals
+
+Event planners, promoters, caterers, and production companies: find vetted vehicles for events, tours, activations, and mobile food service. Short-term rentals, multi-day leases, and managed-fleet partnerships available.
+
+Request vehicles: https://www.alreadyherellc.com/fleet-marketplace
+
+### Camping & Outdoor
+
+**Title:** RV, Camper Van & Trailer Rentals – Weekend & Overland Trips
+
+Rent an RV, camper van, overland rig, or trailer for your next trip. Owners list their vehicles; renters get screened, written terms, and condition documentation.
+
+Browse camping rentals: https://www.alreadyherellc.com/fleet-marketplace
+
+### Parties & Celebrations
+
+**Title:** Party Vehicles, Mobile Bars & Photo-Booth Trailers for Rent
+
+Plan something memorable. Limo-style vans, mobile bars, photo-booth trailers, tailgate setups, and specialty party vehicles. List your vehicle or request one for your event.
+
+Request a party vehicle: https://www.alreadyherellc.com/fleet-marketplace
+
+---
+
+## General Marketplace Outreach Email
+
+**Subject:** Turn idle vehicles and equipment into income
+
+Hi [Name],
+
+Most businesses and individuals own vehicles or equipment that sit unused for days, weeks, or months at a time. Meanwhile, other people in the same market are paying premium rates or scrambling to find short-term capacity.
+
+Already Here LLC operates a Vehicle & Fleet Marketplace that connects owners with renters, buyers, businesses, and partners across categories:
+
+- Delivery and gig vehicles
+- Farming and agricultural equipment
+- Construction and landscaping equipment
+- Entertainment, events, and mobile food
+- Camping, RVs, and outdoor vehicles
+- Party and celebration vehicles
+- Fleet overflow and corporate capacity
+
+We handle intake, screening, written agreements, and operating terms so you don't have to run the marketplace yourself.
+
+List an asset or request capacity: https://www.alreadyherellc.com/fleet-marketplace
+
+Best,
+[Your name]
+Already Here LLC
