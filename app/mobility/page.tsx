@@ -36,6 +36,15 @@ export default function MobilityPage() {
         This marketplace connects vehicle owners, scooter renters, delivery drivers, fleet partners, and businesses that need extra vehicles or delivery capacity. Every opportunity is screened before any rental, sale, delivery, fleet, or revenue-sharing agreement is accepted.
       </p>
 
+      <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+        <Link href="/fleet-marketplace" className="link-ring inline-flex rounded-full bg-action px-6 py-3 text-sm font-semibold text-white hover:bg-navy">
+          Browse Fleet Marketplace
+        </Link>
+        <Link href="/scooter-rentals" className="link-ring inline-flex rounded-full border border-action px-6 py-3 text-sm font-semibold text-action hover:bg-action/5">
+          Rent a scooter
+        </Link>
+      </div>
+
       <div className="mt-10 grid gap-5 md:grid-cols-2">
         {paths.map((path) => (
           <section key={path.title} className="card p-6 sm:p-8">

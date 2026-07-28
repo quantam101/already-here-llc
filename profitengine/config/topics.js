@@ -30,6 +30,12 @@ const TOPICS = [
     title_template: 'Best Print on Demand Strategies {year}',
     keywords: ['print on demand', 'print on demand tips', 'pod business {year}'],
     description: 'Print-on-demand business strategies from niche selection to passive sales'
+  },
+  {
+    niche: 'fleet and mobility',
+    title_template: 'Turn Fleet and Mobility Assets Into Business Income {year}',
+    keywords: ['fleet management', 'vehicle rental business', 'delivery scooter rental', 'fleet income {year}', 'mobility marketplace'],
+    description: 'How businesses and individuals generate income from fleet, vehicle rentals, delivery scooters, and mobility marketplaces'
   }
 ];
 
