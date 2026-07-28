@@ -25,8 +25,8 @@ export default function ConnectPage() {
         <Link href="#find-workers" className="link-ring inline-flex rounded-full border border-action px-6 py-3 text-sm font-semibold text-action hover:bg-action/5">
           I need people / contractors
         </Link>
-        <Link href="/fleet-marketplace" className="link-ring inline-flex rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-600 hover:border-action hover:text-action">
-          Browse vehicles & assets
+        <Link href="/marketplace" className="link-ring inline-flex rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-600 hover:border-action hover:text-action">
+          Browse marketplace
         </Link>
       </div>
 

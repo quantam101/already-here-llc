@@ -12,7 +12,7 @@ const navItems = [
   { href: '/services', label: 'Services' },
   { href: '/operations-products', label: 'Products' },
   { href: '/mobility', label: 'Mobility' },
-  { href: '/fleet-marketplace', label: 'Fleet Marketplace' },
+  { href: '/marketplace', label: 'Marketplace' },
   { href: '/connect', label: 'Find Work' },
   { href: '/scooter-rentals', label: 'Scooter Rentals' },
   { href: '/industries', label: 'Industries' },

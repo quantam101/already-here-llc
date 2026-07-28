@@ -37,8 +37,8 @@ export default function MobilityPage() {
       </p>
 
       <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-        <Link href="/fleet-marketplace" className="link-ring inline-flex rounded-full bg-action px-6 py-3 text-sm font-semibold text-white hover:bg-navy">
-          Browse Fleet Marketplace
+        <Link href="/marketplace" className="link-ring inline-flex rounded-full bg-action px-6 py-3 text-sm font-semibold text-white hover:bg-navy">
+          Browse Marketplace
         </Link>
         <Link href="/scooter-rentals" className="link-ring inline-flex rounded-full border border-action px-6 py-3 text-sm font-semibold text-action hover:bg-action/5">
           Rent a scooter

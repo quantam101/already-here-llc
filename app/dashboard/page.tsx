@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 const sections = [
-  { title: 'My listings', description: 'Vehicles and equipment you have listed. Update availability, pricing, and photos.', action: 'Manage listings', href: '/fleet-marketplace' },
+  { title: 'My listings', description: 'Vehicles, spaces, and equipment you have listed. Update availability, pricing, and photos.', action: 'Manage listings', href: '/marketplace' },
   { title: 'My rentals', description: 'Active and upcoming scooter, vehicle, and equipment rentals. View agreements and return dates.', action: 'View rentals', href: '/scooter-rentals' },
   { title: 'My work & contracts', description: 'Jobs, contract opportunities, and worker matches you have posted or applied to.', action: 'View matches', href: '/connect' },
   { title: 'Referrals', description: 'Your referral code, shareable link, and earned credits.', action: 'View referrals', href: '/dashboard/referrals' },

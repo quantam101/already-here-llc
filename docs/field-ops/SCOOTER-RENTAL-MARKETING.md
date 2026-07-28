@@ -97,7 +97,7 @@ Worth a 10-minute call to see if scooter-based delivery or fleet overflow suppor
 Best,
 [Your name]
 Already Here LLC
-https://www.alreadyherellc.com/fleet-marketplace
+https://www.alreadyherellc.com/marketplace
 
 ---
 
@@ -111,7 +111,7 @@ If you have a scooter, motorcycle, small truck, trailer, or fleet vehicle sittin
 
 We handle the screening, scheduling, and operating framework so you don't have to run a marketplace yourself.
 
-List your vehicle or fleet at https://www.alreadyherellc.com/fleet-marketplace
+List your vehicle or fleet at https://www.alreadyherellc.com/marketplace
 
 Best,
 [Your name]
@@ -133,7 +133,7 @@ Apply: https://www.alreadyherellc.com/scooter-rentals
 
 "Need a delivery vehicle? Scan for scooters, fleet rentals, and vehicle listings."
 
-Destination: https://www.alreadyherellc.com/fleet-marketplace
+Destination: https://www.alreadyherellc.com/marketplace
 
 ---
 
@@ -151,7 +151,7 @@ Refer another driver and get $25 off your next week after they complete four pai
 
 Need a tractor, UTV, sprayer, or flatbed trailer for the season? Already Here LLC connects farmers, ranchers, and agricultural contractors with vetted equipment owners for short-term rental, seasonal lease, or revenue-share arrangements. We verify ownership, condition, and operating terms before any match.
 
-List or request equipment: https://www.alreadyherellc.com/fleet-marketplace
+List or request equipment: https://www.alreadyherellc.com/marketplace
 
 ### Construction & Landscaping
 
@@ -159,7 +159,7 @@ List or request equipment: https://www.alreadyherellc.com/fleet-marketplace
 
 Contractors and landscapers: rent the equipment you need for the job without buying it. Skid steers, mini excavators, dump trailers, utility trailers, and work trucks. Screened owners, written terms, and optional maintenance coordination.
 
-Request equipment: https://www.alreadyherellc.com/fleet-marketplace
+Request equipment: https://www.alreadyherellc.com/marketplace
 
 ### Entertainment & Events
 
@@ -167,7 +167,7 @@ Request equipment: https://www.alreadyherellc.com/fleet-marketplace
 
 Event planners, promoters, caterers, and production companies: find vetted vehicles for events, tours, activations, and mobile food service. Short-term rentals, multi-day leases, and managed-fleet partnerships available.
 
-Request vehicles: https://www.alreadyherellc.com/fleet-marketplace
+Request vehicles: https://www.alreadyherellc.com/marketplace
 
 ### Camping & Outdoor
 
@@ -175,7 +175,7 @@ Request vehicles: https://www.alreadyherellc.com/fleet-marketplace
 
 Rent an RV, camper van, overland rig, or trailer for your next trip. Owners list their vehicles; renters get screened, written terms, and condition documentation.
 
-Browse camping rentals: https://www.alreadyherellc.com/fleet-marketplace
+Browse camping rentals: https://www.alreadyherellc.com/marketplace
 
 ### Parties & Celebrations
 
@@ -183,7 +183,7 @@ Browse camping rentals: https://www.alreadyherellc.com/fleet-marketplace
 
 Plan something memorable. Limo-style vans, mobile bars, photo-booth trailers, tailgate setups, and specialty party vehicles. List your vehicle or request one for your event.
 
-Request a party vehicle: https://www.alreadyherellc.com/fleet-marketplace
+Request a party vehicle: https://www.alreadyherellc.com/marketplace
 
 ### Bounce Houses & Party Inflatables
 
@@ -191,7 +191,7 @@ Request a party vehicle: https://www.alreadyherellc.com/fleet-marketplace
 
 Make your next party or festival unforgettable. Rent bounce houses, water slides, obstacle courses, and inflatable games by the day or weekend. Screened owners, delivery, setup, and takedown coordination available.
 
-Request inflatable rentals: https://www.alreadyherellc.com/fleet-marketplace
+Request inflatable rentals: https://www.alreadyherellc.com/marketplace
 
 ### Water Sports & Bicycles
 
@@ -199,7 +199,7 @@ Request inflatable rentals: https://www.alreadyherellc.com/fleet-marketplace
 
 Get on the water or around town without the ownership cost. Rent kayaks, paddleboards, jet skis, boats, pontoons, bicycles, and e-bikes. Owners can list equipment; renters get screened terms and condition documentation.
 
-Request water sports or bike rentals: https://www.alreadyherellc.com/fleet-marketplace
+Request water sports or bike rentals: https://www.alreadyherellc.com/marketplace
 
 ### Apartments & Rooms
 
@@ -207,7 +207,7 @@ Request water sports or bike rentals: https://www.alreadyherellc.com/fleet-marke
 
 Flexible stays for gig workers, students, travelers, and relocating families. Rent furnished apartments, private rooms, shared rooms, and vacation suites by the week or month. Screened listings and clear rental terms.
 
-Request housing: https://www.alreadyherellc.com/fleet-marketplace
+Request housing: https://www.alreadyherellc.com/marketplace
 
 ### Storage & Parking
 
@@ -215,7 +215,7 @@ Request housing: https://www.alreadyherellc.com/fleet-marketplace
 
 Find self-storage units, garage bays, covered RV/boat storage, parking spaces, and warehouse space. List your unused space or reserve storage for vehicles, equipment, and belongings.
 
-Request storage or parking: https://www.alreadyherellc.com/fleet-marketplace
+Request storage or parking: https://www.alreadyherellc.com/marketplace
 
 ---
 
@@ -239,7 +239,7 @@ Already Here LLC operates a Vehicle & Fleet Marketplace that connects owners wit
 
 We handle intake, screening, written agreements, and operating terms so you don't have to run the marketplace yourself.
 
-List an asset or request capacity: https://www.alreadyherellc.com/fleet-marketplace
+List an asset or request capacity: https://www.alreadyherellc.com/marketplace
 
 Best,
 [Your name]
