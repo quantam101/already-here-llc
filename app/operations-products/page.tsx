@@ -124,7 +124,7 @@ export default function OperationsProductsPage() {
                 <Link href={`/rfq?product=${encodeURIComponent(product.id)}`} className="link-ring rounded-full bg-[#1B66FF] px-5 py-3 text-center text-sm font-semibold text-white hover:bg-[#071B34]">
                   Request This Product
                 </Link>
-                <Link href="/contact" className="link-ring rounded-full border border-[#9AA9BC] px-5 py-3 text-center text-sm font-semibold hover:border-[#1B66FF]">
+                <Link href="/dispatch" className="link-ring rounded-full border border-[#9AA9BC] px-5 py-3 text-center text-sm font-semibold hover:border-[#1B66FF]">
                   Ask a Question
                 </Link>
               </div>
