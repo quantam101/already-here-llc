@@ -64,6 +64,17 @@ Key pages to verify:
 - `next-env.d.ts` is auto-generated — exclude it from ESLint via `eslint.config.mjs`
 - K8s manifests reference images that don't exist yet (`ghcr.io/quantam101/already-here-llc-web:latest`) — these are scaffolds
 
+## React 19 / Dependency Upgrade Smoke Tests
+
+- Align `react`, `react-dom`, and matching `@types/*` versions first, then run `npm install` and `npm run build`.
+- Verify the Vercel preview via the `vercel.app` URL from the deployment metadata.
+- If the preview has live email providers configured, test the dispatch UI against `http://localhost:3000` (`npm start` after `npm run build`) to avoid sending real emails; the `/api/dispatch` route falls back to `local-proof` when `RESEND_API_KEY` and `FORMSPREE_ENDPOINT` are unset.
+- After each page load, check the browser console for React hydration errors.
+
+## Testing Artifacts
+
+- Do **not** write `.md` test plans or notes inside the repo working tree; `scripts/a-plus-content-guard.mjs` scans all `.md` files and will flag forbidden strings (e.g. `SDVOSB Certified`) even in test documents. Keep plans in `/tmp` or outside the repo.
+
 ## Dependencies
 
 - Node.js packages: `npm install` (includes zod, remark, remark-html)
