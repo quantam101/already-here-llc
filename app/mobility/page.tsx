@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { MobilityMarketplaceForm } from '@/components/MobilityMarketplaceForm';
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ const paths = [
   },
   {
     title: 'Rent a scooter or delivery vehicle',
-    copy: 'Individuals can register interest in personal transportation, DoorDash, Uber Eats, local courier work, or short-term mobility.'
+    copy: 'Individuals can register interest in personal transportation, DoorDash, Uber Eats, local courier work, or short-term mobility. Gig delivery scooter rentals are now available at /scooter-rentals.'
   },
   {
     title: 'Partner as a fleet or vendor',
@@ -35,11 +36,28 @@ export default function MobilityPage() {
         This marketplace connects vehicle owners, scooter renters, delivery drivers, fleet partners, and businesses that need extra vehicles or delivery capacity. Every opportunity is screened before any rental, sale, delivery, fleet, or revenue-sharing agreement is accepted.
       </p>
 
+      <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+        <Link href="/marketplace" className="link-ring inline-flex rounded-full bg-action px-6 py-3 text-sm font-semibold text-white hover:bg-navy">
+          Browse Marketplace
+        </Link>
+        <Link href="/scooter-rentals" className="link-ring inline-flex rounded-full border border-action px-6 py-3 text-sm font-semibold text-action hover:bg-action/5">
+          Rent a scooter
+        </Link>
+        <Link href="/connect" className="link-ring inline-flex rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-600 hover:border-action hover:text-action">
+          Find work / workers
+        </Link>
+      </div>
+
       <div className="mt-10 grid gap-5 md:grid-cols-2">
         {paths.map((path) => (
           <section key={path.title} className="card p-6 sm:p-8">
             <h2 className="text-xl font-semibold text-navy">{path.title}</h2>
             <p className="mt-3 text-sm leading-7 text-slate-600">{path.copy}</p>
+            {path.title === 'Rent a scooter or delivery vehicle' ? (
+              <Link href="/scooter-rentals" className="mt-4 inline-flex rounded-full bg-action px-4 py-2 text-sm font-semibold text-white hover:bg-navy">
+                View scooter rentals
+              </Link>
+            ) : null}
           </section>
         ))}
       </div>

@@ -69,6 +69,16 @@
       "id": "residential-services",
       "priority": 3,
       "terms": ["tv mounting", "tv repair", "computer repair", "pc setup", "wifi setup", "printer setup", "appliance delivery", "appliance install", "furniture assembly", "haul away", "junk removal", "moving help"]
+    },
+    {
+      "id": "fleet-mobility",
+      "priority": 2,
+      "terms": ["scooter rental", "delivery scooter", "gig driver vehicle", "vehicle rental", "fleet vehicle", "rent a scooter", "delivery vehicle", "courier vehicle", "temporary vehicle", "short term vehicle", "fleet partnership", "mobility marketplace"]
+    },
+    {
+      "id": "work-contract",
+      "priority": 2,
+      "terms": ["driver needed", "delivery driver", "courier driver", "contractor wanted", "event staff needed", "mechanic wanted", "equipment operator", "labor needed", "gig work", "freelance driver", "route driver", "hiring drivers", "subcontractor needed"]
     }
   ],
   "sources": [

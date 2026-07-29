@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { arrangementTypes, marketplaceCategories, vehicleTypes } from '@/lib/fleet-marketplace';
 
 const interests = [
   ['sell_vehicle', 'Sell a vehicle'],
@@ -15,7 +16,18 @@ const interests = [
   ['doordash', 'DoorDash use'],
   ['uber_eats', 'Uber Eats use'],
   ['local_courier', 'Local courier work'],
-  ['business_delivery_overflow', 'Business delivery overflow']
+  ['business_delivery_overflow', 'Business delivery overflow'],
+  ['farm_equipment', 'Farm / agriculture equipment'],
+  ['construction_equipment', 'Construction / landscaping equipment'],
+  ['event_entertainment', 'Event / entertainment vehicle'],
+  ['camping_rv', 'Camping / RV / outdoor vehicle'],
+  ['party_rental', 'Party / celebration vehicle'],
+  ['bounce_house_rental', 'Bounce house / inflatable rental'],
+  ['water_sports_rental', 'Water sports / boat / jet ski rental'],
+  ['bike_rental', 'Bicycle / e-bike rental'],
+  ['apartment_rental', 'Apartment / room rental'],
+  ['storage_rental', 'Storage / parking space'],
+  ['fleet_overflow', 'Fleet overflow / corporate vehicle']
 ] as const;
 
 export function MobilityMarketplaceForm() {
@@ -54,9 +66,9 @@ export function MobilityMarketplaceForm() {
           I am a <span className="text-action">*</span>
           <select name="participantType" required defaultValue="" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink">
             <option value="" disabled>Select one</option>
-            <option value="vehicle_owner">Vehicle owner with an unused vehicle</option>
+            <option value="vehicle_owner">Vehicle owner with an unused vehicle or equipment</option>
             <option value="vehicle_seller">Vehicle owner interested in selling</option>
-            <option value="business_needs_vehicles">Business needing extra vehicles</option>
+            <option value="business_needs_vehicles">Business needing extra vehicles or equipment</option>
             <option value="business_needs_deliveries">Business needing delivery overflow</option>
             <option value="driver_needs_vehicle">Driver needing a vehicle or scooter</option>
             <option value="scooter_renter">Personal scooter renter</option>
@@ -93,6 +105,62 @@ export function MobilityMarketplaceForm() {
         </label>
       </div>
 
+      <div className="mt-6 grid gap-6 md:grid-cols-2">
+        <label className="grid gap-2 text-sm font-medium text-navy">
+          Marketplace category
+          <select name="marketplaceCategory" defaultValue="" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink">
+            <option value="" disabled>Select a category</option>
+            {marketplaceCategories.map((category) => (
+              <option key={category.id} value={category.id}>{category.title}</option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-medium text-navy">
+          Vehicle / equipment type
+          <select name="vehicleTypeSelection" defaultValue="" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink">
+            <option value="" disabled>Select a type</option>
+            {vehicleTypes.map((type) => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-medium text-navy">
+          Preferred arrangement
+          <select name="arrangement" defaultValue="" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink">
+            <option value="" disabled>Select arrangement</option>
+            {arrangementTypes.map((type) => (
+              <option key={type.id} value={type.id}>{type.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-medium text-navy">
+          Start date
+          <input name="startDate" type="date" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
+        </label>
+        <label className="grid gap-2 text-sm font-medium text-navy">
+          End date
+          <input name="endDate" type="date" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
+        </label>
+        <label className="grid gap-2 text-sm font-medium text-navy">
+          Estimated rental length
+          <select name="rentalLength" defaultValue="" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink">
+            <option value="" disabled>Select estimated length</option>
+            <option value="one_day">One day</option>
+            <option value="few_days">A few days</option>
+            <option value="one_week">One week</option>
+            <option value="few_weeks">A few weeks</option>
+            <option value="one_month">One month</option>
+            <option value="few_months">A few months</option>
+            <option value="six_months_plus">6+ months</option>
+            <option value="ongoing">Ongoing / indefinite</option>
+          </select>
+        </label>
+        <label className="flex items-center gap-3 rounded-2xl border border-borderBrand bg-soft p-4 text-sm text-slate-700">
+          <input type="checkbox" name="dateFlexible" value="true" className="mt-0.5" />
+          <span>My dates are flexible</span>
+        </label>
+      </div>
+
       <fieldset className="mt-6">
         <legend className="text-sm font-semibold text-navy">Collaboration interests <span className="text-action">*</span></legend>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -106,17 +174,17 @@ export function MobilityMarketplaceForm() {
       </fieldset>
 
       <section className="mt-8 rounded-3xl border border-borderBrand bg-soft p-5">
-        <h2 className="text-lg font-semibold text-navy">Vehicle information</h2>
-        <p className="mt-1 text-sm text-slate-600">Complete this section when offering or selling a vehicle.</p>
+        <h2 className="text-lg font-semibold text-navy">Vehicle or equipment information</h2>
+        <p className="mt-1 text-sm text-slate-600">Complete this section when offering, selling, or requesting a specific vehicle or equipment.</p>
         <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          <input name="vehicleType" maxLength={80} placeholder="Vehicle type" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
+          <input name="vehicleType" maxLength={80} placeholder="Vehicle or equipment type" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
           <input name="vehicleYear" maxLength={10} placeholder="Year" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
           <input name="vehicleMake" maxLength={80} placeholder="Make" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
           <input name="vehicleModel" maxLength={80} placeholder="Model" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
-          <input name="mileage" maxLength={40} placeholder="Mileage" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
+          <input name="mileage" maxLength={40} placeholder="Mileage / hours" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
           <input name="askingPrice" maxLength={80} placeholder="Asking price or preferred payment" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
         </div>
-        <textarea name="vehicleCondition" rows={4} maxLength={1500} placeholder="Condition, known issues, availability, registration, insurance, and preferred arrangement." className="mt-5 w-full link-ring rounded-3xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
+        <textarea name="vehicleCondition" rows={4} maxLength={1500} placeholder="Condition, known issues, availability, registration, insurance, attachments, accessories, and preferred arrangement." className="mt-5 w-full link-ring rounded-3xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
       </section>
 
       <section className="mt-8 rounded-3xl border border-borderBrand bg-soft p-5">
@@ -124,7 +192,7 @@ export function MobilityMarketplaceForm() {
         <p className="mt-1 text-sm text-slate-600">Complete this section when your company needs vehicles, drivers, courier support, or overflow deliveries.</p>
         <div className="mt-5 grid gap-5 md:grid-cols-2">
           <input name="vehiclesNeeded" type="number" min="0" max="1000" placeholder="Number of vehicles needed" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
-          <input name="vehicleTypesNeeded" maxLength={300} placeholder="Vehicle types needed" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
+          <input name="vehicleTypesNeeded" maxLength={300} placeholder="Vehicle or equipment types needed" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
           <input name="serviceArea" maxLength={300} placeholder="Service area or routes" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
           <input name="schedule" maxLength={300} placeholder="Schedule, days, hours, or start date" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />
           <input name="deliveryVolume" maxLength={300} placeholder="Estimated delivery volume" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink" />

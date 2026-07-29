@@ -5,7 +5,15 @@ export const runtime = 'nodejs';
 
 const requiredFields = ['participantType', 'fullName', 'email', 'phone', 'city', 'state', 'notes'];
 const allowedParticipantTypes = new Set(['vehicle_owner', 'business_needs_vehicles', 'business_needs_deliveries', 'driver_needs_vehicle', 'scooter_renter', 'fleet_partner', 'vehicle_seller']);
-const allowedInterests = new Set(['sell_vehicle', 'rent_vehicle', 'lease_vehicle', 'revenue_share', 'managed_fleet', 'delivery_capacity', 'driver_with_vehicle', 'vehicle_without_driver', 'scooter_rental', 'doordash', 'uber_eats', 'local_courier', 'business_delivery_overflow']);
+const allowedInterests = new Set([
+  'sell_vehicle', 'rent_vehicle', 'lease_vehicle', 'revenue_share', 'managed_fleet', 'delivery_capacity',
+  'driver_with_vehicle', 'vehicle_without_driver', 'scooter_rental', 'doordash', 'uber_eats', 'local_courier',
+  'business_delivery_overflow', 'farm_equipment', 'construction_equipment', 'event_entertainment', 'camping_rv',
+  'party_rental', 'bounce_house_rental', 'water_sports_rental', 'bike_rental', 'apartment_rental', 'storage_rental', 'fleet_overflow'
+]);
+const allowedCategories = new Set(['delivery', 'farming', 'construction', 'entertainment', 'camping', 'parties', 'fleet', 'specialty', 'bounce_houses', 'water_sports', 'housing', 'storage']);
+const allowedArrangements = new Set(['rent', 'lease', 'sell', 'revenue_share', 'managed_fleet', 'service']);
+const allowedRentalLengths = new Set(['one_day', 'few_days', 'one_week', 'few_weeks', 'one_month', 'few_months', 'six_months_plus', 'ongoing']);
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
 
 function clean(formData: FormData, field: string, max = 3000): string {
@@ -39,6 +47,12 @@ function validate(formData: FormData): string | null {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean(formData, 'email', 160))) return 'Invalid email address.';
   const interests = formData.getAll('interests').map(String).filter((value) => allowedInterests.has(value));
   if (interests.length === 0) return 'Select at least one collaboration interest.';
+  const category = clean(formData, 'marketplaceCategory');
+  if (category && !allowedCategories.has(category)) return 'Invalid marketplace category.';
+  const arrangement = clean(formData, 'arrangement');
+  if (arrangement && !allowedArrangements.has(arrangement)) return 'Invalid arrangement type.';
+  const rentalLength = clean(formData, 'rentalLength');
+  if (rentalLength && !allowedRentalLengths.has(rentalLength)) return 'Invalid rental length.';
   if (clean(formData, 'consentContact') !== 'true' || clean(formData, 'consentData') !== 'true' || clean(formData, 'consentTruth') !== 'true') return 'Required consent is missing.';
   return null;
 }
@@ -70,6 +84,14 @@ export async function POST(request: Request) {
     source: 'website_mobility_marketplace',
     participantType: clean(formData, 'participantType'),
     status: 'new',
+    category: clean(formData, 'marketplaceCategory'),
+    arrangement: clean(formData, 'arrangement'),
+    dates: {
+      startDate: clean(formData, 'startDate', 20),
+      endDate: clean(formData, 'endDate', 20),
+      rentalLength: clean(formData, 'rentalLength', 40),
+      dateFlexible: clean(formData, 'dateFlexible') === 'true'
+    },
     contact: {
       fullName: clean(formData, 'fullName', 120),
       company: clean(formData, 'company', 160),
@@ -81,6 +103,7 @@ export async function POST(request: Request) {
     },
     vehicle: {
       vehicleType: clean(formData, 'vehicleType', 80),
+      vehicleTypeSelection: clean(formData, 'vehicleTypeSelection', 80),
       year: clean(formData, 'vehicleYear', 10),
       make: clean(formData, 'vehicleMake', 80),
       model: clean(formData, 'vehicleModel', 80),
@@ -111,13 +134,19 @@ export async function POST(request: Request) {
   const rows = [
     ['Reference', mobilityId],
     ['Type', record.participantType],
+    ['Category', record.category || '—'],
+    ['Arrangement', record.arrangement || '—'],
+    ['Start date', record.dates.startDate || '—'],
+    ['End date', record.dates.endDate || '—'],
+    ['Rental length', record.dates.rentalLength ? record.dates.rentalLength.replace(/_/g, ' ') : '—'],
+    ['Dates flexible', record.dates.dateFlexible ? 'Yes' : '—'],
     ['Name', record.contact.fullName],
     ['Company', record.contact.company || '—'],
     ['Email', record.contact.email],
     ['Phone', record.contact.phone],
     ['Location', `${record.contact.city}, ${record.contact.state} ${record.contact.zipCode}`.trim()],
     ['Interests', interests.join(', ')],
-    ['Vehicle', [record.vehicle.year, record.vehicle.make, record.vehicle.model, record.vehicle.vehicleType].filter(Boolean).join(' ') || '—'],
+    ['Vehicle', [record.vehicle.year, record.vehicle.make, record.vehicle.model, record.vehicle.vehicleType || record.vehicle.vehicleTypeSelection].filter(Boolean).join(' ') || '—'],
     ['Vehicles needed', String(record.demand.vehiclesNeeded || '—')],
     ['Service area', record.demand.serviceArea || '—'],
     ['Notes', record.notes]
