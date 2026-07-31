@@ -14,6 +14,8 @@ export const siteConfig = {
   phoneDisplay: '(602) 882-2920',
   phoneNote: 'Dispatch and infrastructure assessment',
   email: 'dispatch@alreadyherellc.com',
+  billingEmail: 'billings@alreadyherellc.com',
+  billingEmailNote: 'Billing, invoices, W-9, and vendor administration',
   city: 'Phoenix, Arizona',
   address: {
     street: '429 N 18th Dr',
