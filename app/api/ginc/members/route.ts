@@ -1,25 +1,13 @@
 import { NextResponse } from 'next/server.js';
 import { GincMember } from '@/lib/ginc';
-import { generateGincId, loadNetwork, sanitizeMember, saveNetwork } from '@/lib/ginc-store';
+import { addMember, generateGincId, isRateLimited, loadNetwork, sanitizeMember } from '@/lib/ginc-store';
 
 export const runtime = 'nodejs';
 
 const allowedTypes = new Set(['owner', 'renter', 'worker', 'business']);
-const rateLimit = new Map<string, { count: number; resetAt: number }>();
 
 function clientKey(request: Request): string {
   return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
-}
-
-function limited(key: string): boolean {
-  const now = Date.now();
-  const current = rateLimit.get(key);
-  if (!current || current.resetAt <= now) {
-    rateLimit.set(key, { count: 1, resetAt: now + 60_000 });
-    return false;
-  }
-  current.count += 1;
-  return current.count > 5;
 }
 
 function clean(value: unknown, max = 3000): string {
@@ -38,7 +26,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (limited(clientKey(request))) {
+  if (await isRateLimited(clientKey(request))) {
     return NextResponse.json({ message: 'Too many submissions. Try again shortly.' }, { status: 429 });
   }
 
@@ -78,9 +66,7 @@ export async function POST(request: Request) {
     createdAt: new Date().toISOString()
   };
 
-  const network = await loadNetwork();
-  network.members.push(member);
-  await saveNetwork(network);
+  await addMember(member);
 
   return NextResponse.json({ message: 'Member profile created.', member }, { status: 201 });
 }

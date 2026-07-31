@@ -25,23 +25,6 @@ function getRedis(): Redis | null {
   return new Redis({ url, token });
 }
 
-async function loadFromDisk(): Promise<GincNetwork> {
-  try {
-    const raw = await fs.readFile(dataPath, 'utf-8');
-    return JSON.parse(raw) as GincNetwork;
-  } catch {
-    return seedNetwork();
-  }
-}
-
-async function saveToDisk(data: GincNetwork): Promise<void> {
-  try {
-    await fs.writeFile(dataPath, JSON.stringify(data, null, 2));
-  } catch {
-    // ignore in read-only environments
-  }
-}
-
 function seedNetwork(): GincNetwork {
   return {
     members: [
@@ -107,16 +90,37 @@ function seedNetwork(): GincNetwork {
   };
 }
 
+async function loadFromDisk(): Promise<GincNetwork> {
+  try {
+    const raw = await fs.readFile(dataPath, 'utf-8');
+    return JSON.parse(raw) as GincNetwork;
+  } catch {
+    return seedNetwork();
+  }
+}
+
+async function saveToDisk(data: GincNetwork): Promise<void> {
+  try {
+    await fs.writeFile(dataPath, JSON.stringify(data, null, 2));
+  } catch {
+    // ignore in read-only environments
+  }
+}
+
+async function loadRedisList<T>(redis: Redis, key: string): Promise<T[]> {
+  const items = await redis.lrange<T>(key, 0, -1);
+  return (items || []).map((item) => (typeof item === 'string' ? JSON.parse(item) : item));
+}
+
 export async function loadNetwork(): Promise<GincNetwork> {
   const redis = getRedis();
   if (redis) {
-    const cached = await redis.get<string>('ginc:network');
-    if (cached) {
-      return typeof cached === 'string' ? (JSON.parse(cached) as GincNetwork) : (cached as unknown as GincNetwork);
-    }
-    const data = await loadFromDisk();
-    await redis.set('ginc:network', JSON.stringify(data));
-    return data;
+    const [members, listings, jobs] = await Promise.all([
+      loadRedisList<GincMember>(redis, 'ginc:members'),
+      loadRedisList<GincListing>(redis, 'ginc:listings'),
+      loadRedisList<GincJob>(redis, 'ginc:jobs')
+    ]);
+    return { members, listings, jobs };
   }
   if (!memoryCache) {
     memoryCache = await loadFromDisk();
@@ -127,11 +131,50 @@ export async function loadNetwork(): Promise<GincNetwork> {
 export async function saveNetwork(data: GincNetwork): Promise<void> {
   const redis = getRedis();
   if (redis) {
-    await redis.set('ginc:network', JSON.stringify(data));
+    // Redis persistence uses per-entity lists; this path is kept for bulk seeding only.
+    const pipeline = redis.multi();
+    pipeline.del('ginc:members', 'ginc:listings', 'ginc:jobs');
+    for (const member of data.members) pipeline.rpush('ginc:members', JSON.stringify(member));
+    for (const listing of data.listings) pipeline.rpush('ginc:listings', JSON.stringify(listing));
+    for (const job of data.jobs) pipeline.rpush('ginc:jobs', JSON.stringify(job));
+    await pipeline.exec();
     return;
   }
   memoryCache = data;
   await saveToDisk(data);
+}
+
+export async function addMember(member: GincMember): Promise<void> {
+  const redis = getRedis();
+  if (redis) {
+    await redis.rpush('ginc:members', JSON.stringify(member));
+    return;
+  }
+  const network = await loadNetwork();
+  network.members.push(member);
+  await saveNetwork(network);
+}
+
+export async function addListing(listing: GincListing): Promise<void> {
+  const redis = getRedis();
+  if (redis) {
+    await redis.rpush('ginc:listings', JSON.stringify(listing));
+    return;
+  }
+  const network = await loadNetwork();
+  network.listings.push(listing);
+  await saveNetwork(network);
+}
+
+export async function addJob(job: GincJob): Promise<void> {
+  const redis = getRedis();
+  if (redis) {
+    await redis.rpush('ginc:jobs', JSON.stringify(job));
+    return;
+  }
+  const network = await loadNetwork();
+  network.jobs.push(job);
+  await saveNetwork(network);
 }
 
 export function generateGincId(prefix: 'MEM' | 'LST' | 'JOB'): string {
@@ -179,9 +222,7 @@ export function buildGincMember(payload: Record<string, unknown>): GincMember {
 
 export async function createGincMemberFromPayload(payload: Record<string, unknown>): Promise<GincMember> {
   const member = buildGincMember(payload);
-  const network = await loadNetwork();
-  network.members.push(member);
-  await saveNetwork(network);
+  await addMember(member);
   return member;
 }
 
@@ -190,6 +231,29 @@ export function sanitizeMember(member: GincMember): PublicMember {
     Object.entries(member).filter(([key]) => key !== 'email' && key !== 'phone' && key !== 'zip')
   ) as PublicMember;
   return publicFields;
+}
+
+// Rate limiting: Redis-backed when available, otherwise per-instance in-memory.
+const inMemoryRateLimits = new Map<string, { count: number; resetAt: number }>();
+
+export async function isRateLimited(key: string, maxRequests = 5, windowSeconds = 60): Promise<boolean> {
+  const redis = getRedis();
+  if (redis) {
+    const count = await redis.incr(`ginc:ratelimit:${key}`);
+    if (count === 1) {
+      await redis.expire(`ginc:ratelimit:${key}`, windowSeconds);
+    }
+    return count > maxRequests;
+  }
+
+  const now = Date.now();
+  const current = inMemoryRateLimits.get(key);
+  if (!current || current.resetAt <= now) {
+    inMemoryRateLimits.set(key, { count: 1, resetAt: now + windowSeconds * 1000 });
+    return false;
+  }
+  current.count += 1;
+  return current.count > maxRequests;
 }
 
 function normalize(value: string): string {
