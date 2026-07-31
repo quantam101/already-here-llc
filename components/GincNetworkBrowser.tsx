@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { GincListing, GincJob, GincMatch, GincMember } from '@/lib/ginc';
+import { GincListing, GincJob, GincMatch, PublicMember } from '@/lib/ginc';
 
 type Tab = 'listings' | 'jobs' | 'members' | 'matches';
 
 interface GincNetworkData {
-  members: GincMember[];
+  members: PublicMember[];
   listings: GincListing[];
   jobs: GincJob[];
   matches: GincMatch[];
@@ -19,17 +19,25 @@ export function GincNetworkBrowser({ initialData }: { initialData: GincNetworkDa
   const [assetType, setAssetType] = useState('');
   const [data, setData] = useState<GincNetworkData>(initialData);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
+    setError(null);
     const params = new URLSearchParams();
     if (state) params.set('state', state);
     if (category) params.set('category', category);
     if (assetType) params.set('assetType', assetType);
-    const response = await fetch(`/api/ginc/matches?${params.toString()}`);
-    const payload = (await response.json().catch(() => ({}))) as GincNetworkData;
-    setData(payload);
-    setLoading(false);
+    try {
+      const response = await fetch(`/api/ginc/matches?${params.toString()}`);
+      if (!response.ok) throw new Error('Network request failed');
+      const payload = (await response.json().catch(() => ({}))) as GincNetworkData;
+      setData(payload);
+    } catch {
+      setError('Could not refresh results. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleFilter(event: React.FormEvent) {
@@ -62,6 +70,8 @@ export function GincNetworkBrowser({ initialData }: { initialData: GincNetworkDa
         </button>
       </form>
 
+      {error ? <p className="mb-4 text-sm font-semibold text-red-600">{error}</p> : null}
+
       <div className="flex flex-wrap gap-2 border-b border-borderBrand pb-4">
         {(['matches', 'listings', 'jobs', 'members'] as const).map((tab) => (
           <button
@@ -79,7 +89,7 @@ export function GincNetworkBrowser({ initialData }: { initialData: GincNetworkDa
 
       {activeTab === 'matches' && !loading ? (
         <div className="mt-6 grid gap-4">
-          {matches.length === 0 ? <p className="text-sm text-slate-600">No matches yet. Try a broader filter.</p> : null}
+          {matches.length === 0 ? <p className="text-sm text-slate-600">No matches yet. Add a filter or check listings/work.</p> : null}
           {matches.map((match, index) => (
             <div key={index} className="card p-5">
               <div className="flex items-start justify-between gap-4">
@@ -93,6 +103,11 @@ export function GincNetworkBrowser({ initialData }: { initialData: GincNetworkDa
                 </div>
                 <span className="rounded-full bg-soft px-3 py-1 text-xs font-semibold text-slate-700">Score: {match.score}</span>
               </div>
+              {match.listing && match.job ? (
+                <p className="mt-2 text-sm text-slate-600">
+                  Listing: {match.listing.title} &middot; Work: {match.job.title}
+                </p>
+              ) : null}
               <p className="mt-2 text-xs text-slate-500">Match reason: {match.reason}</p>
               <p className="mt-1 text-xs text-slate-500">
                 {match.listing ? `${match.listing.city}, ${match.listing.state}` : match.job ? `${match.job.city}, ${match.job.state}` : `${match.member?.city}, ${match.member?.state}`}
@@ -140,7 +155,7 @@ export function GincNetworkBrowser({ initialData }: { initialData: GincNetworkDa
               <h3 className="font-semibold text-navy">{member.fullName}</h3>
               <p className="text-sm text-slate-600 capitalize">{member.type}</p>
               <p className="mt-2 text-sm text-slate-600">{member.skills}</p>
-              <p className="mt-1 text-xs text-slate-500">{member.city}, {member.state} &middot; {member.email}</p>
+              <p className="mt-1 text-xs text-slate-500">{member.city}, {member.state}</p>
             </div>
           ))}
         </div>

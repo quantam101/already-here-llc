@@ -4,9 +4,12 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import {
   gincConfig,
+  GincJob,
+  GincListing,
   GincMatch,
   GincMember,
-  GincNetwork
+  GincNetwork,
+  PublicMember
 } from '@/lib/ginc';
 
 export { gincConfig };
@@ -141,7 +144,7 @@ function cleanInput(value: unknown, max = 3000): string {
 
 const allowedMemberTypes = new Set(['owner', 'renter', 'worker', 'business']);
 
-export async function createGincMemberFromPayload(payload: Record<string, unknown>): Promise<GincMember> {
+export function buildGincMember(payload: Record<string, unknown>): GincMember {
   const type = cleanInput(payload.type, 40);
   if (!allowedMemberTypes.has(type)) {
     throw new Error('Invalid member type.');
@@ -159,7 +162,7 @@ export async function createGincMemberFromPayload(payload: Record<string, unknow
     throw new Error('Invalid email address.');
   }
 
-  const member: GincMember = {
+  return {
     id: generateGincId('MEM'),
     type: type as GincMember['type'],
     fullName,
@@ -172,11 +175,21 @@ export async function createGincMemberFromPayload(payload: Record<string, unknow
     bio: cleanInput(payload.bio, 3000),
     createdAt: new Date().toISOString()
   };
+}
 
+export async function createGincMemberFromPayload(payload: Record<string, unknown>): Promise<GincMember> {
+  const member = buildGincMember(payload);
   const network = await loadNetwork();
   network.members.push(member);
   await saveNetwork(network);
   return member;
+}
+
+export function sanitizeMember(member: GincMember): PublicMember {
+  const publicFields = Object.fromEntries(
+    Object.entries(member).filter(([key]) => key !== 'email' && key !== 'phone' && key !== 'zip')
+  ) as PublicMember;
+  return publicFields;
 }
 
 function normalize(value: string): string {
@@ -193,6 +206,60 @@ function scoreTokens(a: string, b: string): number {
   return matches / Math.max(aTokens.size, bTokens.length);
 }
 
+function scoreListing(listing: GincListing, targetState: string, targetCategory: string, targetAssetType: string): { score: number; reasons: string[] } {
+  let score = 0;
+  const reasons: string[] = [];
+  if (targetState && listing.state.toLowerCase() === targetState) {
+    score += 25;
+    reasons.push('same state');
+  }
+  if (targetCategory && listing.category.toLowerCase().includes(targetCategory)) {
+    score += 20;
+    reasons.push('category match');
+  }
+  if (targetAssetType) {
+    const tokenScore = scoreTokens(listing.assetType + ' ' + listing.title + ' ' + listing.description, targetAssetType);
+    score += Math.round(tokenScore * 30);
+    if (tokenScore > 0) reasons.push('asset/type match');
+  }
+  return { score, reasons };
+}
+
+function scoreJob(job: GincJob, targetState: string, targetCategory: string, targetAssetType: string): { score: number; reasons: string[] } {
+  let score = 0;
+  const reasons: string[] = [];
+  if (targetState && job.state.toLowerCase() === targetState) {
+    score += 25;
+    reasons.push('same state');
+  }
+  if (targetCategory && job.category.toLowerCase().includes(targetCategory)) {
+    score += 20;
+    reasons.push('category match');
+  }
+  if (targetAssetType) {
+    const tokenScore = scoreTokens(job.assetType + ' ' + job.title + ' ' + job.description, targetAssetType);
+    score += Math.round(tokenScore * 30);
+    if (tokenScore > 0) reasons.push('asset/type match');
+  }
+  return { score, reasons };
+}
+
+function scoreMember(member: GincMember, targetState: string, targetCategory: string, targetAssetType: string): { score: number; reasons: string[] } {
+  let score = 0;
+  const reasons: string[] = [];
+  if (targetState && member.state.toLowerCase() === targetState) {
+    score += 20;
+    reasons.push('same state');
+  }
+  if (targetCategory || targetAssetType) {
+    const text = `${member.bio || ''} ${member.skills || ''}`;
+    const tokenScore = scoreTokens(text, `${targetCategory} ${targetAssetType}`);
+    score += Math.round(tokenScore * 25);
+    if (tokenScore > 0) reasons.push('profile match');
+  }
+  return { score, reasons };
+}
+
 export async function findMatches(state?: string, category?: string, assetType?: string): Promise<GincMatch[]> {
   const network = await loadNetwork();
   const matches: GincMatch[] = [];
@@ -200,66 +267,60 @@ export async function findMatches(state?: string, category?: string, assetType?:
   const targetState = state?.toLowerCase() || '';
   const targetCategory = category?.toLowerCase() || '';
   const targetAssetType = assetType?.toLowerCase() || '';
+  const hasFilter = targetState || targetCategory || targetAssetType;
 
-  for (const listing of network.listings) {
-    if (listing.status !== 'available') continue;
-    let score = 0;
-    const reasons: string[] = [];
-    if (targetState && listing.state.toLowerCase() === targetState) {
-      score += 25;
-      reasons.push('same state');
-    }
-    if (targetCategory && listing.category.toLowerCase().includes(targetCategory)) {
-      score += 20;
-      reasons.push('category match');
-    }
-    if (targetAssetType) {
-      const tokenScore = scoreTokens(listing.assetType + ' ' + listing.title + ' ' + listing.description, targetAssetType);
-      score += Math.round(tokenScore * 30);
-      if (tokenScore > 0) reasons.push('asset/type match');
-    }
-    if (score > 0) {
-      matches.push({ score, listing, reason: reasons.join(', ') });
-    }
-  }
+  const availableListings = network.listings.filter((l) => l.status === 'available');
+  const openJobs = network.jobs.filter((j) => j.status === 'open');
 
-  for (const job of network.jobs) {
-    if (job.status !== 'open') continue;
-    let score = 0;
-    const reasons: string[] = [];
-    if (targetState && job.state.toLowerCase() === targetState) {
-      score += 25;
-      reasons.push('same state');
+  if (hasFilter) {
+    for (const listing of availableListings) {
+      const { score, reasons } = scoreListing(listing, targetState, targetCategory, targetAssetType);
+      if (score > 0) {
+        matches.push({ score, listing, reason: reasons.join(', ') });
+      }
     }
-    if (targetCategory && job.category.toLowerCase().includes(targetCategory)) {
-      score += 20;
-      reasons.push('category match');
-    }
-    if (targetAssetType) {
-      const tokenScore = scoreTokens(job.assetType + ' ' + job.title + ' ' + job.description, targetAssetType);
-      score += Math.round(tokenScore * 30);
-      if (tokenScore > 0) reasons.push('asset/type match');
-    }
-    if (score > 0) {
-      matches.push({ score, job, reason: reasons.join(', ') });
-    }
-  }
 
-  for (const member of network.members) {
-    let score = 0;
-    const reasons: string[] = [];
-    if (targetState && member.state.toLowerCase() === targetState) {
-      score += 20;
-      reasons.push('same state');
+    for (const job of openJobs) {
+      const { score, reasons } = scoreJob(job, targetState, targetCategory, targetAssetType);
+      if (score > 0) {
+        matches.push({ score, job, reason: reasons.join(', ') });
+      }
     }
-    if (targetCategory || targetAssetType) {
-      const text = `${member.bio || ''} ${member.skills || ''}`;
-      const tokenScore = scoreTokens(text, `${targetCategory} ${targetAssetType}`);
-      score += Math.round(tokenScore * 25);
-      if (tokenScore > 0) reasons.push('profile match');
+
+    for (const member of network.members) {
+      const { score, reasons } = scoreMember(member, targetState, targetCategory, targetAssetType);
+      if (score > 0) {
+        matches.push({ score, member: sanitizeMember(member), reason: reasons.join(', ') });
+      }
     }
-    if (score > 0) {
-      matches.push({ score, member, reason: reasons.join(', ') });
+  } else {
+    // Default view: cross-match open jobs against available listings
+    for (const job of openJobs) {
+      for (const listing of availableListings) {
+        let score = 0;
+        const reasons: string[] = [];
+        if (job.state.toLowerCase() === listing.state.toLowerCase()) {
+          score += 25;
+          reasons.push('same state');
+        }
+        if (
+          job.category.toLowerCase().includes(listing.category.toLowerCase()) ||
+          listing.category.toLowerCase().includes(job.category.toLowerCase())
+        ) {
+          score += 20;
+          reasons.push('category match');
+        }
+        const tokenScore = scoreTokens(
+          listing.assetType + ' ' + listing.title + ' ' + listing.description,
+          job.assetType + ' ' + job.title + ' ' + job.description
+        );
+        score += Math.round(tokenScore * 30);
+        if (tokenScore > 0) reasons.push('asset/type match');
+
+        if (score >= 25) {
+          matches.push({ score, listing, job, reason: reasons.join(', ') });
+        }
+      }
     }
   }
 

@@ -102,10 +102,12 @@ export interface GincNetwork {
   jobs: GincJob[];
 }
 
+export type PublicMember = Omit<GincMember, 'email' | 'phone' | 'zip'>;
+
 export interface GincMatch {
   score: number;
   listing?: GincListing;
   job?: GincJob;
-  member?: GincMember;
+  member?: PublicMember;
   reason: string;
 }

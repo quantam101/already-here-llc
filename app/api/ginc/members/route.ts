@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server.js';
 import { GincMember } from '@/lib/ginc';
-import { generateGincId, loadNetwork, saveNetwork } from '@/lib/ginc-store';
+import { generateGincId, loadNetwork, sanitizeMember, saveNetwork } from '@/lib/ginc-store';
 
 export const runtime = 'nodejs';
 
@@ -29,7 +29,7 @@ function clean(value: unknown, max = 3000): string {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const network = await loadNetwork();
-  let members = network.members;
+  let members = network.members.map(sanitizeMember);
   const state = searchParams.get('state');
   const type = searchParams.get('type');
   if (state) members = members.filter((m) => m.state.toLowerCase() === state.toLowerCase());

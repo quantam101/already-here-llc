@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
 import { GincNetworkBrowser } from '@/components/GincNetworkBrowser';
 import { gincConfig } from '@/lib/ginc';
-import { findMatches, loadNetwork } from '@/lib/ginc-store';
+import { findMatches, loadNetwork, sanitizeMember } from '@/lib/ginc-store';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: 'GINC Network',
@@ -12,7 +15,12 @@ export const metadata: Metadata = {
 export default async function GincNetworkPage() {
   const network = await loadNetwork();
   const matches = await findMatches();
-  const initialData = { ...network, matches };
+  const initialData = {
+    members: network.members.map(sanitizeMember),
+    listings: network.listings,
+    jobs: network.jobs,
+    matches
+  };
 
   return (
     <div className="container-shell py-16 lg:py-24">

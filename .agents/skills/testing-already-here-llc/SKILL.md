@@ -64,7 +64,26 @@ Key pages to verify:
 - `next-env.d.ts` is auto-generated — exclude it from ESLint via `eslint.config.mjs`
 - K8s manifests reference images that don't exist yet (`ghcr.io/quantam101/already-here-llc-web:latest`) — these are scaffolds
 
+## GINC Network Testing
+
+- GINC pages: `/ginc` (hub), `/ginc/join`, `/ginc/list`, `/ginc/work`, `/ginc/network`, plus `/connect` (GINC Work) and `/dashboard`.
+- Default seed data lives in `lib/ginc-store.ts` and persists to `data/ginc-network.json` in local dev (Redis only when `UPSTASH_REDIS_*` env vars are set). Delete `data/ginc-network.json` before starting `npm run dev` if you need a clean seed.
+- Form submissions return `MEM-${ts}-${uuid}`, `LST-${ts}-${uuid}`, and `JOB-${ts}-${uuid}` references. The per-route in-memory rate limit resets after 60 seconds of inactivity.
+- The `/ginc/network` filter inputs are **controlled React components**. If you must set them via `browser_console`, use the native input value setter to update React state:
+  ```js
+  const setNativeValue = (el, value) => Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(el, value);
+  setNativeValue(input, 'AZ');
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  ```
+- Coordinate-based automation for this site is unreliable on high-resolution displays; prefer `browser_console` clicks for header tabs and form submission when native clicks miss.
+
+## GINC Quality Gate Gotchas
+
+- `npm run lint` uses `--max-warnings=0`, so any unused-import warnings in GINC files will fail the gate.
+- `npm run typecheck` / `npm run build` are strict; missing imports (`GincListing`, `GincJob`) or importing non-exported names (`PublicMember` from `lib/ginc-store`) will fail the build.
+- `npm run test` and `node scripts/a-plus-content-guard.mjs` usually pass if the above issues are clean.
+
 ## Dependencies
 
-- Node.js packages: `npm install` (includes zod, remark, remark-html)
+- Node.js packages: `npm install` (includes zod, remark, remark-html, @upstash/redis)
 - Python packages: `pip install pyyaml pytest`

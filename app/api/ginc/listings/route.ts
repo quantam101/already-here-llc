@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server.js';
 import { GincListing } from '@/lib/ginc';
-import { createGincMemberFromPayload, generateGincId, loadNetwork, saveNetwork } from '@/lib/ginc-store';
+import { buildGincMember, generateGincId, loadNetwork, saveNetwork } from '@/lib/ginc-store';
 
 export const runtime = 'nodejs';
 
@@ -68,7 +68,8 @@ export async function POST(request: Request) {
   let member = network.members.find((m) => m.id === memberId);
   if (!member) {
     try {
-      member = await createGincMemberFromPayload(body);
+      member = buildGincMember(body);
+      network.members.push(member);
     } catch (error) {
       return NextResponse.json({ message: error instanceof Error ? error.message : 'Invalid member data.' }, { status: 400 });
     }
