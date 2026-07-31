@@ -6,32 +6,32 @@ import { fleetAvailability, proDeliveryKit, rentalPricing } from '@/lib/scooter-
 import { arrangementTypes, fleetMarketplaceFeatures, howItWorks, marketplaceCategories, marketplaceMission, sampleListings } from '@/lib/fleet-marketplace';
 
 export const metadata: Metadata = {
-  title: 'Marketplace — Rent, List, or Request Any Vehicle, Space, or Asset',
-  description: 'Already Here LLC marketplace for renting, listing, or requesting vehicles, equipment, bounce houses, water sports, bicycles, apartments, rooms, storage, parking, and more.',
+  title: 'GINC Marketplace — Vehicles, Work, and People',
+  description: 'GINC by Already Here LLC — the network for renting, listing, and matching vehicles, equipment, spaces, work, and people across every state.',
   alternates: { canonical: '/marketplace' }
 };
 
 export default function MarketplacePage() {
   return (
     <div className="container-shell py-16 lg:py-24">
-      <span className="eyebrow">Marketplace</span>
-      <h1 className="section-title mt-5">One marketplace for every vehicle, space, and asset.</h1>
+      <span className="eyebrow">GINC Marketplace</span>
+      <h1 className="section-title mt-5">One network for vehicles, work, and people.</h1>
       <p className="section-copy">
         {marketplaceMission} Apartments, rooms, storage, and parking are now included too.
       </p>
 
       <div className="mt-8 flex flex-col gap-4 sm:flex-row flex-wrap">
-        <Link href="#list-asset" className="link-ring inline-flex rounded-full bg-action px-6 py-3 text-sm font-semibold text-white hover:bg-navy">
+        <Link href="/ginc/list" className="link-ring inline-flex rounded-full bg-action px-6 py-3 text-sm font-semibold text-white hover:bg-navy">
           List an asset
         </Link>
-        <Link href="#request-capacity" className="link-ring inline-flex rounded-full border border-action px-6 py-3 text-sm font-semibold text-action hover:bg-action/5">
-          Request anything
+        <Link href="/ginc/work" className="link-ring inline-flex rounded-full border border-action px-6 py-3 text-sm font-semibold text-action hover:bg-action/5">
+          Post work / need
+        </Link>
+        <Link href="/ginc/network" className="link-ring inline-flex rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-600 hover:border-action hover:text-action">
+          Browse the network
         </Link>
         <Link href="/scooter-rentals" className="link-ring inline-flex rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-600 hover:border-action hover:text-action">
           Rent a scooter
-        </Link>
-        <Link href="/connect" className="link-ring inline-flex rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-600 hover:border-action hover:text-action">
-          Find work / workers
         </Link>
       </div>
 
@@ -149,7 +149,7 @@ export default function MarketplacePage() {
 
       <section className="mt-12">
         <div className="mb-6">
-          <span className="eyebrow">Marketplace intake</span>
+          <span className="eyebrow">Quick intake</span>
           <h2 className="section-title mt-4">List, request, or partner across every category.</h2>
         </div>
         <MobilityMarketplaceForm />
