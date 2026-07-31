@@ -75,6 +75,25 @@ Key pages to verify:
 - A fixed bottom "Need a Phoenix technician today?" CTA can obscure form fields on long pages; hide it for testing with a one-time `display: none` via the browser console.
 - The automation keyboard/mouse sometimes cannot reliably fill long forms or hit small targets; falling back to `browser_console` to set `.value`/`.checked` and trigger `.click()` is acceptable for proving end-to-end behavior.
 
+## GINC Network Testing
+
+- GINC pages: `/ginc` (hub), `/ginc/join`, `/ginc/list`, `/ginc/work`, `/ginc/network`, plus `/connect` (GINC Work) and `/dashboard`.
+- Default seed data lives in `lib/ginc-store.ts` and persists to `data/ginc-network.json` in local dev (Redis only when `UPSTASH_REDIS_*` env vars are set). Delete `data/ginc-network.json` before starting `npm run dev` if you need a clean seed.
+- Form submissions return `MEM-${ts}-${uuid}`, `LST-${ts}-${uuid}`, and `JOB-${ts}-${uuid}` references. Redis-backed rate limiting is used when `UPSTASH_REDIS_*` is configured; otherwise a per-instance in-memory limit applies.
+- The `/ginc/network` filter inputs are **controlled React components**. If you must set them via `browser_console`, use the native input value setter to update React state:
+  ```js
+  const setNativeValue = (el, value) => Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(el, value);
+  setNativeValue(input, 'AZ');
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  ```
+- Coordinate-based automation for this site is unreliable on high-resolution displays; prefer `browser_console` clicks for header tabs and form submission when native clicks miss.
+
+## GINC Quality Gate Gotchas
+
+- `npm run lint` uses `--max-warnings=0`, so any unused-import warnings in GINC files will fail the gate.
+- `npm run typecheck` / `npm run build` are strict; missing imports (`GincListing`, `GincJob`) or importing non-exported names (`PublicMember` from `lib/ginc-store`) will fail the build.
+- `npm run test` and `node scripts/a-plus-content-guard.mjs` usually pass if the above issues are clean.
+
 ## Vercel Preview URL
 
 - Vercel bot comments are base64-encoded payloads. Extract the preview URL with:
@@ -91,5 +110,5 @@ Key pages to verify:
 
 ## Dependencies
 
-- Node.js packages: `npm install` (includes zod, remark, remark-html)
+- Node.js packages: `npm install` (includes zod, remark, remark-html, @upstash/redis)
 - Python packages: `pip install pyyaml pytest`
