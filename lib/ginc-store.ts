@@ -112,7 +112,7 @@ async function loadRedisList<T>(redis: Redis, key: string): Promise<T[]> {
   return (items || []).map((item) => (typeof item === 'string' ? JSON.parse(item) : item));
 }
 
-export async function loadNetwork(): Promise<GincNetwork> {
+export async function loadNetwork(retries = 3): Promise<GincNetwork> {
   const redis = getRedis();
   if (redis) {
     const [members, listings, jobs] = await Promise.all([
@@ -120,8 +120,33 @@ export async function loadNetwork(): Promise<GincNetwork> {
       loadRedisList<GincListing>(redis, 'ginc:listings'),
       loadRedisList<GincJob>(redis, 'ginc:jobs')
     ]);
-    return { members, listings, jobs };
+
+    if (members.length > 0 || listings.length > 0 || jobs.length > 0) {
+      return { members, listings, jobs };
+    }
+
+    // Lists are empty — seed/migrate once using a short-lived lock to avoid duplicate seeding.
+    const lockAcquired = await redis.set('ginc:seeded', '1', { nx: true, ex: 30 });
+    if (lockAcquired === 'OK') {
+      try {
+        const legacy = await redis.get<string>('ginc:network');
+        const data = legacy
+          ? (typeof legacy === 'string' ? (JSON.parse(legacy) as GincNetwork) : (legacy as unknown as GincNetwork))
+          : await loadFromDisk();
+        await saveNetwork(data);
+      } finally {
+        // Lock expires automatically; no need to delete.
+      }
+    } else if (retries > 0) {
+      // Another process is seeding; wait briefly and re-read.
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      return loadNetwork(retries - 1);
+    }
+
+    // After seeding (or if lock could not be acquired), re-read the lists.
+    return loadNetwork(retries - 1);
   }
+
   if (!memoryCache) {
     memoryCache = await loadFromDisk();
   }
@@ -239,10 +264,11 @@ const inMemoryRateLimits = new Map<string, { count: number; resetAt: number }>()
 export async function isRateLimited(key: string, maxRequests = 5, windowSeconds = 60): Promise<boolean> {
   const redis = getRedis();
   if (redis) {
-    const count = await redis.incr(`ginc:ratelimit:${key}`);
-    if (count === 1) {
-      await redis.expire(`ginc:ratelimit:${key}`, windowSeconds);
-    }
+    const rateKey = `ginc:ratelimit:${key}`;
+    const pipeline = redis.multi();
+    pipeline.incr(rateKey);
+    pipeline.expire(rateKey, windowSeconds, 'NX');
+    const [count] = (await pipeline.exec()) as [number, unknown];
     return count > maxRequests;
   }
 
