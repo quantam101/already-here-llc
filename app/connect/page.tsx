@@ -4,16 +4,16 @@ import { ConnectMatchForm } from '@/components/ConnectMatchForm';
 import { connectMission, connectNeeds, connectRoles } from '@/lib/connect';
 
 export const metadata: Metadata = {
-  title: 'Connect & Contract — Find Work or Find Workers',
-  description: 'Connect drivers, technicians, contractors, event staff, and equipment operators with businesses, vehicle owners, and fleet operators who need them.',
+  title: 'GINC Work — Find Jobs, Workers, and Crews',
+  description: 'GINC by Already Here LLC — connect drivers, technicians, contractors, and crew members with businesses, vehicle owners, and fleet operators who need them.',
   alternates: { canonical: '/connect' }
 };
 
 export default function ConnectPage() {
   return (
     <div className="container-shell py-16 lg:py-24">
-      <span className="eyebrow">Connect & Contract</span>
-      <h1 className="section-title mt-5">Find work. Find workers. Find each other.</h1>
+      <span className="eyebrow">GINC Work</span>
+      <h1 className="section-title mt-5">Find work. Find workers. Build crews.</h1>
       <p className="section-copy">
         {connectMission}
       </p>
@@ -25,8 +25,8 @@ export default function ConnectPage() {
         <Link href="#find-workers" className="link-ring inline-flex rounded-full border border-action px-6 py-3 text-sm font-semibold text-action hover:bg-action/5">
           I need people / contractors
         </Link>
-        <Link href="/marketplace" className="link-ring inline-flex rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-600 hover:border-action hover:text-action">
-          Browse marketplace
+        <Link href="/ginc/network" className="link-ring inline-flex rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-600 hover:border-action hover:text-action">
+          Browse network
         </Link>
       </div>
 

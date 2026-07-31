@@ -2,27 +2,27 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Owner & Renter Dashboard',
-  description: 'Manage your vehicle listings, rentals, contracts, and matches from one dashboard.',
+  title: 'GINC Dashboard',
+  description: 'Manage your GINC listings, rentals, work matches, referrals, and payments.',
   alternates: { canonical: '/dashboard' }
 };
 
 const sections = [
-  { title: 'My listings', description: 'Vehicles, spaces, and equipment you have listed. Update availability, pricing, and photos.', action: 'Manage listings', href: '/marketplace' },
+  { title: 'My listings', description: 'Vehicles, spaces, and equipment you have listed. Update availability, pricing, and photos.', action: 'Manage listings', href: '/ginc/network' },
   { title: 'My rentals', description: 'Active and upcoming scooter, vehicle, and equipment rentals. View agreements and return dates.', action: 'View rentals', href: '/scooter-rentals' },
   { title: 'My work & contracts', description: 'Jobs, contract opportunities, and worker matches you have posted or applied to.', action: 'View matches', href: '/connect' },
+  { title: 'Network', description: 'Browse the full GINC network: members, listings, jobs, and matches.', action: 'Browse network', href: '/ginc/network' },
   { title: 'Referrals', description: 'Your referral code, shareable link, and earned credits.', action: 'View referrals', href: '/dashboard/referrals' },
-  { title: 'Payments', description: 'Deposit and subscription invoices, payment methods, and payout settings.', action: 'View payments', href: '/dashboard/payments' },
-  { title: 'Messages', description: 'Inquiries, booking confirmations, and match notifications.', action: 'View messages', href: '/dashboard' }
+  { title: 'Payments', description: 'Deposit and subscription invoices, payment methods, and payout settings.', action: 'View payments', href: '/dashboard/payments' }
 ];
 
 export default function DashboardPage() {
   return (
     <div className="container-shell py-16 lg:py-24">
-      <span className="eyebrow">Dashboard</span>
-      <h1 className="section-title mt-5">Owner & renter dashboard</h1>
+      <span className="eyebrow">GINC Dashboard</span>
+      <h1 className="section-title mt-5">Dashboard</h1>
       <p className="section-copy">
-        Manage listings, rentals, contracts, referrals, and payments from one place. This is a preview dashboard — authentication and live data integration will be added before launch.
+        Manage your GINC listings, rentals, work matches, referrals, and payments from one place. This is a preview dashboard — authentication and live data integration will be added before launch.
       </p>
 
       <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">

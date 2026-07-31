@@ -1,17 +1,31 @@
-# Already Here Marketplace — Operator Manual
+# GINC — Growth & Interconnected Networks Collective
 
-How to access the marketplace, use it from the renter/owner/worker side, and operate it as a business.
+A DBA of Already Here LLC.
+
+How to access, use, and operate the GINC network that connects people, vehicles, equipment, spaces, and work.
 
 ## 1. What this is
 
-The `/marketplace` page is the public hub where anyone can:
+GINC is a multi-sided network, not just a marketplace. It connects:
 
-- **Browse** vehicles, equipment, and spaces for rent, lease, or sale.
-- **List** their own vehicle, equipment, or space.
-- **Request** a vehicle, equipment, or space.
-- **Find work or find workers** at `/connect`.
+- **Owners** with idle vehicles, equipment, tools, spaces, or real estate.
+- **Renters/buyers** who need vehicles, equipment, spaces, or short-term capacity.
+- **Workers** who want jobs, contracts, or recurring crew relationships.
+- **Businesses** that need people, vehicles, equipment, or extra capacity.
 
-It currently supports scooter rentals directly and captures leads for every other category. The site routes submissions into your operating database and sends a notification email for each lead.
+Public pages:
+
+- `/ginc` — network landing page
+- `/ginc/join` — create a member profile
+- `/ginc/list` — list an asset, vehicle, space, or equipment
+- `/ginc/work` — post a job, contract, or work need
+- `/ginc/network` — browse members, listings, work posts, and matches
+- `/marketplace` — legacy marketplace hub (redirects to `/ginc` over time)
+- `/connect` — GINC Work matching
+- `/scooter-rentals` — turnkey scooter rental intake
+- `/dashboard` — preview control panel
+
+The site captures submissions, stores them (Redis/Upstash in production, in-memory/file in local dev), and sends a notification email for each lead.
 
 ## 2. Access
 
@@ -19,14 +33,14 @@ It currently supports scooter rentals directly and captures leads for every othe
 
 | Page | URL | Purpose |
 |------|-----|---------|
-| Marketplace hub | `https://www.alreadyherellc.com/marketplace` | Browse all categories, search/filter, submit an intake |
+| GINC hub | `https://www.alreadyherellc.com/ginc` | Join, list, post work, browse |
+| Join the network | `https://www.alreadyherellc.com/ginc/join` | Create a member profile |
+| List an asset | `https://www.alreadyherellc.com/ginc/list` | Add a vehicle, tool, space, or equipment listing |
+| Post work / need | `https://www.alreadyherellc.com/ginc/work` | Post a job, contract, or worker need |
+| Browse network | `https://www.alreadyherellc.com/ginc/network` | Filter and match members, listings, and jobs |
 | Scooter rentals | `https://www.alreadyherellc.com/scooter-rentals` | Turnkey scooter rental intake and pricing |
-| Find work / workers | `https://www.alreadyherellc.com/connect` | People-to-people contract matching |
-| Owner dashboard | `https://www.alreadyherellc.com/dashboard` | Listings, rentals, matches, referrals, payments (preview) |
-| Referrals | `https://www.alreadyherellc.com/dashboard/referrals` | Generate/share a referral code |
-| Payments | `https://www.alreadyherellc.com/dashboard/payments` | Stripe checkout preview |
-
-`/fleet-marketplace` automatically redirects to `/marketplace`.
+| GINC Work | `https://www.alreadyherellc.com/connect` | People-to-people work matching |
+| Dashboard | `https://www.alreadyherellc.com/dashboard` | Listings, rentals, matches, referrals, payments (preview) |
 
 ### Run it locally
 
@@ -36,7 +50,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000/marketplace`.
+Open `http://localhost:3000/ginc`.
 
 For the full quality gate:
 
@@ -48,59 +62,57 @@ node scripts/a-plus-content-guard.mjs
 source ~/.nvm/nvm.sh && nvm use 22 && npm run test
 ```
 
-## 3. How to use as a renter, buyer, or demand source
+## 3. How to join GINC
 
-1. Go to `/marketplace`.
-2. Scroll to **"Request anything"** or click **"List an asset"** if you have supply.
-3. Fill out the marketplace intake form:
-   - **I am a**: choose your role (driver, business needing vehicles, etc.).
-   - **Category**: delivery, farming, construction, entertainment, camping, parties, bounce houses, water sports, apartments, storage, etc.
-   - **Vehicle / equipment type**: select from the dropdown or describe.
-   - **Preferred arrangement**: rent, lease, sell, revenue-share, managed fleet, service.
-   - **Start date, end date, estimated rental length, and flexibility**: tells the owner/operator when you need it.
-   - **Interests**: check all that apply (e.g., scooter rental, farm equipment, apartment rental).
-   - **Business need**: number of vehicles, service area, schedule, budget.
-   - **Notes**: anything else.
-4. Agree to the consent checkboxes and submit.
-5. The page shows a `MOB-...` reference number. An email is sent to the configured dispatch address.
+1. Go to `/ginc/join`.
+2. Choose your role: owner, renter, worker, or business.
+3. Enter name, email, phone, city, state, and ZIP.
+4. Add skills, assets, or a short bio.
+5. Submit. You receive a `MEM-...` reference ID. Keep it to list assets or post work.
 
-To rent a scooter directly, use `/scooter-rentals` and choose the weekly or monthly plan.
+## 4. How to list an asset or space
 
-## 4. How to use as an owner, seller, or supply source
+1. Go to `/ginc/list`.
+2. Enter your member ID if you already joined, or fill out the profile fields.
+3. Select category, asset type, title, price, and period.
+4. Add location, description, and availability notes.
+5. Submit. The listing receives an `LST-...` reference and appears in `/ginc/network`.
 
-1. Go to `/marketplace`.
-2. Click **"List an asset"**.
-3. In the form:
-   - Select **"vehicle_owner"** or **"fleet_partner"**.
-   - Choose the matching category and vehicle/equipment type.
-   - Enter year, make, model, mileage/hours, condition, asking price, and photos/description in the **Vehicle or equipment information** section.
-   - Add availability, preferred arrangement, pickup/return rules, and pricing notes in the free-text fields.
-4. Submit. You receive a `MOB-...` reference.
+Supported categories include delivery/gig vehicles, farming, construction, entertainment, camping, parties, bounce houses, water sports, bicycles, apartments, rooms, storage, parking, fleet overflow, and specialty assets.
 
-Currently the site captures leads and emails them to you. Later, owner dashboard features will let you edit live listings and set availability.
+## 5. How to post work or a need
 
-## 5. How to find or offer work (`/connect`)
+1. Go to `/ginc/work`.
+2. Enter your member ID or profile information.
+3. Select category, asset/need type, title, schedule, and budget.
+4. Describe the scope and whether the work could become recurring.
+5. Submit. The post receives a `JOB-...` reference and appears in `/ginc/network`.
 
-`/connect` is the people-to-people layer:
+## 6. How to browse and match
 
-- **I have skills / want work**: drivers, technicians, contractors, event staff, equipment operators, cleaners, etc.
-- **I need people / contractors**: businesses or owners who need labor.
+`/ginc/network` shows:
 
-Fill out the form, check the relevant roles or needs, and submit. The system sends a `CNT-...` reference and routes the record to your email/webhook.
+- **Matches** — listings, jobs, and members scored by state, category, and asset/need type
+- **Listings** — all available assets and spaces
+- **Work** — all open job/contract posts
+- **Members** — all profiles
 
-## 6. Dashboard overview
+Use the filter form to narrow by state, category/keyword, or asset/need type. Matching uses a simple token-overlap score; production scale will move to a persistent database with geospatial and vector search.
+
+## 7. Dashboard overview
 
 `/dashboard` is a preview control panel with links to:
 
-- **My listings** → `/marketplace`
+- **My listings** → `/ginc/network`
 - **My rentals** → `/scooter-rentals`
 - **My work & contracts** → `/connect`
+- **Network** → `/ginc/network`
 - **Referrals** → `/dashboard/referrals`
 - **Payments** → `/dashboard/payments`
 
-Live statistics, editable listings, and match tracking require a connected database.
+Live statistics, editable listings, and match tracking require authentication and a connected database or Redis.
 
-## 7. How to sell / monetize
+## 8. How to sell / monetize
 
 ### Scooter rental pricing
 
@@ -128,28 +140,30 @@ The scooter intake form includes:
 - Referrer earns a $25 account credit after the referred renter completes four paid weeks.
 - The form validates the `?ref=` code and ignores malformed codes.
 
-### Marketplace conversion
+### GINC network monetization
 
-For non-scooter categories, use the marketplace intake to capture interest. You then:
+- **Listing fees**: owners may pay a small fee per listing or a monthly subscription once volume grows.
+- **Transaction/admin fee**: a percentage of each rental, sale, or job contract handled through GINC.
+- **Managed fleet partnerships**: GINC sources vehicles/equipment and handles marketing, maintenance, and payout for a recurring fee or revenue share.
+- **Implementation revenue**: setup, onboarding, inspection, insurance review, and compliance services for businesses joining the network.
+- **Advertising/promoted listings**: featured placement for owners and businesses.
 
-1. Screen ownership, registration, insurance, and condition.
-2. Set pricing or revenue-share terms.
-3. Manually match supply and demand from the submitted records.
-4. Move to written agreement, payment/deposit, and handoff.
+## 9. Data storage
 
-### Payments
+Local development:
 
-`/dashboard/payments` shows a Stripe checkout button for the $305 scooter onboarding amount. To collect live payments, add these to your Vercel environment variables:
+- The app reads from `data/ginc-network.json` and falls back to in-memory storage if the file is missing or read-only.
+- Writes are persisted to the file in dev, but lost on Vercel because functions are stateless.
 
-- `STRIPE_SECRET_KEY`
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- `STRIPE_WEBHOOK_SECRET`
+Production:
 
-For subscriptions (weekly/monthly), enable Stripe Billing products and link them to the checkout session.
+- Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in Vercel environment variables.
+- GINC will use Upstash Redis to persist members, listings, jobs, and matches across requests.
+- For high-volume scaling, migrate to Vercel Postgres, Neon, or another managed database with full search and indexing.
 
-## 8. Notification and follow-up channels
+## 10. Notification and follow-up channels
 
-The site uses **Resend** for email. Each marketplace submission sends an email to the address configured in `DISPATCH_TO_EMAIL` or `MOBILITY_TO_EMAIL`.
+The site uses **Resend** for email. Each GINC submission sends an email to the address configured in `DISPATCH_TO_EMAIL` or `MOBILITY_TO_EMAIL`.
 
 For SMS (waitlist alerts, booking confirmations, matched work), add to Vercel:
 
@@ -159,35 +173,39 @@ For SMS (waitlist alerts, booking confirmations, matched work), add to Vercel:
 
 Templates live in `lib/sms.ts` and the sending endpoint is `/api/sms`.
 
-## 9. Daily operating workflow
+## 11. Daily operating workflow
 
-1. **Check submissions**: review the email or webhook payload for `MOB-...` (marketplace) and `CNT-...` (connect) records.
+1. **Check submissions**: review email/webhook payloads for `MEM-...`, `LST-...`, and `JOB-...` records.
 2. **Screen leads**:
-   - Renter: license, delivery app eligibility, insurance, deposit/card.
-   - Owner: title/registration, insurance, photos, condition, pricing.
-   - Business: legal name, route/cargo needs, budget, insurance.
-   - Worker: skills, availability, background, transportation.
-3. **Match**: compare category, vehicle type, dates, rental length, budget, and geography.
-4. **Quote**: send a written estimate or agreement.
-5. **Collect deposit/payment** through Stripe or manual invoice.
-6. **Document**: before-and-after photos, inspection checklist, mileage/hours, fuel/charge level.
-7. **Track**: utilization, on-time returns, damage, maintenance, repeat rate.
+   - **Owner**: title/registration, insurance, photos, condition, pricing.
+   - **Renter**: license, delivery app eligibility, insurance, deposit/card.
+   - **Business**: legal name, route/cargo/crew needs, budget, insurance.
+   - **Worker**: skills, availability, background, transportation.
+3. **Match**: use `/ginc/network` or compare submissions manually by category, asset type, state/city, schedule, and budget.
+4. **Introduce**: connect matched members by email, phone, or SMS.
+5. **Quote**: send written estimate or agreement.
+6. **Collect deposit/payment** through Stripe or manual invoice.
+7. **Document**: before-and-after photos, inspection checklist, mileage/hours, fuel/charge level.
+8. **Track**: utilization, on-time returns, damage, maintenance, repeat rate, repeat work relationships.
 
-## 10. Compliance and safety checklist
+## 12. Compliance and safety checklist
 
+- GINC is a DBA of Already Here LLC. Operate under the existing LLC's insurance, tax, and liability framework.
 - Do not represent renters or workers as employees unless formally hired and classified.
 - Confirm insurance covers the intended commercial or rental use.
-- Use written rental/lease/revenue-share agreements reviewed for Arizona law.
+- Use written rental/lease/revenue-share/contract agreements reviewed for the state where the asset or work is used.
 - Do not handle controlled substances, hazardous materials, firearms, cash, or regulated medical specimens without proper authority.
-- Keep title, SSN, bank, policy numbers, and other sensitive data out of the public intake forms.
-- Mark unverified listings as "coming soon" until screening is complete.
+- Keep title, SSN, bank, policy numbers, and other sensitive data out of public intake forms.
+- Mark unverified listings and jobs as "pending" until screening is complete.
+- Comply with consumer protection, privacy, fair housing, and transportation laws in every state where the network operates.
 
-## 11. Quick-start checklist
+## 13. Quick-start checklist
 
 - [ ] Set `RESEND_API_KEY` and `DISPATCH_TO_EMAIL` in Vercel so intake emails arrive.
+- [ ] Add `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` to persist GINC data in production.
 - [ ] Add `STRIPE_*` keys when ready to collect deposits/subscriptions.
 - [ ] Add `TWILIO_*` keys when ready to send SMS.
 - [ ] Set `NEXT_PUBLIC_SITE_URL` to the production domain.
 - [ ] List the first scooter as "available" and the rest of the categories as "coming soon" until vetted.
 - [ ] Share the referral link with the first renters.
-- [ ] Post marketplace listings to Craigslist, Facebook Marketplace, Nextdoor, and local gig forums using the marketing copy in `docs/field-ops/SCOOTER-RENTAL-MARKETING.md`.
+- [ ] Post GINC listings to Craigslist, Facebook Marketplace, Nextdoor, and local gig forums using the marketing copy in `docs/field-ops/SCOOTER-RENTAL-MARKETING.md`.

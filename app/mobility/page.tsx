@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { MobilityMarketplaceForm } from '@/components/MobilityMarketplaceForm';
 
 export const metadata: Metadata = {
-  title: 'Mobility Marketplace',
+  title: 'GINC Mobility — Vehicles, Work, and People',
   description: 'Connect unused vehicles, scooter renters, delivery drivers, fleet partners, and businesses needing extra vehicles or delivery capacity through Already Here LLC.',
   alternates: { canonical: '/mobility' }
 };
@@ -33,12 +33,12 @@ export default function MobilityPage() {
       <span className="eyebrow">Already Here Mobility</span>
       <h1 className="section-title mt-5">Match unused vehicles with real transportation and delivery demand.</h1>
       <p className="section-copy">
-        This marketplace connects vehicle owners, scooter renters, delivery drivers, fleet partners, and businesses that need extra vehicles or delivery capacity. Every opportunity is screened before any rental, sale, delivery, fleet, or revenue-sharing agreement is accepted.
+        GINC by Already Here LLC connects vehicle owners, scooter renters, delivery drivers, fleet partners, workers, and businesses that need extra vehicles, equipment, or crew. Every opportunity is screened before any rental, sale, delivery, fleet, or working agreement is accepted.
       </p>
 
       <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-        <Link href="/marketplace" className="link-ring inline-flex rounded-full bg-action px-6 py-3 text-sm font-semibold text-white hover:bg-navy">
-          Browse Marketplace
+        <Link href="/ginc" className="link-ring inline-flex rounded-full bg-action px-6 py-3 text-sm font-semibold text-white hover:bg-navy">
+          Browse GINC
         </Link>
         <Link href="/scooter-rentals" className="link-ring inline-flex rounded-full border border-action px-6 py-3 text-sm font-semibold text-action hover:bg-action/5">
           Rent a scooter
