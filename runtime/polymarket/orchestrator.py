@@ -6,19 +6,26 @@ import hashlib
 import json
 import logging
 import os
+import sys
 import threading
 import time
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
-from .abi import derive_price_from_fill, derive_usd_notional
-from .alerts import TelegramAlertEngine
-from .config import PolymarketConfig
-from .listener import PolymarketListener
-from .profiler import WalletProfiler
-from .risk import RiskGuard
-from .state import StateManager
-from .utils import CircuitBreaker
+# Allow `python runtime/polymarket/orchestrator.py` while keeping package imports.
+if __name__ == "__main__" and __package__ is None:
+    _repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    sys.path.insert(0, _repo_root)
+    __package__ = "runtime.polymarket"
+
+from runtime.polymarket.abi import derive_price_from_fill, derive_usd_notional
+from runtime.polymarket.alerts import TelegramAlertEngine
+from runtime.polymarket.config import PolymarketConfig
+from runtime.polymarket.listener import PolymarketListener
+from runtime.polymarket.profiler import WalletProfiler
+from runtime.polymarket.risk import RiskGuard
+from runtime.polymarket.state import StateManager
+from runtime.polymarket.utils import CircuitBreaker
 
 logger = logging.getLogger("polymarket-tracker")
 
