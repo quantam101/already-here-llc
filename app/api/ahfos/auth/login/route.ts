@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { getUserByEmail } from '@/lib/ahfos/store';
 import { setSessionCookie, verifyPassword } from '@/lib/ahfos/auth';
 import { err, ok } from '@/lib/ahfos/api-utils';
+import { getClientIp, isRateLimited } from '@/lib/ahfos/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -11,6 +12,11 @@ const LoginSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  if (isRateLimited(`login:${ip}`, 10, 15 * 60 * 1000)) {
+    return err('Too many login attempts. Please try again later.', 429);
+  }
+
   const body = await request.json().catch(() => ({}));
   const parsed = LoginSchema.safeParse(body);
   if (!parsed.success) return err('Invalid login credentials.', 400);

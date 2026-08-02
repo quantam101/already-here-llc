@@ -15,7 +15,7 @@ type JobSummary = {
   dispatcherPacket: { summary: string };
 };
 
-type UserSummary = { id: string; name: string; email: string; roles: string[] };
+type UserSummary = { id: string; name: string; email: string; roles: string[]; skills?: string[] };
 
 const STATUSES = ['lead', 'intake', 'quoted', 'approved', 'assigned', 'in_progress', 'completed', 'closed', 'cancelled'];
 
@@ -23,6 +23,7 @@ export function DispatcherBoard() {
   const [jobs, setJobs] = useState<JobSummary[] | null>(null);
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -40,27 +41,45 @@ export function DispatcherBoard() {
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load board.'));
   }, []);
 
+  function showMessage(text: string) {
+    setMessage(text);
+    setTimeout(() => setMessage(null), 4000);
+  }
+
   async function updateJob(id: string, patch: Partial<JobSummary>) {
-    const res = await fetch(`/api/ahfos/jobs/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch),
-    });
-    const data = (await res.json().catch(() => ({ message: 'Update failed.' }))) as { message?: string };
-    if (!res.ok) throw new Error(data.message || 'Update failed.');
-    setJobs((prev) => (prev ? prev.map((j) => (j.id === id ? { ...j, ...patch } : j)) : prev));
+    setError(null);
+    try {
+      const res = await fetch(`/api/ahfos/jobs/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      const data = (await res.json().catch(() => ({ message: 'Update failed.' }))) as { ok?: boolean; job?: JobSummary; message?: string };
+      if (!res.ok) throw new Error(data.message || 'Update failed.');
+      setJobs((prev) => (prev ? prev.map((j) => (j.id === id ? (data.job as JobSummary) ?? { ...j, ...patch } : j)) : prev));
+      showMessage('Job updated.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Update failed.');
+      refresh();
+    }
   }
 
   async function runAgent(id: string, agent: string, payload?: Record<string, unknown>) {
-    const res = await fetch(`/api/ahfos/jobs/${id}/agent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent, payload }),
-    });
-    const data = (await res.json().catch(() => ({ message: 'Agent failed.' }))) as { message?: string; job?: JobSummary };
-    if (!res.ok) throw new Error(data.message || 'Agent failed.');
-    if (data.job) setJobs((prev) => (prev ? prev.map((j) => (j.id === id ? data.job as JobSummary : j)) : prev));
-    else refresh();
+    setError(null);
+    try {
+      const res = await fetch(`/api/ahfos/jobs/${id}/agent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agent, payload }),
+      });
+      const data = (await res.json().catch(() => ({ message: 'Agent failed.' }))) as { ok?: boolean; job?: JobSummary; message?: string };
+      if (!res.ok) throw new Error(data.message || 'Agent failed.');
+      if (data.job) setJobs((prev) => (prev ? prev.map((j) => (j.id === id ? data.job as JobSummary : j)) : prev));
+      showMessage(`${agent} agent finished.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Agent failed.');
+      refresh();
+    }
   }
 
   function refresh() {
@@ -87,6 +106,8 @@ export function DispatcherBoard() {
         </Link>
       </div>
 
+      {message && <p className="mt-4 rounded-2xl border border-borderBrand bg-soft p-3 text-sm text-slate-700">{message}</p>}
+
       {jobs.length === 0 && (
         <section className="mt-10 rounded-2xl border border-borderBrand bg-soft p-8 text-center">
           <p className="text-slate-300">No jobs in the system. Create a service request to start the pipeline.</p>
@@ -109,7 +130,7 @@ export function DispatcherBoard() {
                 Status
                 <select
                   value={job.status}
-                  onChange={(e) => updateJob(job.id, { status: e.target.value })}
+                  onChange={async (e) => { await updateJob(job.id, { status: e.target.value }); }}
                   className="rounded-2xl border border-borderBrand px-3 py-2 text-sm"
                 >
                   {STATUSES.map((s) => (
@@ -122,7 +143,7 @@ export function DispatcherBoard() {
                 Technician
                 <select
                   value={job.assignedTo || ''}
-                  onChange={(e) => updateJob(job.id, { assignedTo: e.target.value || null })}
+                  onChange={async (e) => { await updateJob(job.id, { assignedTo: e.target.value || null }); }}
                   className="rounded-2xl border border-borderBrand px-3 py-2 text-sm"
                 >
                   <option value="">Unassigned</option>

@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto';
 import { z } from 'zod';
 import { createUser, getUsers } from '@/lib/ahfos/store';
 import { hashPassword, setSessionCookie } from '@/lib/ahfos/auth';
@@ -20,7 +21,10 @@ export async function POST(request: Request) {
   const { token, email, password, name } = parsed.data;
   const expected = process.env.AHFOS_BOOTSTRAP_TOKEN;
   if (!expected) return err('Bootstrap is not enabled.', 403);
-  if (token !== expected) return err('Invalid bootstrap token.', 403);
+  const tokenBuf = Buffer.from(token);
+  const expectedBuf = Buffer.from(expected);
+  if (tokenBuf.length !== expectedBuf.length) return err('Invalid bootstrap token.', 403);
+  if (!timingSafeEqual(tokenBuf, expectedBuf)) return err('Invalid bootstrap token.', 403);
 
   const users = await getUsers();
   if (users.length > 0) return err('Bootstrap already complete.', 409);
@@ -30,6 +34,7 @@ export async function POST(request: Request) {
     passwordHash: hashPassword(password),
     name,
     roles: ['admin'],
+    skills: [],
     company: 'Already Here LLC',
   });
 

@@ -17,7 +17,7 @@ export default async function PortalPage() {
   }
 
   if (user.roles.includes('technician')) {
-    redirect('/dispatch-board');
+    redirect('/technician/jobs');
   }
 
   return <CustomerPortal user={{ name: user.name, email: user.email, roles: user.roles }} />;

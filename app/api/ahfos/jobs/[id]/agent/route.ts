@@ -1,9 +1,10 @@
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { authenticated, err, ok, safeJson } from '@/lib/ahfos/api-utils';
+import { canAccessJob } from '@/lib/ahfos/auth';
 import { closeoutAgent, dispatchAgent, invoiceAgent, reviewAgent, technicianAgent } from '@/lib/ahfos/agents';
-import { CloseoutPayloadSchema, totalJobCostCents } from '@/lib/ahfos/schema';
-import { appendJobEvent, createKnowledgeEntry, getJobById, getUsers, updateJob } from '@/lib/ahfos/store';
+import { AhfosRole, CloseoutPayloadSchema, JobStatus, totalJobCostCents } from '@/lib/ahfos/schema';
+import { appendJobEvent, createKnowledgeEntry, getJobById, getJobs, getUsers, updateJob } from '@/lib/ahfos/store';
 
 export const runtime = 'nodejs';
 
@@ -11,6 +12,24 @@ const AgentRequestSchema = z.object({
   agent: z.enum(['dispatch', 'technician', 'closeout', 'invoice', 'review', 'kb']),
   payload: z.record(z.string(), z.unknown()).default({}),
 }).strict();
+
+const DISPATCH_ADMIN_ROLES: AhfosRole[] = ['admin', 'dispatcher', 'project_manager'];
+const TECHNICIAN_ROLES: AhfosRole[] = ['admin', 'dispatcher', 'project_manager', 'technician'];
+const INVOICE_ROLES: AhfosRole[] = ['admin', 'accounting', 'dispatcher'];
+const REVIEW_ROLES: AhfosRole[] = ['admin', 'sales', 'dispatcher'];
+const KB_ROLES: AhfosRole[] = ['admin', 'dispatcher', 'project_manager', 'technician'];
+
+function hasRole(user: { roles: string[] }, roles: readonly string[]): boolean {
+  return user.roles.some((r) => roles.includes(r));
+}
+
+function isInStatus(current: JobStatus, allowed: readonly JobStatus[]): boolean {
+  return allowed.includes(current);
+}
+
+const DISPATCH_FROM: readonly JobStatus[] = ['intake', 'quoted', 'approved', 'assigned'];
+const CLOSEOUT_FROM: readonly JobStatus[] = ['assigned', 'in_progress'];
+const POST_CLOSE_FROM: readonly JobStatus[] = ['completed', 'closed'];
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -28,13 +47,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const now = new Date().toISOString();
 
   if (agent === 'dispatch') {
-    if (!user.roles.some((r) => ['admin', 'dispatcher', 'project_manager'].includes(r))) {
-      return err('Only dispatchers can run dispatch agent.', 403);
-    }
+    if (!hasRole(user, DISPATCH_ADMIN_ROLES)) return err('Only dispatchers can run dispatch agent.', 403);
+    if (!(await canAccessJob(user, job, DISPATCH_ADMIN_ROLES))) return err('Forbidden', 403);
+    if (!isInStatus(job.status, DISPATCH_FROM)) return err(`Cannot dispatch a job in ${job.status} status.`, 400);
+
     const users = await getUsers();
+    const allJobs = await getJobs();
     const technicians = users
       .filter((u) => u.roles.includes('technician'))
-      .map((u) => ({ id: u.id, name: u.name, skills: [] }));
+      .map((u) => ({
+        id: u.id,
+        name: u.name,
+        skills: u.skills,
+        assignedJobCount: allJobs.filter((j) => j.assignedTo === u.id && ['assigned', 'in_progress'].includes(j.status)).length,
+      }));
     const result = await dispatchAgent(job, { availableTechnicians: technicians, actorId: user.id });
     if (result.assignedTo) {
       job.assignedTo = result.assignedTo;
@@ -48,10 +74,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   if (agent === 'technician') {
-    if (!user.roles.some((r) => ['admin', 'dispatcher', 'technician', 'project_manager'].includes(r))) {
-      return err('Forbidden', 403);
-    }
-    const { checklist } = await technicianAgent(job);
+    if (!hasRole(user, TECHNICIAN_ROLES)) return err('Forbidden', 403);
+    if (!(await canAccessJob(user, job, DISPATCH_ADMIN_ROLES))) return err('Forbidden', 403);
+    if (!['assigned', 'in_progress'].includes(job.status)) return err('Checklist can only be built for assigned or in-progress jobs.', 400);
+
+    const asset = undefined;
+    const { checklist } = await technicianAgent(job, { asset, actorId: user.id });
     job.checklist = checklist;
     job.updatedAt = now;
     await updateJob(job);
@@ -60,10 +88,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   if (agent === 'closeout') {
-    if (!user.roles.some((r) => ['admin', 'dispatcher', 'technician'].includes(r))) {
-      return err('Only assigned technicians or dispatchers can close out.', 403);
-    }
-    const closeoutPayload = CloseoutPayloadSchema.parse(payload);
+    if (!hasRole(user, TECHNICIAN_ROLES)) return err('Only assigned technicians or dispatchers can close out.', 403);
+    if (!(await canAccessJob(user, job, DISPATCH_ADMIN_ROLES))) return err('Forbidden', 403);
+    if (!isInStatus(job.status, CLOSEOUT_FROM)) return err(`Cannot close out a job in ${job.status} status.`, 400);
+
+    const closeoutParsed = CloseoutPayloadSchema.safeParse(payload);
+    if (!closeoutParsed.success) return err('Invalid closeout payload.', 400);
+    const closeoutPayload = closeoutParsed.data;
     const result = await closeoutAgent(job, closeoutPayload);
 
     job.workNotes = closeoutPayload.workNotes;
@@ -71,7 +102,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     job.materials = closeoutPayload.materials;
     job.recommendations = closeoutPayload.recommendations;
     job.warrantyDays = closeoutPayload.warrantyDays;
-    job.signature = { name: closeoutPayload.signatureName, signedAt: now, ip: request.headers.get('x-forwarded-for') || '' };
+    job.signature = { name: closeoutPayload.signatureName, signedAt: now };
     job.status = result.status;
     job.invoice = result.invoice;
     job.review = result.review;
@@ -111,9 +142,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   if (agent === 'invoice') {
-    if (!user.roles.some((r) => ['admin', 'accounting', 'dispatcher'].includes(r))) {
-      return err('Forbidden', 403);
-    }
+    if (!hasRole(user, INVOICE_ROLES)) return err('Forbidden', 403);
+    if (!(await canAccessJob(user, job, DISPATCH_ADMIN_ROLES))) return err('Forbidden', 403);
+    if (!isInStatus(job.status, POST_CLOSE_FROM)) return err('Invoice can only be generated for completed or closed jobs.', 400);
+
     job.invoice = await invoiceAgent(job);
     job.updatedAt = now;
     await updateJob(job);
@@ -122,9 +154,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   if (agent === 'review') {
-    if (!user.roles.some((r) => ['admin', 'sales', 'dispatcher'].includes(r))) {
-      return err('Forbidden', 403);
-    }
+    if (!hasRole(user, REVIEW_ROLES)) return err('Forbidden', 403);
+    if (!(await canAccessJob(user, job, DISPATCH_ADMIN_ROLES))) return err('Forbidden', 403);
+    if (!isInStatus(job.status, POST_CLOSE_FROM)) return err('Review can only be sent for completed or closed jobs.', 400);
+
     job.review = await reviewAgent(job);
     job.updatedAt = now;
     await updateJob(job);
@@ -133,9 +166,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   if (agent === 'kb') {
-    if (!user.roles.some((r) => ['admin', 'technician', 'dispatcher'].includes(r))) {
-      return err('Forbidden', 403);
-    }
+    if (!hasRole(user, KB_ROLES)) return err('Forbidden', 403);
+    if (!(await canAccessJob(user, job, DISPATCH_ADMIN_ROLES))) return err('Forbidden', 403);
+    if (!isInStatus(job.status, POST_CLOSE_FROM)) return err('Knowledge base entry can only be created for completed or closed jobs.', 400);
+
     const kb = await createKnowledgeEntry({
       problem: job.intake.problemDescription.slice(0, 500),
       resolution: job.workNotes.slice(0, 2000),

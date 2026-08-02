@@ -22,6 +22,7 @@ export const UserSchema = z.object({
   passwordHash: z.string().min(1),
   name: z.string().min(1).max(160),
   roles: z.array(AhfosRoleSchema).min(1),
+  skills: z.array(z.string().max(80)).default([]),
   company: z.string().max(200).optional().default(''),
   createdAt: z.string().datetime(),
 });
@@ -92,10 +93,12 @@ export const JobPrioritySchema = z.enum(['low', 'normal', 'high', 'emergency']);
 
 export type JobPriority = z.infer<typeof JobPrioritySchema>;
 
+export const UrlSchema = z.string().url().max(2048).refine((u) => /^https?:\/\//i.test(u), { message: 'URL must use http or https' });
+
 export const PhotoSchema = z.object({
   id: z.string().uuid(),
   kind: z.enum(['before', 'after', 'asset', 'other']),
-  url: z.string().max(2048),
+  url: UrlSchema,
   caption: z.string().max(500).optional().default(''),
   uploadedAt: z.string().datetime(),
   uploadedBy: z.string().uuid(),
@@ -230,7 +233,7 @@ export const ServiceRequestSchema = z.object({
   assetMake: z.string().max(120).optional().default(''),
   assetModel: z.string().max(120).optional().default(''),
   serialNumber: z.string().max(120).optional().default(''),
-  photos: z.array(z.string().max(2048)).default([]),
+  photos: z.array(UrlSchema).default([]),
 });
 
 export type ServiceRequest = z.infer<typeof ServiceRequestSchema>;
@@ -242,8 +245,8 @@ export const CloseoutPayloadSchema = z.object({
   recommendations: z.array(z.string().max(500)).default([]),
   warrantyDays: z.number().int().nonnegative().default(30),
   signatureName: z.string().min(1).max(160),
-  beforePhotos: z.array(z.string().max(2048)).default([]),
-  afterPhotos: z.array(z.string().max(2048)).default([]),
+  beforePhotos: z.array(UrlSchema).default([]),
+  afterPhotos: z.array(UrlSchema).default([]),
 });
 
 export type CloseoutPayload = z.infer<typeof CloseoutPayloadSchema>;

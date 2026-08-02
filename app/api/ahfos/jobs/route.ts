@@ -49,7 +49,9 @@ export async function POST(request: Request) {
   if (!parsed.success) return err('Invalid service request.', 400);
 
   const req = parsed.data;
-  const address = AddressSchema.parse(req.address);
+  const addressParsed = AddressSchema.safeParse(req.address);
+  if (!addressParsed.success) return err('Invalid address.', 400);
+  const address = addressParsed.data;
 
   const customer = (await getCustomerByUserId(user.id))
     ?? await createCustomer({
@@ -80,12 +82,12 @@ export async function POST(request: Request) {
 
   const photos: Photo[] = req.photos.map((url) => ({
     id: randomUUID(),
-    kind: 'other',
+    kind: 'before',
     url,
     caption: 'Customer intake photo',
     uploadedAt: new Date().toISOString(),
     uploadedBy: user.id,
-  } as Photo));
+  }));
 
   const job = await createJob({
     status: intake.status,
@@ -109,8 +111,8 @@ export async function POST(request: Request) {
     labor: [],
     materials: [],
     recommendations: [],
-    beforePhotos: [],
-    afterPhotos: photos,
+    beforePhotos: photos,
+    afterPhotos: [],
     workNotes: '',
     warrantyDays: 30,
     invoice: { status: 'pending', totalCents: 0 },

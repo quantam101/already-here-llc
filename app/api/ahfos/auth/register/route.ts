@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { createCustomer, createUser, getUserByEmail } from '@/lib/ahfos/store';
 import { hashPassword, setSessionCookie } from '@/lib/ahfos/auth';
 import { err, ok } from '@/lib/ahfos/api-utils';
+import { getClientIp, isRateLimited } from '@/lib/ahfos/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -14,6 +15,11 @@ const RegisterSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  if (isRateLimited(`register:${ip}`, 5, 60 * 60 * 1000)) {
+    return err('Too many registration attempts. Please try again later.', 429);
+  }
+
   const body = await request.json().catch(() => ({}));
   const parsed = RegisterSchema.safeParse(body);
   if (!parsed.success) return err('Invalid registration data.', 400);
@@ -28,6 +34,7 @@ export async function POST(request: Request) {
     passwordHash: hashPassword(password),
     name,
     roles: ['customer'],
+    skills: [],
     company,
   });
 

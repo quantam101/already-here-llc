@@ -1,7 +1,7 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server.js';
 import { AhfosRole, User } from './schema';
-import { getUserById } from './store';
+import { getCustomerByUserId, getUserById } from './store';
 
 const SESSION_COOKIE = 'ahfos_session';
 const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
@@ -10,6 +10,9 @@ function getSessionSecret(): string {
   const secret = process.env.AHFOS_SESSION_SECRET;
   if (!secret) {
     throw new Error('AHFOS_SESSION_SECRET is not configured.');
+  }
+  if (secret.length < 32) {
+    throw new Error('AHFOS_SESSION_SECRET must be at least 32 characters.');
   }
   return secret;
 }
@@ -48,9 +51,18 @@ export function verifyJwt(token: string): Record<string, unknown> | null {
   const parts = token.split('.');
   if (parts.length !== 3) return null;
   const [header, body, signature] = parts;
+  try {
+    const headerJson = JSON.parse(Buffer.from(header, 'base64url').toString('utf8')) as Record<string, unknown>;
+    if (headerJson.alg !== 'HS256' || headerJson.typ !== 'JWT') return null;
+  } catch {
+    return null;
+  }
   const signingInput = `${header}.${body}`;
   const expected = createHmac('sha256', secret).update(signingInput).digest('base64url');
-  if (signature !== expected) return null;
+  const signatureBuf = Buffer.from(signature, 'base64url');
+  const expectedBuf = Buffer.from(expected, 'base64url');
+  if (signatureBuf.length !== expectedBuf.length) return null;
+  if (!timingSafeEqual(signatureBuf, expectedBuf)) return null;
   try {
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as Record<string, unknown>;
     const exp = Number(payload.exp);
@@ -122,6 +134,20 @@ export async function getPageSessionUser(): Promise<User | null> {
 
 export function isRoleAllowed(user: User, roles: AhfosRole[]): boolean {
   return user.roles.some((role) => roles.includes(role));
+}
+
+export async function canAccessJob(
+  user: { id: string; roles: AhfosRole[] },
+  job: { customerId: string; assignedTo?: string | null },
+  adminRoles: AhfosRole[] = ['admin', 'dispatcher', 'project_manager'],
+): Promise<boolean> {
+  if (user.roles.some((r) => adminRoles.includes(r))) return true;
+  if (user.roles.includes('technician') && job.assignedTo === user.id) return true;
+  if (user.roles.includes('customer')) {
+    const customer = await getCustomerByUserId(user.id);
+    if (customer && customer.id === job.customerId) return true;
+  }
+  return false;
 }
 
 export async function requirePageAuth(allowedRoles?: AhfosRole[], fallback = '/portal/login'): Promise<User> {

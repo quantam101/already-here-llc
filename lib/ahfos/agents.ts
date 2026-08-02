@@ -21,7 +21,7 @@ export type AgentContext = {
   actorRole?: string;
   customer?: Customer;
   asset?: Asset;
-  availableTechnicians?: Array<{ id: string; name: string; skills: string[] }>;
+  availableTechnicians?: Array<{ id: string; name: string; skills: string[]; assignedJobCount?: number }>;
 };
 
 export type IntakeResult = {
@@ -158,7 +158,8 @@ export async function dispatchAgent(job: Job, context: AgentContext): Promise<Di
   const scored = techs.map((tech) => {
     const skillMatch = tech.skills.some((s) => job.skill.toLowerCase().includes(s.toLowerCase())) ? 10 : 0;
     const tradeMatch = tech.skills.some((s) => job.trade.toLowerCase().includes(s.toLowerCase())) ? 5 : 0;
-    return { tech, score: skillMatch + tradeMatch };
+    const load = tech.assignedJobCount ?? 0;
+    return { tech, score: skillMatch + tradeMatch - load * 0.5 };
   });
 
   scored.sort((a, b) => b.score - a.score);
@@ -168,7 +169,7 @@ export async function dispatchAgent(job: Job, context: AgentContext): Promise<Di
     assignedTo: top.id,
     assignedToName: top.name,
     eta: `${job.estimatedDurationMinutes + 30} minutes`,
-    note: `Auto-assigned to ${top.name} based on skill match.`,
+    note: `Auto-assigned to ${top.name} based on skill match and current load.`,
   };
 }
 

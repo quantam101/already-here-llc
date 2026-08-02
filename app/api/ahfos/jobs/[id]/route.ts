@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { authenticated, err, ok, safeJson } from '@/lib/ahfos/api-utils';
-import { AhfosRole, ChecklistItemSchema, Job, JobStatus, JobStatusSchema, LaborLineSchema, MaterialLineSchema } from '@/lib/ahfos/schema';
-import { appendJobEvent, getCustomerByUserId, getJobById, getJobEvents, updateJob } from '@/lib/ahfos/store';
+import { canAccessJob } from '@/lib/ahfos/auth';
+import { AhfosRole, ChecklistItemSchema, Job, JobStatus, JobStatusSchema, LaborLineSchema, MaterialLineSchema, PhotoSchema } from '@/lib/ahfos/schema';
+import { appendJobEvent, getJobById, getJobEvents, updateJob } from '@/lib/ahfos/store';
 
 export const runtime = 'nodejs';
 
@@ -16,15 +17,9 @@ const UpdateJobSchema = z.object({
   labor: z.array(LaborLineSchema).optional(),
   materials: z.array(MaterialLineSchema).optional(),
   recommendations: z.array(z.string()).optional(),
+  beforePhotos: z.array(PhotoSchema).optional(),
+  afterPhotos: z.array(PhotoSchema).optional(),
 }).strict();
-
-async function canAccess(user: { id: string; roles: AhfosRole[] }, job: Job): Promise<boolean> {
-  if (user.roles.some((r) => ADMIN_ROLES.includes(r))) return true;
-  if (user.roles.includes('technician') && job.assignedTo === user.id) return true;
-  const customer = await getCustomerByUserId(user.id);
-  if (customer && customer.id === job.customerId) return true;
-  return false;
-}
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -33,7 +28,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   const job = await getJobById(id);
   if (!job) return err('Job not found.', 404);
-  if (!(await canAccess(user, job))) return err('Forbidden', 403);
+  if (!(await canAccessJob(user, job, ADMIN_ROLES))) return err('Forbidden', 403);
 
   const events = await getJobEvents(id);
   return ok({ job, events });
@@ -46,7 +41,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const job = await getJobById(id);
   if (!job) return err('Job not found.', 404);
-  if (!(await canAccess(user, job))) return err('Forbidden', 403);
+  if (!(await canAccessJob(user, job, ADMIN_ROLES))) return err('Forbidden', 403);
 
   const body = await safeJson(request);
   const parsed = UpdateJobSchema.safeParse(body);
@@ -68,6 +63,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (changes.labor) next.labor = changes.labor;
   if (changes.materials) next.materials = changes.materials;
   if (changes.recommendations) next.recommendations = changes.recommendations;
+  if (changes.beforePhotos) next.beforePhotos = changes.beforePhotos;
+  if (changes.afterPhotos) next.afterPhotos = changes.afterPhotos;
 
   next.updatedAt = new Date().toISOString();
   await updateJob(next);

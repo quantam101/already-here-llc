@@ -182,6 +182,15 @@ export function TechnicianJobView({ jobId, user }: { jobId: string; user: { id: 
             ))}
           </ul>
         )}
+        {job.status === 'assigned' && (
+          <button
+            onClick={() => patchJob({ status: 'in_progress' })}
+            disabled={saving}
+            className="mt-5 rounded-full bg-action px-4 py-2 text-sm font-semibold text-white hover:bg-navy disabled:opacity-50"
+          >
+            Start work
+          </button>
+        )}
       </div>
 
       <section className="card mt-6 p-5">
@@ -315,7 +324,11 @@ export function TechnicianJobView({ jobId, user }: { jobId: string; user: { id: 
       {closed && (
         <section className="card mt-6 p-5">
           <h2 className="text-lg font-semibold text-navy">Job closed</h2>
-          <p className="mt-2 text-sm text-slate-600">Signed by {job.signature?.name} on {new Date(job.signature!.signedAt).toLocaleString()}.</p>
+          {job.signature ? (
+            <p className="mt-2 text-sm text-slate-600">Signed by {job.signature.name} on {new Date(job.signature.signedAt).toLocaleString()}.</p>
+          ) : (
+            <p className="mt-2 text-sm text-slate-600">No customer signature captured.</p>
+          )}
           <p className="mt-2 text-sm text-slate-600">Invoice: {job.invoice.status} — ${(job.invoice.totalCents / 100).toFixed(2)}</p>
           <p className="text-sm text-slate-600">Review: {job.review.status}</p>
         </section>
