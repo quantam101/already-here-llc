@@ -18,9 +18,58 @@ Lean multi-page B2B field-service website for Already Here LLC, built with Next.
 - Who We Serve
 - Contact / Dispatch
 - AI Web Agent
+- Photo AI Haul Scanner
 - Revenue Mesh v1
 - Privacy Policy
 - Thank You
+
+## Photo AI Haul Scanner
+
+A standalone FastAPI microservice (`app.py`) for mobile photo-driven pickup / hauling / junk-removal quotes.
+
+- Snaps a load photo from any smartphone browser.
+- Runs an isolated multi-agent pipeline:
+  1. **Vision Spatial Agent** — analyzes image features and extracts load entities.
+  2. **Volumetric Agent** — computes true cubic-yard volume with density correction.
+  3. **Asset Recovery Agent** — values scrap metal, resale, and refurb potential.
+- Returns a net customer quote, trailer fill percentage, and a driver recovery manifest.
+
+### Local usage
+
+```bash
+python -m pip install -r requirements.txt
+python app.py
+```
+
+Open `http://localhost:8000` on your phone (same Wi-Fi) and tap **SNAP LOAD PHOTO**.
+
+### Configuration
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `HAUL_SCANNER_HOST` | `0.0.0.0` | Bind host |
+| `HAUL_SCANNER_PORT` | `8000` | Bind port |
+| `HAUL_TRAILER_CAPACITY_CU_YD` | `10.6` | Trailer volume capacity |
+| `HAUL_BASE_DISPATCH_FEE_USD` | `75.0` | Flat dispatch fee |
+| `HAUL_RATE_PER_CU_YD_USD` | `38.0` | Per-cubic-yard hauling rate |
+| `HAUL_RECOVERY_CREDIT_PCT` | `0.25` | Recovery credit applied to net quote |
+| `HAUL_FRAME_WIDTH_METERS` | `2.5` | Assumed real-world frame width for local spatial calibration |
+
+Cloud vision (Gemini) is gated by `GMAOS_PAID_ADAPTERS_ENABLED=true` and `GEMINI_API_KEY`. Without both, the engine uses deterministic local image analysis (Pillow + NumPy) at zero cost.
+
+### Endpoints
+
+- `GET /` — Mobile PWA scanner UI
+- `POST /api/scan` — Upload image (`multipart/form-data`) and receive quote JSON
+- `GET /healthz` — Liveness probe
+- `GET /readyz` — Readiness probe
+
+### Verification
+
+```bash
+python -m pytest tests/test_photo_ai_haul.py -v
+curl http://localhost:8000/healthz
+```
 
 ## Revenue Mesh v1
 
@@ -124,6 +173,7 @@ npm run typecheck
 npm run build
 npm run test
 python -m pytest tests/test_finnhub_feed.py
+python -m pytest tests/test_photo_ai_haul.py
 ```
 
 Runtime verification endpoints:
@@ -132,6 +182,7 @@ Runtime verification endpoints:
 curl http://localhost:3000/api/health
 curl http://localhost:3000/api/runtime/status
 curl http://localhost:3000/api/revenue-mesh
+curl http://localhost:8000/healthz
 ```
 
 ## Deployment notes
@@ -142,7 +193,7 @@ curl http://localhost:3000/api/revenue-mesh
 2. Import the repository into Vercel.
 3. Add production environment variables in Vercel project settings.
 4. Deploy.
-5. Confirm `/api/health`, `/api/runtime/status`, and `/api/revenue-mesh` return valid JSON.
+5. Confirm `/api/health`, `/api/runtime/status`, `/api/revenue-mesh`, and (on the Python runtime) `/healthz` return valid JSON.
 
 ### Vercel CLI deployment
 
@@ -165,6 +216,7 @@ vercel --prod
 - Confirm `/revenue-mesh` loads on desktop and mobile.
 - Confirm Finnhub paper/shadow runtime reports `source="finnhub_ws"` only when `FINNHUB_API_KEY` is set.
 - Confirm no live-money trading path is enabled by the Finnhub runtime.
+- Confirm `python -m pytest tests/test_photo_ai_haul.py` passes and `/healthz` and `/api/scan` return valid responses.
 - Confirm no prohibited claims remain in public copy.
 
 ## Form processing
