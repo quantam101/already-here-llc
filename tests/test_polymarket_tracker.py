@@ -1,0 +1,230 @@
+"""Tests for the Polymarket Smart Wallet Tracker runtime."""
+
+from __future__ import annotations
+
+import json
+import os
+import time
+from decimal import Decimal
+
+import pytest
+
+from runtime.polymarket.abi import (
+    ORDERS_MATCHED_V2_TOPIC,
+    ORDER_FILLED_V2_TOPIC,
+    decode_order_filled_v2,
+    decode_transfer_batch,
+    decode_transfer_single,
+    derive_price_from_fill,
+    parse_log,
+)
+from runtime.polymarket.config import PolymarketConfig
+from runtime.polymarket.profiler import WalletProfiler, _realized_pnl_and_returns, _coerce_trade
+from runtime.polymarket.risk import RiskGuard
+from runtime.polymarket.state import StateManager
+from runtime.polymarket.utils import CircuitBreaker, RateLimiter, sharpe_ratio, win_rate
+
+
+@pytest.fixture
+def tmp_db(tmp_path):
+    return str(tmp_path / "tracker.db")
+
+
+@pytest.fixture
+def config(tmp_db):
+    return PolymarketConfig(
+        polygon_ws_url="",
+        polygon_http_urls=[],
+        telegram_bot_token="",
+        telegram_chat_ids=[],
+        watched_wallets=["0xce25testwallet398144"],
+        db_path=tmp_db,
+        min_wallet_profit_usd=Decimal("0"),
+        min_win_rate_pct=Decimal("0"),
+        min_sharpe_ratio=Decimal("0"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# ABI / log decoding
+# ---------------------------------------------------------------------------
+def test_decode_order_filled_v2():
+    topics = [
+        ORDER_FILLED_V2_TOPIC,
+        "0x" + "11" * 32,
+        "0x" + "22" * 32,  # maker
+        "0x" + "33" * 32,  # taker
+    ]
+    data = (
+        "0x"
+        + "00" * 31 + "00"  # side BUY
+        + "00" * 31 + "01"  # tokenId 1
+        + "00" * 31 + "64"  # makerAmount 100
+        + "00" * 31 + "c8"  # takerAmount 200
+        + "00" * 31 + "00"  # fee 0
+        + "bb" * 32          # builder
+        + "cc" * 32          # metadata
+    )
+    log = {
+        "topics": topics,
+        "data": data,
+        "transactionHash": "0x" + "aa" * 32,
+        "logIndex": "0x1",
+        "blockNumber": "0x1234",
+    }
+    parsed = decode_order_filled_v2(log)
+    assert parsed
+    assert parsed["maker"] == "0x" + "22" * 20
+    assert parsed["taker"] == "0x" + "33" * 20
+    assert parsed["side"] == "BUY"
+    assert parsed["token_id"] == "1"
+    assert parsed["maker_amount"] == 100
+    assert parsed["taker_amount"] == 200
+
+
+def test_parse_log_routes_v2_order_filled():
+    topics = [ORDER_FILLED_V2_TOPIC, "0x" + "11" * 32, "0x" + "22" * 32, "0x" + "33" * 32]
+    data = (
+        "0x"
+        + "00" * 31 + "01"  # side SELL
+        + "00" * 31 + "02"
+        + "00" * 31 + "64"
+        + "00" * 31 + "c8"
+        + "00" * 31 + "00"
+        + "bb" * 32
+        + "cc" * 32
+    )
+    parsed = parse_log({"topics": topics, "data": data})
+    assert parsed and parsed["side"] == "SELL"
+
+
+def test_derive_price_from_fill():
+    assert derive_price_from_fill({"maker_amount": 100, "taker_amount": 200}) == Decimal("0.5")
+    assert derive_price_from_fill({"maker_amount": 0, "taker_amount": 200}) == Decimal("0")
+
+
+# ---------------------------------------------------------------------------
+# State
+# ---------------------------------------------------------------------------
+def test_state_wallets_and_blacklist(tmp_db):
+    state = StateManager(tmp_db)
+    state.set_watched_wallets(["0xABC"])
+    assert state.is_watched("0xabc")
+    state.set_market_blacklist(["token1"])
+    assert state.is_blacklisted("TOKEN1")
+
+
+# ---------------------------------------------------------------------------
+# Profiler
+# ---------------------------------------------------------------------------
+def test_profiler_fifo_pnl_and_score(config, tmp_db, monkeypatch):
+    state = StateManager(tmp_db)
+    prof = WalletProfiler(config, state)
+
+    # Mock fetch_trades to return controlled buys/sells
+    trades = [
+        _coerce_trade(
+            {
+                "token": "tok1",
+                "side": "BUY",
+                "amount": 100,
+                "price": 0.4,
+                "timestamp": 1000,
+                "tx_hash": "0x01",
+            }
+        ),
+        _coerce_trade(
+            {
+                "token": "tok1",
+                "side": "SELL",
+                "amount": 100,
+                "price": 0.7,
+                "timestamp": 2000,
+                "tx_hash": "0x02",
+            }
+        ),
+    ]
+    monkeypatch.setattr(prof, "fetch_trades", lambda wallet, since=None: trades)
+    score = prof.compute_score("0xtest")
+    assert score.profit_usd == Decimal("30.00")
+    assert score.wins == 1
+    assert score.losses == 0
+    assert score.win_rate == Decimal("100.00")
+    assert prof.passes_filter(score) is True
+
+
+def test_profiler_score_filter_respects_min_profit(config, tmp_db, monkeypatch):
+    # Use a config with a non-zero profit threshold to verify filtering
+    config = PolymarketConfig(
+        db_path=tmp_db,
+        min_wallet_profit_usd=Decimal("1.00"),
+        min_win_rate_pct=Decimal("0"),
+        min_sharpe_ratio=Decimal("0"),
+    )
+    state = StateManager(tmp_db)
+    prof = WalletProfiler(config, state)
+    monkeypatch.setattr(
+        prof, "fetch_trades", lambda wallet, since=None: []
+    )
+    score = prof.compute_score("0xtest")
+    assert score.total_trades == 0
+    assert prof.passes_filter(score) is False
+
+
+# ---------------------------------------------------------------------------
+# Risk
+# ---------------------------------------------------------------------------
+def test_risk_blocks_blacklisted_market(config, tmp_db):
+    state = StateManager(tmp_db)
+    state.set_market_blacklist(["bad-token"])
+    risk = RiskGuard(config, state)
+    result = risk.assess_alert("0xtest", "bad-token", Decimal("100"))
+    assert result.pass_gate is False
+    assert "blacklisted" in result.reasons[0].lower()
+
+
+def test_risk_default_allows_alert(config, tmp_db):
+    state = StateManager(tmp_db)
+    state.set_watched_wallets(["0xtest"])
+    risk = RiskGuard(config, state)
+    result = risk.assess_alert("0xtest", "good-token", Decimal("100"))
+    assert result.pass_gate is True
+
+
+# ---------------------------------------------------------------------------
+# Utilities
+# ---------------------------------------------------------------------------
+def test_circuit_breaker_opens_after_failures():
+    cb = CircuitBreaker("test", failure_threshold=2, reset_timeout_seconds=0.1)
+    assert cb.is_open is False
+    cb.record_failure()
+    cb.record_failure()
+    assert cb.is_open is True
+    time.sleep(0.15)
+    assert cb.state == "half_open"
+
+
+def test_rate_limiter_caps_calls():
+    rl = RateLimiter(max_calls=2, window_seconds=10)
+    assert rl.is_allowed() is True
+    assert rl.is_allowed() is True
+    assert rl.is_allowed() is False
+
+
+def test_win_rate_and_sharpe():
+    assert win_rate(3, 4) == Decimal("75.00")
+    assert sharpe_ratio([Decimal("0.01"), Decimal("-0.005"), Decimal("0.02")]) > 0
+
+
+# ---------------------------------------------------------------------------
+# Integration / orchestrator status
+# ---------------------------------------------------------------------------
+def test_orchestrator_status_smoke(config, tmp_db):
+    from runtime.polymarket.orchestrator import PolymarketOrchestrator
+
+    orchestrator = PolymarketOrchestrator(config)
+    status = orchestrator.status()
+    assert status["running"] is False
+    assert "listener" in status
+    assert "alerts" in status
+    assert "risk" in status

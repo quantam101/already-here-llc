@@ -94,6 +94,34 @@ Yahoo fallback disabled during keyed run
 live_order_execution=false
 ```
 
+## Polymarket Smart Wallet Tracker & Alert Engine
+
+`runtime/polymarket/` is a military-grade, fully autonomous tracker for Polymarket smart wallets on Polygon.
+
+Components:
+
+- `PolymarketListener` — resilient WebSocket + HTTP RPC log ingestion for `OrderFilled`, `OrdersMatched`, and ERC-1155 `Transfer` events across CTF Exchange V1/V2 and NegRisk exchange contracts.
+- `WalletProfiler` — 30-day P&L, win-rate, Sharpe, and conviction scoring from The Graph / PolyNode / local state.
+- `RiskGuard` — deterministic slippage cap, fixed order sizing, blacklisted markets, and cooldown controls.
+- `TelegramAlertEngine` — sub-second Markdown alert dispatcher with circuit breaker and rate limiting.
+- `PolymarketOrchestrator` — sovereign agent coordinator wiring listener, profiler, risk, and alert agents.
+
+Agent declarations are in `agents/registry.yaml` under `polymarket-*`. The system is alert-only by default; live copy-execution requires explicit `POLYMARKET_LIVE_EXECUTION=true` plus human approval per the risk gate.
+
+Local validation:
+
+```bash
+python -m pip install -r requirements.txt
+python -m pytest tests/test_polymarket_tracker.py
+python runtime/polymarket/orchestrator.py
+```
+
+API surface:
+
+```bash
+curl http://localhost:3000/api/polymarket-tracker/status
+```
+
 ## Environment variables
 
 Production secrets are configured as encrypted hosting/Vercel, GitHub Actions, or OCI environment variables and must not be committed to this repository.
@@ -106,6 +134,7 @@ Required operational variables by surface:
 - LLM gateway/provider keys only for configured provider routes
 - ProfitEngine URL and webhook token only when the ProfitEngine handoff is active
 - Finnhub API key only for paper/shadow WebSocket market-data proof runs
+- Polygon RPC / Alchemy WebSocket and Telegram credentials only when the Polymarket tracker is active
 
 ## Local development
 
@@ -132,6 +161,7 @@ Runtime verification endpoints:
 curl http://localhost:3000/api/health
 curl http://localhost:3000/api/runtime/status
 curl http://localhost:3000/api/revenue-mesh
+curl http://localhost:3000/api/polymarket-tracker/status
 ```
 
 ## Deployment notes
@@ -142,7 +172,7 @@ curl http://localhost:3000/api/revenue-mesh
 2. Import the repository into Vercel.
 3. Add production environment variables in Vercel project settings.
 4. Deploy.
-5. Confirm `/api/health`, `/api/runtime/status`, and `/api/revenue-mesh` return valid JSON.
+5. Confirm `/api/health`, `/api/runtime/status`, `/api/revenue-mesh`, and `/api/polymarket-tracker/status` return valid JSON.
 
 ### Vercel CLI deployment
 
@@ -165,6 +195,8 @@ vercel --prod
 - Confirm `/revenue-mesh` loads on desktop and mobile.
 - Confirm Finnhub paper/shadow runtime reports `source="finnhub_ws"` only when `FINNHUB_API_KEY` is set.
 - Confirm no live-money trading path is enabled by the Finnhub runtime.
+- Confirm `/api/polymarket-tracker/status` reports alert-only mode, watched wallets, and risk guardrails.
+- Confirm no live-money Polymarket copy-trading path is enabled unless `POLYMARKET_LIVE_EXECUTION=true` and human approval is recorded.
 - Confirm no prohibited claims remain in public copy.
 
 ## Form processing
