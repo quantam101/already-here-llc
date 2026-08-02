@@ -1,6 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
+
+const DEFAULT_EXCHANGES = [
+  '0xE111180000d2663C0091e4f400237545B87B996B',
+  '0xe2222d279d744050d28e00520010520000310F59',
+  '0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E'
+];
 
 function safeList(raw: string | undefined): string[] {
   if (!raw) return [];
@@ -10,28 +16,27 @@ function safeList(raw: string | undefined): string[] {
     .filter(Boolean);
 }
 
-export async function GET() {
-  const watched = safeList(process.env.WATCHED_WALLETS);
-  const exchanges = safeList(process.env.POLYMARKET_EXCHANGE_ADDRESSES) || [
-    '0xE111180000d2663C0091e4f400237545B87B996B',
-    '0xe2222d279d744050d28e00520010520000310F59',
-    '0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E'
-  ];
-  const hasTelegram = Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_IDS);
-  const hasPolygon = Boolean(
-    process.env.POLYGON_WS_URL || process.env.POLYGON_HTTP_URLS
-  );
+function isAuthenticated(request: NextRequest): boolean {
+  const secret = process.env.POLYMARKET_STATUS_SECRET;
+  if (!secret) return false;
+  const token = request.nextUrl.searchParams.get('token');
+  return token === secret;
+}
 
-  return NextResponse.json({
+export async function GET(request: NextRequest) {
+  const parsedExchanges = safeList(process.env.POLYMARKET_EXCHANGE_ADDRESSES);
+  const exchanges =
+    parsedExchanges.length > 0 ? parsedExchanges : DEFAULT_EXCHANGES;
+  const watched = safeList(process.env.WATCHED_WALLETS);
+
+  const publicBody = {
     ok: true,
     service: 'polymarket-tracker',
     status: 'ready',
     mode: 'alert-only',
     liveExecution: false,
-    watchedWallets: watched,
     exchanges,
-    hasTelegram,
-    hasPolygon,
+    watchedWalletCount: watched.length,
     risk: {
       maxSlippagePct: Number(process.env.POLYMARKET_MAX_SLIPPAGE_PCT ?? '2'),
       fixedOrderUsd: Number(process.env.POLYMARKET_FIXED_ORDER_USD ?? '50'),
@@ -40,5 +45,21 @@ export async function GET() {
       minSharpe: Number(process.env.POLYMARKET_MIN_SHARPE_RATIO ?? '1')
     },
     timestamp: new Date().toISOString()
+  };
+
+  if (!isAuthenticated(request)) {
+    return NextResponse.json(publicBody);
+  }
+
+  return NextResponse.json({
+    ...publicBody,
+    watchedWallets: watched,
+    hasTelegram: Boolean(
+      process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_IDS
+    ),
+    hasPolygon: Boolean(
+      process.env.POLYGON_WS_URL || process.env.POLYGON_HTTP_URLS
+    ),
+    gated: false
   });
 }

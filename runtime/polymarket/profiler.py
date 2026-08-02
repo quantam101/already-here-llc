@@ -281,8 +281,8 @@ class WalletProfiler:
         return {
             "subgraph_url": self._subgraph_url,
             "sources": [
-                *("subgraph" if self._config.subgraph_url else []),
-                *("polynode" if self._config.polynode_api_key else []),
+                *(["subgraph"] if self._config.subgraph_url else []),
+                *(["polynode"] if self._config.polynode_api_key else []),
                 "local",
             ],
         }

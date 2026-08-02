@@ -11,7 +11,7 @@ import time
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
-from .abi import derive_price_from_fill, usdc_amount
+from .abi import derive_price_from_fill, derive_usd_notional
 from .alerts import TelegramAlertEngine
 from .config import PolymarketConfig
 from .listener import PolymarketListener
@@ -28,10 +28,6 @@ def _setup_logging(level: str) -> None:
         level=getattr(logging, level.upper(), logging.INFO),
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
-
-
-def _usdc_to_decimal(raw: int) -> Decimal:
-    return usdc_amount(raw)
 
 
 class PolymarketOrchestrator:
@@ -131,9 +127,8 @@ class PolymarketOrchestrator:
                 continue
 
             token_id = fill.get("token_id") or fill.get("maker_asset_id") or fill.get("taker_asset_id")
-            amount_raw = fill.get("maker_amount", 0) or fill.get("taker_amount", 0)
             price = derive_price_from_fill(fill)
-            amount_usd = _usdc_to_decimal(amount_raw) * price
+            amount_usd = derive_usd_notional(fill)
 
             event = {
                 "wallet": wallet,

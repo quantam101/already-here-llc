@@ -292,13 +292,49 @@ def parse_log(log: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 
 def derive_price_from_fill(fill: Dict[str, Any]) -> Decimal:
-    """Infer trade price from maker/taker amounts (6-decimal USDC implied)."""
+    """Infer trade price (USDC per share) from maker/taker amounts.
+
+    V2 OrderFilled / OrdersMatched encode an explicit side:
+      - BUY  (0): maker gives collateral, taker gives shares  => price = maker/taker
+      - SELL (1): maker gives shares,   taker gives collateral => price = taker/maker
+    V1 lacks side, so we fall back to min/max ratio (collateral raw is always <= shares raw
+    for binary markets with equal decimals).
+    """
     maker_amount = fill.get("maker_amount", 0) or 0
     taker_amount = fill.get("taker_amount", 0) or 0
     if maker_amount == 0 or taker_amount == 0:
         return Decimal("0")
-    # Price = collateral paid / shares received, bounded to [0,1] for binary markets.
-    raw = Decimal(maker_amount) / Decimal(taker_amount)
-    if raw > 1:
-        raw = Decimal(1) / raw if taker_amount else Decimal("0")
+
+    side = fill.get("side")
+    if side == "BUY":
+        raw = Decimal(maker_amount) / Decimal(taker_amount)
+    elif side == "SELL":
+        raw = Decimal(taker_amount) / Decimal(maker_amount)
+    else:
+        # V1 / unknown: collateral raw is the smaller leg.
+        usdc_raw = min(maker_amount, taker_amount)
+        shares_raw = max(maker_amount, taker_amount)
+        raw = Decimal(usdc_raw) / Decimal(shares_raw)
+
     return min(max(raw, Decimal("0")), Decimal("1")).quantize(Decimal("0.0001"))
+
+
+def derive_usd_notional(fill: Dict[str, Any]) -> Decimal:
+    """Return the USD collateral notional (6-decimal scaled) for a fill.
+
+    Side-aware for V2; falls back to the smaller leg when side is unavailable.
+    """
+    maker_amount = fill.get("maker_amount", 0) or 0
+    taker_amount = fill.get("taker_amount", 0) or 0
+    if maker_amount == 0 or taker_amount == 0:
+        return Decimal("0")
+
+    side = fill.get("side")
+    if side == "BUY":
+        usdc_raw = maker_amount
+    elif side == "SELL":
+        usdc_raw = taker_amount
+    else:
+        usdc_raw = min(maker_amount, taker_amount)
+
+    return (Decimal(usdc_raw) / Decimal(10**6)).quantize(Decimal("0.01"))
