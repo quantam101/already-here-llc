@@ -3,8 +3,9 @@
 Reuses the ensemble-confluence idea from the 90% win-rate stock trading agent
 (profitenginev5/trading-agent) and adapts it to binary prediction-market prices.
 
-The adapter fetches public price history from the Polymarket CLOB, runs a small
-set of technical indicators, and returns a directional confluence score.  The
+The adapter fetches public price history and live order-book / market metadata
+from the Polymarket CLOB and Gamma API, runs a small ensemble of technical and
+microstructure indicators, and returns a directional confluence score.  The
 orchestrator can use this score as an additional filter: only copy a smart
 wallet's fill when the short-term market signal agrees with the wallet's side.
 """
@@ -23,7 +24,34 @@ from .config import PolymarketConfig
 
 logger = logging.getLogger("polymarket-tracker")
 
+
+def _to_float(value: Any, default: float = 0.0) -> float:
+    if value is None:
+        return default
+    if isinstance(value, (int, float)):
+        return float(value)
+    try:
+        return float(str(value).strip() or default)
+    except (ValueError, TypeError):
+        return default
+
+
+def _parse_json_list(value: Any) -> List[str]:
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        try:
+            import json
+            parsed = json.loads(value)
+            return parsed if isinstance(parsed, list) else []
+        except json.JSONDecodeError:
+            return []
+    return []
+
 CLOB_PRICES_HISTORY = "https://clob.polymarket.com/prices-history"
+CLOB_ORDER_BOOK = "https://clob.polymarket.com/book"
+CLOB_MARKETS_BY_TOKEN = "https://clob.polymarket.com/markets-by-token/{token_id}"
+GAMMA_MARKETS = "https://gamma-api.polymarket.com/markets"
 
 
 @dataclass(frozen=True)
@@ -170,22 +198,169 @@ class ClobPriceHistory:
         return self._cache.get(token_id, [])
 
 
+class ClobOrderBook:
+    """Fetch and cache live CLOB order-book state for a token."""
+
+    def __init__(self, base_url: str = CLOB_ORDER_BOOK) -> None:
+        self._base_url = base_url
+        self._cache: Dict[str, Optional[Dict[str, Any]]] = {}
+
+    def fetch(self, token_id: str) -> Optional[Dict[str, Any]]:
+        if not token_id or token_id == "0":
+            return None
+        if token_id in self._cache:
+            return self._cache[token_id]
+        try:
+            resp = requests.get(self._base_url, params={"token_id": token_id}, timeout=15)
+            if not resp.ok:
+                logger.warning("CLOB order book HTTP %s for %s", resp.status_code, token_id[:10])
+                self._cache[token_id] = None
+                return None
+            data = resp.json()
+            bids = data.get("bids", [])
+            asks = data.get("asks", [])
+            if not bids or not asks:
+                self._cache[token_id] = None
+                return None
+            # Bids are ascending; asks descending.
+            best_bid = float(bids[-1]["price"])
+            best_bid_size = float(bids[-1]["size"])
+            best_ask = float(asks[0]["price"])
+            best_ask_size = float(asks[0]["size"])
+            spread = best_ask - best_bid
+            mid = (best_ask + best_bid) / 2.0
+            total_bid_size = sum(float(b["size"]) for b in bids)
+            total_ask_size = sum(float(a["size"]) for a in asks)
+            self._cache[token_id] = {
+                "best_bid": best_bid,
+                "best_ask": best_ask,
+                "best_bid_size": best_bid_size,
+                "best_ask_size": best_ask_size,
+                "spread": spread,
+                "mid": mid,
+                "spread_pct": spread / mid if mid else 0.0,
+                "total_bid_size": total_bid_size,
+                "total_ask_size": total_ask_size,
+                "imbalance": (total_bid_size - total_ask_size) / (total_bid_size + total_ask_size)
+                if (total_bid_size + total_ask_size) > 0
+                else 0.0,
+            }
+            return self._cache[token_id]
+        except Exception as exc:
+            logger.warning("Failed to fetch order book for %s: %s", token_id[:10], exc)
+            self._cache[token_id] = None
+            return None
+
+
+class GammaMarketMetadata:
+    """Fetch and cache Gamma market metadata (volume, liquidity, price change)."""
+
+    def __init__(self, base_url: str = GAMMA_MARKETS) -> None:
+        self._base_url = base_url
+        self._cache: Dict[str, Optional[Dict[str, Any]]] = {}
+
+    def fetch(self, token_id: str) -> Optional[Dict[str, Any]]:
+        if not token_id or token_id == "0":
+            return None
+        if token_id in self._cache:
+            return self._cache[token_id]
+        try:
+            resp = requests.get(
+                self._base_url, params={"clobTokenIds": token_id, "limit": 1}, timeout=15
+            )
+            if not resp.ok:
+                logger.warning("Gamma metadata HTTP %s for %s", resp.status_code, token_id[:10])
+                self._cache[token_id] = None
+                return None
+            data = resp.json()
+            if not data:
+                self._cache[token_id] = None
+                return None
+            market = data[0]
+            outcome_prices = _parse_json_list(market.get("outcomePrices"))
+            self._cache[token_id] = {
+                "volume_24h": _to_float(market.get("volume24hr")),
+                "volume_total": _to_float(market.get("volume")),
+                "liquidity": _to_float(market.get("liquidity")),
+                "spread": _to_float(market.get("spread")),
+                "best_bid": _to_float(market.get("bestBid")),
+                "best_ask": _to_float(market.get("bestAsk")),
+                "one_day_change": _to_float(market.get("oneDayPriceChange")),
+                "one_week_change": _to_float(market.get("oneWeekPriceChange")),
+                "outcome_prices": [_to_float(p) for p in outcome_prices],
+            }
+            return self._cache[token_id]
+        except Exception as exc:
+            logger.warning("Failed to fetch Gamma metadata for %s: %s", token_id[:10], exc)
+            self._cache[token_id] = None
+            return None
+
+
+def _order_book_signal(book: Optional[Dict[str, Any]], max_spread_pct: float = 0.05) -> Tuple[int, float]:
+    """Return direction/strength from order-book imbalance and spread."""
+    if not book:
+        return 0, 0.0
+    spread_pct = book.get("spread_pct", 0.0)
+    if spread_pct > max_spread_pct:
+        return 0, 0.0
+    imbalance = book.get("imbalance", 0.0)
+    if imbalance > 0.2:
+        return 1, min(imbalance, 1.0)
+    if imbalance < -0.2:
+        return -1, min(abs(imbalance), 1.0)
+    return 0, 0.0
+
+
+def _metadata_signal(metadata: Optional[Dict[str, Any]]) -> Tuple[int, float]:
+    """Return direction/strength from 24h price change and volume attention."""
+    if not metadata:
+        return 0, 0.0
+    one_day = metadata.get("one_day_change", 0.0)
+    volume_24h = metadata.get("volume_24h", 0.0)
+    if volume_24h <= 0:
+        return 0, 0.0
+    # Normalize strength around a 2% daily move.
+    strength = min(abs(one_day) / 0.02, 1.0)
+    if one_day > 0.001:
+        return 1, strength
+    if one_day < -0.001:
+        return -1, strength
+    return 0, 0.0
+
+
 class SignalConfluence:
     """
     Lightweight ensemble of short-term signals for Polymarket token prices.
 
+    Sources:
+      - CLOB price-history technicals (momentum, RSI, Bollinger, support/resistance)
+      - CLOB order-book microstructure (spread, bid/ask imbalance)
+      - Gamma market metadata (24h price change, volume, liquidity)
+
     Mirrors the confluence idea from the 90% win-rate stock trading agent but
-    uses only public CLOB price data and pure-Python statistics.
+    uses only public Polymarket data and pure-Python statistics.
     """
 
     def __init__(self, config: Optional[PolymarketConfig] = None) -> None:
         self.config = config or PolymarketConfig.from_env()
         self._history = ClobPriceHistory()
+        self._order_book = ClobOrderBook()
+        self._metadata = GammaMarketMetadata()
 
     def _prices_for(self, token_id: str) -> List[float]:
         if not self.config.confluence_enabled:
             return []
         return self._history.fetch(token_id)
+
+    def _order_book_for(self, token_id: str) -> Optional[Dict[str, Any]]:
+        if not self.config.confluence_enabled or not getattr(self.config, "confluence_use_order_book", True):
+            return None
+        return self._order_book.fetch(token_id)
+
+    def _metadata_for(self, token_id: str) -> Optional[Dict[str, Any]]:
+        if not self.config.confluence_enabled or not getattr(self.config, "confluence_use_market_metadata", True):
+            return None
+        return self._metadata.fetch(token_id)
 
     def assess(self, token_id: str, side: str, current_price: Optional[Decimal] = None) -> ConfluenceAssessment:
         side = (side or "").upper()
@@ -213,29 +388,28 @@ class SignalConfluence:
         if current_price is not None:
             prices = prices + [float(current_price)]
 
-        signals = [
-            _momentum_signal(prices),
-            _mean_reversion_signal(prices),
-            _bollinger_signal(prices),
-            _support_resistance_signal(prices),
+        max_spread = float(getattr(self.config, "confluence_max_spread_pct", Decimal("0.05")))
+
+        signal_generators = [
+            ("momentum", _momentum_signal(prices)),
+            ("mean_reversion", _mean_reversion_signal(prices)),
+            ("bollinger", _bollinger_signal(prices)),
+            ("support_resistance", _support_resistance_signal(prices)),
+            ("order_book", _order_book_signal(self._order_book_for(token_id), max_spread_pct=max_spread)),
+            ("market_metadata", _metadata_signal(self._metadata_for(token_id))),
         ]
 
         raw_score = 0.0
         total_strength = 0.0
         contributors: List[str] = []
-        for signal_name, (direction, strength) in [
-            ("momentum", _momentum_signal(prices)),
-            ("mean_reversion", _mean_reversion_signal(prices)),
-            ("bollinger", _bollinger_signal(prices)),
-            ("support_resistance", _support_resistance_signal(prices)),
-        ]:
+        for signal_name, (direction, strength) in signal_generators:
             raw_score += direction * strength
             total_strength += strength
             if direction != 0:
                 contributors.append(f"{signal_name}: {direction} (s={strength:.2f})")
 
         score = Decimal(str(raw_score / max(total_strength, 1.0))).quantize(Decimal("0.01"))
-        confidence = Decimal(str(min(total_strength / 4.0, 1.0) * 100)).quantize(Decimal("0.01"))
+        confidence = Decimal(str(min(total_strength / 6.0, 1.0) * 100)).quantize(Decimal("0.01"))
 
         # BUY is positive, SELL is negative.
         desired_sign = 1 if side == "BUY" else -1
@@ -251,6 +425,8 @@ class SignalConfluence:
                 "contributors": contributors,
                 "total_strength": round(total_strength, 2),
                 "price_points": len(prices),
+                "order_book": self._order_book_for(token_id) is not None,
+                "market_metadata": self._metadata_for(token_id) is not None,
             },
         )
 
@@ -259,5 +435,8 @@ class SignalConfluence:
             "enabled": self.config.confluence_enabled,
             "threshold": str(self.config.confluence_threshold),
             "min_confidence": str(self.config.confluence_min_confidence),
+            "use_order_book": getattr(self.config, "confluence_use_order_book", True),
+            "use_market_metadata": getattr(self.config, "confluence_use_market_metadata", True),
+            "max_spread_pct": str(getattr(self.config, "confluence_max_spread_pct", Decimal("0.05"))),
             "cached_tokens": len(self._history._cache),
         }

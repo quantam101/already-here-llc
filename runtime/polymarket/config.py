@@ -80,6 +80,9 @@ class PolymarketConfig:
     confluence_enabled: bool = False
     confluence_threshold: Decimal = Decimal("0.20")
     confluence_min_confidence: Decimal = Decimal("50.0")
+    confluence_use_order_book: bool = True
+    confluence_use_market_metadata: bool = True
+    confluence_max_spread_pct: Decimal = Decimal("0.05")
 
     # Portfolio-level risk guard (daily/weekly loss, drawdown, streaks)
     portfolio_daily_loss_limit: Decimal = Decimal("200.00")
@@ -158,6 +161,9 @@ class PolymarketConfig:
             confluence_enabled=(os.environ.get("POLYMARKET_CONFLUENCE_ENABLED", "false").lower() == "true"),
             confluence_threshold=_env_decimal("POLYMARKET_CONFLUENCE_THRESHOLD", "0.20"),
             confluence_min_confidence=_env_decimal("POLYMARKET_CONFLUENCE_MIN_CONFIDENCE", "50.0"),
+            confluence_use_order_book=(os.environ.get("POLYMARKET_CONFLUENCE_USE_ORDER_BOOK", "true").lower() == "true"),
+            confluence_use_market_metadata=(os.environ.get("POLYMARKET_CONFLUENCE_USE_MARKET_METADATA", "true").lower() == "true"),
+            confluence_max_spread_pct=_env_decimal("POLYMARKET_CONFLUENCE_MAX_SPREAD_PCT", "0.05"),
             portfolio_daily_loss_limit=_env_decimal("POLYMARKET_PORTFOLIO_DAILY_LOSS_LIMIT", "200.00"),
             portfolio_weekly_loss_limit=_env_decimal("POLYMARKET_PORTFOLIO_WEEKLY_LOSS_LIMIT", "500.00"),
             portfolio_max_drawdown_pct=_env_decimal("POLYMARKET_PORTFOLIO_MAX_DRAWDOWN_PCT", "30.0"),

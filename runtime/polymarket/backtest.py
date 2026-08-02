@@ -56,6 +56,7 @@ class BacktestTrade:
     entry_price: Decimal
     exit_price: Decimal
     shares: Decimal
+    notional_usd: Decimal
     pnl: Decimal
     roi: Decimal
     timestamp: int
@@ -145,6 +146,7 @@ class SubgraphLoader:
         wallets: List[str],
         side_field: str,
         id_gt: str = "",
+        page_size: int = SUBGRAPH_PAGE_SIZE,
     ) -> List[Dict[str, Any]]:
         wallet_clause = ""
         if wallets:
@@ -154,7 +156,7 @@ class SubgraphLoader:
         query = f"""
         {{
           orderFilledEvents(
-            first: {SUBGRAPH_PAGE_SIZE},
+            first: {page_size},
             where: {{ {wallet_clause}{id_clause}timestamp_gt: {start_ts}, timestamp_lt: {end_ts} }},
             orderBy: timestamp,
             orderDirection: asc
@@ -182,6 +184,12 @@ class SubgraphLoader:
             resp.raise_for_status()
             data = resp.json()
             if data.get("errors"):
+                msg = str(data["errors"])
+                # Retry on subgraph store timeouts by halving page size.
+                if "timeout" in msg.lower() or "statement timeout" in msg.lower():
+                    if page_size > 10:
+                        logger.warning("Subgraph timeout; retrying with page size %d", page_size // 2)
+                        return self._page(start_ts, end_ts, wallets, side_field, id_gt, page_size // 2)
                 logger.warning("Subgraph errors: %s", data["errors"])
                 return []
             return data.get("data", {}).get("orderFilledEvents", [])
@@ -193,19 +201,21 @@ class SubgraphLoader:
         self, wallets: List[str], start_ts: int, end_ts: int, first: int = 1000
     ) -> List[Dict[str, Any]]:
         combined: List[Dict[str, Any]] = []
+        # Wallet-specific filters stress the subgraph; use smaller pages.
+        page_size = SUBGRAPH_PAGE_SIZE if not wallets else min(200, SUBGRAPH_PAGE_SIZE)
         if wallets:
             for side_field in ("maker", "taker"):
                 id_gt = ""
                 pages = 0
-                max_pages = max(1, first // SUBGRAPH_PAGE_SIZE) + 1
+                max_pages = max(1, first // page_size) + 1
                 while pages < max_pages:
-                    page = self._page(start_ts, end_ts, wallets, side_field, id_gt)
+                    page = self._page(start_ts, end_ts, wallets, side_field, id_gt, page_size=page_size)
                     if not page:
                         break
                     combined.extend(page)
                     id_gt = page[-1]["id"]
                     pages += 1
-                    if len(page) < SUBGRAPH_PAGE_SIZE:
+                    if len(page) < page_size:
                         break
         else:
             id_gt = ""
@@ -345,6 +355,8 @@ class WalkForwardBacktest:
         wallets: List[str],
         config: Optional[PolymarketConfig] = None,
         fixed_order_usd: Decimal = Decimal("50"),
+        starting_bankroll: Decimal = Decimal("1000"),
+        position_size_pct: Optional[Decimal] = None,
         min_wallet_profit: Decimal = Decimal("10000"),
         min_wallet_win_rate: Decimal = Decimal("65"),
         min_wallet_sharpe: Decimal = Decimal("1"),
@@ -354,6 +366,8 @@ class WalkForwardBacktest:
         self.wallets = [w.lower() for w in wallets if w]
         self.config = config or PolymarketConfig.from_env()
         self.fixed_order_usd = fixed_order_usd
+        self.starting_bankroll = starting_bankroll
+        self.position_size_pct = position_size_pct
         self.min_wallet_profit = min_wallet_profit
         self.min_wallet_win_rate = min_wallet_win_rate
         self.min_wallet_sharpe = min_wallet_sharpe
@@ -430,7 +444,18 @@ class WalkForwardBacktest:
                 if self.use_confluence and confluence_confidence < self.config.confluence_min_confidence:
                     continue
 
-            shares = self.fixed_order_usd / entry_p
+            if self.position_size_pct is not None:
+                notional = max(self.starting_bankroll * self.position_size_pct, Decimal("1"))
+            else:
+                notional = self.fixed_order_usd
+
+            # Ensure we do not allocate more than the current bankroll allows.
+            current_bankroll = self.starting_bankroll + sum((t.pnl for t in self.trades), Decimal("0"))
+            if notional > current_bankroll:
+                logger.info("Skipping trade for %s: required $%s, bankroll $%s", token_id[:16], notional, current_bankroll)
+                continue
+
+            shares = notional / entry_p
             pnl = (exit_p - entry_p) * shares
             roi = ((exit_p / entry_p) - 1) * 100 if entry_p else Decimal("0")
             info = self.oracle.resolve(token_id) or {}
@@ -445,6 +470,7 @@ class WalkForwardBacktest:
                     entry_price=entry_p.quantize(Decimal("0.0001")),
                     exit_price=exit_p,
                     shares=shares.quantize(Decimal("0.0001")),
+                    notional_usd=notional.quantize(Decimal("0.01")),
                     pnl=pnl.quantize(Decimal("0.01")),
                     roi=roi.quantize(Decimal("0.01")),
                     timestamp=fill["timestamp"],
@@ -460,12 +486,16 @@ class WalkForwardBacktest:
         if not self.trades:
             return {
                 "wallets": self.wallets,
+                "starting_bankroll": str(self.starting_bankroll),
                 "total_trades": 0,
                 "winners": 0,
                 "losers": 0,
                 "win_rate": "0.00",
                 "total_pnl": "0.00",
+                "final_bankroll": str(self.starting_bankroll),
+                "roi_pct": "0.00",
                 "max_drawdown": "0.00",
+                "max_drawdown_pct": "0.00",
                 "avg_trade": "0.00",
                 "profit_factor": "0.00",
                 "sharpe": "0.00",
@@ -487,14 +517,22 @@ class WalkForwardBacktest:
             (gross_wins / gross_losses).quantize(Decimal("0.01")) if gross_losses else Decimal("inf")
         )
 
-        peak = Decimal("0")
+        # Bankroll drawdown on the running balance, not just P&L series.
+        peak = self.starting_bankroll
+        trough = self.starting_bankroll
         dd = Decimal("0")
-        cum = Decimal("0")
+        balance = self.starting_bankroll
         for p in pnls:
-            cum += p
-            if cum > peak:
-                peak = cum
-            dd = max(dd, peak - cum)
+            balance += p
+            if balance > peak:
+                peak = balance
+            if balance < trough:
+                trough = balance
+            dd = max(dd, peak - balance)
+
+        final_bankroll = self.starting_bankroll + total_pnl
+        roi_pct = ((final_bankroll - self.starting_bankroll) / self.starting_bankroll * 100).quantize(Decimal("0.01"))
+        max_dd_pct = (dd / peak * 100).quantize(Decimal("0.01")) if peak else Decimal("0")
 
         sharpe = Decimal("0")
         if len(pnls) > 1:
@@ -508,12 +546,16 @@ class WalkForwardBacktest:
 
         return {
             "wallets": self.wallets,
+            "starting_bankroll": str(self.starting_bankroll),
             "total_trades": total,
             "winners": wins,
             "losers": losses,
             "win_rate": str(win_rate),
             "total_pnl": str(total_pnl),
+            "final_bankroll": str(final_bankroll),
+            "roi_pct": str(roi_pct),
             "max_drawdown": str(dd.quantize(Decimal("0.01"))),
+            "max_drawdown_pct": str(max_dd_pct),
             "avg_trade": str(avg_trade),
             "profit_factor": str(profit_factor),
             "sharpe": str(sharpe),
@@ -531,6 +573,7 @@ class WalkForwardBacktest:
             "entry_price": str(t.entry_price),
             "exit_price": str(t.exit_price),
             "shares": str(t.shares),
+            "notional_usd": str(t.notional_usd),
             "pnl": str(t.pnl),
             "roi": str(t.roi),
             "timestamp": t.timestamp,
@@ -551,13 +594,18 @@ def main() -> None:
     parser.add_argument("--min-sharpe", type=float, default=1.0)
     parser.add_argument("--confluence", action="store_true")
     parser.add_argument("--first", type=int, default=1000)
+    parser.add_argument("--bankroll", type=float, default=1000.0)
+    parser.add_argument("--position-size-pct", type=float, default=None)
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
+    position_size_pct = Decimal(str(args.position_size_pct)) if args.position_size_pct is not None else None
     bt = WalkForwardBacktest(
         wallets=[w.strip() for w in args.wallets.split(",") if w.strip()],
         fixed_order_usd=Decimal(str(args.fixed_usd)),
+        starting_bankroll=Decimal(str(args.bankroll)),
+        position_size_pct=position_size_pct,
         min_wallet_profit=Decimal(str(args.min_profit)),
         min_wallet_win_rate=Decimal(str(args.min_win_rate)),
         min_wallet_sharpe=Decimal(str(args.min_sharpe)),
