@@ -76,6 +76,18 @@ class PolymarketConfig:
     blacklist_market_ids: List[str] = field(default_factory=list)
     whitelist_only: bool = False
 
+    # Signal confluence (90% win-rate ensemble idea adapted to prediction markets)
+    confluence_enabled: bool = False
+    confluence_threshold: Decimal = Decimal("0.20")
+    confluence_min_confidence: Decimal = Decimal("50.0")
+
+    # Portfolio-level risk guard (daily/weekly loss, drawdown, streaks)
+    portfolio_daily_loss_limit: Decimal = Decimal("200.00")
+    portfolio_weekly_loss_limit: Decimal = Decimal("500.00")
+    portfolio_max_drawdown_pct: Decimal = Decimal("30.0")
+    portfolio_min_win_rate_pct: Decimal = Decimal("50.0")
+    portfolio_consecutive_loss_limit: int = 5
+
     # Sovereign / telemetry
     audit_log_path: str = "./data/polymarket_audit.jsonl"
     telemetry_service: str = "polymarket-tracker"
@@ -143,6 +155,14 @@ class PolymarketConfig:
             min_sharpe_ratio=_env_decimal("POLYMARKET_MIN_SHARPE_RATIO", "1.0"),
             blacklist_market_ids=[m.lower() for m in _env_list("POLYMARKET_BLACKLIST_MARKET_IDS")],
             whitelist_only=(os.environ.get("POLYMARKET_WHITELIST_ONLY", "false").lower() == "true"),
+            confluence_enabled=(os.environ.get("POLYMARKET_CONFLUENCE_ENABLED", "false").lower() == "true"),
+            confluence_threshold=_env_decimal("POLYMARKET_CONFLUENCE_THRESHOLD", "0.20"),
+            confluence_min_confidence=_env_decimal("POLYMARKET_CONFLUENCE_MIN_CONFIDENCE", "50.0"),
+            portfolio_daily_loss_limit=_env_decimal("POLYMARKET_PORTFOLIO_DAILY_LOSS_LIMIT", "200.00"),
+            portfolio_weekly_loss_limit=_env_decimal("POLYMARKET_PORTFOLIO_WEEKLY_LOSS_LIMIT", "500.00"),
+            portfolio_max_drawdown_pct=_env_decimal("POLYMARKET_PORTFOLIO_MAX_DRAWDOWN_PCT", "30.0"),
+            portfolio_min_win_rate_pct=_env_decimal("POLYMARKET_PORTFOLIO_MIN_WIN_RATE_PCT", "50.0"),
+            portfolio_consecutive_loss_limit=_env_int("POLYMARKET_PORTFOLIO_CONSECUTIVE_LOSS_LIMIT", 5),
             audit_log_path=os.environ.get("POLYMARKET_AUDIT_LOG", "./data/polymarket_audit.jsonl"),
             telemetry_service=os.environ.get("POLYMARKET_TELEMETRY_SERVICE", "polymarket-tracker"),
             log_level=os.environ.get("POLYMARKET_LOG_LEVEL", "INFO"),

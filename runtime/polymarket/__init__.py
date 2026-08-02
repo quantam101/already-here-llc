@@ -21,6 +21,9 @@ from .listener import PolymarketListener
 from .profiler import WalletProfiler
 from .alerts import TelegramAlertEngine
 from .risk import RiskGuard
+from .signals import SignalConfluence
+from .portfolio import PortfolioRiskGuard
+from .backtest import MarketOracle, SubgraphLoader, WalkForwardBacktest
 from .orchestrator import PolymarketOrchestrator
 
 __all__ = [
@@ -29,5 +32,10 @@ __all__ = [
     "WalletProfiler",
     "TelegramAlertEngine",
     "RiskGuard",
+    "SignalConfluence",
+    "PortfolioRiskGuard",
+    "MarketOracle",
+    "SubgraphLoader",
+    "WalkForwardBacktest",
     "PolymarketOrchestrator",
 ]

@@ -22,8 +22,10 @@ from runtime.polymarket.abi import derive_price_from_fill, derive_usd_notional
 from runtime.polymarket.alerts import TelegramAlertEngine
 from runtime.polymarket.config import PolymarketConfig
 from runtime.polymarket.listener import PolymarketListener
+from runtime.polymarket.portfolio import PortfolioRiskGuard
 from runtime.polymarket.profiler import WalletProfiler
 from runtime.polymarket.risk import RiskGuard
+from runtime.polymarket.signals import SignalConfluence
 from runtime.polymarket.state import StateManager
 from runtime.polymarket.utils import CircuitBreaker
 
@@ -44,7 +46,8 @@ class PolymarketOrchestrator:
     Agent responsibilities:
       - Listener Agent : ingests on-chain fills via WebSocket + HTTP failovers
       - Profiler Agent : scores wallet performance (P&L, win-rate, Sharpe)
-      - Risk Agent     : validates slippage, sizing, and blacklists
+      - Risk Agent     : validates slippage, sizing, blacklists, and portfolio limits
+      - Signal Agent   : 90% win-rate style confluence filter on public price history
       - Alert Agent    : dispatches Telegram alerts in <2s
     """
 
@@ -59,6 +62,8 @@ class PolymarketOrchestrator:
         self._profiler = WalletProfiler(self.config, self._state)
         self._alerts = TelegramAlertEngine(self.config, self._state)
         self._risk = RiskGuard(self.config, self._state)
+        self._portfolio = PortfolioRiskGuard(self.config, self._state)
+        self._confluence = SignalConfluence(self.config)
 
         self._profile_cb = CircuitBreaker("profiler", failure_threshold=3, reset_timeout_seconds=60.0)
         self._profile_cache: Dict[str, Any] = {}
@@ -109,7 +114,13 @@ class PolymarketOrchestrator:
         wallet = event.get("wallet", "")
         token_id = event.get("token_id", "")
         amount_usd = Decimal(event.get("amount_usd", 0))
-        return self._risk.assess_alert(wallet, token_id, amount_usd).__dict__
+        return {
+            "per_trade": self._risk.assess_alert(wallet, token_id, amount_usd).__dict__,
+            "portfolio": self._portfolio.assess().__dict__,
+            "confluence": self._confluence.assess(
+                token_id, event.get("side", ""), Decimal(event.get("price", 0))
+            ).__dict__,
+        }
 
     # ------------------------------------------------------------------
     # Internal event pipeline
@@ -153,6 +164,34 @@ class PolymarketOrchestrator:
             if not risk.pass_gate:
                 logger.info("Risk gate blocked %s: %s", wallet, risk.reasons)
                 continue
+
+            portfolio = self._portfolio.assess()
+            if not portfolio.can_trade:
+                logger.info("Portfolio risk gate blocked %s: %s", wallet, portfolio.reasons)
+                continue
+
+            confluence = self._confluence.assess(event["token_id"], event["side"], price)
+            if self.config.confluence_enabled and not confluence.agree:
+                logger.info(
+                    "Confluence filter blocked %s on %s: score=%s side=%s",
+                    wallet,
+                    event["token_id"][:16],
+                    confluence.score,
+                    event["side"],
+                )
+                continue
+            if self.config.confluence_enabled and confluence.confidence < self.config.confluence_min_confidence:
+                logger.info(
+                    "Confluence confidence too low for %s on %s: %s",
+                    wallet,
+                    event["token_id"][:16],
+                    confluence.confidence,
+                )
+                continue
+
+            event["portfolio_scale"] = str(portfolio.position_scale)
+            event["confluence_score"] = str(confluence.score)
+            event["confluence_confidence"] = str(confluence.confidence)
 
             self._record_trade(wallet, role, event)
             self.alert_agent(event)
@@ -216,6 +255,8 @@ class PolymarketOrchestrator:
             "listener": self._listener.status(),
             "alerts": self._alerts.status(),
             "risk": self._risk.status(),
+            "portfolio": self._portfolio.status(),
+            "confluence": self._confluence.status(),
             "profiler": self._profiler.status(),
             "profile_cache": {
                 k: v for k, v in self._profile_cache.items() if not k.startswith("_")

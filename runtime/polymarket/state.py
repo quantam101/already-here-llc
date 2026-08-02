@@ -103,6 +103,23 @@ class StateManager:
                 );
                 CREATE INDEX IF NOT EXISTS idx_alerts_wallet ON alerts(wallet);
                 CREATE INDEX IF NOT EXISTS idx_alerts_ts ON alerts(sent_at);
+                CREATE TABLE IF NOT EXISTS closed_trades (
+                    id TEXT PRIMARY KEY,
+                    opened_at REAL,
+                    closed_at REAL,
+                    wallet TEXT,
+                    token_id TEXT,
+                    side TEXT,
+                    shares REAL,
+                    entry_price REAL,
+                    exit_price REAL,
+                    pnl REAL,
+                    roi REAL,
+                    strategy TEXT
+                );
+                CREATE INDEX IF NOT EXISTS idx_closed_trades_wallet ON closed_trades(wallet);
+                CREATE INDEX IF NOT EXISTS idx_closed_trades_ts ON closed_trades(closed_at);
+                CREATE INDEX IF NOT EXISTS idx_closed_trades_token ON closed_trades(token_id);
                 """
             )
 
@@ -257,3 +274,39 @@ class StateManager:
         with self._cursor() as cur:
             row = cur.execute("SELECT * FROM markets WHERE token_id = ?", (token_id.lower(),)).fetchone()
             return dict(row) if row else None
+
+    def record_closed_trade(self, trade: Dict[str, Any]) -> None:
+        with self._cursor() as cur:
+            cur.execute(
+                """INSERT OR IGNORE INTO closed_trades
+                   (id, opened_at, closed_at, wallet, token_id, side, shares,
+                    entry_price, exit_price, pnl, roi, strategy)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    trade["id"],
+                    trade.get("opened_at", trade.get("closed_at", time.time())),
+                    trade.get("closed_at", time.time()),
+                    trade.get("wallet", "").lower(),
+                    trade.get("token_id", "").lower(),
+                    trade.get("side", ""),
+                    float(trade.get("shares", 0)),
+                    float(trade.get("entry_price", 0)),
+                    float(trade.get("exit_price", 0)),
+                    float(trade.get("pnl", 0)),
+                    float(trade.get("roi", 0)),
+                    trade.get("strategy", "copy"),
+                ),
+            )
+
+    def get_closed_trades(
+        self, since: Optional[float] = None, order: str = "DESC"
+    ) -> List[Dict[str, Any]]:
+        sql = "SELECT * FROM closed_trades"
+        params: List[Any] = []
+        if since is not None:
+            sql += " WHERE closed_at >= ?"
+            params.append(since)
+        sql += f" ORDER BY closed_at {order}"
+        with self._cursor() as cur:
+            rows = cur.execute(sql, params).fetchall()
+            return [dict(r) for r in rows]

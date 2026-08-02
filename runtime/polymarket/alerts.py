@@ -73,6 +73,9 @@ class TelegramAlertEngine:
         sharpe = score.get("sharpe") if score else None
         win_rate = score.get("win_rate") if score else None
         profit = score.get("profit_usd") if score else None
+        confluence_score = event.get("confluence_score")
+        confluence_confidence = event.get("confluence_confidence")
+        portfolio_scale = event.get("portfolio_scale")
 
         lines = [
             "🚨 *POLYMARKET SMART WALLET ALERT*",
@@ -88,6 +91,12 @@ class TelegramAlertEngine:
             lines.append(f"🎯 *Win Rate:* {Decimal(str(win_rate)):.1f}%")
         if sharpe is not None:
             lines.append(f"⚡ *Sharpe:* {Decimal(str(sharpe)):.2f}")
+        if confluence_score is not None:
+            lines.append(f"🧩 *Confluence Score:* {confluence_score}")
+        if confluence_confidence is not None:
+            lines.append(f"🧠 *Confluence Confidence:* {confluence_confidence}%")
+        if portfolio_scale is not None:
+            lines.append(f"📏 *Portfolio Scale:* {portfolio_scale}x")
         if tx_hash:
             lines.append(f"🔗 [View on Polygonscan](https://polygonscan.com/tx/{tx_hash})")
         lines.append("")

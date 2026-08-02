@@ -103,8 +103,11 @@ Components:
 - `PolymarketListener` — resilient WebSocket + HTTP RPC log ingestion for `OrderFilled`, `OrdersMatched`, and ERC-1155 `Transfer` events across CTF Exchange V1/V2 and NegRisk exchange contracts.
 - `WalletProfiler` — 30-day P&L, win-rate, Sharpe, and conviction scoring from The Graph / PolyNode / local state.
 - `RiskGuard` — deterministic slippage cap, fixed order sizing, blacklisted markets, and cooldown controls.
+- `SignalConfluence` — 90% win-rate style ensemble filter using live CLOB price history (momentum, mean reversion, Bollinger, support/resistance).
+- `PortfolioRiskGuard` — portfolio-level circuit breaker with daily/weekly loss, drawdown, streak, and win-rate scaling rules.
+- `WalkForwardBacktest` — realized P&L backtest over historical Goldsky fills using real closed-market settlements from the Polymarket CLOB.
 - `TelegramAlertEngine` — sub-second Markdown alert dispatcher with circuit breaker and rate limiting.
-- `PolymarketOrchestrator` — sovereign agent coordinator wiring listener, profiler, risk, and alert agents.
+- `PolymarketOrchestrator` — sovereign agent coordinator wiring listener, profiler, signal, portfolio, risk, and alert agents.
 
 Agent declarations are in `agents/registry.yaml` under `polymarket-*`. The system is alert-only by default; live copy-execution requires explicit `POLYMARKET_LIVE_EXECUTION=true` plus human approval per the risk gate.
 
@@ -114,6 +117,7 @@ Local validation:
 python -m pip install -r requirements.txt
 python -m pytest tests/test_polymarket_tracker.py
 python runtime/polymarket/orchestrator.py
+python runtime/polymarket/backtest.py --wallets 0x... --start 1770000000 --end 1785634560
 ```
 
 API surface:

@@ -42,7 +42,21 @@ export async function GET(request: NextRequest) {
       fixedOrderUsd: Number(process.env.POLYMARKET_FIXED_ORDER_USD ?? '50'),
       minProfitUsd: Number(process.env.POLYMARKET_MIN_PROFIT_USD ?? '10000'),
       minWinRatePct: Number(process.env.POLYMARKET_MIN_WIN_RATE_PCT ?? '65'),
-      minSharpe: Number(process.env.POLYMARKET_MIN_SHARPE_RATIO ?? '1')
+      minSharpe: Number(process.env.POLYMARKET_MIN_SHARPE_RATIO ?? '1'),
+      confluenceEnabled: process.env.POLYMARKET_CONFLUENCE_ENABLED === 'true',
+      confluenceThreshold: Number(process.env.POLYMARKET_CONFLUENCE_THRESHOLD ?? '0.2'),
+      confluenceMinConfidence: Number(
+        process.env.POLYMARKET_CONFLUENCE_MIN_CONFIDENCE ?? '50'
+      ),
+      portfolioDailyLossLimit: Number(
+        process.env.POLYMARKET_PORTFOLIO_DAILY_LOSS_LIMIT ?? '200'
+      ),
+      portfolioWeeklyLossLimit: Number(
+        process.env.POLYMARKET_PORTFOLIO_WEEKLY_LOSS_LIMIT ?? '500'
+      ),
+      portfolioMaxDrawdownPct: Number(
+        process.env.POLYMARKET_PORTFOLIO_MAX_DRAWDOWN_PCT ?? '30'
+      )
     },
     timestamp: new Date().toISOString()
   };

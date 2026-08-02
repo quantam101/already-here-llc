@@ -228,3 +228,44 @@ def test_orchestrator_status_smoke(config, tmp_db):
     assert "listener" in status
     assert "alerts" in status
     assert "risk" in status
+    assert "portfolio" in status
+    assert "confluence" in status
+
+
+def test_signal_confluence_with_synthetic_prices():
+    from runtime.polymarket.signals import SignalConfluence
+
+    cfg = PolymarketConfig(confluence_enabled=True, confluence_threshold=Decimal("0.10"))
+    confluence = SignalConfluence(cfg)
+    # Inject synthetic rising prices to get a BUY confluence.
+    confluence._history._cache["test-token"] = list(range(50, 80))
+    result = confluence.assess("test-token", "BUY", Decimal("0.79"))
+    assert result.agree is True
+    assert result.score > 0
+    assert result.confidence > 0
+
+
+def test_portfolio_risk_guard_blocks_after_losses(config, tmp_db):
+    from runtime.polymarket.portfolio import PortfolioRiskGuard
+
+    state = StateManager(tmp_db)
+    for i in range(6):
+        state.record_closed_trade(
+            {
+                "id": f"loss-{i}",
+                "closed_at": time.time() - i,
+                "wallet": "0xtest",
+                "token_id": "token",
+                "side": "BUY",
+                "shares": 1.0,
+                "entry_price": 0.5,
+                "exit_price": 0.4,
+                "pnl": -10.0,
+                "roi": -0.2,
+            }
+        )
+    guard = PortfolioRiskGuard(config, state)
+    result = guard.assess()
+    assert result.consecutive_losses == 6
+    assert result.can_trade is False
+    assert any("consecutive" in r.lower() for r in result.reasons)
