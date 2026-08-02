@@ -55,7 +55,7 @@ function inferTradeAndSkill(description: string): { trade: string; skill: string
 function inferPriority(urgency: string): JobPriority {
   const u = urgency.toLowerCase();
   if (u.includes('emergency') || u.includes('down') || u.includes('outage')) return 'emergency';
-  if (u.includes('same day') || u.includes('urgent') || u.includes('today')) return 'high';
+  if (u.includes('same day') || u.includes('same-day') || u.includes('sameday') || u.includes('urgent') || u.includes('today') || u.includes('asap')) return 'high';
   if (u.includes('quote') || u.includes('schedule')) return 'normal';
   return 'normal';
 }

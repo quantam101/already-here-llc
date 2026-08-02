@@ -157,14 +157,22 @@ export function DispatcherBoard() {
                 <button onClick={() => runAgent(job.id, 'dispatch')} className="rounded-full bg-action px-4 py-2 text-sm font-semibold text-white hover:bg-navy">
                   Auto-assign
                 </button>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button onClick={() => runAgent(job.id, 'technician')} className="flex-1 rounded-full border border-borderBrand px-4 py-2 text-sm font-semibold text-slate-300 hover:border-action hover:text-action">
                     Build checklist
                   </button>
                   {job.status === 'completed' && (
-                    <button onClick={() => runAgent(job.id, 'invoice')} className="flex-1 rounded-full border border-borderBrand px-4 py-2 text-sm font-semibold text-slate-300 hover:border-action hover:text-action">
-                      Send invoice
-                    </button>
+                    <>
+                      <button onClick={() => runAgent(job.id, 'invoice')} className="flex-1 rounded-full border border-borderBrand px-4 py-2 text-sm font-semibold text-slate-300 hover:border-action hover:text-action">
+                        Send invoice
+                      </button>
+                      <button onClick={() => runAgent(job.id, 'review')} className="flex-1 rounded-full border border-borderBrand px-4 py-2 text-sm font-semibold text-slate-300 hover:border-action hover:text-action">
+                        Request review
+                      </button>
+                      <button onClick={() => runAgent(job.id, 'kb')} className="flex-1 rounded-full border border-borderBrand px-4 py-2 text-sm font-semibold text-slate-300 hover:border-action hover:text-action">
+                        Add to KB
+                      </button>
+                    </>
                   )}
                   <Link href={`/technician/jobs/${job.id}`} className="flex-1 rounded-full border border-borderBrand px-4 py-2 text-center text-sm font-semibold text-slate-300 hover:border-action hover:text-action">
                     Open job

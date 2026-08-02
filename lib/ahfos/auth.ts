@@ -84,7 +84,7 @@ function parseCookies(header: string | null): Record<string, string> {
 }
 
 function serializeCookie(name: string, value: string, maxAge?: number): string {
-  const parts = [`${name}=${value}`, 'Path=/', 'HttpOnly', 'SameSite=Strict'];
+  const parts = [`${name}=${value}`, 'Path=/', 'HttpOnly', 'SameSite=Lax'];
   if (maxAge !== undefined) parts.push(`Max-Age=${maxAge}`);
   if (process.env.NODE_ENV === 'production') parts.push('Secure');
   return parts.join('; ');

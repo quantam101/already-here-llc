@@ -20,7 +20,7 @@ import {
 const DATA_DIR = process.env.AHFOS_DATA_DIR || 'data/ahfos';
 
 function dataDir(): string {
-  return path.isAbsolute(DATA_DIR) ? DATA_DIR : path.join(process.cwd(), DATA_DIR);
+  return path.isAbsolute(DATA_DIR) ? DATA_DIR : path.join(/*turbopackIgnore: true*/ process.cwd(), DATA_DIR);
 }
 
 async function ensureDir(dir: string): Promise<string> {
