@@ -25,8 +25,6 @@ function getRedis(): Redis | null {
   return new Redis({ url, token });
 }
 
-const redis = getRedis();
-
 function key(parts: string[]): string {
   return [PREFIX, ...parts].join(':');
 }
@@ -41,12 +39,14 @@ function parse<T>(value: unknown, schema: z.ZodType<T>): T | null {
 }
 
 async function getById<T>(id: string, parts: string[], schema: z.ZodType<T>): Promise<T | null> {
+  const redis = getRedis();
   if (!redis) return null;
   const value = await redis.get<string>(key([...parts, id]));
   return parse(value, schema);
 }
 
 async function multiGet<T>(ids: string[], parts: string[], schema: z.ZodType<T>): Promise<T[]> {
+  const redis = getRedis();
   if (!redis || ids.length === 0) return [];
   const values = await redis.mget<string[]>(ids.map((id) => key([...parts, id])));
   const entries: T[] = [];
@@ -62,12 +62,14 @@ function sortByCreatedAtDesc<T extends { createdAt: string }>(items: T[]): T[] {
 }
 
 export async function getUsers(): Promise<User[]> {
+  const redis = getRedis();
   if (!redis) return [];
   const ids = await redis.smembers(key(['users']));
   return sortByCreatedAtDesc(await multiGet(ids, ['user'], UserSchema));
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
+  const redis = getRedis();
   if (!redis) return null;
   const id = await redis.get<string>(key(['user', 'email', email.toLowerCase()]));
   if (!id) return null;
@@ -79,6 +81,7 @@ export async function getUserById(id: string): Promise<User | null> {
 }
 
 export async function createUser(user: Omit<User, 'id' | 'createdAt'>): Promise<User> {
+  const redis = getRedis();
   if (!redis) throw new Error('Redis not configured.');
   const existing = await getUserByEmail(user.email);
   if (existing) throw new Error('Email already registered.');
@@ -90,6 +93,7 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt'>): Promise<
 }
 
 export async function getCustomers(): Promise<Customer[]> {
+  const redis = getRedis();
   if (!redis) return [];
   const ids = await redis.smembers(key(['customers']));
   return sortByCreatedAtDesc(await multiGet(ids, ['customer'], CustomerSchema));
@@ -100,6 +104,7 @@ export async function getCustomerById(id: string): Promise<Customer | null> {
 }
 
 export async function getCustomerByUserId(userId: string): Promise<Customer | null> {
+  const redis = getRedis();
   if (!redis) return null;
   const id = await redis.get<string>(key(['customer', 'user', userId]));
   if (!id) return null;
@@ -107,6 +112,7 @@ export async function getCustomerByUserId(userId: string): Promise<Customer | nu
 }
 
 export async function createCustomer(customer: Omit<Customer, 'id' | 'createdAt'>): Promise<Customer> {
+  const redis = getRedis();
   if (!redis) throw new Error('Redis not configured.');
   const full: Customer = { ...customer, id: randomUUID(), createdAt: new Date().toISOString() };
   await redis.set(key(['customer', full.id]), JSON.stringify(full));
@@ -118,12 +124,14 @@ export async function createCustomer(customer: Omit<Customer, 'id' | 'createdAt'
 }
 
 export async function updateCustomer(customer: Customer): Promise<Customer> {
+  const redis = getRedis();
   if (!redis) throw new Error('Redis not configured.');
   await redis.set(key(['customer', customer.id]), JSON.stringify(customer));
   return customer;
 }
 
 export async function getJobs(): Promise<Job[]> {
+  const redis = getRedis();
   if (!redis) return [];
   const ids = await redis.smembers(key(['jobs']));
   return sortByCreatedAtDesc(await multiGet(ids, ['job'], JobSchema));
@@ -134,18 +142,21 @@ export async function getJobById(id: string): Promise<Job | null> {
 }
 
 export async function getJobsForCustomer(customerId: string): Promise<Job[]> {
+  const redis = getRedis();
   if (!redis) return [];
   const ids = await redis.smembers(key(['jobs', 'customer', customerId]));
   return sortByCreatedAtDesc(await multiGet(ids, ['job'], JobSchema));
 }
 
 export async function getJobsForTechnician(technicianId: string): Promise<Job[]> {
+  const redis = getRedis();
   if (!redis) return [];
   const ids = await redis.smembers(key(['jobs', 'technician', technicianId]));
   return sortByCreatedAtDesc(await multiGet(ids, ['job'], JobSchema));
 }
 
 export async function createJob(job: Omit<Job, 'id' | 'createdAt' | 'updatedAt'>): Promise<Job> {
+  const redis = getRedis();
   if (!redis) throw new Error('Redis not configured.');
   const now = new Date().toISOString();
   const full: Job = { ...job, id: randomUUID(), createdAt: now, updatedAt: now };
@@ -159,6 +170,7 @@ export async function createJob(job: Omit<Job, 'id' | 'createdAt' | 'updatedAt'>
 }
 
 export async function updateJob(job: Job): Promise<Job> {
+  const redis = getRedis();
   if (!redis) throw new Error('Redis not configured.');
   const old = await getJobById(job.id);
   const updated = { ...job, updatedAt: new Date().toISOString() };
@@ -184,6 +196,7 @@ export async function updateJob(job: Job): Promise<Job> {
 }
 
 export async function appendJobEvent(event: Omit<JobEvent, 'id'>): Promise<JobEvent> {
+  const redis = getRedis();
   if (!redis) throw new Error('Redis not configured.');
   const full: JobEvent = { ...event, id: randomUUID() };
   await redis.rpush(key(['events', event.jobId]), JSON.stringify(full));
@@ -191,6 +204,7 @@ export async function appendJobEvent(event: Omit<JobEvent, 'id'>): Promise<JobEv
 }
 
 export async function getJobEvents(jobId: string): Promise<JobEvent[]> {
+  const redis = getRedis();
   if (!redis) return [];
   const lines = await redis.lrange<string>(key(['events', jobId]), 0, -1);
   const events: JobEvent[] = [];
@@ -202,6 +216,7 @@ export async function getJobEvents(jobId: string): Promise<JobEvent[]> {
 }
 
 export async function getAssets(): Promise<Asset[]> {
+  const redis = getRedis();
   if (!redis) return [];
   const ids = await redis.smembers(key(['assets']));
   return sortByCreatedAtDesc(await multiGet(ids, ['asset'], AssetSchema));
@@ -212,6 +227,7 @@ export async function getAssetById(id: string): Promise<Asset | null> {
 }
 
 export async function createAsset(asset: Omit<Asset, 'id' | 'createdAt'>): Promise<Asset> {
+  const redis = getRedis();
   if (!redis) throw new Error('Redis not configured.');
   const full: Asset = { ...asset, id: randomUUID(), createdAt: new Date().toISOString() };
   await redis.set(key(['asset', full.id]), JSON.stringify(full));
@@ -221,6 +237,7 @@ export async function createAsset(asset: Omit<Asset, 'id' | 'createdAt'>): Promi
 }
 
 export async function updateAsset(asset: Asset): Promise<Asset> {
+  const redis = getRedis();
   if (!redis) throw new Error('Redis not configured.');
   const old = await getAssetById(asset.id);
   await redis.set(key(['asset', asset.id]), JSON.stringify(asset));
@@ -232,12 +249,14 @@ export async function updateAsset(asset: Asset): Promise<Asset> {
 }
 
 export async function getKnowledgeEntries(): Promise<KnowledgeEntry[]> {
+  const redis = getRedis();
   if (!redis) return [];
   const ids = await redis.smembers(key(['knowledge']));
   return sortByCreatedAtDesc(await multiGet(ids, ['knowledge', 'entry'], KnowledgeEntrySchema));
 }
 
 export async function createKnowledgeEntry(entry: Omit<KnowledgeEntry, 'id' | 'createdAt'>): Promise<KnowledgeEntry> {
+  const redis = getRedis();
   if (!redis) throw new Error('Redis not configured.');
   const full: KnowledgeEntry = { ...entry, id: randomUUID(), createdAt: new Date().toISOString() };
   await redis.set(key(['knowledge', 'entry', full.id]), JSON.stringify(full));
@@ -255,6 +274,8 @@ export async function getOrCreateCustomerFromRequest(
   },
   userId?: string,
 ): Promise<Customer> {
+  const redis = getRedis();
+  if (!redis) throw new Error('Redis not configured.');
   if (userId) {
     const existing = await getCustomerByUserId(userId);
     if (existing) return existing;
@@ -274,10 +295,10 @@ export async function getOrCreateCustomerFromRequest(
     addresses: [],
     createdAt: new Date().toISOString(),
   };
-  await redis?.set(key(['customer', customer.id]), JSON.stringify(customer));
-  await redis?.sadd(key(['customers']), customer.id);
+  await redis.set(key(['customer', customer.id]), JSON.stringify(customer));
+  await redis.sadd(key(['customers']), customer.id);
   if (customer.userId) {
-    await redis?.set(key(['customer', 'user', customer.userId]), customer.id);
+    await redis.set(key(['customer', 'user', customer.userId]), customer.id);
   }
   return customer;
 }
