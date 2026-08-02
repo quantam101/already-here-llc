@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { PolymarketBillingButton } from '@/components/PolymarketBillingButton';
 
 export const metadata: Metadata = {
   title: 'Polymarket Tracker Dashboard',
@@ -27,10 +28,11 @@ async function loadStatus(token?: string) {
 export default async function PolymarketDashboardPage({
   searchParams
 }: {
-  searchParams: Promise<{ token?: string; success?: string }> | { token?: string; success?: string };
+  searchParams: Promise<{ token?: string; success?: string; session_id?: string }> | { token?: string; success?: string; session_id?: string };
 }) {
   const params = await searchParams;
   const token = params.token;
+  const sessionId = params.session_id;
   const authorized = isAuthorized(token);
   const status = authorized ? await loadStatus(token) : null;
 
@@ -113,15 +115,25 @@ export default async function PolymarketDashboardPage({
         </div>
 
         <div className="card p-6" data-proof-surface>
+          <p className="grid-label proof-label">Billing</p>
+          <p className="mt-4 text-sm text-slate-600">
+            Manage your Pro or Enterprise subscription, update payment method, or download invoices.
+          </p>
+          <div className="mt-4">
+            <PolymarketBillingButton sessionId={sessionId}>Manage subscription</PolymarketBillingButton>
+          </div>
+        </div>
+
+        <div className="card p-6" data-proof-surface>
           <p className="grid-label proof-label">Need help?</p>
           <p className="mt-4 text-sm text-slate-600">
-            Enterprise customers get custom wallet filters, private RPC endpoints, and a monthly strategy review.
+            Submit a support ticket or email us. Enterprise customers get a dedicated Slack channel and monthly strategy review.
           </p>
           <a
-            href="mailto:info@alreadyherellc.com?subject=Polymarket%20Tracker%20Support"
-            className="link-ring mt-4 inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action"
+            href="/polymarket-tracker/support"
+            className="link-ring mt-4 inline-flex w-full items-center justify-center rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action"
           >
-            Contact support
+            Open support ticket
           </a>
         </div>
       </div>
