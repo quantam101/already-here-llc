@@ -39,7 +39,11 @@ export const ALLOWED_TABLES = new Set([
   'proof_of_work',
   'codex_changelog',
   'catch_correct_events',
-  'system_health_signals'
+  'system_health_signals',
+  'roles',
+  'permissions',
+  'user_roles',
+  'security_findings'
 ]);
 
 type Store = Record<string, Record<string, Record<string, unknown>>>;

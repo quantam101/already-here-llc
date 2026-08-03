@@ -38,11 +38,12 @@ export async function POST(request: Request) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       source: 'twilio_sms_ai_receptionist',
-      name: from || 'SMS lead',
+      fullName: from || 'SMS lead',
       phone: from,
       serviceType: 'SMS service request',
       urgency: state,
       message: body,
+      transcript: body,
       leadState: state
     }),
     cache: 'no-store'

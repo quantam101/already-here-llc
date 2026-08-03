@@ -64,6 +64,18 @@ type ActionResult = {
   nextLocalState: string;
 };
 
+type OwnedOpportunity = {
+  id: string;
+  lane?: string;
+  status?: string;
+  title?: string;
+  summary?: string;
+  score?: number;
+  estimated_value_cents?: number;
+  next_action?: string;
+  priority?: string;
+};
+
 const fallback: RevenueCommandPayload = {
   ok: true,
   generatedAt: new Date().toISOString(),
@@ -84,10 +96,20 @@ const fallback: RevenueCommandPayload = {
   databaseStats: {}
 };
 
+const pipelineActions = ['review', 'reply', 'quote', 'schedule', 'prove', 'invoice', 'payment', 'repeat', 'pass'];
+
+function formatCents(cents?: number): string {
+  if (!cents) return '$0';
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
 export default function RevenueCommandPage() {
   const [payload, setPayload] = useState<RevenueCommandPayload>(fallback);
   const [status, setStatus] = useState<'loading' | 'ready' | 'offline'>('loading');
   const [actionResult, setActionResult] = useState<ActionResult | null>(null);
+  const [opportunities, setOpportunities] = useState<OwnedOpportunity[]>([]);
+  const [oppStatus, setOppStatus] = useState<'loading' | 'ready' | 'offline'>('loading');
+  const [selectedAction, setSelectedAction] = useState<Record<string, string>>({});
 
   const loadPayload = async () => {
     try {
@@ -102,10 +124,24 @@ export default function RevenueCommandPage() {
     }
   };
 
+  const loadOpportunities = async () => {
+    try {
+      const response = await fetch('/api/revenue-command-spine/data?table=opportunities&limit=50');
+      if (!response.ok) throw new Error('Owned opportunities fetch failed');
+      const data = (await response.json()) as { ok: boolean; records: OwnedOpportunity[] };
+      setOpportunities(data.records || []);
+      setOppStatus('ready');
+    } catch {
+      setOpportunities([]);
+      setOppStatus('offline');
+    }
+  };
+
   useEffect(() => {
     // Initial data fetch on mount; state updates occur only after the awaited response.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadPayload().catch(() => null);
+    loadOpportunities().catch(() => null);
   }, []);
 
   const runLocalAction = async (recordId: string, action: string) => {
@@ -118,6 +154,8 @@ export default function RevenueCommandPage() {
       if (!response.ok) throw new Error('Revenue Command action failed');
       const data = (await response.json()) as ActionResult;
       setActionResult(data);
+      await loadPayload();
+      await loadOpportunities();
     } catch {
       setActionResult({
         ok: true,
@@ -133,6 +171,12 @@ export default function RevenueCommandPage() {
 
   const topRecords = payload.records.slice(0, 8);
   const topAgents = payload.agents.slice(0, 8);
+
+  const stageCounts = opportunities.reduce<Record<string, number>>((acc, opp) => {
+    const stage = opp.status || 'new';
+    acc[stage] = (acc[stage] || 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <section className="container-shell py-16 lg:py-24">
@@ -164,6 +208,55 @@ export default function RevenueCommandPage() {
 
         <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
           <div className="space-y-4">
+            <div className="rounded-3xl border border-borderBrand bg-soft p-5">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm font-semibold text-navy">Owned opportunities pipeline</p>
+                <p className="text-xs text-slate-500">Status: {oppStatus}</p>
+              </div>
+              {opportunities.length === 0 ? (
+                <p className="mt-3 text-sm text-slate-500">No owned opportunities yet. Submit an intake through /api/ai-receptionist/intake or /api/revenue-command-spine/intake.</p>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {opportunities.slice(0, 10).map((opp) => (
+                    <article key={opp.id} className="rounded-2xl border border-borderBrand bg-white p-4 text-sm">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="font-semibold text-navy">{opp.title || 'Untitled opportunity'}</p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500">{opp.lane || 'General'} | {opp.priority || 'P1'} | {opp.status || 'new'}</p>
+                        </div>
+                        <p className="rounded-full border border-borderBrand px-3 py-1 text-xs text-slate-600">{formatCents(opp.estimated_value_cents)}</p>
+                      </div>
+                      <p className="mt-2 text-xs text-slate-600">{opp.next_action || 'No next action set.'}</p>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <select
+                          aria-label={`Action for opportunity ${opp.id}`}
+                          className="rounded-full border border-borderBrand bg-white px-3 py-1.5 text-xs text-slate-700 outline-none focus:border-action"
+                          value={selectedAction[opp.id] || ''}
+                          onChange={(e) => setSelectedAction((prev) => ({ ...prev, [opp.id]: e.target.value }))}
+                        >
+                          <option value="">Select action</option>
+                          {pipelineActions.map((action) => (
+                            <option key={action} value={action}>{action}</option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const action = selectedAction[opp.id];
+                            if (action) runLocalAction(opp.id, action);
+                          }}
+                          className="rounded-full bg-action px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy disabled:opacity-50"
+                          disabled={!selectedAction[opp.id]}
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="rounded-3xl border border-borderBrand bg-[#07111f] p-5">
               <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Highest-value build records</p>
               <div className="mt-4 space-y-4">
@@ -193,6 +286,24 @@ export default function RevenueCommandPage() {
           </div>
 
           <div className="space-y-4">
+            <div className="rounded-3xl border border-borderBrand bg-soft p-5">
+              <p className="text-sm font-semibold text-navy">Pipeline stage counts</p>
+              <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
+                {Object.keys(stageCounts).length === 0 ? (
+                  <div className="col-span-2 text-slate-500">No opportunities to stage.</div>
+                ) : (
+                  Object.entries(stageCounts)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([stage, count]) => (
+                      <div key={stage}>
+                        <dt className="font-semibold text-slate-500">{stage}</dt>
+                        <dd>{count}</dd>
+                      </div>
+                    ))
+                )}
+              </dl>
+            </div>
+
             <div className="rounded-3xl border border-borderBrand bg-soft p-5">
               <p className="text-sm font-semibold text-navy">Agent coverage</p>
               <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">

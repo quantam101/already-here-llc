@@ -419,6 +419,43 @@ CREATE TABLE IF NOT EXISTS system_health_signals (
   updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS roles (
+  id TEXT PRIMARY KEY,
+  role_name TEXT NOT NULL UNIQUE,
+  permissions_json TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS permissions (
+  id TEXT PRIMARY KEY,
+  permission_name TEXT NOT NULL UNIQUE,
+  resource TEXT NOT NULL,
+  action TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_roles (
+  id TEXT PRIMARY KEY,
+  contact_id TEXT REFERENCES contacts(id),
+  role_id TEXT REFERENCES roles(id),
+  granted_by TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS security_findings (
+  id TEXT PRIMARY KEY,
+  finding_type TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  resource TEXT NOT NULL,
+  description TEXT NOT NULL,
+  remediation TEXT,
+  status TEXT NOT NULL DEFAULT 'open',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_opportunities_priority ON opportunities(priority, score DESC);
 CREATE INDEX IF NOT EXISTS idx_leads_lane_status ON leads(lane, status);
 CREATE INDEX IF NOT EXISTS idx_reviews_target ON reviews(target_table, target_id);
