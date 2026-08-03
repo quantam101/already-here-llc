@@ -1,25 +1,24 @@
 import { NextResponse } from 'next/server.js';
+import { logAudit } from '@/lib/audit';
 import { GincMember } from '@/lib/ginc';
-import { generateGincId, loadNetwork, sanitizeMember, saveNetwork } from '@/lib/ginc-store';
+import { gincMemberSchema } from '@/lib/ginc-schemas';
+import { addMember, generateGincId, isRateLimited, loadNetwork, sanitizeMember } from '@/lib/ginc-store';
 
 export const runtime = 'nodejs';
 
 const allowedTypes = new Set(['owner', 'renter', 'worker', 'business']);
-const rateLimit = new Map<string, { count: number; resetAt: number }>();
 
 function clientKey(request: Request): string {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
-}
-
-function limited(key: string): boolean {
-  const now = Date.now();
-  const current = rateLimit.get(key);
-  if (!current || current.resetAt <= now) {
-    rateLimit.set(key, { count: 1, resetAt: now + 60_000 });
-    return false;
+  const realIp = request.headers.get('x-real-ip')?.trim();
+  if (realIp) return realIp;
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) {
+    const parts = forwarded.split(',').map((s) => s.trim()).filter(Boolean);
+    // Use the rightmost entry, which is the closest proxy's/client's actual IP.
+    const last = parts[parts.length - 1];
+    if (last) return last;
   }
-  current.count += 1;
-  return current.count > 5;
+  return 'unknown';
 }
 
 function clean(value: unknown, max = 3000): string {
@@ -38,7 +37,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (limited(clientKey(request))) {
+  if (await isRateLimited(clientKey(request))) {
     return NextResponse.json({ message: 'Too many submissions. Try again shortly.' }, { status: 429 });
   }
 
@@ -47,6 +46,11 @@ export async function POST(request: Request) {
     body = (await request.json()) as Record<string, unknown>;
   } catch {
     return NextResponse.json({ message: 'Invalid JSON body.' }, { status: 400 });
+  }
+
+  const parsed = gincMemberSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ message: parsed.error.issues[0]?.message || 'Invalid input.' }, { status: 400 });
   }
 
   const type = clean(body.type, 40);
@@ -78,9 +82,15 @@ export async function POST(request: Request) {
     createdAt: new Date().toISOString()
   };
 
-  const network = await loadNetwork();
-  network.members.push(member);
-  await saveNetwork(network);
+  await addMember(member);
+  await logAudit({
+    action: 'member.create',
+    actor: member.id,
+    resource: `member:${member.id}`,
+    ip: clientKey(request),
+    userAgent: request.headers.get('user-agent') || undefined,
+    metadata: { type: member.type, city: member.city, state: member.state }
+  });
 
   return NextResponse.json({ message: 'Member profile created.', member }, { status: 201 });
 }
