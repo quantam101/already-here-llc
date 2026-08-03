@@ -98,6 +98,8 @@ class Category(str, Enum):
     ELECTRONICS = "electronics"
     APPLIANCE = "appliance"
     YARD_WASTE = "yard_waste"
+    MOTOR_VEHICLE = "motor_vehicle"
+    SPORTING_GOODS = "sporting_goods"
 
 
 @dataclass(frozen=True)
@@ -250,6 +252,8 @@ def _estimate_bounding_box(category: Category, pixel_area: int, pixels_per_m2: f
         Category.ELECTRONICS: 0.35,
         Category.APPLIANCE: 0.95,
         Category.YARD_WASTE: 0.75,
+        Category.MOTOR_VEHICLE: 0.65,
+        Category.SPORTING_GOODS: 0.75,
     }
     height = height_map.get(category, 0.6)
 
@@ -288,7 +292,252 @@ def _resale_estimate(category: Category, weight_lbs: float) -> float:
         return 75.0
     if category == Category.ELECTRONICS and weight_lbs > 10:
         return 25.0
+    if category == Category.MOTOR_VEHICLE:
+        return 250.0 if weight_lbs > 100 else 75.0
+    if category == Category.SPORTING_GOODS and weight_lbs > 30:
+        return 125.0
     return 0.0
+
+
+def _kmeans(features: np.ndarray, k: int, max_iter: int = 15, random_seed: int = 42) -> np.ndarray:
+    """Vectorized Lloyd's algorithm on a feature matrix."""
+    rng = np.random.default_rng(random_seed)
+    # Random centroid initialization from data samples.
+    indices = rng.choice(features.shape[0], size=k, replace=False)
+    centroids = features[indices].copy()
+    for _ in range(max_iter):
+        distances = np.linalg.norm(features[:, None, :] - centroids[None, :, :], axis=2)
+        labels = np.argmin(distances, axis=1)
+        new_centroids = np.array([features[labels == i].mean(axis=0) if np.any(labels == i) else centroids[i] for i in range(k)])
+        if np.allclose(centroids, new_centroids):
+            break
+        centroids = new_centroids
+    return labels
+
+
+def _segment_kmeans(arr: np.ndarray, n_clusters: int = 12) -> List[Dict[str, Any]]:
+    """
+    Segment an image by color quantization (K-means on RGB) then run
+    connected-components on each color cluster. This splits distinct objects
+    of the same color without needing a trained detector. Each component
+    carries its own color and bounding box.
+    """
+    h, w = arr.shape[:2]
+    # Pure color features. Position is intentionally not used so the same
+    # color on opposite sides of the frame groups into one cluster, and
+    # `_find_regions` separates disconnected components spatially.
+    features = arr.reshape(-1, 3).astype(np.float32)
+
+    # Sub-sample for speed while keeping representation.
+    n_samples = min(5000, features.shape[0])
+    rng = np.random.default_rng(42)
+    sample_idx = rng.choice(features.shape[0], size=n_samples, replace=False)
+    sampled = features[sample_idx]
+    sample_labels = _kmeans(sampled, n_clusters)
+
+    # Nearest-neighbor projection back to full pixels using sampled centroids.
+    centroids = []
+    for i in range(n_clusters):
+        cluster_points = sampled[sample_labels == i]
+        if cluster_points.shape[0]:
+            centroids.append(cluster_points.mean(axis=0))
+        else:
+            # Fall back to the closest sampled point to avoid NaNs.
+            rng = np.random.default_rng(42 + i)
+            centroids.append(sampled[rng.integers(0, sampled.shape[0])])
+    centroids = np.array(centroids)
+    distances = np.linalg.norm(features[:, None, :] - centroids[None, :, :], axis=2)
+    labels = np.argmin(distances, axis=1).reshape(h, w)
+
+    regions: List[Dict[str, Any]] = []
+    for cluster_id in range(n_clusters):
+        mask = (labels == cluster_id).astype(np.uint8) * 255
+        for region in _find_regions(mask):
+            area = region["area"]
+            if area < 200:
+                continue
+            region_mask = region["mask"]
+            mean_rgb = arr[region_mask].mean(axis=0) if np.any(region_mask) else arr[0, 0]
+            hsv_patch = _rgb_to_hsv(arr[region_mask][None, ...])
+            mean_hsv = np.mean(hsv_patch[0], axis=0) if hsv_patch.shape[1] > 0 else np.array([0.0, 0.0, 0.0])
+            regions.append({
+                "area": area,
+                "bbox": region["bbox"],
+                "mask": region_mask,
+                "mean_rgb": mean_rgb,
+                "mean_hsv": mean_hsv,
+            })
+
+    regions.sort(key=lambda x: x["area"], reverse=True)
+    return regions
+
+
+def _categorize_region(region: Dict[str, Any], total_pixels: int, thumb_w: int, thumb_h: int) -> Category:
+    """
+    Refine a segmented region's category using color, size, and shape heuristics.
+    This lets the local zero-spend path distinguish likely resale objects.
+    """
+    hsv_mean = region["mean_hsv"]
+    hue, sat, val = hsv_mean
+    area = region["area"]
+    area_ratio = area / total_pixels
+    min_r, min_c, max_r, max_c = region["bbox"]
+    width = max_c - min_c + 1
+    height = max_r - min_r + 1
+    aspect = max(width, height) / max(1, min(width, height))
+
+    # Copper / brass small parts -> scrap metal.
+    if 10 <= hue <= 35 and sat > 55 and val > 60:
+        return Category.SCRAP_METAL
+
+    # Metallic surfaces.
+    if sat < 35 and val > 75:
+        if area_ratio > 0.05 and aspect > 2.0:
+            return Category.MOTOR_VEHICLE
+        return Category.SCRAP_METAL
+
+    # Dark objects.
+    if val < 70:
+        if area_ratio > 0.25:
+            # Large flat dark object is often a table / bed frame / bulky furniture.
+            if aspect > 2.5:
+                return Category.BULKY_FURNITURE
+            return Category.SPORTING_GOODS
+        if area_ratio > 0.08 and aspect > 2.0:
+            return Category.MOTOR_VEHICLE
+        if area_ratio > 0.03 and aspect < 2.0:
+            # Small dark rounded object on a surface: likely helmet / gear.
+            return Category.SPORTING_GOODS
+        return Category.GENERAL_DEBRIS
+
+    # Green / brown organic.
+    if 35 <= hue <= 85 and sat > 30:
+        return Category.YARD_WASTE
+
+    # Light neutral fabric / wood.
+    if sat < 50:
+        if area_ratio > 0.20:
+            return Category.BULKY_FURNITURE
+        return Category.GENERAL_DEBRIS
+
+    return Category.GENERAL_DEBRIS
+
+
+def _merge_by_category(
+    regions: List[Dict[str, Any]],
+    arr: np.ndarray,
+    thumb_total_pixels: int,
+    thumb_w: int,
+    thumb_h: int,
+) -> List[Dict[str, Any]]:
+    """
+    Merge adjacent or nearby segmented regions that received the same category,
+    then recompute area and color for the merged component. This turns fragmented
+    scooter parts or table+helmets into single, more realistic objects.
+    """
+    h, w = arr.shape[:2]
+    label_map = np.full((h, w), -1, dtype=np.int16)
+    for idx, region in enumerate(regions):
+        label_map[region["mask"]] = idx
+
+    # Classify each region and build a per-pixel category map.
+    cat_to_idx = {cat: i for i, cat in enumerate(Category)}
+    category_map = np.full((h, w), -1, dtype=np.int16)
+    for idx, region in enumerate(regions):
+        if idx >= 0 and label_map[region["mask"]].shape[0] > 0:
+            cat = _categorize_region(region, thumb_total_pixels, thumb_w, thumb_h)
+            category_map[region["mask"]] = cat_to_idx[cat]
+
+    merged: List[Dict[str, Any]] = []
+    for cat in Category:
+        mask = (category_map == cat_to_idx[cat]).astype(np.uint8) * 255
+        for region in _find_regions(mask):
+            area = region["area"]
+            if area < thumb_total_pixels * 0.015:
+                continue
+            region_mask = region["mask"]
+            mean_rgb = arr[region_mask].mean(axis=0) if np.any(region_mask) else arr[0, 0]
+            hsv_patch = _rgb_to_hsv(arr[region_mask][None, ...])
+            mean_hsv = np.mean(hsv_patch[0], axis=0) if hsv_patch.shape[1] > 0 else np.array([0.0, 0.0, 0.0])
+            merged.append({
+                "area": area,
+                "bbox": region["bbox"],
+                "mask": region_mask,
+                "mean_rgb": mean_rgb,
+                "mean_hsv": mean_hsv,
+                "inferred_category": cat,
+            })
+
+    merged.sort(key=lambda x: x["area"], reverse=True)
+    return merged
+
+
+def _bbox_distance(a: Tuple[int, int, int, int], b: Tuple[int, int, int, int]) -> int:
+    """Pixel distance between two bounding boxes; 0 if they overlap."""
+    min_r_a, min_c_a, max_r_a, max_c_a = a
+    min_r_b, min_c_b, max_r_b, max_c_b = b
+    dr = max(0, min_r_b - max_r_a, min_r_a - max_r_b)
+    dc = max(0, min_c_b - max_c_a, min_c_a - max_c_b)
+    return dr + dc
+
+
+def _merge_nearby_regions(
+    regions: List[Dict[str, Any]],
+    arr: np.ndarray,
+    distance_px: int = 20,
+) -> List[Dict[str, Any]]:
+    """
+    Merge regions of the same category whose bounding boxes are within
+    `distance_px` pixels. This joins fragmented table / helmet / gear segments
+    into a single object without merging disconnected background pieces.
+    """
+    if not regions:
+        return regions
+
+    merged: List[Dict[str, Any]] = []
+    consumed = set()
+    n = len(regions)
+    for i in range(n):
+        if i in consumed:
+            continue
+        region = regions[i]
+        combined_mask = region["mask"].copy()
+        bbox = list(region["bbox"])
+        for j in range(i + 1, n):
+            if j in consumed:
+                continue
+            other = regions[j]
+            if region.get("category") != other.get("category"):
+                continue
+            if _bbox_distance(tuple(bbox), other["bbox"]) > distance_px:
+                continue
+            combined_mask = combined_mask | other["mask"]
+            min_r, min_c, max_r, max_c = bbox
+            omin_r, omin_c, omax_r, omax_c = other["bbox"]
+            bbox = [
+                min(min_r, omin_r),
+                min(min_c, omin_c),
+                max(max_r, omax_r),
+                max(max_c, omax_c),
+            ]
+            consumed.add(j)
+
+        if combined_mask.any():
+            mean_rgb = arr[combined_mask].mean(axis=0)
+            hsv_patch = _rgb_to_hsv(arr[combined_mask][None, ...])
+            mean_hsv = np.mean(hsv_patch[0], axis=0) if hsv_patch.shape[1] > 0 else region["mean_hsv"]
+            merged.append({
+                "area": int(combined_mask.sum()),
+                "bbox": tuple(bbox),
+                "mask": combined_mask,
+                "mean_rgb": mean_rgb,
+                "mean_hsv": mean_hsv,
+                "category": region["category"],
+            })
+        consumed.add(i)
+
+    merged.sort(key=lambda x: x["area"], reverse=True)
+    return merged
 
 
 def _analyze_image_bytes(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity], Dict[str, Any], str]:
@@ -325,8 +574,6 @@ def _analyze_image_bytes(image_bytes: bytes, scan_id: str) -> Tuple[List[Detecte
     texture_score = float(np.std(gray))
     clutter_score = min(1.0, texture_score / 50.0)
 
-    category, confidence = _classify_dominant_color(mean_hsv)
-
     # Estimate real-world scale from a calibrated phone-camera assumption:
     # a typical smartphone photo taken ~2 m from a load frames ~2.5 m wide.
     # Use the thumbnail coordinate system for all segmentation math so area,
@@ -336,22 +583,31 @@ def _analyze_image_bytes(image_bytes: bytes, scan_id: str) -> Tuple[List[Detecte
     thumb_pixels_per_meter = thumb_w / frame_width_m
     thumb_pixels_per_m2 = thumb_pixels_per_meter ** 2
 
-    # Detect "blobs" by thresholding regions above average brightness — a
-    # poor-man's segmentation that still produces real, image-driven data.
-    gray_small = np.array(thumb.convert("L"))
-    mean_luma = float(np.mean(gray_small))
-    binary = cv2_threshold(gray_small, mean_luma * 0.9, 255)
-    regions = _find_regions(binary)
+    # K-means color segmentation into a small number of clusters. Objects of the
+    # same color are grouped and then split by connected components, giving distinct
+    # blobs like the scooter, pool table, and background walls without a model.
+    regions = _segment_kmeans(arr, n_clusters=6)
+
+    # Classify each segmented region. The same-color cluster may split an object
+    # into multiple pieces (table top, legs, helmet); the front-end/quote engine
+    # aggregates the recovery manifest, and a future model-based pass will merge
+    # true instances once a trained detector is wired in.
+    for region in regions:
+        region["category"] = _categorize_region(region, thumb_total_pixels, thumb_w, thumb_h)
 
     entities: List[DetectedEntity] = []
     used_area = 0
-    for region in regions[:5]:
+    for region in regions[:8]:
         pixel_area = region["area"]
-        if pixel_area < thumb_total_pixels * 0.01:
+        if pixel_area < thumb_total_pixels * 0.015:
             continue
         used_area += pixel_area
+        category = region["category"]
+        confidence = _classify_dominant_color(region["mean_hsv"])[1]
         box = _estimate_bounding_box(category, pixel_area, thumb_pixels_per_m2)
-        weight_lbs = max(5.0, round(pixel_area / thumb_pixels_per_m2 * 12.0, 1))
+        # Realistic pounds from 3-D bounding box volume: 1 m^3 of water is ~2205 lb.
+        volume_m3 = box[0] * box[1] * box[2]
+        weight_lbs = max(5.0, round(volume_m3 * 2205.0 * _density_for_category(category), 1))
         entities.append(
             DetectedEntity(
                 label=_label_for_category(category),
@@ -366,8 +622,10 @@ def _analyze_image_bytes(image_bytes: bytes, scan_id: str) -> Tuple[List[Detecte
 
     if not entities:
         # Single full-frame entity when no segmentation blobs are found.
+        category, confidence = _classify_dominant_color(mean_hsv)
         box = _estimate_bounding_box(category, thumb_total_pixels * 0.7, thumb_pixels_per_m2)
-        weight_lbs = max(10.0, round(thumb_total_pixels / thumb_pixels_per_m2 * 8.0, 1))
+        volume_m3 = box[0] * box[1] * box[2]
+        weight_lbs = max(10.0, round(volume_m3 * 2205.0 * _density_for_category(category), 1))
         entities.append(
             DetectedEntity(
                 label=_label_for_category(category),
@@ -441,8 +699,10 @@ def _find_regions(binary: np.ndarray) -> List[Dict[str, Any]]:
             visited[r, c] = True
             area = 0
             min_r, max_r, min_c, max_c = r, r, c, c
+            mask = np.zeros((rows, cols), dtype=bool)
             while q:
                 cr, cc = q.popleft()
+                mask[cr, cc] = True
                 area += 1
                 min_r, max_r = min(min_r, cr), max(max_r, cr)
                 min_c, max_c = min(min_c, cc), max(max_c, cc)
@@ -451,7 +711,7 @@ def _find_regions(binary: np.ndarray) -> List[Dict[str, Any]]:
                     if 0 <= nr < rows and 0 <= nc < cols and not visited[nr, nc] and binary[nr, nc] != 0:
                         visited[nr, nc] = True
                         q.append((nr, nc))
-            regions.append({"area": area, "bbox": (min_r, min_c, max_r, max_c)})
+            regions.append({"area": area, "bbox": (min_r, min_c, max_r, max_c), "mask": mask})
     regions.sort(key=lambda x: x["area"], reverse=True)
     return regions
 
@@ -464,6 +724,8 @@ def _label_for_category(category: Category) -> str:
         Category.ELECTRONICS: "Electronics / E-Waste",
         Category.APPLIANCE: "Appliance / White Good",
         Category.YARD_WASTE: "Yard Waste / Organic Material",
+        Category.MOTOR_VEHICLE: "Motor Vehicle / Scooter / Motorcycle",
+        Category.SPORTING_GOODS: "Sporting Goods / Pool Table / Gear",
     }
     return labels.get(category, "Detected Load Item")
 
@@ -476,6 +738,8 @@ def _density_for_category(category: Category) -> float:
         Category.ELECTRONICS: 0.75,
         Category.APPLIANCE: 0.80,
         Category.YARD_WASTE: 0.55,
+        Category.MOTOR_VEHICLE: 0.70,
+        Category.SPORTING_GOODS: 0.75,
     }
     return densities.get(category, 0.75)
 
@@ -594,43 +858,52 @@ def asset_recovery_agent(payload: Dict[str, Any]) -> Dict[str, Any]:
     items: List[RecoveryItem] = []
     instructions: List[str] = []
 
+    # Aggregate per-category so fragmented local segments (e.g. pool table pieces)
+    # are reported as a single recovery line instead of many duplicates.
+    category_value: Dict[Category, float] = {}
+    category_weight: Dict[Category, float] = {}
+    category_label: Dict[Category, str] = {}
+    category_action: Dict[Category, str] = {}
+
     for item in entities:
         if item.category == Category.SCRAP_METAL:
             val = item.est_weight_lbs * rates.copper_lbs_usd
             if val > 5.0:
-                items.append(
-                    RecoveryItem(
-                        label=item.label,
-                        category=item.category,
-                        value_usd=round(val, 2),
-                        action=f"EXTRACT SCRAP: {item.est_weight_lbs} lbs metal (~${round(val, 2)})",
-                    )
-                )
-                instructions.append(items[-1].action)
-        elif item.category == Category.BULKY_FURNITURE and item.resale_potential_usd > 0:
-            items.append(
-                RecoveryItem(
-                    label=item.label,
-                    category=item.category,
-                    value_usd=round(item.resale_potential_usd, 2),
-                    action=f"FLAG FOR RESALE: {item.label} (${round(item.resale_potential_usd, 2)} resale potential)",
-                )
-            )
-            instructions.append(items[-1].action)
-        elif item.category == Category.APPLIANCE and item.resale_potential_usd > 0:
-            items.append(
-                RecoveryItem(
-                    label=item.label,
-                    category=item.category,
-                    value_usd=round(item.resale_potential_usd, 2),
-                    action=f"FLAG FOR REFURB: {item.label} (${round(item.resale_potential_usd, 2)} repair/resale potential)",
-                )
-            )
-            instructions.append(items[-1].action)
-        elif item.category == Category.ELECTRONICS and item.resale_potential_usd > 0:
+                category_value[item.category] = category_value.get(item.category, 0.0) + val
+                category_weight[item.category] = category_weight.get(item.category, 0.0) + item.est_weight_lbs
+                category_label.setdefault(item.category, item.label)
+                category_action[item.category] = "EXTRACT SCRAP"
+        elif item.resale_potential_usd > 0:
+            category_value[item.category] = category_value.get(item.category, 0.0) + item.resale_potential_usd
+            category_label.setdefault(item.category, item.label)
+            if item.category == Category.BULKY_FURNITURE:
+                category_action[item.category] = "FLAG FOR RESALE"
+            elif item.category == Category.APPLIANCE:
+                category_action[item.category] = "FLAG FOR REFURB"
+            elif item.category == Category.ELECTRONICS:
+                category_action[item.category] = "FLAG E-WASTE"
+            elif item.category == Category.MOTOR_VEHICLE:
+                category_action[item.category] = "REFURB / RESALE"
+            elif item.category == Category.SPORTING_GOODS:
+                category_action[item.category] = "RESALE"
+
+    for cat, val in category_value.items():
+        label = category_label.get(cat, "Detected Item")
+        action = category_action.get(cat, "FLAG")
+        if cat == Category.SCRAP_METAL:
             instructions.append(
-                f"INSPECT E-WASTE: {item.label} for precious-metal recovery before landfill."
+                f"{action}: {category_weight.get(cat, 0.0):.1f} lbs {label} (~${round(val, 2)})"
             )
+        else:
+            instructions.append(f"{action}: {label} (${round(val, 2)} resale potential)")
+        items.append(
+            RecoveryItem(
+                label=label,
+                category=cat,
+                value_usd=round(val, 2),
+                action=instructions[-1],
+            )
+        )
 
     total = round(sum(i.value_usd for i in items), 2)
     return {
@@ -755,7 +1028,11 @@ class HaulScanner:
             ),
         )
 
-        net_price = max(0.0, vol_out["gross_quote_usd"] - (rec_out["total_recovery_yield_usd"] * RECOVERY_CREDIT_PCT))
+        recovery_credit = min(
+            vol_out["gross_quote_usd"] * 0.50,
+            rec_out["total_recovery_yield_usd"] * RECOVERY_CREDIT_PCT,
+        )
+        net_price = max(BASE_DISPATCH_FEE_USD, vol_out["gross_quote_usd"] - recovery_credit)
         processing_ms = round((time.time() - t0) * 1000, 1)
 
         self.telemetry.info(
