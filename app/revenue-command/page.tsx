@@ -51,6 +51,7 @@ type RevenueCommandPayload = {
     duplicateAgentRecordIds: string[];
     duplicateOperations: string[];
   };
+  databaseStats?: Record<string, number>;
 };
 
 type ActionResult = {
@@ -79,7 +80,8 @@ const fallback: RevenueCommandPayload = {
     missingAgentRecordIds: [],
     duplicateAgentRecordIds: [],
     duplicateOperations: []
-  }
+  },
+  databaseStats: {}
 };
 
 export default function RevenueCommandPage() {
@@ -215,12 +217,31 @@ export default function RevenueCommandPage() {
             </div>
 
             <div className="rounded-3xl border border-borderBrand bg-soft p-5">
-              <p className="text-sm font-semibold text-navy">Database tables</p>
+              <p className="text-sm font-semibold text-navy">Owned database tables</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {payload.databaseTables.map((table) => (
                   <span key={table} className="rounded-full border border-borderBrand bg-white px-3 py-1 text-xs text-slate-600">{table}</span>
                 ))}
               </div>
+            </div>
+
+            <div className="rounded-3xl border border-borderBrand bg-soft p-5">
+              <p className="text-sm font-semibold text-navy">Owned record counts</p>
+              <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
+                {Object.entries(payload.databaseStats || {}).filter(([, count]) => count > 0).length === 0 ? (
+                  <div className="col-span-2 text-slate-500">No owned records yet. Submit an intake to populate the database.</div>
+                ) : (
+                  Object.entries(payload.databaseStats || {})
+                    .filter(([, count]) => count > 0)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([table, count]) => (
+                      <div key={table}>
+                        <dt className="font-semibold text-slate-500">{table}</dt>
+                        <dd>{count}</dd>
+                      </div>
+                    ))
+                )}
+              </dl>
             </div>
           </div>
         </div>

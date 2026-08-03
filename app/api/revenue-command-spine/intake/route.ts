@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { persistDatabaseReadyWrites } from '@/lib/revenue-command-db';
 import { buildRevenueCommandProofDemos, buildRevenueIntakeProof, type RevenueIntakeInput } from '@/lib/revenue-command-intake';
 
 function asString(value: unknown): string {
@@ -51,5 +52,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  return NextResponse.json(buildRevenueIntakeProof(inputFromBody(body)));
+  const proof = buildRevenueIntakeProof(inputFromBody(body));
+  const { inserted, errors } = persistDatabaseReadyWrites(proof.databaseReadyWrites);
+  return NextResponse.json({ ...proof, persistedToOwnedDatabase: inserted, persistenceErrors: errors });
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getRevenueCommandAgents, validateRevenueAgentCoverage } from '@/lib/revenue-command-agents';
+import { getDatabaseStats } from '@/lib/revenue-command-db';
 import { applyReviewAction, getRevenueCommandSpineResponse, type ReviewAction } from '@/lib/revenue-command-spine';
 
 function isReviewAction(value: unknown): value is ReviewAction {
@@ -10,7 +11,8 @@ export async function GET() {
   return NextResponse.json({
     ...getRevenueCommandSpineResponse(),
     agents: getRevenueCommandAgents(),
-    agentCoverage: validateRevenueAgentCoverage()
+    agentCoverage: validateRevenueAgentCoverage(),
+    databaseStats: getDatabaseStats()
   });
 }
 
