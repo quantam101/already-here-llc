@@ -1,7 +1,8 @@
-import { Redis } from '@upstash/redis';
+import type { Redis } from '@upstash/redis';
 import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { getRedis } from '@/lib/redis';
 import {
   gincConfig,
   GincJob,
@@ -17,13 +18,6 @@ export { gincConfig };
 const dataPath = path.join(process.cwd(), 'data', 'ginc-network.json');
 
 let memoryCache: GincNetwork | null = null;
-
-function getRedis(): Redis | null {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
-  return new Redis({ url, token });
-}
 
 function seedNetwork(): GincNetwork {
   return {
@@ -211,6 +205,7 @@ function cleanInput(value: unknown, max = 3000): string {
 }
 
 const allowedMemberTypes = new Set(['owner', 'renter', 'worker', 'business']);
+const allowedMemberRoles = new Set(['admin', 'moderator', 'member']);
 
 export function buildGincMember(payload: Record<string, unknown>): GincMember {
   const type = cleanInput(payload.type, 40);
@@ -230,9 +225,13 @@ export function buildGincMember(payload: Record<string, unknown>): GincMember {
     throw new Error('Invalid email address.');
   }
 
+  const role = cleanInput(payload.role, 20);
+  const memberRole = allowedMemberRoles.has(role) ? (role as GincMember['role']) : 'member';
+
   return {
     id: generateGincId('MEM'),
     type: type as GincMember['type'],
+    role: memberRole,
     fullName,
     email,
     phone,

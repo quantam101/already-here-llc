@@ -51,10 +51,12 @@ export const gincAssetTypes = [
 ];
 
 export type GincMemberType = 'owner' | 'renter' | 'worker' | 'business';
+export type GincMemberRole = 'admin' | 'moderator' | 'member';
 
 export interface GincMember {
   id: string;
   type: GincMemberType;
+  role?: GincMemberRole;
   fullName: string;
   email: string;
   phone: string;

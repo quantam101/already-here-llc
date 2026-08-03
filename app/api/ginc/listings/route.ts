@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server.js';
+import { logAudit } from '@/lib/audit';
 import { GincListing } from '@/lib/ginc';
+import { gincListingSchema } from '@/lib/ginc-schemas';
 import { addListing, addMember, buildGincMember, generateGincId, isRateLimited, loadNetwork } from '@/lib/ginc-store';
 
 export const runtime = 'nodejs';
@@ -47,6 +49,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Invalid JSON body.' }, { status: 400 });
   }
 
+  const parsed = gincListingSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ message: parsed.error.issues[0]?.message || 'Invalid input.' }, { status: 400 });
+  }
+
   const memberId = clean(body.memberId, 40);
   const title = clean(body.title, 200);
   const category = clean(body.category, 120);
@@ -87,6 +94,14 @@ export async function POST(request: Request) {
   };
 
   await addListing(listing);
+  await logAudit({
+    action: 'listing.create',
+    actor: listing.memberId,
+    resource: `listing:${listing.id}`,
+    ip: clientKey(request),
+    userAgent: request.headers.get('user-agent') || undefined,
+    metadata: { category: listing.category, assetType: listing.assetType, state: listing.state }
+  });
 
   return NextResponse.json({ message: 'Listing created.', listing }, { status: 201 });
 }

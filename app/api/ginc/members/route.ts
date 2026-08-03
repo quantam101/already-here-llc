@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server.js';
+import { logAudit } from '@/lib/audit';
 import { GincMember } from '@/lib/ginc';
+import { gincMemberSchema } from '@/lib/ginc-schemas';
 import { addMember, generateGincId, isRateLimited, loadNetwork, sanitizeMember } from '@/lib/ginc-store';
 
 export const runtime = 'nodejs';
@@ -46,6 +48,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Invalid JSON body.' }, { status: 400 });
   }
 
+  const parsed = gincMemberSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ message: parsed.error.issues[0]?.message || 'Invalid input.' }, { status: 400 });
+  }
+
   const type = clean(body.type, 40);
   if (!allowedTypes.has(type)) return NextResponse.json({ message: 'Invalid member type.' }, { status: 400 });
   const fullName = clean(body.fullName, 120);
@@ -76,6 +83,14 @@ export async function POST(request: Request) {
   };
 
   await addMember(member);
+  await logAudit({
+    action: 'member.create',
+    actor: member.id,
+    resource: `member:${member.id}`,
+    ip: clientKey(request),
+    userAgent: request.headers.get('user-agent') || undefined,
+    metadata: { type: member.type, city: member.city, state: member.state }
+  });
 
   return NextResponse.json({ message: 'Member profile created.', member }, { status: 201 });
 }

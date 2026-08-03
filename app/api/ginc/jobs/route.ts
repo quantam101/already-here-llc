@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server.js';
+import { logAudit } from '@/lib/audit';
 import { GincJob } from '@/lib/ginc';
+import { gincJobSchema } from '@/lib/ginc-schemas';
 import { addJob, addMember, buildGincMember, generateGincId, isRateLimited, loadNetwork } from '@/lib/ginc-store';
 
 export const runtime = 'nodejs';
@@ -47,6 +49,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Invalid JSON body.' }, { status: 400 });
   }
 
+  const parsed = gincJobSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ message: parsed.error.issues[0]?.message || 'Invalid input.' }, { status: 400 });
+  }
+
   const memberId = clean(body.memberId, 40);
   const title = clean(body.title, 200);
   const category = clean(body.category, 120);
@@ -87,6 +94,14 @@ export async function POST(request: Request) {
   };
 
   await addJob(job);
+  await logAudit({
+    action: 'job.create',
+    actor: job.memberId,
+    resource: `job:${job.id}`,
+    ip: clientKey(request),
+    userAgent: request.headers.get('user-agent') || undefined,
+    metadata: { category: job.category, assetType: job.assetType, state: job.state }
+  });
 
   return NextResponse.json({ message: 'Job posted.', job }, { status: 201 });
 }
