@@ -1,5 +1,6 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import type { DatabaseReadyWrite } from './revenue-command-intake';
 
 const DEFAULT_DB_PATH = 'data/revenue-command.json';
@@ -34,6 +35,8 @@ const ALLOWED_TABLES = new Set([
 
 type Store = Record<string, Record<string, Record<string, unknown>>>;
 
+let writeQueue: Promise<unknown> = Promise.resolve();
+
 export function getDatabasePath(): string {
   return process.env.REVENUE_COMMAND_DB_PATH || join(process.cwd(), DEFAULT_DB_PATH);
 }
@@ -45,7 +48,7 @@ function ensureDirectory(path: string): void {
   }
 }
 
-function readStore(path: string): Store {
+export function readStore(path: string): Store {
   try {
     const raw = readFileSync(path, 'utf8');
     return JSON.parse(raw) as Store;
@@ -56,16 +59,25 @@ function readStore(path: string): Store {
 
 function writeStore(path: string, store: Store): void {
   ensureDirectory(path);
-  const temp = `${path}.tmp`;
-  writeFileSync(temp, JSON.stringify(store, null, 2));
-  renameSync(temp, path);
+  const temp = `${path}.${randomUUID()}.tmp`;
+  try {
+    writeFileSync(temp, JSON.stringify(store, null, 2));
+    renameSync(temp, path);
+  } catch (error) {
+    try {
+      unlinkSync(temp);
+    } catch {
+      // ignore cleanup failure
+    }
+    throw error;
+  }
 }
 
 function isAllowedTable(name: string): boolean {
   return ALLOWED_TABLES.has(name);
 }
 
-export function persistDatabaseReadyWrites(writes: DatabaseReadyWrite[]): { inserted: number; errors: string[] } {
+async function lockedPersist(writes: DatabaseReadyWrite[]): Promise<{ inserted: number; errors: string[] }> {
   const path = getDatabasePath();
   const errors: string[] = [];
   let inserted = 0;
@@ -98,8 +110,14 @@ export function persistDatabaseReadyWrites(writes: DatabaseReadyWrite[]): { inse
   return { inserted, errors };
 }
 
-function getTable(table: string): Record<string, Record<string, unknown>> {
-  return readStore(getDatabasePath())[table] || {};
+export function persistDatabaseReadyWrites(writes: DatabaseReadyWrite[]): Promise<{ inserted: number; errors: string[] }> {
+  const task = writeQueue.then(() => lockedPersist(writes));
+  writeQueue = task.catch(() => undefined);
+  return task as Promise<{ inserted: number; errors: string[] }>;
+}
+
+function getTable(store: Store, table: string): Record<string, Record<string, unknown>> {
+  return store[table] || {};
 }
 
 function byCreatedAtDesc(left: Record<string, unknown>, right: Record<string, unknown>): number {
@@ -110,23 +128,24 @@ function byCreatedAtDesc(left: Record<string, unknown>, right: Record<string, un
 
 export function listRecords(table: string, limit = 100): Record<string, unknown>[] {
   if (!isAllowedTable(table)) return [];
-  return Object.values(getTable(table)).sort(byCreatedAtDesc).slice(0, limit);
+  return Object.values(getTable(readStore(getDatabasePath()), table)).sort(byCreatedAtDesc).slice(0, limit);
 }
 
 export function getRecord(table: string, id: string): Record<string, unknown> | undefined {
   if (!isAllowedTable(table)) return undefined;
-  return getTable(table)[id];
+  return getTable(readStore(getDatabasePath()), table)[id];
 }
 
-export function countRecords(table: string): number {
+export function countRecords(store: Store, table: string): number {
   if (!isAllowedTable(table)) return 0;
-  return Object.keys(getTable(table)).length;
+  return Object.keys(getTable(store, table)).length;
 }
 
 export function getDatabaseStats(): Record<string, number> {
+  const store = readStore(getDatabasePath());
   const result: Record<string, number> = {};
   for (const table of ALLOWED_TABLES) {
-    result[table] = countRecords(table);
+    result[table] = countRecords(store, table);
   }
   return result;
 }

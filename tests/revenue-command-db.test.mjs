@@ -27,7 +27,7 @@ const dispatch = buildRevenueIntakeProof({
 assert.equal(dispatch.persistedExternally, false);
 assert.ok(dispatch.databaseReadyWrites.length >= 10);
 
-const { inserted, errors } = persistDatabaseReadyWrites(dispatch.databaseReadyWrites);
+const { inserted, errors } = await persistDatabaseReadyWrites(dispatch.databaseReadyWrites);
 assert.equal(errors.length, 0, `Unexpected persistence errors: ${errors.join(', ')}`);
 assert.ok(inserted >= dispatch.databaseReadyWrites.length, `Expected ${dispatch.databaseReadyWrites.length} inserts, got ${inserted}`);
 
