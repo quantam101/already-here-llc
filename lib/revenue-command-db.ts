@@ -12,6 +12,10 @@ export const ALLOWED_TABLES = new Set([
   'opportunities',
   'jobs',
   'dispatches',
+  'quotes',
+  'invoices',
+  'payments',
+  'repeating_customers',
   'technicians',
   'vendors',
   'vehicles',
@@ -139,6 +143,11 @@ export function listRecords(table: string, limit = 100): Record<string, unknown>
 export function getRecord(table: string, id: string): Record<string, unknown> | undefined {
   if (!isAllowedTable(table)) return undefined;
   return getTable(readStore(getDatabasePath()), table)[id];
+}
+
+export function findRecordBy(table: string, field: string, value: unknown): Record<string, unknown> | undefined {
+  if (!isAllowedTable(table)) return undefined;
+  return Object.values(getTable(readStore(getDatabasePath()), table)).find((record) => record[field] === value);
 }
 
 export function countRecords(store: Store, table: string): number {

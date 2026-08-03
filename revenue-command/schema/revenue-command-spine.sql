@@ -82,6 +82,52 @@ CREATE TABLE IF NOT EXISTS dispatches (
   updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS quotes (
+  id TEXT PRIMARY KEY,
+  opportunity_id TEXT REFERENCES opportunities(id),
+  contact_id TEXT REFERENCES contacts(id),
+  quote_amount_cents INTEGER NOT NULL DEFAULT 0,
+  quote_status TEXT NOT NULL DEFAULT 'draft',
+  approved_by TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS invoices (
+  id TEXT PRIMARY KEY,
+  opportunity_id TEXT REFERENCES opportunities(id),
+  contact_id TEXT REFERENCES contacts(id),
+  invoice_amount_cents INTEGER NOT NULL DEFAULT 0,
+  invoice_status TEXT NOT NULL DEFAULT 'draft',
+  issued_at TEXT,
+  paid_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS payments (
+  id TEXT PRIMARY KEY,
+  invoice_id TEXT REFERENCES invoices(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  contact_id TEXT REFERENCES contacts(id),
+  payment_amount_cents INTEGER NOT NULL DEFAULT 0,
+  payment_method TEXT,
+  payment_status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS repeating_customers (
+  id TEXT PRIMARY KEY,
+  organization_id TEXT REFERENCES organizations(id),
+  contact_id TEXT REFERENCES contacts(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  repeat_score INTEGER NOT NULL DEFAULT 0,
+  next_service_due_date TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS technicians (
   id TEXT PRIMARY KEY,
   contact_id TEXT REFERENCES contacts(id),
