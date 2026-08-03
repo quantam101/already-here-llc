@@ -13,12 +13,13 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from contextlib import asynccontextmanager
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Tuple
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 
 import uvicorn
 
@@ -38,8 +39,13 @@ def _env(name: str, default: str) -> str:
 HAUL_PORT = int(_env("HAUL_SCANNER_PORT", "8000"))
 HAUL_HOST = _env("HAUL_SCANNER_HOST", "0.0.0.0")
 CORS_ORIGINS = _env("HAUL_CORS_ORIGINS", "*").split(",")
+HAUL_API_KEY = _env("HAUL_API_KEY", "")
+HAUL_RATE_LIMIT = int(_env("HAUL_RATE_LIMIT_PER_MINUTE", "30"))
 
 scanner = HaulScanner()
+
+# Simple in-memory per-IP fixed-window rate limiter for /api/scan.
+_rate_limit_store: Dict[str, Tuple[int, float]] = {}
 
 
 @asynccontextmanager
@@ -57,7 +63,7 @@ app = FastAPI(title="AVAX-3D Mobile Hauling AI", lifespan=_lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -86,8 +92,73 @@ def get_mobile_app() -> str:
     return _MOBILE_HTML
 
 
+@app.get("/manifest.json")
+def manifest() -> FileResponse:
+    return FileResponse("public/manifest.json", media_type="application/json")
+
+
+@app.get("/.well-known/assetlinks.json")
+def assetlinks() -> FileResponse:
+    return FileResponse("public/assetlinks.json", media_type="application/json")
+
+
+@app.get("/service-worker.js")
+def service_worker() -> PlainTextResponse:
+    return PlainTextResponse(
+        open("public/service-worker.js").read(),
+        media_type="application/javascript",
+    )
+
+
+@app.get("/icon-192.png")
+def icon_192() -> FileResponse:
+    return FileResponse("public/icon-192.png")
+
+
+@app.get("/icon-512.png")
+def icon_512() -> FileResponse:
+    return FileResponse("public/icon-512.png")
+
+
+def _check_api_key(request: Request) -> Optional[JSONResponse]:
+    if not HAUL_API_KEY:
+        return None
+    header = request.headers.get("x-haul-api-key", "")
+    auth = request.headers.get("authorization", "")
+    if auth.lower().startswith("bearer "):
+        header = auth[7:].strip()
+    if header != HAUL_API_KEY:
+        return JSONResponse(status_code=401, content={"error": "Invalid or missing API key"})
+    return None
+
+
+def _check_rate_limit(client_ip: str) -> Optional[JSONResponse]:
+    now = time.time()
+    count, window_start = _rate_limit_store.get(client_ip, (0, now))
+    if now - window_start > 60:
+        count = 0
+        window_start = now
+    count += 1
+    _rate_limit_store[client_ip] = (count, window_start)
+    if count > HAUL_RATE_LIMIT:
+        return JSONResponse(
+            status_code=429,
+            content={"error": "Rate limit exceeded. Try again later."},
+        )
+    return None
+
+
 @app.post("/api/scan")
-async def handle_mobile_scan(file: UploadFile = File(...)) -> JSONResponse:
+async def handle_mobile_scan(
+    request: Request, file: UploadFile = File(...)
+) -> JSONResponse:
+    if (resp := _check_api_key(request)) is not None:
+        return resp
+
+    client_ip = request.client.host if request.client else "unknown"
+    if (resp := _check_rate_limit(client_ip)) is not None:
+        return resp
+
     if file.size is not None and file.size > MAX_UPLOAD_BYTES:
         return JSONResponse(
             status_code=413,
@@ -106,9 +177,12 @@ async def handle_mobile_scan(file: UploadFile = File(...)) -> JSONResponse:
     except RuntimeError as exc:
         logger.warning("Scan rejected: %s", exc)
         return JSONResponse(status_code=400, content={"error": str(exc)})
-    except Exception as exc:
-        logger.exception("Scan failed: %s", exc)
-        return JSONResponse(status_code=500, content={"error": f"Scan processing failed: {exc}"})
+    except Exception:
+        logger.exception("Scan failed for file=%s", file.filename)
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Scan processing failed. Please retry or contact support."},
+        )
     return JSONResponse(content=result.__dict__)
 
 
@@ -120,6 +194,8 @@ _MOBILE_HTML = """<!DOCTYPE html>
     <meta name="theme-color" content="#0f172a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192.png">
     <title>AVAX-3D Mobile AI Hauler</title>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --green: #22c55e; --amber: #f59e0b; --text: #f8fafc; }
@@ -228,6 +304,10 @@ _MOBILE_HTML = """<!DOCTYPE html>
         function confirmBooking() {
             const quote = document.getElementById('netQuote').innerText;
             alert('Booking confirmed at ' + quote + '. Dispatch will be notified.');
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js').catch(console.error);
         }
     </script>
 </body>

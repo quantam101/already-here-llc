@@ -215,6 +215,10 @@ class ScrapRateProvider:
         return self._cache or self._FALLBACK
 
 
+# Module-level singleton so the one-hour TTL cache is shared across scans.
+_scrap_rates = ScrapRateProvider()
+
+
 # =====================================================================
 # REAL IMAGE ANALYSIS
 # =====================================================================
@@ -307,10 +311,11 @@ def _analyze_image_bytes(image_bytes: bytes, scan_id: str) -> Tuple[List[Detecte
         image = image.convert("RGB")
 
     width_px, height_px = image.size
-    total_pixels = width_px * height_px
 
     # Downsample for speed while preserving color statistics.
     thumb = image.resize((320, int(320 * height_px / width_px)))
+    thumb_w, thumb_h = thumb.size
+    thumb_total_pixels = thumb_w * thumb_h
     arr = np.array(thumb)
     hsv = _rgb_to_hsv(arr)
     mean_hsv = np.mean(hsv.reshape(-1, 3), axis=0)
@@ -324,10 +329,12 @@ def _analyze_image_bytes(image_bytes: bytes, scan_id: str) -> Tuple[List[Detecte
 
     # Estimate real-world scale from a calibrated phone-camera assumption:
     # a typical smartphone photo taken ~2 m from a load frames ~2.5 m wide.
+    # Use the thumbnail coordinate system for all segmentation math so area,
+    # scale and confidence are consistent.
     # Override via HAUL_FRAME_WIDTH_METERS env var.
     frame_width_m = _env_float("HAUL_FRAME_WIDTH_METERS", 2.5)
-    pixels_per_meter = width_px / frame_width_m
-    pixels_per_m2 = pixels_per_meter ** 2
+    thumb_pixels_per_meter = thumb_w / frame_width_m
+    thumb_pixels_per_m2 = thumb_pixels_per_meter ** 2
 
     # Detect "blobs" by thresholding regions above average brightness — a
     # poor-man's segmentation that still produces real, image-driven data.
@@ -340,11 +347,11 @@ def _analyze_image_bytes(image_bytes: bytes, scan_id: str) -> Tuple[List[Detecte
     used_area = 0
     for region in regions[:5]:
         pixel_area = region["area"]
-        if pixel_area < total_pixels * 0.01:
+        if pixel_area < thumb_total_pixels * 0.01:
             continue
         used_area += pixel_area
-        box = _estimate_bounding_box(category, pixel_area, pixels_per_m2)
-        weight_lbs = max(5.0, round(pixel_area / pixels_per_m2 * 12.0, 1))
+        box = _estimate_bounding_box(category, pixel_area, thumb_pixels_per_m2)
+        weight_lbs = max(5.0, round(pixel_area / thumb_pixels_per_m2 * 12.0, 1))
         entities.append(
             DetectedEntity(
                 label=_label_for_category(category),
@@ -352,15 +359,15 @@ def _analyze_image_bytes(image_bytes: bytes, scan_id: str) -> Tuple[List[Detecte
                 bounding_box_3d_m=box,
                 est_weight_lbs=weight_lbs,
                 density_coefficient=_density_for_category(category),
-                confidence=round(min(1.0, confidence * (pixel_area / total_pixels) * 10), 2),
+                confidence=round(min(1.0, confidence * (pixel_area / thumb_total_pixels) * 10), 2),
                 resale_potential_usd=_resale_estimate(category, weight_lbs),
             )
         )
 
     if not entities:
         # Single full-frame entity when no segmentation blobs are found.
-        box = _estimate_bounding_box(category, total_pixels * 0.7, pixels_per_m2)
-        weight_lbs = max(10.0, round(total_pixels / pixels_per_m2 * 8.0, 1))
+        box = _estimate_bounding_box(category, thumb_total_pixels * 0.7, thumb_pixels_per_m2)
+        weight_lbs = max(10.0, round(thumb_total_pixels / thumb_pixels_per_m2 * 8.0, 1))
         entities.append(
             DetectedEntity(
                 label=_label_for_category(category),
@@ -583,7 +590,7 @@ def volumetric_pricing_agent(payload: Dict[str, Any]) -> Dict[str, Any]:
 def asset_recovery_agent(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Agent 03: Live commodity & secondary-market value discovery."""
     entities = [DetectedEntity(**_coerce_entity(e)) for e in payload.get("entities", [])]
-    rates = ScrapRateProvider().get_rates()
+    rates = _scrap_rates.get_rates()
     items: List[RecoveryItem] = []
     instructions: List[str] = []
 
@@ -645,13 +652,14 @@ class WorkerPayload:
     payload: Dict[str, Any]
 
 
-def _agent_dispatcher(worker_payload: WorkerPayload) -> Tuple[str, Dict[str, Any]]:
+def _agent_dispatcher(worker_payload: WorkerPayload) -> Dict[str, Any]:
+    """Dispatch an agent call inside a pool worker process."""
     if worker_payload.agent == "vision":
-        return "vision", vision_spatial_agent(worker_payload.payload)
+        return vision_spatial_agent(worker_payload.payload)
     if worker_payload.agent == "volumetric":
-        return "volumetric", volumetric_pricing_agent(worker_payload.payload)
+        return volumetric_pricing_agent(worker_payload.payload)
     if worker_payload.agent == "recovery":
-        return "recovery", asset_recovery_agent(worker_payload.payload)
+        return asset_recovery_agent(worker_payload.payload)
     raise ValueError(f"Unknown agent: {worker_payload.agent}")
 
 
@@ -674,7 +682,7 @@ class HaulScanner:
 
     def shutdown(self) -> None:
         if self._pool:
-            self._pool.close()
+            self._pool.terminate()
             self._pool.join()
             self._pool = None
 
@@ -714,12 +722,13 @@ class HaulScanner:
             cloud_model=cloud_model,
         ).__dict__
 
-        def _run(agent: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-            return _agent_dispatcher(WorkerPayload(agent, payload))[1]
-
         # Stage 1: Vision (isolated process)
         vision_out = await asyncio.wait_for(
-            asyncio.to_thread(_run, "vision", vision_payload),
+            asyncio.to_thread(
+                self._pool.apply,
+                _agent_dispatcher,
+                (WorkerPayload("vision", vision_payload),),
+            ),
             timeout=PROCESS_TIMEOUT_SECONDS,
         )
 
@@ -729,11 +738,19 @@ class HaulScanner:
 
         vol_out, rec_out = await asyncio.gather(
             asyncio.wait_for(
-                asyncio.to_thread(_run, "volumetric", vol_payload),
+                asyncio.to_thread(
+                    self._pool.apply,
+                    _agent_dispatcher,
+                    (WorkerPayload("volumetric", vol_payload),),
+                ),
                 timeout=PROCESS_TIMEOUT_SECONDS,
             ),
             asyncio.wait_for(
-                asyncio.to_thread(_run, "recovery", rec_payload),
+                asyncio.to_thread(
+                    self._pool.apply,
+                    _agent_dispatcher,
+                    (WorkerPayload("recovery", rec_payload),),
+                ),
                 timeout=PROCESS_TIMEOUT_SECONDS,
             ),
         )

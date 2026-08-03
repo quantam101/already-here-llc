@@ -54,6 +54,12 @@ Open `http://localhost:8000` on your phone (same Wi-Fi) and tap **SNAP LOAD PHOT
 | `HAUL_RATE_PER_CU_YD_USD` | `38.0` | Per-cubic-yard hauling rate |
 | `HAUL_RECOVERY_CREDIT_PCT` | `0.25` | Recovery credit applied to net quote |
 | `HAUL_FRAME_WIDTH_METERS` | `2.5` | Assumed real-world frame width for local spatial calibration |
+| `HAUL_MAX_UPLOAD_BYTES` | `26214400` | Max photo upload size (25 MiB) |
+| `HAUL_RATE_LIMIT_PER_MINUTE` | `30` | Per-IP rate limit for `/api/scan` |
+| `HAUL_API_KEY` | *(none)* | Optional API key required by `/api/scan` |
+| `HAUL_CORS_ORIGINS` | `*` | Comma-separated allowed CORS origins |
+| `GMAOS_PAID_ADAPTERS_ENABLED` | `false` | Enable cloud vision (Gemini) |
+| `GEMINI_API_KEY` | *(none)* | Gemini API key for cloud vision |
 
 Cloud vision (Gemini) is gated by `GMAOS_PAID_ADAPTERS_ENABLED=true` and `GEMINI_API_KEY`. Without both, the engine uses deterministic local image analysis (Pillow + NumPy) at zero cost.
 
@@ -70,6 +76,24 @@ Cloud vision (Gemini) is gated by `GMAOS_PAID_ADAPTERS_ENABLED=true` and `GEMINI
 python -m pytest tests/test_photo_ai_haul.py -v
 curl http://localhost:8000/healthz
 ```
+
+### Google Play app (Trusted Web Activity)
+
+The PWA can be wrapped as an Android app and published on Google Play. A ready-to-build TWA project is in `android/photo-ai-haul-twa/`:
+
+1. Deploy `app.py` to a public HTTPS domain.
+2. Update `android/photo-ai-haul-twa/app/src/main/AndroidManifest.xml` and `res/values/strings.xml` with your domain.
+3. Update `public/assetlinks.json` with your app package name and release keystore SHA-256 fingerprint.
+4. Build the Play Store bundle:
+
+```bash
+cd android/photo-ai-haul-twa
+./gradlew bundleRelease
+```
+
+5. Upload `app/build/outputs/bundle/release/app-release.aab` to Google Play Console.
+
+See `android/photo-ai-haul-twa/README.md` for full instructions.
 
 ## Revenue Mesh v1
 
