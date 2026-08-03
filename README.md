@@ -67,14 +67,50 @@ Cloud vision (Gemini) is gated by `GMAOS_PAID_ADAPTERS_ENABLED=true` and `GEMINI
 
 - `GET /` — Mobile PWA scanner UI
 - `POST /api/scan` — Upload image (`multipart/form-data`) and receive quote JSON
+- `GET /api/usage` — Per-organization rate-limit and quota usage
 - `GET /healthz` — Liveness probe
 - `GET /readyz` — Readiness probe
+- `GET /metrics` — Prometheus-compatible metrics
+
+### Enterprise / multi-tenant configuration
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `HAUL_API_KEY` | *(none)* | Legacy single shared API key |
+| `HAUL_API_KEYS` | *(none)* | Multi-tenant keys as JSON: `{key: {org, tier, rpm, daily_quota}}` |
+| `REDIS_URL` | *(none)* | Optional Redis for global per-org rate limits and quotas across pods |
+| `HAUL_LOG_JSON` | `false` | Emit structured JSON logs |
+| `HAUL_CORS_ORIGINS` | `*` | Comma-separated allowed CORS origins |
+
+`HAUL_API_KEYS` supports a JSON object keyed by key string, or a list of objects with a `key` field. Each entry sets `org`, `tier` (`free`/`pro`/`enterprise`), per-minute request limit (`rpm`), and daily scan quota (`daily_quota`).
 
 ### Verification
 
 ```bash
 python -m pytest tests/test_photo_ai_haul.py -v
 curl http://localhost:8000/healthz
+curl http://localhost:8000/metrics
+```
+
+### Global deployment
+
+A stateless container and Kubernetes manifests are provided for horizontal scaling:
+
+- `Dockerfile.photo-ai-haul` — production container
+- `docker-compose.yml` — local stack with Redis-backed rate limits
+- `infra/kubernetes/photo-ai-haul-deployment.yaml` — 2+ replica Deployment
+- `infra/kubernetes/photo-ai-haul-service.yaml` — ClusterIP service
+- `infra/kubernetes/photo-ai-haul-hpa.yaml` — CPU/memory HorizontalPodAutoscaler (2-20 pods)
+- `infra/kubernetes/photo-ai-haul-ingress.yaml` — TLS ingress for `photo-ai.alreadyherellc.com`
+
+Deploy to Kubernetes:
+
+```bash
+kubectl apply -f infra/kubernetes/namespace.yaml
+kubectl apply -f infra/kubernetes/photo-ai-haul-deployment.yaml
+kubectl apply -f infra/kubernetes/photo-ai-haul-service.yaml
+kubectl apply -f infra/kubernetes/photo-ai-haul-hpa.yaml
+kubectl apply -f infra/kubernetes/photo-ai-haul-ingress.yaml
 ```
 
 ### Google Play app (Trusted Web Activity)

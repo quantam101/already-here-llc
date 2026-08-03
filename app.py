@@ -1,21 +1,31 @@
 """
-AVAX-3D Mobile Hauling AI — Production FastAPI entrypoint.
+AVAX-3D Mobile Hauling AI — Global Enterprise FastAPI entrypoint.
 
 Serves a standalone, mobile-optimized PWA at the root path and exposes a
 single /api/scan endpoint for photo-driven volumetric pickup quotes.
 
+Enterprise features:
+  - Multi-tenant API key auth with per-org rate limits and daily quotas.
+  - Optional Redis-backed global rate limit / quota store.
+  - Prometheus /metrics endpoint.
+  - Request correlation IDs and structured JSON logging.
+  - Stateless design suitable for horizontal scaling behind a load balancer.
+
 Boots a persistent multiprocessing agent pool on startup and shuts it down
-cleanly on exit.  Telemetry and audit records are written through the
-existing GMAOS runtime primitives.
+cleanly on exit. Telemetry and audit records are written through the existing
+GMAOS runtime primitives.
 """
 
 from __future__ import annotations
 
+import datetime as dt
+import json
 import logging
 import os
 import time
+import uuid
 from contextlib import asynccontextmanager
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,27 +35,329 @@ import uvicorn
 
 from runtime.photo_ai_haul import HaulScanner, MAX_UPLOAD_BYTES
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] [%(processName)s] %(message)s",
-)
-logger = logging.getLogger("photo_ai_haul_app")
-
+# --------------------------------------------------------------------
+# Environment helpers
+# --------------------------------------------------------------------
 
 def _env(name: str, default: str) -> str:
     return os.environ.get(name, default)
 
 
-HAUL_PORT = int(_env("HAUL_SCANNER_PORT", "8000"))
+def _env_int(name: str, default: int) -> int:
+    return int(os.environ.get(name, str(default)))
+
+
+def _env_float(name: str, default: float) -> float:
+    return float(os.environ.get(name, str(default)))
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    return os.environ.get(name, str(default)).lower() in {"1", "true", "yes", "on"}
+
+
+HAUL_PORT = _env_int("HAUL_SCANNER_PORT", 8000)
 HAUL_HOST = _env("HAUL_SCANNER_HOST", "0.0.0.0")
 CORS_ORIGINS = _env("HAUL_CORS_ORIGINS", "*").split(",")
-HAUL_API_KEY = _env("HAUL_API_KEY", "")
-HAUL_RATE_LIMIT = int(_env("HAUL_RATE_LIMIT_PER_MINUTE", "30"))
+LOG_JSON = _env_bool("HAUL_LOG_JSON", False)
+
+# --------------------------------------------------------------------
+# Logging setup
+# --------------------------------------------------------------------
+
+
+class _JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        payload = {
+            "timestamp": dt.datetime.fromtimestamp(record.created, tz=dt.timezone.utc).isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "source": f"{record.filename}:{record.lineno}",
+        }
+        if hasattr(record, "request_id"):
+            payload["request_id"] = record.request_id
+        if hasattr(record, "org_id"):
+            payload["org_id"] = record.org_id
+        extra = {k: v for k, v in record.__dict__.items() if k not in payload and not k.startswith("_")}
+        if extra:
+            payload.update(extra)
+        return json.dumps(payload, default=str)
+
+
+_handler = logging.StreamHandler()
+if LOG_JSON:
+    _handler.setFormatter(_JsonFormatter())
+else:
+    _handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s [%(levelname)s] [%(processName)s] %(message)s"
+        )
+    )
+
+logging.basicConfig(level=logging.INFO, handlers=[_handler])
+logger = logging.getLogger("photo_ai_haul_app")
+
+# --------------------------------------------------------------------
+# Metrics helpers (Prometheus text exposition)
+# --------------------------------------------------------------------
+
+
+class _Metrics:
+    """Thread-safe in-process Prometheus-style counters."""
+
+    def __init__(self) -> None:
+        self._counters: Dict[str, int] = {}
+        self._histograms: Dict[str, List[float]] = {}
+        self._lock = False  # simple flag, app is single-process async
+
+    def inc(self, name: str, labels: Optional[Dict[str, str]] = None, value: int = 1) -> None:
+        key = self._key(name, labels)
+        self._counters[key] = self._counters.get(key, 0) + value
+
+    def observe(self, name: str, value: float, labels: Optional[Dict[str, str]] = None) -> None:
+        key = self._key(name, labels)
+        self._histograms.setdefault(key, []).append(value)
+
+    def render(self) -> str:
+        lines: List[str] = []
+        for key, value in sorted(self._counters.items()):
+            name, labels_str = key.rsplit("{", 1)
+            lines.append(f"# TYPE {name} counter")
+            lines.append(f"{name}{{{labels_str} {value}")
+        for key, values in sorted(self._histograms.items()):
+            name, labels_str = key.rsplit("{", 1)
+            lines.append(f"# TYPE {name} histogram")
+            for bucket in [0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]:
+                count = sum(1 for v in values if v <= bucket)
+                lines.append(f'{name}_bucket{{le="{bucket}",{labels_str} {count}')
+            lines.append(f'{name}_bucket{{le="+Inf",{labels_str} {len(values)}')
+            lines.append(f"{name}_sum{{{labels_str} {sum(values)}")
+            lines.append(f"{name}_count{{{labels_str} {len(values)}")
+        return "\n".join(lines) + "\n"
+
+    @staticmethod
+    def _key(name: str, labels: Optional[Dict[str, str]]) -> str:
+        if labels:
+            label_str = ",".join(f'{k}="{v}"' for k, v in sorted(labels.items()) if v is not None)
+            return f'{name}{{{label_str}}}'
+        return f"{name}{{}}"
+
+
+METRICS = _Metrics()
+
+# --------------------------------------------------------------------
+# Multi-tenant auth, rate limits, and quotas
+# --------------------------------------------------------------------
+
+
+def _parse_api_keys() -> Dict[str, Dict[str, Any]]:
+    """Parse HAUL_API_KEYS JSON or fall back to HAUL_API_KEY."""
+    keys_json = _env("HAUL_API_KEYS", "").strip()
+    if keys_json:
+        try:
+            parsed = json.loads(keys_json)
+            # Accept either a dict keyed by key, or a list of objects containing `key`.
+            if isinstance(parsed, dict):
+                return {k: _normalize_key_config(v) for k, v in parsed.items()}
+            if isinstance(parsed, list):
+                return {item["key"]: _normalize_key_config(item) for item in parsed}
+        except Exception as exc:
+            logger.warning("HAUL_API_KEYS is invalid JSON: %s", exc)
+
+    single_key = _env("HAUL_API_KEY", "").strip()
+    if single_key:
+        return {
+            single_key: _normalize_key_config(
+                {
+                    "org": "default",
+                    "tier": "enterprise",
+                    "rpm": _env_int("HAUL_RATE_LIMIT_PER_MINUTE", 30),
+                }
+            )
+        }
+    return {}
+
+
+def _normalize_key_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
+    tier = cfg.get("tier", "enterprise")
+    rpm_by_tier = {"free": 10, "pro": 100, "enterprise": 1000}
+    quota_by_tier = {"free": 50, "pro": 500, "enterprise": 10000}
+    return {
+        "org": str(cfg.get("org", "unknown")),
+        "tier": tier,
+        "rpm": int(cfg.get("rpm", rpm_by_tier.get(tier, 1000))),
+        "daily_quota": int(cfg.get("daily_quota", quota_by_tier.get(tier, 10000))),
+    }
+
+
+class _MemoryRateStore:
+    """Per-process in-memory rate limit / quota store."""
+
+    def __init__(self) -> None:
+        self._windows: Dict[str, List[float]] = {}
+        self._daily: Dict[str, Dict[str, int]] = {}
+
+    def allow(self, org_id: str, rpm: int, daily_quota: int) -> Tuple[bool, Optional[str]]:
+        now = time.time()
+        today = dt.datetime.fromtimestamp(now, tz=dt.timezone.utc).strftime("%Y-%m-%d")
+
+        if rpm > 0:
+            window = self._windows.setdefault(org_id, [])
+            cutoff = now - 60
+            self._windows[org_id] = [ts for ts in window if ts > cutoff]
+            if len(self._windows[org_id]) >= rpm:
+                return False, "rate_limit"
+
+        if daily_quota > 0:
+            daily_count = self._daily.setdefault(org_id, {}).get(today, 0)
+            if daily_count >= daily_quota:
+                return False, "quota"
+
+        # Record only when at least one limit is configured.
+        if rpm > 0:
+            self._windows[org_id].append(now)
+        if daily_quota > 0:
+            self._daily.setdefault(org_id, {})[today] = self._daily[org_id].get(today, 0) + 1
+        return True, None
+
+    def usage(self, org_id: str) -> Dict[str, Any]:
+        now = time.time()
+        today = dt.datetime.fromtimestamp(now, tz=dt.timezone.utc).strftime("%Y-%m-%d")
+        window = [ts for ts in self._windows.get(org_id, []) if ts > now - 60]
+        return {
+            "requests_last_60s": len(window),
+            "requests_today": self._daily.get(org_id, {}).get(today, 0),
+        }
+
+
+class _RedisRateStore:
+    """Global Redis-backed rate limit / quota store for multi-pod deployments."""
+
+    def __init__(self, redis_url: str) -> None:
+        import redis as redis_lib  # type: ignore
+        self._client = redis_lib.from_url(redis_url, decode_responses=True)
+
+    def allow(self, org_id: str, rpm: int, daily_quota: int) -> Tuple[bool, Optional[str]]:
+        import redis as redis_lib
+        if rpm <= 0 and daily_quota <= 0:
+            return True, None
+
+        now = time.time()
+        today = dt.datetime.fromtimestamp(now, tz=dt.timezone.utc).strftime("%Y-%m-%d")
+        window_key = f"haul:ratelimit:{org_id}"
+        quota_key = f"haul:quota:{org_id}:{today}"
+
+        pipe = self._client.pipeline()
+        if rpm > 0:
+            pipe.zremrangebyscore(window_key, 0, now - 60)
+            pipe.zcard(window_key)
+        if daily_quota > 0:
+            pipe.get(quota_key)
+        try:
+            results = pipe.execute()
+        except redis_lib.RedisError as exc:
+            logger.warning("Redis rate-limit query failed: %s; falling back to allow", exc)
+            return True, None
+
+        if rpm > 0:
+            window_count = int(results[1] or 0)
+            if window_count >= rpm:
+                return False, "rate_limit"
+
+        if daily_quota > 0:
+            daily_offset = 2 if rpm > 0 else 0
+            daily_count = int(results[daily_offset] or 0)
+            if daily_count >= daily_quota:
+                return False, "quota"
+
+        pipe = self._client.pipeline()
+        if rpm > 0:
+            pipe.zadd(window_key, {str(now): now})
+            pipe.expire(window_key, 120)
+        if daily_quota > 0:
+            pipe.incr(quota_key)
+            pipe.expire(quota_key, 86400)
+        try:
+            pipe.execute()
+        except redis_lib.RedisError as exc:
+            logger.warning("Redis rate-limit update failed: %s; allowing request", exc)
+        return True, None
+
+    def usage(self, org_id: str) -> Dict[str, Any]:
+        import redis as redis_lib
+        now = time.time()
+        today = dt.datetime.fromtimestamp(now, tz=dt.timezone.utc).strftime("%Y-%m-%d")
+        window_key = f"haul:ratelimit:{org_id}"
+        quota_key = f"haul:quota:{org_id}:{today}"
+        try:
+            pipe = self._client.pipeline()
+            pipe.zremrangebyscore(window_key, 0, now - 60)
+            pipe.zcard(window_key)
+            pipe.get(quota_key)
+            _, window_count, daily_count = pipe.execute()
+        except redis_lib.RedisError as exc:
+            logger.warning("Redis usage query failed: %s", exc)
+            return {"requests_last_60s": 0, "requests_today": 0}
+        return {
+            "requests_last_60s": int(window_count or 0),
+            "requests_today": int(daily_count or 0),
+        }
+
+
+def _make_rate_store() -> Union[_MemoryRateStore, _RedisRateStore]:
+    redis_url = _env("REDIS_URL", "").strip() or _env("REDIS_ENDPOINT", "").strip()
+    if redis_url:
+        try:
+            return _RedisRateStore(redis_url)
+        except Exception as exc:
+            logger.warning("Failed to initialize Redis rate store: %s; using in-memory store", exc)
+    return _MemoryRateStore()
+
+
+API_KEYS = _parse_api_keys()
+RATE_STORE = _make_rate_store()
+
+
+class _EnterpriseAuth:
+    """Authenticate requests and enforce per-organization rate limits / quotas."""
+
+    def __init__(self, keys: Dict[str, Dict[str, Any]], store: Any) -> None:
+        self.keys = keys
+        self.store = store
+
+    def is_enabled(self) -> bool:
+        return bool(self.keys)
+
+    def authenticate(self, request: Request) -> Tuple[Optional[Dict[str, Any]], Optional[JSONResponse]]:
+        if not self.keys:
+            return {"org": "anonymous", "tier": "none", "rpm": 0, "daily_quota": 0}, None
+
+        header = request.headers.get("x-haul-api-key", "")
+        auth = request.headers.get("authorization", "")
+        if auth.lower().startswith("bearer "):
+            header = auth[7:].strip()
+
+        config = self.keys.get(header)
+        if not config:
+            return None, JSONResponse(
+                status_code=401,
+                content={"error": "Invalid or missing API key"},
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return config, None
+
+    def check_limit(self, org_config: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+        org_id = org_config["org"]
+        return self.store.allow(org_id, org_config["rpm"], org_config["daily_quota"])
+
+
+AUTH = _EnterpriseAuth(API_KEYS, RATE_STORE)
+
+# --------------------------------------------------------------------
+# FastAPI application lifecycle
+# --------------------------------------------------------------------
 
 scanner = HaulScanner()
-
-# Simple in-memory per-IP fixed-window rate limiter for /api/scan.
-_rate_limit_store: Dict[str, Tuple[int, float]] = {}
 
 
 @asynccontextmanager
@@ -58,7 +370,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[type-arg]
     scanner.shutdown()
 
 
-app = FastAPI(title="AVAX-3D Mobile Hauling AI", lifespan=_lifespan)
+app = FastAPI(title="AVAX-3D Mobile Hauling AI — Enterprise", lifespan=_lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -69,12 +381,39 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def _request_logging_middleware(request: Request, call_next: Callable) -> Any:
+    request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
+    request.state.request_id = request_id
+    start = time.time()
+    try:
+        response = await call_next(request)
+    except Exception:
+        logger.exception("Unhandled exception", extra={"request_id": request_id})
+        raise
+    duration = time.time() - start
+    logger.info(
+        "%s %s %s %.3fs",
+        request.method,
+        request.url.path,
+        response.status_code,
+        duration,
+        extra={"request_id": request_id},
+    )
+    response.headers["X-Request-ID"] = request_id
+    return response
+
+
+# --------------------------------------------------------------------
+# Endpoints
+# --------------------------------------------------------------------
+
 @app.get("/healthz")
 async def healthz() -> Dict[str, Any]:
     return {
         "status": "ok",
         "engine": "photo-ai-haul",
-        "version": "1.0.0",
+        "version": "2.0.0-enterprise",
     }
 
 
@@ -84,6 +423,11 @@ async def readyz() -> Dict[str, Any]:
         "status": "ready" if scanner._pool is not None else "not_ready",
         "engine": "photo-ai-haul",
     }
+
+
+@app.get("/metrics")
+async def metrics() -> PlainTextResponse:
+    return PlainTextResponse(METRICS.render(), media_type="text/plain; version=0.0.4")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -120,46 +464,24 @@ def icon_512() -> FileResponse:
     return FileResponse("public/icon-512.png")
 
 
-def _check_api_key(request: Request) -> Optional[JSONResponse]:
-    if not HAUL_API_KEY:
-        return None
-    header = request.headers.get("x-haul-api-key", "")
-    auth = request.headers.get("authorization", "")
-    if auth.lower().startswith("bearer "):
-        header = auth[7:].strip()
-    if header != HAUL_API_KEY:
-        return JSONResponse(status_code=401, content={"error": "Invalid or missing API key"})
-    return None
+@app.post("/api/scan")
+async def handle_mobile_scan(request: Request, file: UploadFile = File(...)) -> JSONResponse:
+    org_config, error = AUTH.authenticate(request)
+    if error:
+        METRICS.inc("haul_scan_errors_total", {"reason": "unauthorized"})
+        return error
 
-
-def _check_rate_limit(client_ip: str) -> Optional[JSONResponse]:
-    now = time.time()
-    count, window_start = _rate_limit_store.get(client_ip, (0, now))
-    if now - window_start > 60:
-        count = 0
-        window_start = now
-    count += 1
-    _rate_limit_store[client_ip] = (count, window_start)
-    if count > HAUL_RATE_LIMIT:
+    org_id = org_config["org"] if org_config else "anonymous"
+    allowed, reason = AUTH.check_limit(org_config)
+    if not allowed:
+        METRICS.inc("haul_scan_errors_total", {"reason": reason or "limit"})
         return JSONResponse(
             status_code=429,
-            content={"error": "Rate limit exceeded. Try again later."},
+            content={"error": f"Rate limit or quota exceeded: {reason}"},
         )
-    return None
-
-
-@app.post("/api/scan")
-async def handle_mobile_scan(
-    request: Request, file: UploadFile = File(...)
-) -> JSONResponse:
-    if (resp := _check_api_key(request)) is not None:
-        return resp
-
-    client_ip = request.client.host if request.client else "unknown"
-    if (resp := _check_rate_limit(client_ip)) is not None:
-        return resp
 
     if file.size is not None and file.size > MAX_UPLOAD_BYTES:
+        METRICS.inc("haul_scan_errors_total", {"reason": "payload_too_large"})
         return JSONResponse(
             status_code=413,
             content={"error": f"Upload exceeds {MAX_UPLOAD_BYTES} bytes limit."},
@@ -167,24 +489,53 @@ async def handle_mobile_scan(
 
     image_bytes = await file.read()
     if len(image_bytes) > MAX_UPLOAD_BYTES:
+        METRICS.inc("haul_scan_errors_total", {"reason": "payload_too_large"})
         return JSONResponse(
             status_code=413,
             content={"error": f"Upload exceeds {MAX_UPLOAD_BYTES} bytes limit."},
         )
 
+    start = time.time()
     try:
         result = await scanner.scan(image_bytes, filename=file.filename or "camera_snap.jpg")
     except RuntimeError as exc:
-        logger.warning("Scan rejected: %s", exc)
+        logger.warning("Scan rejected for org=%s: %s", org_id, exc, extra={"org_id": org_id})
+        METRICS.inc("haul_scan_errors_total", {"reason": "rejected"})
         return JSONResponse(status_code=400, content={"error": str(exc)})
     except Exception:
-        logger.exception("Scan failed for file=%s", file.filename)
+        logger.exception("Scan failed for org=%s", org_id, extra={"org_id": org_id})
+        METRICS.inc("haul_scan_errors_total", {"reason": "exception"})
         return JSONResponse(
             status_code=500,
             content={"error": "Scan processing failed. Please retry or contact support."},
         )
+
+    duration = time.time() - start
+    METRICS.inc("haul_scans_total", {"org": org_id, "tier": org_config.get("tier", "none")})
+    METRICS.observe("haul_scan_duration_seconds", duration, {"org": org_id})
     return JSONResponse(content=result.__dict__)
 
+
+@app.get("/api/usage")
+async def usage(request: Request) -> JSONResponse:
+    org_config, error = AUTH.authenticate(request)
+    if error:
+        return error
+    org_id = org_config["org"]
+    return JSONResponse(
+        content={
+            "org": org_id,
+            "tier": org_config["tier"],
+            "rpm_limit": org_config["rpm"],
+            "daily_quota": org_config["daily_quota"],
+            "usage": RATE_STORE.usage(org_id),
+        }
+    )
+
+
+# --------------------------------------------------------------------
+# PWA HTML (same mobile-first UI)
+# --------------------------------------------------------------------
 
 _MOBILE_HTML = """<!DOCTYPE html>
 <html lang="en">
@@ -221,7 +572,7 @@ _MOBILE_HTML = """<!DOCTYPE html>
 </head>
 <body>
     <h1>AVAX-3D Mobile Scanner</h1>
-    <p class="tagline">Snap a load photo for an instant volumetric quote & scrap-recovery breakdown.</p>
+    <p class="tagline">Snap a load photo for an instant volumetric quote &amp; scrap-recovery breakdown.</p>
 
     <div class="card">
         <label for="cameraInput" class="btn">SNAP LOAD PHOTO</label>
@@ -245,7 +596,7 @@ _MOBILE_HTML = """<!DOCTYPE html>
                     <div class="metric-lbl">Trailer Fill</div>
                 </div>
             </div>
-            <button class="btn btn-green" onclick="confirmBooking()">ACCEPT & BOOK LOAD</button>
+            <button class="btn btn-green" onclick="confirmBooking()">ACCEPT &amp; BOOK LOAD</button>
             <p class="fine-print">Cloud vision disabled by default. Enable paid mode to use Gemini 2.5 Flash.</p>
         </div>
 
