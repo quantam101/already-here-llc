@@ -240,6 +240,68 @@ CREATE TABLE IF NOT EXISTS ai_actions (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS ai_conversations (
+  id TEXT PRIMARY KEY,
+  lead_id TEXT REFERENCES leads(id),
+  contact_id TEXT REFERENCES contacts(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  channel TEXT NOT NULL,
+  transcript TEXT,
+  summary TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ai_memory (
+  id TEXT PRIMARY KEY,
+  contact_id TEXT REFERENCES contacts(id),
+  lead_id TEXT REFERENCES leads(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  source TEXT NOT NULL,
+  observation TEXT NOT NULL,
+  confidence INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ai_feedback (
+  id TEXT PRIMARY KEY,
+  contact_id TEXT REFERENCES contacts(id),
+  lead_id TEXT REFERENCES leads(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  feedback_type TEXT NOT NULL,
+  feedback_text TEXT NOT NULL,
+  outcome TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ai_tasks (
+  id TEXT PRIMARY KEY,
+  contact_id TEXT REFERENCES contacts(id),
+  lead_id TEXT REFERENCES leads(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  task_type TEXT NOT NULL,
+  description TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open',
+  priority TEXT NOT NULL DEFAULT 'P1',
+  due_date TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ai_goals (
+  id TEXT PRIMARY KEY,
+  contact_id TEXT REFERENCES contacts(id),
+  lead_id TEXT REFERENCES leads(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  goal TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  progress_percent INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS analytics_events (
   id TEXT PRIMARY KEY,
   source TEXT NOT NULL,

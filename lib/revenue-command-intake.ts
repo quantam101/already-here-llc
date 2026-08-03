@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import { buildAiOperationWrites } from './revenue-command-ai';
 import { getRevenueCommandAgents } from './revenue-command-agents';
 
 export type IntakeLane = 'Dispatch' | 'AutoWorks' | 'Hauling' | 'Procurement' | 'Product / Affiliate' | 'AI lead capture';
@@ -18,6 +19,9 @@ export interface RevenueIntakeInput {
   requestedWindow?: string;
   estimatedValueCents?: number;
   submittedAt?: string;
+  transcript?: string;
+  goal?: string;
+  confidence?: number;
 }
 
 export interface DatabaseReadyWrite {
@@ -179,6 +183,21 @@ export function buildRevenueIntakeProof(input: RevenueIntakeInput): RevenueIntak
 
   const laneWrite = moduleWrite(lane, opportunityId, contactId, submittedAt, input);
   if (laneWrite) writes.push(laneWrite);
+
+  const aiWrites = buildAiOperationWrites({
+    contactId,
+    leadId,
+    opportunityId,
+    intakeId,
+    source: input.source,
+    submittedAt,
+    summary: input.title,
+    transcript: input.transcript || input.body,
+    goal: input.goal,
+    confidence: input.confidence ?? score,
+    channel: input.source
+  });
+  writes.push(...aiWrites);
 
   return { ok: true, service: 'already-here-revenue-command-intake', intakeId, lane, priority, score, persistedExternally: false, externalActions: 'blocked_by_default', assignedAgentId: agent.id, assignedAgentOperation: agent.operation, databaseReadyWrites: writes, proofOfWorkSummary: `${lane} intake normalized into ${writes.length} database-ready write(s), assigned to ${agent.name}, priority ${priority}.`, blockedExternalActions: BLOCKED_EXTERNAL_ACTIONS, nextLocalActions: ['review', 'pass', 'reply_draft_only', 'quote_draft_only', 'schedule_draft_only', 'prove_local_only'] };
 }

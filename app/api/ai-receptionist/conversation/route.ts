@@ -33,10 +33,13 @@ function leadState(score: number, data: Record<string, string>): string {
 
 async function submitLead(request: Request, data: Record<string, string>, score: number, state: string) {
   const url = new URL('/api/ai-receptionist/intake', request.url);
+  const transcript = Object.entries(data)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join('\n');
   return fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ ...data, source: data.source || 'autonomous_conversation_engine', leadScore: String(score), leadState: state }),
+    body: JSON.stringify({ ...data, source: data.source || 'autonomous_conversation_engine', leadScore: String(score), leadState: state, transcript }),
     cache: 'no-store'
   });
 }

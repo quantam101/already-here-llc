@@ -5,7 +5,7 @@ import type { DatabaseReadyWrite } from './revenue-command-intake';
 
 const DEFAULT_DB_PATH = 'data/revenue-command.json';
 
-const ALLOWED_TABLES = new Set([
+export const ALLOWED_TABLES = new Set([
   'organizations',
   'contacts',
   'leads',
@@ -25,6 +25,11 @@ const ALLOWED_TABLES = new Set([
   'reviews',
   'revenue_agents',
   'ai_actions',
+  'ai_conversations',
+  'ai_memory',
+  'ai_feedback',
+  'ai_tasks',
+  'ai_goals',
   'analytics_events',
   'audit_logs',
   'proof_of_work',
