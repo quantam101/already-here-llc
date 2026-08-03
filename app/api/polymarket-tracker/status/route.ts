@@ -74,6 +74,9 @@ export async function GET(request: NextRequest) {
     hasPolygon: Boolean(
       process.env.POLYGON_WS_URL || process.env.POLYGON_HTTP_URLS
     ),
+    hasClaude: Boolean(
+      process.env.CLAUDE_API_KEY && process.env.POLYMARKET_CLAUDE_ENABLED === 'true'
+    ),
     gated: false
   });
 }

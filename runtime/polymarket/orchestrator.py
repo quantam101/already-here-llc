@@ -20,6 +20,7 @@ if __name__ == "__main__" and __package__ is None:
 
 from runtime.polymarket.abi import derive_price_from_fill, derive_usd_notional
 from runtime.polymarket.alerts import TelegramAlertEngine
+from runtime.polymarket.claude import ClaudeSummarizer
 from runtime.polymarket.config import PolymarketConfig
 from runtime.polymarket.listener import PolymarketListener
 from runtime.polymarket.portfolio import PortfolioRiskGuard
@@ -48,6 +49,7 @@ class PolymarketOrchestrator:
       - Profiler Agent : scores wallet performance (P&L, win-rate, Sharpe)
       - Risk Agent     : validates slippage, sizing, blacklists, and portfolio limits
       - Signal Agent   : 90% win-rate style confluence filter on public price history
+      - Claude Agent   : optional AI signal summarizer (disabled unless API key + env toggle set)
       - Alert Agent    : dispatches Telegram alerts in <2s
     """
 
@@ -60,7 +62,14 @@ class PolymarketOrchestrator:
 
         self._listener = PolymarketListener(self.config, on_fill=self._on_fill)
         self._profiler = WalletProfiler(self.config, self._state)
-        self._alerts = TelegramAlertEngine(self.config, self._state)
+        self._claude = ClaudeSummarizer(
+            api_key=self.config.claude_api_key,
+            enabled=self.config.claude_enabled,
+            model=self.config.claude_model,
+            max_tokens=self.config.claude_max_tokens,
+            timeout=self.config.claude_timeout_seconds,
+        )
+        self._alerts = TelegramAlertEngine(self.config, self._state, summarizer=self._claude)
         self._risk = RiskGuard(self.config, self._state)
         self._portfolio = PortfolioRiskGuard(self.config, self._state)
         self._confluence = SignalConfluence(self.config)
@@ -254,6 +263,7 @@ class PolymarketOrchestrator:
             "watched_wallets": self._state.get_watched_wallets(),
             "listener": self._listener.status(),
             "alerts": self._alerts.status(),
+            "claude": self._claude.status(),
             "risk": self._risk.status(),
             "portfolio": self._portfolio.status(),
             "confluence": self._confluence.status(),

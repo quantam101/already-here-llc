@@ -91,6 +91,13 @@ class PolymarketConfig:
     portfolio_min_win_rate_pct: Decimal = Decimal("50.0")
     portfolio_consecutive_loss_limit: int = 5
 
+    # Claude signal summarizer (opt-in; disabled unless API key + env toggle set)
+    claude_api_key: str = ""
+    claude_enabled: bool = False
+    claude_model: str = "claude-3-5-sonnet-20241022"
+    claude_max_tokens: int = 120
+    claude_timeout_seconds: float = 4.0
+
     # Sovereign / telemetry
     audit_log_path: str = "./data/polymarket_audit.jsonl"
     telemetry_service: str = "polymarket-tracker"
@@ -169,6 +176,11 @@ class PolymarketConfig:
             portfolio_max_drawdown_pct=_env_decimal("POLYMARKET_PORTFOLIO_MAX_DRAWDOWN_PCT", "30.0"),
             portfolio_min_win_rate_pct=_env_decimal("POLYMARKET_PORTFOLIO_MIN_WIN_RATE_PCT", "50.0"),
             portfolio_consecutive_loss_limit=_env_int("POLYMARKET_PORTFOLIO_CONSECUTIVE_LOSS_LIMIT", 5),
+            claude_api_key=os.environ.get("CLAUDE_API_KEY", ""),
+            claude_enabled=(os.environ.get("POLYMARKET_CLAUDE_ENABLED", "false").lower() == "true"),
+            claude_model=os.environ.get("POLYMARKET_CLAUDE_MODEL", "claude-3-5-sonnet-20241022"),
+            claude_max_tokens=_env_int("POLYMARKET_CLAUDE_MAX_TOKENS", 120),
+            claude_timeout_seconds=float(os.environ.get("POLYMARKET_CLAUDE_TIMEOUT_SECONDS", "4.0")),
             audit_log_path=os.environ.get("POLYMARKET_AUDIT_LOG", "./data/polymarket_audit.jsonl"),
             telemetry_service=os.environ.get("POLYMARKET_TELEMETRY_SERVICE", "polymarket-tracker"),
             log_level=os.environ.get("POLYMARKET_LOG_LEVEL", "INFO"),

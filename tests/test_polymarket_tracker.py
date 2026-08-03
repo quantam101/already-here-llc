@@ -22,6 +22,7 @@ from runtime.polymarket.config import PolymarketConfig
 from runtime.polymarket.profiler import WalletProfiler, _realized_pnl_and_returns, _coerce_trade
 from runtime.polymarket.risk import RiskGuard
 from runtime.polymarket.state import StateManager
+from runtime.polymarket.claude import ClaudeSummarizer
 from runtime.polymarket.utils import CircuitBreaker, RateLimiter, sharpe_ratio, win_rate
 
 
@@ -269,3 +270,26 @@ def test_portfolio_risk_guard_blocks_after_losses(config, tmp_db):
     assert result.consecutive_losses == 6
     assert result.can_trade is False
     assert any("consecutive" in r.lower() for r in result.reasons)
+
+
+def test_claude_summarizer_disabled_by_default(config):
+    summarizer = ClaudeSummarizer(enabled=False, api_key="")
+    assert summarizer.ready is False
+    assert summarizer.summarize({}) is None
+    assert summarizer.status()["ready"] is False
+
+
+def test_claude_summarizer_message_build_includes_prompt():
+    summarizer = ClaudeSummarizer(enabled=False)
+    event = {
+        "wallet": "0xWallet",
+        "role": "TAKER",
+        "side": "BUY",
+        "amount_usd": "100",
+        "price": "0.55",
+        "token_id": "123456789012",
+    }
+    prompt = summarizer._build_prompt(event, {"profit_usd": "1000", "win_rate": "80", "sharpe": "1.5"})
+    assert "Polymarket" in prompt or "prediction-market" in prompt
+    assert "0xWallet" in prompt
+    assert "$100.00" in prompt

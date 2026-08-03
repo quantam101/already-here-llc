@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
+from .claude import ClaudeSummarizer
 from .config import PolymarketConfig
 from .state import StateManager
 from .utils import CircuitBreaker, RateLimiter
@@ -44,7 +45,12 @@ class TelegramAlertEngine:
 
     API_BASE = "https://api.telegram.org/bot{token}/{method}"
 
-    def __init__(self, config: PolymarketConfig, state: StateManager) -> None:
+    def __init__(
+        self,
+        config: PolymarketConfig,
+        state: StateManager,
+        summarizer: Optional[ClaudeSummarizer] = None,
+    ) -> None:
         self._token = config.telegram_bot_token
         self._chat_ids = config.telegram_chat_ids
         self._timeout = config.telegram_timeout_seconds
@@ -54,6 +60,7 @@ class TelegramAlertEngine:
         self._cb = CircuitBreaker("telegram", failure_threshold=3, reset_timeout_seconds=30.0)
         self._rate = RateLimiter(max_calls=20, window_seconds=1)
         self._last_alert_at: Dict[str, float] = {}
+        self._summarizer = summarizer
 
     def _api_url(self, method: str) -> str:
         return self.API_BASE.format(token=self._token, method=method)
@@ -77,14 +84,25 @@ class TelegramAlertEngine:
         confluence_confidence = event.get("confluence_confidence")
         portfolio_scale = event.get("portfolio_scale")
 
+        claude_summary = ""
+        if self._summarizer is not None and self._summarizer.ready:
+            summary = self._summarizer.summarize(event, score)
+            if summary and summary.text:
+                claude_summary = f"🧠 *Alpha Brief:* {summary.text}"
+
         lines = [
             "🚨 *POLYMARKET SMART WALLET ALERT*",
             f"",
+        ]
+        if claude_summary:
+            lines.append(claude_summary)
+            lines.append("")
+        lines.extend([
             f"👤 *Wallet:* `{_fmt_addr(wallet)}`",
             f"🏷️ *Role:* `{role}` | *Side:* `{side}`",
             f"📈 *Market:* `{market}`",
             f"💰 *Size:* {_fmt_usd(size)} @ {price:.4f}",
-        ]
+        ])
         if profit is not None:
             lines.append(f"📊 *Wallet 30D P&L:* {_fmt_usd(Decimal(str(profit)))}")
         if win_rate is not None:
@@ -208,4 +226,5 @@ class TelegramAlertEngine:
             "chats": len(self._chat_ids),
             "circuit_breaker": self._cb.status(),
             "rate_limiter": self._rate.status(),
+            "claude": self._summarizer.status() if self._summarizer else {"ready": False},
         }
