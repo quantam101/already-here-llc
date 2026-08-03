@@ -50,8 +50,13 @@ type Store = Record<string, Record<string, Record<string, unknown>>>;
 
 let writeQueue: Promise<unknown> = Promise.resolve();
 
+function defaultDatabasePath(): string {
+  if (process.env.VERCEL || process.env.VERCEL_ENV) return '/tmp/revenue-command.json';
+  return join(process.cwd(), DEFAULT_DB_PATH);
+}
+
 export function getDatabasePath(): string {
-  return process.env.REVENUE_COMMAND_DB_PATH || join(process.cwd(), DEFAULT_DB_PATH);
+  return process.env.REVENUE_COMMAND_DB_PATH || defaultDatabasePath();
 }
 
 function ensureDirectory(path: string): void {
