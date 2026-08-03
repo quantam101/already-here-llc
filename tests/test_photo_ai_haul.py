@@ -141,6 +141,7 @@ def test_asset_recovery_agent_copper():
 def test_vision_spatial_agent_local(monkeypatch):
     monkeypatch.setenv("GMAOS_MODE", "strict_zero_spend")
     monkeypatch.setenv("GMAOS_PAID_ADAPTERS_ENABLED", "false")
+    monkeypatch.setenv("HAUL_YOLO_ENABLED", "false")
     import base64
 
     payload = {

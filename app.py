@@ -19,6 +19,8 @@ GMAOS runtime primitives.
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
+import hmac
 import json
 import logging
 import os
@@ -34,6 +36,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTex
 import uvicorn
 
 from runtime.photo_ai_haul import HaulScanner, MAX_UPLOAD_BYTES
+from runtime.photo_ai_store import ScanStore
 
 # --------------------------------------------------------------------
 # Environment helpers
@@ -144,6 +147,35 @@ class _Metrics:
 
 
 METRICS = _Metrics()
+
+# --------------------------------------------------------------------
+# Enterprise security helpers
+# --------------------------------------------------------------------
+
+def _parse_trailer_fill_pct(value: str) -> float:
+    """Convert a '23.9%' trailer-fill string to a float percentage."""
+    try:
+        return float(value.replace("%", "").strip())
+    except Exception:
+        return 0.0
+
+
+def _verify_request_signature(request: Request, body: bytes) -> bool:
+    """
+    Optional HMAC-SHA256 request signing for enterprise webhooks.
+    Expects the X-Haul-Signature header as a hex digest of the request body.
+    """
+    if not HAUL_REQUEST_SIGNING_SECRET:
+        return True
+    signature = request.headers.get("x-haul-signature", "")
+    expected = hmac.new(
+        HAUL_REQUEST_SIGNING_SECRET.encode("utf-8"),
+        body,
+        hashlib.sha256,
+    ).hexdigest()
+    # Constant-time compare to prevent timing side-channels.
+    return hmac.compare_digest(signature.lower(), expected.lower())
+
 
 # --------------------------------------------------------------------
 # Multi-tenant auth, rate limits, and quotas
@@ -352,6 +384,8 @@ class _EnterpriseAuth:
 
 
 AUTH = _EnterpriseAuth(API_KEYS, RATE_STORE)
+SCAN_STORE = ScanStore()
+HAUL_REQUEST_SIGNING_SECRET = _env("HAUL_REQUEST_SIGNING_SECRET", "")
 
 # --------------------------------------------------------------------
 # FastAPI application lifecycle
@@ -472,6 +506,7 @@ async def handle_mobile_scan(request: Request, file: UploadFile = File(...)) -> 
         return error
 
     org_id = org_config["org"] if org_config else "anonymous"
+
     allowed, reason = AUTH.check_limit(org_config)
     if not allowed:
         METRICS.inc("haul_scan_errors_total", {"reason": reason or "limit"})
@@ -495,6 +530,11 @@ async def handle_mobile_scan(request: Request, file: UploadFile = File(...)) -> 
             content={"error": f"Upload exceeds {MAX_UPLOAD_BYTES} bytes limit."},
         )
 
+    # Optional request-signature hardening for enterprise webhooks.
+    if HAUL_REQUEST_SIGNING_SECRET and not _verify_request_signature(request, image_bytes):
+        METRICS.inc("haul_scan_errors_total", {"reason": "invalid_signature"})
+        return JSONResponse(status_code=401, content={"error": "Invalid request signature"})
+
     start = time.time()
     try:
         result = await scanner.scan(image_bytes, filename=file.filename or "camera_snap.jpg")
@@ -513,6 +553,21 @@ async def handle_mobile_scan(request: Request, file: UploadFile = File(...)) -> 
     duration = time.time() - start
     METRICS.inc("haul_scans_total", {"org": org_id, "tier": org_config.get("tier", "none")})
     METRICS.observe("haul_scan_duration_seconds", duration, {"org": org_id})
+
+    # Persist scan metadata (never the image bytes) for usage and billing.
+    trailer_fill_pct = _parse_trailer_fill_pct(result.trailer_capacity_used)
+    SCAN_STORE.record_scan(
+        org_id=org_id,
+        scan_id=result.scan_id,
+        vision_source=result.vision_source,
+        volume_cu_yd=result.volume_cu_yd,
+        gross_quote_usd=result.gross_quote_usd,
+        net_customer_quote_usd=result.net_customer_quote_usd,
+        scrap_recovery_yield_usd=result.scrap_recovery_yield_usd,
+        trailer_fill_pct=trailer_fill_pct,
+        entities=result.entities,
+    )
+
     return JSONResponse(content=result.__dict__)
 
 
@@ -528,9 +583,47 @@ async def usage(request: Request) -> JSONResponse:
             "tier": org_config["tier"],
             "rpm_limit": org_config["rpm"],
             "daily_quota": org_config["daily_quota"],
-            "usage": RATE_STORE.usage(org_id),
+            "rate_usage": RATE_STORE.usage(org_id),
+            "scan_usage": SCAN_STORE.get_usage(org_id, period_days=30),
+            "billing": SCAN_STORE.get_billing(org_id),
         }
     )
+
+
+@app.get("/api/scans")
+async def scans(request: Request, limit: int = 50) -> JSONResponse:
+    org_config, error = AUTH.authenticate(request)
+    if error:
+        return error
+    org_id = org_config["org"]
+    history = SCAN_STORE.get_scan_history(org_id, limit=min(limit, 200))
+    return JSONResponse(
+        content={
+            "org": org_id,
+            "scans": [
+                {
+                    "id": r.id,
+                    "scan_id": r.scan_id,
+                    "created_at": r.created_at,
+                    "vision_source": r.vision_source,
+                    "volume_cu_yd": r.volume_cu_yd,
+                    "gross_quote_usd": r.gross_quote_usd,
+                    "net_customer_quote_usd": r.net_customer_quote_usd,
+                    "scrap_recovery_yield_usd": r.scrap_recovery_yield_usd,
+                    "entities_count": len(r.entities),
+                }
+                for r in history
+            ],
+        }
+    )
+
+
+@app.get("/api/billing")
+async def billing(request: Request) -> JSONResponse:
+    org_config, error = AUTH.authenticate(request)
+    if error:
+        return error
+    return JSONResponse(content=SCAN_STORE.get_billing(org_config["org"]))
 
 
 # --------------------------------------------------------------------

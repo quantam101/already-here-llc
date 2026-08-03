@@ -9,9 +9,10 @@ description: End-to-end test workflow for the Photo AI Haul Scanner FastAPI PWA.
 Verify the mobile PWA (`/`) and `/api/scan` endpoint produce a net customer quote, cubic-yard volume, trailer fill percentage, scrap/recovery yield, and driver manifest from a real photo upload.
 
 ## Preconditions
-- Python runtime deps are installed into the interpreter you will use (`/usr/bin/python` on the current snapshot; the default `python` may be a pyenv shim without `numpy`/`Pillow`).
+- Python runtime deps are installed into the interpreter you will use (`/usr/bin/python` is known to work; the default `python` may be a pyenv shim without `numpy`/`Pillow`).
 - The repo is cloned at `/home/ubuntu/repos/already-here-llc`.
 - A test JPEG exists, e.g. `/tmp/test_load.jpg`.
+- Optional: set `HAUL_API_KEY` and `HAUL_RATE_LIMIT_PER_MINUTE` if you are testing authenticated/rate-limited deployments; local dev defaults have no API key and 30 req/min.
 
 ## Start the service
 
@@ -30,11 +31,15 @@ HAUL_SCANNER_PORT=8000 \
 /usr/bin/python app.py
 ```
 
-## Verify health
+## Verify health and PWA assets
 
 ```bash
-curl http://localhost:8000/healthz
-curl http://localhost:8000/readyz
+curl -s http://localhost:8000/healthz
+curl -s http://localhost:8000/readyz
+curl -s -o /dev/null -w "%{http_code} %{content_type}\n" http://localhost:8000/manifest.json
+curl -s -o /dev/null -w "%{http_code} %{content_type}\n" http://localhost:8000/service-worker.js
+curl -s -o /dev/null -w "%{http_code} %{content_type}\n" http://localhost:8000/icon-192.png
+curl -s -o /dev/null -w "%{http_code} %{content_type}\n" http://localhost:8000/icon-512.png
 curl -F "file=@/tmp/test_load.jpg" http://localhost:8000/api/scan
 ```
 

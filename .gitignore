@@ -12,6 +12,11 @@ backups/
 .env
 hermes/receipts/
 
+# Photo AI Haul Scanner
+models/*.onnx
+test-plan-*.md
+test-report-*.md
+
 # ProfitEngine runtime
 profitengine/.env
 profitengine/node_modules/

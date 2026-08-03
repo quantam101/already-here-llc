@@ -29,7 +29,7 @@ A standalone FastAPI microservice (`app.py`) for mobile photo-driven pickup / ha
 
 - Snaps a load photo from any smartphone browser.
 - Runs an isolated multi-agent pipeline:
-  1. **Vision Spatial Agent** — analyzes image features and extracts load entities.
+  1. **Vision Spatial Agent** — YOLOv8 ONNX + K-means segmentation; trained object labels fused with deterministic spatial analysis.
   2. **Volumetric Agent** — computes true cubic-yard volume with density correction.
   3. **Asset Recovery Agent** — values scrap metal, resale, and refurb potential.
 - Returns a net customer quote, trailer fill percentage, and a driver recovery manifest.
@@ -60,14 +60,22 @@ Open `http://localhost:8000` on your phone (same Wi-Fi) and tap **SNAP LOAD PHOT
 | `HAUL_CORS_ORIGINS` | `*` | Comma-separated allowed CORS origins |
 | `GMAOS_PAID_ADAPTERS_ENABLED` | `false` | Enable cloud vision (Gemini) |
 | `GEMINI_API_KEY` | *(none)* | Gemini API key for cloud vision |
+| `HAUL_YOLO_ENABLED` | `true` | Run YOLOv8 ONNX local object detection |
+| `HAUL_YOLO_MODEL_PATH` | `models/yolov8n.onnx` | ONNX model path |
+| `HAUL_VISION_SOURCE_ORDER` | `fused,cloud,deterministic` | Vision pipeline priority |
+| `HAUL_YOLO_CONF` | `0.55` | Minimum YOLO class confidence |
+| `HAUL_YOLO_IOU` | `0.3` | YOLO NMS IoU threshold |
+| `HAUL_YOLO_MAX_DETECTIONS` | `8` | Max YOLO detections per image |
 
-Cloud vision (Gemini) is gated by `GMAOS_PAID_ADAPTERS_ENABLED=true` and `GEMINI_API_KEY`. Without both, the engine uses deterministic local image analysis (Pillow + NumPy) at zero cost.
+The default vision pipeline is **fused** (YOLOv8 ONNX + deterministic segmentation), then cloud (Gemini), then deterministic fallback. YOLO is zero-cost local trained object recognition; cloud vision is gated by `GMAOS_PAID_ADAPTERS_ENABLED=true` and `GEMINI_API_KEY`.
 
 ### Endpoints
 
 - `GET /` — Mobile PWA scanner UI
 - `POST /api/scan` — Upload image (`multipart/form-data`) and receive quote JSON
-- `GET /api/usage` — Per-organization rate-limit and quota usage
+- `GET /api/usage` — Per-organization rate-limit, scan usage, and billing
+- `GET /api/scans` — Scan history for the authenticated organization
+- `GET /api/billing` — Aggregated billing metrics for the authenticated organization
 - `GET /healthz` — Liveness probe
 - `GET /readyz` — Readiness probe
 - `GET /metrics` — Prometheus-compatible metrics
@@ -79,10 +87,14 @@ Cloud vision (Gemini) is gated by `GMAOS_PAID_ADAPTERS_ENABLED=true` and `GEMINI
 | `HAUL_API_KEY` | *(none)* | Legacy single shared API key |
 | `HAUL_API_KEYS` | *(none)* | Multi-tenant keys as JSON: `{key: {org, tier, rpm, daily_quota}}` |
 | `REDIS_URL` | *(none)* | Optional Redis for global per-org rate limits and quotas across pods |
+| `HAUL_SCAN_STORE` | `data/haul_scans.db` | SQLite path or `memory` for scan persistence |
+| `HAUL_REQUEST_SIGNING_SECRET` | *(none)* | Optional HMAC-SHA256 signature secret for `/api/scan` |
 | `HAUL_LOG_JSON` | `false` | Emit structured JSON logs |
 | `HAUL_CORS_ORIGINS` | `*` | Comma-separated allowed CORS origins |
 
 `HAUL_API_KEYS` supports a JSON object keyed by key string, or a list of objects with a `key` field. Each entry sets `org`, `tier` (`free`/`pro`/`enterprise`), per-minute request limit (`rpm`), and daily scan quota (`daily_quota`).
+
+Per-organization scan metadata (quotes, recovery values, detected entities) is persisted to `HAUL_SCAN_STORE` and exposed via `/api/scans`, `/api/usage`, and `/api/billing`. Raw image bytes are never stored.
 
 ### Verification
 

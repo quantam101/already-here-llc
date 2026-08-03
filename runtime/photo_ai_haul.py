@@ -540,6 +540,405 @@ def _merge_nearby_regions(
     return merged
 
 
+# COCO 80-class labels used by YOLOv8 ONNX export.
+_COCO_NAMES = (
+    "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat",
+    "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog",
+    "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella",
+    "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite",
+    "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle",
+    "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich",
+    "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
+    "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote",
+    "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator",
+    "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush",
+)
+
+
+def _coco_to_category(name: str) -> Category:
+    """Map COCO object classes to hauling categories."""
+    name = name.lower()
+    if name in {"bicycle", "motorcycle", "car", "bus", "truck", "train"}:
+        return Category.MOTOR_VEHICLE
+    if name in {
+        "backpack", "umbrella", "handbag", "suitcase", "frisbee", "skis", "snowboard",
+        "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
+        "tennis racket",
+    }:
+        return Category.SPORTING_GOODS
+    if name in {"chair", "couch", "bench", "bed", "dining table"}:
+        return Category.BULKY_FURNITURE
+    if name in {"tv", "laptop", "mouse", "remote", "keyboard", "cell phone"}:
+        return Category.ELECTRONICS
+    if name in {"microwave", "oven", "toaster", "sink", "refrigerator"}:
+        return Category.APPLIANCE
+    if name == "potted plant":
+        return Category.YARD_WASTE
+    return Category.GENERAL_DEBRIS
+
+
+def _nms(boxes: np.ndarray, scores: np.ndarray, iou_threshold: float = 0.45) -> List[int]:
+    """Greedy Non-Maximum Suppression for XYXY boxes."""
+    if len(boxes) == 0:
+        return []
+    x1, y1, x2, y2 = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
+    areas = (x2 - x1) * (y2 - y1)
+    order = np.argsort(scores)[::-1]
+    keep = []
+    while order.size > 0:
+        i = order[0]
+        keep.append(i)
+        xx1 = np.maximum(x1[i], x1[order[1:]])
+        yy1 = np.maximum(y1[i], y1[order[1:]])
+        xx2 = np.minimum(x2[i], x2[order[1:]])
+        yy2 = np.minimum(y2[i], y2[order[1:]])
+        w = np.maximum(0.0, xx2 - xx1)
+        h = np.maximum(0.0, yy2 - yy1)
+        inter = w * h
+        iou = inter / (areas[i] + areas[order[1:]] - inter + 1e-6)
+        order = order[1:][iou <= iou_threshold]
+    return keep
+
+
+_HAULING_COCO_WHITELIST = {
+    "bicycle", "motorcycle", "car", "bus", "truck", "train", "backpack", "umbrella",
+    "handbag", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite",
+    "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket",
+    "chair", "couch", "bench", "bed", "dining table", "tv", "laptop", "mouse", "remote",
+    "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator",
+    "potted plant", "vase", "book", "clock",
+}
+
+
+def _iou(a: Tuple[float, float, float, float], b: Tuple[float, float, float, float]) -> float:
+    """Intersection-over-Union for two XYXY boxes."""
+    x1 = max(a[0], b[0])
+    y1 = max(a[1], b[1])
+    x2 = min(a[2], b[2])
+    y2 = min(a[3], b[3])
+    inter = max(0.0, x2 - x1) * max(0.0, y2 - y1)
+    area_a = (a[2] - a[0]) * (a[3] - a[1])
+    area_b = (b[2] - b[0]) * (b[3] - b[1])
+    return inter / (area_a + area_b - inter + 1e-6)
+
+
+class _YoloOnnxDetector:
+    """Lazy-singleton wrapper around a YOLOv8 ONNX model for CPU inference."""
+
+    _instance: Optional["_YoloOnnxDetector"] = None
+    _lock = False
+
+    def __new__(cls) -> "_YoloOnnxDetector":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._session = None
+        return cls._instance
+
+    @property
+    def available(self) -> bool:
+        if not _env_bool("HAUL_YOLO_ENABLED", True):
+            return False
+        try:
+            import onnxruntime as ort  # type: ignore
+            if self._session is None:
+                model_path = Path(_env("HAUL_YOLO_MODEL_PATH", "models/yolov8n.onnx"))
+                if not model_path.exists():
+                    return False
+                self._session = ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
+            return self._session is not None
+        except Exception as exc:
+            logger.warning("YOLO ONNX detector not available: %s", exc)
+            return False
+
+    def _preprocess(self, image: Any) -> Tuple[np.ndarray, float, float, int, int]:
+        """Letterbox resize and return float32 NCHW tensor plus scale/padding."""
+        from PIL import Image as PILImage
+        orig_w, orig_h = image.size
+        scale = 640.0 / max(orig_w, orig_h)
+        new_w = int(orig_w * scale)
+        new_h = int(orig_h * scale)
+        pad_w = (640 - new_w) // 2
+        pad_h = (640 - new_h) // 2
+
+        letter = PILImage.new("RGB", (640, 640), (114, 114, 114))
+        resized = image.convert("RGB").resize((new_w, new_h), PILImage.Resampling.LANCZOS)
+        letter.paste(resized, (pad_w, pad_h))
+
+        arr = np.array(letter).astype(np.float32) / 255.0
+        input_tensor = np.transpose(arr, (2, 0, 1))[None, ...]
+        return input_tensor, scale, pad_w, pad_h, orig_w, orig_h
+
+    def get_boxes(self, image: Any) -> List[Dict[str, Any]]:
+        """Run YOLOv8 ONNX NMS and return filtered detections in original image coordinates."""
+        import onnxruntime as ort
+        if self._session is None:
+            raise RuntimeError("ONNX session not initialized")
+
+        input_tensor, scale, pad_w, pad_h, orig_w, orig_h = self._preprocess(image)
+        outputs = self._session.run(None, {self._session.get_inputs()[0].name: input_tensor})
+        predictions = outputs[0][0].T  # [8400, 84]
+
+        conf_threshold = _env_float("HAUL_YOLO_CONF", 0.55)
+        min_area_ratio = _env_float("HAUL_YOLO_MIN_AREA_RATIO", 0.01)
+        max_area_ratio = _env_float("HAUL_YOLO_MAX_AREA_RATIO", 0.5)
+        max_detections = _env_int("HAUL_YOLO_MAX_DETECTIONS", 8)
+        min_area_px = orig_w * orig_h * min_area_ratio
+        max_area_px = orig_w * orig_h * max_area_ratio
+
+        boxes_xyxy: List[np.ndarray] = []
+        confidences: List[float] = []
+        class_ids: List[int] = []
+
+        for row in predictions:
+            x, y, w, h = row[:4]
+            scores = row[4:]
+            sigmoid_scores = 1.0 / (1.0 + np.exp(-scores))
+            class_id = int(np.argmax(sigmoid_scores))
+            confidence = float(sigmoid_scores[class_id])
+            if confidence < conf_threshold:
+                continue
+
+            class_name = _COCO_NAMES[class_id]
+            if class_name not in _HAULING_COCO_WHITELIST:
+                continue
+
+            x1, y1 = x - w / 2.0, y - h / 2.0
+            x2, y2 = x + w / 2.0, y + h / 2.0
+            # Remove padding and scale back to original image coordinates.
+            x1 = (x1 - pad_w) / scale
+            x2 = (x2 - pad_w) / scale
+            y1 = (y1 - pad_h) / scale
+            y2 = (y2 - pad_h) / scale
+
+            # Clip to image bounds and drop degenerate boxes.
+            x1, y1 = max(0.0, x1), max(0.0, y1)
+            x2, y2 = min(orig_w, x2), min(orig_h, y2)
+            area = max(0.0, x2 - x1) * max(0.0, y2 - y1)
+            if area < min_area_px or area > max_area_px:
+                continue
+
+            boxes_xyxy.append(np.array([x1, y1, x2, y2]))
+            confidences.append(confidence)
+            class_ids.append(class_id)
+
+        if not boxes_xyxy:
+            return []
+
+        boxes = np.stack(boxes_xyxy)
+        keep = _nms(boxes, np.array(confidences), iou_threshold=_env_float("HAUL_YOLO_IOU", 0.3))
+
+        # Keep only the highest-confidence detections to avoid hallucination floods.
+        keep = keep[:max_detections]
+
+        results: List[Dict[str, Any]] = []
+        for idx in keep:
+            x1, y1, x2, y2 = boxes[idx]
+            class_name = _COCO_NAMES[class_ids[idx]]
+            results.append({
+                "bbox": (float(x1), float(y1), float(x2), float(y2)),
+                "class_name": class_name,
+                "category": _coco_to_category(class_name),
+                "confidence": round(confidences[idx], 2),
+                "pixel_area": float((x2 - x1) * (y2 - y1)),
+            })
+        return results
+
+
+def _region_to_entity(
+    region: Dict[str, Any],
+    category: Category,
+    label: str,
+    confidence: float,
+    pixels_per_m2: float,
+) -> DetectedEntity:
+    """Convert a pixel region into a DetectedEntity with a 3-D bounding box."""
+    pixel_area = region["area"]
+    box = _estimate_bounding_box(category, pixel_area, pixels_per_m2)
+    volume_m3 = box[0] * box[1] * box[2]
+    weight_lbs = max(5.0, round(volume_m3 * 2205.0 * _density_for_category(category), 1))
+    return DetectedEntity(
+        label=label,
+        category=category,
+        bounding_box_3d_m=box,
+        est_weight_lbs=weight_lbs,
+        density_coefficient=_density_for_category(category),
+        confidence=round(min(1.0, confidence), 2),
+        resale_potential_usd=_resale_estimate(category, weight_lbs),
+    )
+
+
+def _resolve_fused_category(class_name: str, deterministic_category: Category) -> Tuple[Category, str]:
+    """
+    Decide the final hauling category when YOLO and deterministic segmentation disagree.
+    This keeps domain-specific labels (pool table, helmets/gear bags) while still
+    allowing YOLO to confidently reclassify e.g. a scooter as a motor vehicle.
+    """
+    name = class_name.lower()
+    # Vehicle classes are strong YOLO signals.
+    if name in {"bicycle", "motorcycle", "car", "bus", "truck", "train"}:
+        return Category.MOTOR_VEHICLE, _label_for_category(Category.MOTOR_VEHICLE)
+    # Sporting-goods YOLO signals should not erase an already-sporting region.
+    if name in {"backpack", "suitcase", "handbag", "sports ball", "skis", "snowboard", "frisbee", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket"}:
+        if deterministic_category in {Category.SPORTING_GOODS, Category.BULKY_FURNITURE}:
+            return Category.SPORTING_GOODS, _label_for_category(Category.SPORTING_GOODS)
+        return Category.SPORTING_GOODS, _label_for_category(Category.SPORTING_GOODS)
+    # A dining table in a hauling context is often a pool / ping-pong / game table.
+    if name in {"dining table", "bed"}:
+        if deterministic_category == Category.SPORTING_GOODS:
+            return Category.SPORTING_GOODS, "Sporting Goods / Pool Table / Gear"
+        return _coco_to_category(name), _label_for_category(_coco_to_category(name))
+    return _coco_to_category(name), _label_for_category(_coco_to_category(name))
+
+
+def _yolo_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity], Dict[str, Any], str]:
+    """Run trained YOLOv8 ONNX object detection and convert outputs to entities."""
+    from PIL import Image
+
+    image = Image.open(io.BytesIO(image_bytes))
+    image = _apply_exif_orientation(image)
+    detector = _YoloOnnxDetector()
+    if not detector.available:
+        raise RuntimeError("YOLO ONNX model not available")
+
+    frame_width_m = _env_float("HAUL_FRAME_WIDTH_METERS", 2.5)
+    orig_w, orig_h = image.size
+    pixels_per_m2 = (orig_w / frame_width_m) ** 2
+    boxes = detector.get_boxes(image)
+    if not boxes:
+        raise RuntimeError("YOLO produced no detections")
+
+    entities = [
+        _region_to_entity(
+            {"area": b["pixel_area"]},
+            b["category"],
+            f"{b['class_name'].title()} / {_label_for_category(b['category'])}",
+            b["confidence"],
+            pixels_per_m2,
+        )
+        for b in boxes
+    ]
+    return entities, {"detections": len(boxes)}, "yolov8_onnx"
+
+
+def _fused_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity], Dict[str, Any], str]:
+    """
+    Fuse deterministic color/segmentation with YOLOv8 ONNX detections.
+    Segmentation splits distinct objects; YOLO provides trained class labels for the
+    largest regions.  Unmatched YOLO boxes are added as standalone entities, and
+    unmatched segments keep their deterministic category.
+    """
+    from PIL import Image
+
+    image = Image.open(io.BytesIO(image_bytes))
+    image = _apply_exif_orientation(image)
+    width_px, height_px = image.size
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    # ---- Deterministic segmentation (same pipeline as _analyze_image_bytes) ----
+    thumb = image.resize((320, int(320 * height_px / width_px)))
+    thumb_w, thumb_h = thumb.size
+    thumb_total_pixels = thumb_w * thumb_h
+    arr = np.array(thumb)
+
+    frame_width_m = _env_float("HAUL_FRAME_WIDTH_METERS", 2.5)
+    pixels_per_m = width_px / frame_width_m
+    pixels_per_m2 = pixels_per_m ** 2
+    scale_x = width_px / thumb_w
+    scale_y = height_px / thumb_h
+
+    regions = _segment_kmeans(arr, n_clusters=6)
+    for region in regions:
+        region["category"] = _categorize_region(region, thumb_total_pixels, thumb_w, thumb_h)
+        # Convert thumbnail bbox to original image coordinates.
+        min_r, min_c, max_r, max_c = region["bbox"]
+        region["orig_bbox"] = (
+            min_c * scale_x,
+            min_r * scale_y,
+            (max_c + 1) * scale_x,
+            (max_r + 1) * scale_y,
+        )
+        # Pixel area in original image coordinates.
+        region["orig_pixel_area"] = region["area"] * scale_x * scale_y
+
+    # ---- YOLO trained labels ----
+    detector = _YoloOnnxDetector()
+    yolo_boxes = detector.get_boxes(image) if detector.available else []
+    if not yolo_boxes:
+        raise RuntimeError("No trained YOLO detections; falling back to deterministic segmentation")
+
+    matched_yolo: set[int] = set()
+    matched_region: set[int] = set()
+
+    # Greedily match YOLO boxes to segmentation regions by IoU.
+    for yolo in sorted(yolo_boxes, key=lambda b: b["confidence"], reverse=True):
+        best_idx = -1
+        best_iou = 0.0
+        for idx, region in enumerate(regions):
+            if idx in matched_region:
+                continue
+            iou = _iou(yolo["bbox"], region["orig_bbox"])
+            if iou > best_iou:
+                best_iou = iou
+                best_idx = idx
+        if best_idx >= 0 and best_iou >= _env_float("HAUL_FUSION_IOU", 0.25):
+            region = regions[best_idx]
+            deterministic_category = region.get("category", Category.GENERAL_DEBRIS)
+            fused_category, fused_label = _resolve_fused_category(yolo["class_name"], deterministic_category)
+            region["category"] = fused_category
+            region["yolo_label"] = f"{yolo['class_name'].title()} / {fused_label}"
+            region["yolo_confidence"] = yolo["confidence"]
+            # Use the YOLO bounding-box area for the object's physical size; the
+            # segmented region may be fragmented by items sitting on top.
+            region["yolo_pixel_area"] = yolo["pixel_area"]
+            matched_region.add(best_idx)
+            matched_yolo.add(id(yolo))
+
+    entities: List[DetectedEntity] = []
+    for region in regions:
+        idx = regions.index(region)
+        category = region["category"]
+        # For YOLO-matched regions, trust the trained detector's bounding box for size.
+        pixel_area = region.get("yolo_pixel_area", region["orig_pixel_area"])
+        if pixel_area < (width_px * height_px * 0.015):
+            continue
+        if "yolo_label" in region:
+            label = region["yolo_label"]
+            confidence = region["yolo_confidence"]
+        else:
+            label = _label_for_category(category)
+            confidence = _classify_dominant_color(region["mean_hsv"])[1]
+        entities.append(_region_to_entity({"area": pixel_area}, category, label, confidence, pixels_per_m2))
+
+    # Add YOLO boxes that did not overlap any segment (large standalone objects).
+    for yolo in yolo_boxes:
+        if id(yolo) in matched_yolo:
+            continue
+        box = yolo["bbox"]
+        pixel_area = max(1.0, (box[2] - box[0]) * (box[3] - box[1]))
+        entities.append(
+            _region_to_entity(
+                {"area": pixel_area},
+                yolo["category"],
+                f"{yolo['class_name'].title()} / {_label_for_category(yolo['category'])}",
+                yolo["confidence"],
+                pixels_per_m2,
+            )
+        )
+
+    entities.sort(key=lambda e: e.est_weight_lbs, reverse=True)
+    entities = entities[:15]
+
+    features = {
+        "segmented_regions": len(regions),
+        "yolo_detections": len(yolo_boxes),
+        "fused_entities": len(entities),
+        "frame_width_m": frame_width_m,
+    }
+    return entities, features, "yolov8_fused"
+
+
+
 def _analyze_image_bytes(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity], Dict[str, Any], str]:
     """
     Perform deterministic, model-free image feature extraction.
@@ -770,12 +1169,32 @@ def vision_spatial_agent(payload: Dict[str, Any]) -> Dict[str, Any]:
     scan_id = payload["scan_id"]
     image_bytes = base64.b64decode(payload["image_b64"])
     allow_cloud = payload["allow_cloud"]
+    # Default pipeline: trained YOLO fusion first, then paid cloud, then deterministic.
+    vision_source_order = _env("HAUL_VISION_SOURCE_ORDER", "fused,cloud,deterministic").split(",")
 
-    if allow_cloud:
-        try:
-            return _vision_cloud_inference(image_bytes, scan_id, payload["cloud_model"])
-        except Exception as exc:
-            logger.warning("Cloud vision failed (%s); falling back to local analysis.", exc)
+    for source in vision_source_order:
+        source = source.strip()
+        if source == "cloud" and allow_cloud:
+            try:
+                return _vision_cloud_inference(image_bytes, scan_id, payload["cloud_model"])
+            except Exception as exc:
+                logger.warning("Cloud vision failed (%s); trying next source.", exc)
+        elif source in {"fused", "yolo"}:
+            try:
+                if source == "fused":
+                    entities, features, label = _fused_detect(image_bytes, scan_id)
+                else:
+                    entities, features, label = _yolo_detect(image_bytes, scan_id)
+                return {
+                    "scan_id": scan_id,
+                    "source": label,
+                    "entities": [asdict(e) for e in entities],
+                    "features": features,
+                }
+            except Exception as exc:
+                logger.warning("Trained detection failed (%s); trying next source.", exc)
+        elif source == "deterministic":
+            break
 
     entities, features, source = _analyze_image_bytes(image_bytes, scan_id)
     return {
