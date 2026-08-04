@@ -29,7 +29,7 @@ A standalone FastAPI microservice (`app.py`) for mobile photo-driven pickup / ha
 
 - Snaps a load photo from any smartphone browser.
 - Runs an isolated multi-agent pipeline:
-  1. **Vision Spatial Agent** — YOLOv8 ONNX + K-means segmentation; trained object labels fused with deterministic spatial analysis.
+  1. **Vision Spatial Agent** — YOLOv8 ONNX for trained bounding boxes, TinyCLIP 40M ONNX for zero-shot fine-grained labels (motor scooter, pool table, helmet, etc.), fused with K-means segmentation.
   2. **Volumetric Agent** — computes true cubic-yard volume with density correction.
   3. **Asset Recovery Agent** — values scrap metal, resale, and refurb potential.
 - Returns a net customer quote, trailer fill percentage, and a driver recovery manifest.
@@ -66,8 +66,12 @@ Open `http://localhost:8000` on your phone (same Wi-Fi) and tap **SNAP LOAD PHOT
 | `HAUL_YOLO_CONF` | `0.55` | Minimum YOLO class confidence |
 | `HAUL_YOLO_IOU` | `0.3` | YOLO NMS IoU threshold |
 | `HAUL_YOLO_MAX_DETECTIONS` | `8` | Max YOLO detections per image |
+| `HAUL_CLIP_ENABLED` | `true` | Run TinyCLIP zero-shot classification for fine-grained labels |
+| `HAUL_CLIP_MODEL_DIR` | `models/tinyclip40` | TinyCLIP ONNX artifacts directory |
+| `HAUL_CLIP_CONF` | `7.0` | Minimum TinyCLIP logit score for a label to be accepted |
+| `HAUL_CLIP_MAX_CANDIDATES` | `12` | Max crops classified per image (latency control) |
 
-The default vision pipeline is **fused** (YOLOv8 ONNX + deterministic segmentation), then cloud (Gemini), then deterministic fallback. YOLO is zero-cost local trained object recognition; cloud vision is gated by `GMAOS_PAID_ADAPTERS_ENABLED=true` and `GEMINI_API_KEY`.
+The default vision pipeline is **yolov8_tinyclip_fused** (YOLOv8 ONNX boxes + TinyCLIP labels + deterministic segmentation), then cloud (Gemini), then deterministic fallback. YOLO and TinyCLIP are zero-cost local trained recognition; cloud vision is gated by `GMAOS_PAID_ADAPTERS_ENABLED=true` and `GEMINI_API_KEY`. Download TinyCLIP artifacts with `scripts/download_tinyclip40.sh` or at container build time.
 
 ### Endpoints
 

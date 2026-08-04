@@ -16,9 +16,15 @@ COPY app.py ./
 COPY runtime/ ./runtime/
 COPY public/ ./public/
 
-# Download the YOLOv8n ONNX model so the container ships with trained object recognition.
-RUN mkdir -p models && \
-    python -c "import urllib.request; urllib.request.urlretrieve('https://huggingface.co/Kalray/yolov8/resolve/main/yolov8n.onnx', 'models/yolov8n.onnx')"
+# Download the YOLOv8n ONNX model and TinyCLIP 40M artifacts for trained object recognition.
+RUN mkdir -p models/tinyclip40 && \
+    python - <<'PY'
+import urllib.request, os
+urllib.request.urlretrieve('https://huggingface.co/Kalray/yolov8/resolve/main/yolov8n.onnx', 'models/yolov8n.onnx')
+base = 'https://huggingface.co/onnx-community/TinyCLIP-ViT-40M-32-Text-19M-LAION400M-ONNX/resolve/main'
+for path in ['onnx/model_q4f16.onnx', 'tokenizer.json', 'preprocessor_config.json', 'config.json']:
+    urllib.request.urlretrieve(f'{base}/{path}', f'models/tinyclip40/{os.path.basename(path)}')
+PY
 
 # Non-root runtime user.
 RUN groupadd -r haul && useradd -r -g haul -u 1000 haul

@@ -42,6 +42,7 @@ import numpy as np
 
 from .audit_log import AuditLog
 from .cost_guard import CostGuard, CostGuardError, RouteDecision
+from .photo_ai_clip import get_classifier
 from .telemetry import TelemetryCollector, Severity
 
 logger = logging.getLogger("photo_ai_haul")
@@ -84,6 +85,9 @@ RATE_PER_CU_YD_USD = _env_float("HAUL_RATE_PER_CU_YD_USD", 38.0)
 RECOVERY_CREDIT_PCT = _env_float("HAUL_RECOVERY_CREDIT_PCT", 0.25)
 MAX_UPLOAD_BYTES = _env_int("HAUL_MAX_UPLOAD_BYTES", 25 * 1024 * 1024)
 PROCESS_TIMEOUT_SECONDS = _env_float("HAUL_PROCESS_TIMEOUT_SECONDS", 30.0)
+HAUL_CLIP_ENABLED = _env_bool("HAUL_CLIP_ENABLED", True)
+HAUL_CLIP_CONF = _env_float("HAUL_CLIP_CONF", 7.0)
+HAUL_CLIP_MAX_CANDIDATES = _env_int("HAUL_CLIP_MAX_CANDIDATES", 12)
 
 
 # =====================================================================
@@ -610,6 +614,51 @@ _HAULING_COCO_WHITELIST = {
 }
 
 
+@dataclass(frozen=True)
+class HaulingItemSpec:
+    """Fine-grained hauling catalog: dimensions, weight, resale, and haul category."""
+
+    category: Category
+    dims_m: Tuple[float, float, float]
+    typical_weight_lbs: float
+    resale_usd: float
+    label: str
+
+
+# Fine-grained catalog used by the TinyCLIP zero-shot classifier. Dims are
+# typical real-world dimensions (L x W x H). Weights/resale are market-informed
+# defaults for quotes and driver manifests.
+_HAULING_ITEM_CATALOG: Dict[str, HaulingItemSpec] = {
+    "motor scooter": HaulingItemSpec(Category.MOTOR_VEHICLE, (1.80, 0.70, 1.10), 250.0, 400.0, "Motor Scooter / Motor Vehicle"),
+    "motorcycle": HaulingItemSpec(Category.MOTOR_VEHICLE, (2.00, 0.80, 1.20), 400.0, 600.0, "Motorcycle / Motor Vehicle"),
+    "bicycle": HaulingItemSpec(Category.MOTOR_VEHICLE, (1.70, 0.60, 1.10), 35.0, 120.0, "Bicycle / Motor Vehicle"),
+    "bicycle helmet": HaulingItemSpec(Category.SPORTING_GOODS, (0.25, 0.20, 0.20), 3.0, 40.0, "Bicycle Helmet / Sporting Goods"),
+    "motorcycle helmet": HaulingItemSpec(Category.SPORTING_GOODS, (0.30, 0.25, 0.25), 5.0, 60.0, "Motorcycle Helmet / Sporting Goods"),
+    "football helmet": HaulingItemSpec(Category.SPORTING_GOODS, (0.30, 0.25, 0.25), 5.0, 60.0, "Football Helmet / Sporting Goods"),
+    "helmet": HaulingItemSpec(Category.SPORTING_GOODS, (0.28, 0.22, 0.22), 4.0, 50.0, "Helmet / Sporting Goods"),
+    "pool table": HaulingItemSpec(Category.SPORTING_GOODS, (2.10, 1.20, 0.85), 800.0, 500.0, "Pool Table / Sporting Goods"),
+    "ping pong table": HaulingItemSpec(Category.SPORTING_GOODS, (2.70, 1.50, 0.75), 120.0, 300.0, "Ping Pong Table / Sporting Goods"),
+    "cardboard box": HaulingItemSpec(Category.GENERAL_DEBRIS, (0.50, 0.40, 0.40), 20.0, 0.0, "Cardboard Box / General Debris"),
+    "plastic tote": HaulingItemSpec(Category.GENERAL_DEBRIS, (0.60, 0.40, 0.35), 15.0, 5.0, "Plastic Tote / General Debris"),
+    "suitcase": HaulingItemSpec(Category.SPORTING_GOODS, (0.60, 0.40, 0.25), 25.0, 30.0, "Suitcase / Sporting Goods"),
+    "backpack": HaulingItemSpec(Category.SPORTING_GOODS, (0.45, 0.30, 0.20), 10.0, 20.0, "Backpack / Sporting Goods"),
+    "potted plant": HaulingItemSpec(Category.YARD_WASTE, (0.30, 0.30, 0.60), 30.0, 0.0, "Potted Plant / Yard Waste"),
+    "refrigerator": HaulingItemSpec(Category.APPLIANCE, (0.80, 0.70, 1.80), 300.0, 100.0, "Refrigerator / Appliance"),
+    "chair": HaulingItemSpec(Category.BULKY_FURNITURE, (0.50, 0.50, 0.90), 40.0, 20.0, "Chair / Furniture"),
+    "couch": HaulingItemSpec(Category.BULKY_FURNITURE, (2.00, 0.90, 0.85), 180.0, 60.0, "Couch / Furniture"),
+    "dining table": HaulingItemSpec(Category.BULKY_FURNITURE, (1.50, 0.90, 0.75), 120.0, 80.0, "Dining Table / Furniture"),
+    "tv": HaulingItemSpec(Category.ELECTRONICS, (1.20, 0.10, 0.70), 50.0, 100.0, "TV / Electronics"),
+    "laptop": HaulingItemSpec(Category.ELECTRONICS, (0.35, 0.25, 0.03), 5.0, 200.0, "Laptop / Electronics"),
+    "car": HaulingItemSpec(Category.MOTOR_VEHICLE, (4.50, 1.80, 1.50), 3500.0, 2000.0, "Car / Motor Vehicle"),
+    "truck": HaulingItemSpec(Category.MOTOR_VEHICLE, (5.50, 2.00, 2.00), 5000.0, 3000.0, "Truck / Motor Vehicle"),
+    "person": HaulingItemSpec(Category.GENERAL_DEBRIS, (0.00, 0.00, 0.00), 0.0, 0.0, ""),
+}
+
+
+# All candidate labels the zero-shot classifier can distinguish.
+_HAULING_CLIP_LABELS = list(_HAULING_ITEM_CATALOG.keys())
+
+
 def _iou(a: Tuple[float, float, float, float], b: Tuple[float, float, float, float]) -> float:
     """Intersection-over-Union for two XYXY boxes."""
     x1 = max(a[0], b[0])
@@ -750,8 +799,24 @@ def _region_to_entity(
     label: str,
     confidence: float,
     pixels_per_m2: float,
+    spec: Optional[HaulingItemSpec] = None,
 ) -> DetectedEntity:
     """Convert a pixel region into a DetectedEntity with a 3-D bounding box."""
+    if spec is not None and spec.dims_m[0] > 0.0:
+        box = spec.dims_m
+        volume_m3 = box[0] * box[1] * box[2]
+        weight_lbs = max(5.0, spec.typical_weight_lbs)
+        resale = max(0.0, spec.resale_usd)
+        return DetectedEntity(
+            label=spec.label,
+            category=spec.category,
+            bounding_box_3d_m=box,
+            est_weight_lbs=weight_lbs,
+            density_coefficient=_density_for_category(spec.category),
+            confidence=round(min(1.0, confidence), 2),
+            resale_potential_usd=resale,
+        )
+
     pixel_area = region["area"]
     box = _estimate_bounding_box(category, pixel_area, pixels_per_m2)
     volume_m3 = box[0] * box[1] * box[2]
@@ -790,6 +855,157 @@ def _resolve_fused_category(class_name: str, deterministic_category: Category) -
     return _coco_to_category(name), _label_for_category(_coco_to_category(name))
 
 
+def _has_plant_color(image: Any) -> bool:
+    """Check if an image crop contains plausible green/brown plant pixels."""
+    from PIL import Image as PILImage
+
+    if not isinstance(image, PILImage.Image):
+        image = PILImage.fromarray(image)
+    img = image.convert("RGB").resize((64, 64))
+    arr = np.array(img)
+    hsv = _rgb_to_hsv(arr)
+    h, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
+
+    green = ((h >= 35) & (h <= 85) & (s >= 20)).sum()
+    brown = ((h >= 10) & (h <= 35) & (s >= 20) & (v >= 20)).sum()
+    total = arr.shape[0] * arr.shape[1]
+    return ((green + brown) / total) > 0.05
+
+
+def _classify_crop(
+    image: Any,
+    bbox: Tuple[float, float, float, float],
+) -> Optional[Tuple[str, float, HaulingItemSpec]]:
+    """Zero-shot classify a cropped object using TinyCLIP and the hauling catalog."""
+    if not HAUL_CLIP_ENABLED:
+        return None
+
+    clip = get_classifier()
+    if not clip.available:
+        return None
+
+    try:
+        from PIL import Image
+    except ImportError:
+        return None
+
+    width, height = image.size
+    x1, y1, x2, y2 = (
+        max(0, int(bbox[0])),
+        max(0, int(bbox[1])),
+        min(width, int(bbox[2])),
+        min(height, int(bbox[3])),
+    )
+    if x2 <= x1 or y2 <= y1:
+        return None
+
+    crop = image.crop((x1, y1, x2, y2))
+    result = clip.classify(crop, _HAULING_CLIP_LABELS)
+    if result is None:
+        return None
+
+    # Common CLIP confusions: map near-synonyms to the more frequent hauling label.
+    canonical_key = {"ping pong table": "pool table"}.get(result.key, result.key)
+    spec = _HAULING_ITEM_CATALOG.get(canonical_key)
+    if spec is None or canonical_key == "person" or result.score < HAUL_CLIP_CONF:
+        return None
+
+    # Reject false "potted plant" if the crop has no green/brown plant color.
+    if canonical_key == "potted plant" and not _has_plant_color(crop):
+        return None
+
+    return canonical_key, result.score, spec
+
+
+def _merge_detections(
+    detections: List[Dict[str, Any]],
+    iou_threshold: float = 0.05,
+    containment_threshold: float = 0.25,
+) -> List[Dict[str, Any]]:
+    """
+    Merge fragmented detections of the same hauling object using union-find.
+
+    A low IoU threshold is intentional: segmentation often splits one object
+    (pool table, scooter, couch) into several adjacent regions, while distinct
+    objects of the same category rarely touch.  Containment catches small
+    sub-regions that sit almost entirely inside a larger object.
+    """
+
+    def _containment(inner: Tuple[float, ...], outer: Tuple[float, ...]) -> float:
+        x1 = max(inner[0], outer[0])
+        y1 = max(inner[1], outer[1])
+        x2 = min(inner[2], outer[2])
+        y2 = min(inner[3], outer[3])
+        inter = max(0.0, x2 - x1) * max(0.0, y2 - y1)
+        inner_area = max(1.0, (inner[2] - inner[0]) * (inner[3] - inner[1]))
+        return inter / inner_area
+
+    def _center_inside(inner: Tuple[float, ...], outer: Tuple[float, ...]) -> bool:
+        cx = (inner[0] + inner[2]) / 2.0
+        cy = (inner[1] + inner[3]) / 2.0
+        return outer[0] <= cx <= outer[2] and outer[1] <= cy <= outer[3]
+
+    n = len(detections)
+    if n == 0:
+        return []
+
+    parent = list(range(n))
+
+    def find(x: int) -> int:
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a: int, b: int) -> None:
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            a, b = detections[i], detections[j]
+            same_group = (
+                a["category"] == b["category"]
+                or a.get("clip_key") == b.get("clip_key")
+            )
+            if not same_group:
+                continue
+            iou = _iou(a["bbox"], b["bbox"])
+            containment = max(_containment(a["bbox"], b["bbox"]), _containment(b["bbox"], a["bbox"]))
+            center_inside = _center_inside(a["bbox"], b["bbox"]) or _center_inside(b["bbox"], a["bbox"])
+
+            # A small, unclassified fragment inside a larger classified object is part of it.
+            spec_merge = False
+            for larger, smaller in ((a, b), (b, a)):
+                if larger.get("spec") and not smaller.get("spec"):
+                    ci = _center_inside(smaller["bbox"], larger["bbox"])
+                    area_ratio = (smaller["pixel_area"] + 1.0) / (larger["pixel_area"] + 1.0)
+                    if ci and area_ratio < 0.35:
+                        spec_merge = True
+
+            if iou >= iou_threshold or containment >= containment_threshold or center_inside or spec_merge:
+                union(i, j)
+
+    # Pick the highest-quality detection from each connected component.
+    components: Dict[int, List[int]] = {}
+    for i in range(n):
+        components.setdefault(find(i), []).append(i)
+
+    kept: List[Dict[str, Any]] = []
+    for members in components.values():
+        best_idx = max(
+            members,
+            key=lambda idx: (
+                detections[idx].get("spec") is not None,
+                detections[idx]["pixel_area"],
+                detections[idx]["confidence"],
+            ),
+        )
+        kept.append(detections[best_idx])
+    return kept
+
+
 def _yolo_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity], Dict[str, Any], str]:
     """Run trained YOLOv8 ONNX object detection and convert outputs to entities."""
     from PIL import Image
@@ -820,12 +1036,45 @@ def _yolo_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity]
     return entities, {"detections": len(boxes)}, "yolov8_onnx"
 
 
+def _entity_for_detection(
+    image: Any,
+    bbox: Tuple[float, float, float, float],
+    pixel_area: float,
+    fallback_category: Category,
+    fallback_label: str,
+    fallback_confidence: float,
+    pixels_per_m2: float,
+) -> Optional[DetectedEntity]:
+    """Classify a detection crop with TinyCLIP, then build a DetectedEntity."""
+    classification = _classify_crop(image, bbox)
+    if classification:
+        key, score, spec = classification
+        confidence = min(1.0, max(0.0, score / 25.0))  # Normalize raw CLIP logit roughly.
+        return _region_to_entity(
+            {"area": pixel_area},
+            spec.category,
+            spec.label,
+            confidence,
+            pixels_per_m2,
+            spec=spec,
+        )
+    if pixel_area < 0.0001:
+        return None
+    return _region_to_entity(
+        {"area": pixel_area},
+        fallback_category,
+        fallback_label,
+        fallback_confidence,
+        pixels_per_m2,
+    )
+
+
 def _fused_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity], Dict[str, Any], str]:
     """
-    Fuse deterministic color/segmentation with YOLOv8 ONNX detections.
-    Segmentation splits distinct objects; YOLO provides trained class labels for the
-    largest regions.  Unmatched YOLO boxes are added as standalone entities, and
-    unmatched segments keep their deterministic category.
+    Fuse deterministic color/segmentation, YOLOv8 ONNX detections, and TinyCLIP
+    zero-shot classification.  Segmentation splits distinct objects, YOLO provides
+    trained bounding boxes, and TinyCLIP re-labels each crop with fine-grained
+    hauling-specific labels (motor scooter, pool table, helmet, etc.).
     """
     from PIL import Image
 
@@ -850,7 +1099,6 @@ def _fused_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity
     regions = _segment_kmeans(arr, n_clusters=6)
     for region in regions:
         region["category"] = _categorize_region(region, thumb_total_pixels, thumb_w, thumb_h)
-        # Convert thumbnail bbox to original image coordinates.
         min_r, min_c, max_r, max_c = region["bbox"]
         region["orig_bbox"] = (
             min_c * scale_x,
@@ -858,19 +1106,18 @@ def _fused_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity
             (max_c + 1) * scale_x,
             (max_r + 1) * scale_y,
         )
-        # Pixel area in original image coordinates.
         region["orig_pixel_area"] = region["area"] * scale_x * scale_y
 
     # ---- YOLO trained labels ----
     detector = _YoloOnnxDetector()
     yolo_boxes = detector.get_boxes(image) if detector.available else []
-    if not yolo_boxes:
-        raise RuntimeError("No trained YOLO detections; falling back to deterministic segmentation")
+    clip_available = HAUL_CLIP_ENABLED and get_classifier().available
+    if not yolo_boxes and not clip_available:
+        raise RuntimeError("No trained models available; falling back to deterministic segmentation")
 
     matched_yolo: set[int] = set()
     matched_region: set[int] = set()
 
-    # Greedily match YOLO boxes to segmentation regions by IoU.
     for yolo in sorted(yolo_boxes, key=lambda b: b["confidence"], reverse=True):
         best_idx = -1
         best_iou = 0.0
@@ -888,46 +1135,95 @@ def _fused_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity
             region["category"] = fused_category
             region["yolo_label"] = f"{yolo['class_name'].title()} / {fused_label}"
             region["yolo_confidence"] = yolo["confidence"]
-            # Use the YOLO bounding-box area for the object's physical size; the
-            # segmented region may be fragmented by items sitting on top.
+            region["yolo_bbox"] = yolo["bbox"]
             region["yolo_pixel_area"] = yolo["pixel_area"]
             matched_region.add(best_idx)
             matched_yolo.add(id(yolo))
 
-    entities: List[DetectedEntity] = []
-    for region in regions:
-        idx = regions.index(region)
-        category = region["category"]
-        # For YOLO-matched regions, trust the trained detector's bounding box for size.
+    # Build detection candidates with bounding boxes and fallback metadata.
+    detections: List[Dict[str, Any]] = []
+    for idx, region in enumerate(regions):
         pixel_area = region.get("yolo_pixel_area", region["orig_pixel_area"])
         if pixel_area < (width_px * height_px * 0.015):
             continue
+
+        bbox = region.get("yolo_bbox", region["orig_bbox"])
         if "yolo_label" in region:
-            label = region["yolo_label"]
-            confidence = region["yolo_confidence"]
+            fallback_category = region["category"]
+            fallback_label = region["yolo_label"]
+            fallback_confidence = region["yolo_confidence"]
         else:
-            label = _label_for_category(category)
-            confidence = _classify_dominant_color(region["mean_hsv"])[1]
-        entities.append(_region_to_entity({"area": pixel_area}, category, label, confidence, pixels_per_m2))
+            fallback_category = region["category"]
+            fallback_label = _label_for_category(region["category"])
+            fallback_confidence = _classify_dominant_color(region["mean_hsv"])[1]
+
+        detections.append({
+            "bbox": bbox,
+            "pixel_area": pixel_area,
+            "fallback_category": fallback_category,
+            "fallback_label": fallback_label,
+            "fallback_confidence": fallback_confidence,
+        })
 
     # Add YOLO boxes that did not overlap any segment (large standalone objects).
     for yolo in yolo_boxes:
         if id(yolo) in matched_yolo:
             continue
         box = yolo["bbox"]
+        if yolo["class_name"] == "person":
+            continue
         pixel_area = max(1.0, (box[2] - box[0]) * (box[3] - box[1]))
+        detections.append({
+            "bbox": box,
+            "pixel_area": pixel_area,
+            "fallback_category": yolo["category"],
+            "fallback_label": f"{yolo['class_name'].title()} / {_label_for_category(yolo['category'])}",
+            "fallback_confidence": yolo["confidence"],
+        })
+
+    # Classify the most promising crops first to keep latency low.
+    detections.sort(key=lambda d: d["pixel_area"], reverse=True)
+    classify_limit = min(HAUL_CLIP_MAX_CANDIDATES, len(detections))
+
+    classified: List[Dict[str, Any]] = []
+    for idx, det in enumerate(detections):
+        spec = None
+        clip_key: Optional[str] = None
+        clip_score = 0.0
+        if idx < classify_limit:
+            classification = _classify_crop(image, det["bbox"])
+            if classification:
+                clip_key, clip_score, spec = classification
+
+        classified.append({
+            "bbox": det["bbox"],
+            "pixel_area": det["pixel_area"],
+            "category": spec.category if spec else det["fallback_category"],
+            "label": spec.label if spec else det["fallback_label"],
+            "confidence": clip_score / 25.0 if spec else det["fallback_confidence"],
+            "spec": spec,
+            "clip_key": clip_key,
+        })
+
+    merged = _merge_detections(classified, iou_threshold=_env_float("HAUL_MERGE_IOU", 0.05))
+
+    entities: List[DetectedEntity] = []
+    for det in merged:
         entities.append(
             _region_to_entity(
-                {"area": pixel_area},
-                yolo["category"],
-                f"{yolo['class_name'].title()} / {_label_for_category(yolo['category'])}",
-                yolo["confidence"],
+                {"area": det["pixel_area"]},
+                det["category"],
+                det["label"],
+                det["confidence"],
                 pixels_per_m2,
+                spec=det.get("spec"),
             )
         )
 
     entities.sort(key=lambda e: e.est_weight_lbs, reverse=True)
     entities = entities[:15]
+
+    vision_source = "yolov8_tinyclip_fused" if clip_available else "yolov8_fused"
 
     features = {
         "segmented_regions": len(regions),
@@ -935,7 +1231,7 @@ def _fused_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity
         "fused_entities": len(entities),
         "frame_width_m": frame_width_m,
     }
-    return entities, features, "yolov8_fused"
+    return entities, features, vision_source
 
 
 
