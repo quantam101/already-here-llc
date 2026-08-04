@@ -115,6 +115,7 @@ class DetectedEntity:
     density_coefficient: float = 1.0
     confidence: float = 0.0
     resale_potential_usd: float = 0.0
+    pixel_bbox: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
 
 
 @dataclass(frozen=True)
@@ -800,6 +801,7 @@ def _region_to_entity(
     confidence: float,
     pixels_per_m2: float,
     spec: Optional[HaulingItemSpec] = None,
+    pixel_bbox: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
 ) -> DetectedEntity:
     """Convert a pixel region into a DetectedEntity with a 3-D bounding box."""
     if spec is not None and spec.dims_m[0] > 0.0:
@@ -815,6 +817,7 @@ def _region_to_entity(
             density_coefficient=_density_for_category(spec.category),
             confidence=round(min(1.0, confidence), 2),
             resale_potential_usd=resale,
+            pixel_bbox=pixel_bbox,
         )
 
     pixel_area = region["area"]
@@ -829,6 +832,7 @@ def _region_to_entity(
         density_coefficient=_density_for_category(category),
         confidence=round(min(1.0, confidence), 2),
         resale_potential_usd=_resale_estimate(category, weight_lbs),
+        pixel_bbox=pixel_bbox,
     )
 
 
@@ -1030,6 +1034,7 @@ def _yolo_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity]
             f"{b['class_name'].title()} / {_label_for_category(b['category'])}",
             b["confidence"],
             pixels_per_m2,
+            pixel_bbox=b["bbox"],
         )
         for b in boxes
     ]
@@ -1057,6 +1062,7 @@ def _entity_for_detection(
             confidence,
             pixels_per_m2,
             spec=spec,
+            pixel_bbox=bbox,
         )
     if pixel_area < 0.0001:
         return None
@@ -1066,6 +1072,7 @@ def _entity_for_detection(
         fallback_label,
         fallback_confidence,
         pixels_per_m2,
+        pixel_bbox=bbox,
     )
 
 
@@ -1217,6 +1224,7 @@ def _fused_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity
                 det["confidence"],
                 pixels_per_m2,
                 spec=det.get("spec"),
+                pixel_bbox=det["bbox"],
             )
         )
 

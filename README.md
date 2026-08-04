@@ -80,6 +80,9 @@ The default vision pipeline is **yolov8_tinyclip_fused** (YOLOv8 ONNX boxes + Ti
 - `GET /api/usage` — Per-organization rate-limit, scan usage, and billing
 - `GET /api/scans` — Scan history for the authenticated organization
 - `GET /api/billing` — Aggregated billing metrics for the authenticated organization
+- `POST /api/feedback` — Submit corrected labels/ground-truth for a scan
+- `GET /api/feedback` — List labeled feedback for the authenticated organization
+- `GET /api/feedback/export?fmt=yolo|coco&as_zip=true` — Export labeled training dataset
 - `GET /healthz` — Liveness probe
 - `GET /readyz` — Readiness probe
 - `GET /metrics` — Prometheus-compatible metrics
@@ -93,12 +96,16 @@ The default vision pipeline is **yolov8_tinyclip_fused** (YOLOv8 ONNX boxes + Ti
 | `REDIS_URL` | *(none)* | Optional Redis for global per-org rate limits and quotas across pods |
 | `HAUL_SCAN_STORE` | `data/haul_scans.db` | SQLite path or `memory` for scan persistence |
 | `HAUL_REQUEST_SIGNING_SECRET` | *(none)* | Optional HMAC-SHA256 signature secret for `/api/scan` |
+| `HAUL_FEEDBACK_ENABLED` | `true` | Enable labeled feedback collection |
+| `HAUL_SAVE_SCAN_IMAGES` | `true` | Save uploaded scan images for later review/training |
+| `HAUL_FEEDBACK_DIR` | `data/feedback` | Directory for labeled feedback images |
+| `HAUL_SCAN_IMAGES_DIR` | `data/scan_images` | Directory for uploaded scan images |
 | `HAUL_LOG_JSON` | `false` | Emit structured JSON logs |
 | `HAUL_CORS_ORIGINS` | `*` | Comma-separated allowed CORS origins |
 
 `HAUL_API_KEYS` supports a JSON object keyed by key string, or a list of objects with a `key` field. Each entry sets `org`, `tier` (`free`/`pro`/`enterprise`), per-minute request limit (`rpm`), and daily scan quota (`daily_quota`).
 
-Per-organization scan metadata (quotes, recovery values, detected entities) is persisted to `HAUL_SCAN_STORE` and exposed via `/api/scans`, `/api/usage`, and `/api/billing`. Raw image bytes are never stored.
+Per-organization scan metadata (quotes, recovery values, detected entities) is persisted to `HAUL_SCAN_STORE` and exposed via `/api/scans`, `/api/usage`, and `/api/billing`. Scan images can be saved to `HAUL_SCAN_IMAGES_DIR` when `HAUL_SAVE_SCAN_IMAGES=true` so drivers/reviewers can later submit corrected labels via `POST /api/feedback`; these labeled photos export as YOLO/COCO datasets from `GET /api/feedback/export` for model fine-tuning.
 
 ### Verification
 

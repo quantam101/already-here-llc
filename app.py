@@ -29,12 +29,13 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from fastapi import FastAPI, File, Request, UploadFile
+from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 
 import uvicorn
 
+from runtime.photo_ai_feedback import FeedbackStore, get_feedback_store
 from runtime.photo_ai_haul import HaulScanner, MAX_UPLOAD_BYTES
 from runtime.photo_ai_store import ScanStore
 
@@ -62,6 +63,26 @@ HAUL_PORT = _env_int("HAUL_SCANNER_PORT", 8000)
 HAUL_HOST = _env("HAUL_SCANNER_HOST", "0.0.0.0")
 CORS_ORIGINS = _env("HAUL_CORS_ORIGINS", "*").split(",")
 LOG_JSON = _env_bool("HAUL_LOG_JSON", False)
+SAVE_SCAN_IMAGES = _env_bool("HAUL_SAVE_SCAN_IMAGES", True)
+SCAN_IMAGES_DIR = _env("HAUL_SCAN_IMAGES_DIR", "data/scan_images")
+
+# --------------------------------------------------------------------
+# Helpers
+# --------------------------------------------------------------------
+
+def _save_scan_image(scan_id: str, image_bytes: bytes) -> Optional[str]:
+    if not SAVE_SCAN_IMAGES or not image_bytes:
+        return None
+    try:
+        from pathlib import Path
+        dest = Path(SCAN_IMAGES_DIR) / f"{scan_id}.jpg"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        with open(dest, "wb") as f:
+            f.write(image_bytes)
+        return str(dest)
+    except Exception:
+        logger.exception("Failed to save scan image")
+    return None
 
 # --------------------------------------------------------------------
 # Logging setup
@@ -385,6 +406,7 @@ class _EnterpriseAuth:
 
 AUTH = _EnterpriseAuth(API_KEYS, RATE_STORE)
 SCAN_STORE = ScanStore()
+FEEDBACK_STORE: FeedbackStore = get_feedback_store()
 HAUL_REQUEST_SIGNING_SECRET = _env("HAUL_REQUEST_SIGNING_SECRET", "")
 
 # --------------------------------------------------------------------
@@ -554,7 +576,10 @@ async def handle_mobile_scan(request: Request, file: UploadFile = File(...)) -> 
     METRICS.inc("haul_scans_total", {"org": org_id, "tier": org_config.get("tier", "none")})
     METRICS.observe("haul_scan_duration_seconds", duration, {"org": org_id})
 
-    # Persist scan metadata (never the image bytes) for usage and billing.
+    # Persist scan image for later feedback/retraining.
+    _save_scan_image(result.scan_id, image_bytes)
+
+    # Persist scan metadata for usage and billing.
     trailer_fill_pct = _parse_trailer_fill_pct(result.trailer_capacity_used)
     SCAN_STORE.record_scan(
         org_id=org_id,
@@ -624,6 +649,108 @@ async def billing(request: Request) -> JSONResponse:
     if error:
         return error
     return JSONResponse(content=SCAN_STORE.get_billing(org_config["org"]))
+
+
+@app.post("/api/feedback")
+async def record_feedback(
+    request: Request,
+    file: Optional[UploadFile] = File(None),
+    scan_id: str = Form(""),
+    corrected_entities: str = Form("[]"),
+    feedback_type: str = Form("correct"),
+    notes: str = Form(""),
+) -> JSONResponse:
+    """Record user corrections for a scan to build a labeled training dataset."""
+    org_config, error = AUTH.authenticate(request)
+    if error:
+        return error
+    org_id = org_config["org"]
+
+    image_bytes = await file.read() if file else None
+    try:
+        predicted = []
+        if scan_id:
+            # Attach the original predicted entities for reference.
+            history = SCAN_STORE.get_scan_history(org_id, limit=1)
+            for h in history:
+                if h.scan_id == scan_id:
+                    predicted = h.entities
+                    break
+        corrected = json.loads(corrected_entities)
+        feedback_id = FEEDBACK_STORE.record_feedback(
+            org_id=org_id,
+            scan_id=scan_id or None,
+            image_bytes=image_bytes,
+            predicted_entities=predicted,
+            corrected_entities=corrected,
+            feedback_type=feedback_type,
+            notes=notes,
+        )
+    except Exception:
+        logger.exception("Feedback recording failed")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to record feedback."},
+        )
+    return JSONResponse({"feedback_id": feedback_id, "status": "ok"})
+
+
+@app.get("/api/feedback")
+async def list_feedback(request: Request, limit: int = 50) -> JSONResponse:
+    org_config, error = AUTH.authenticate(request)
+    if error:
+        return error
+    rows = FEEDBACK_STORE.get_feedback(org_config["org"], limit=min(limit, 200))
+    return JSONResponse(
+        {
+            "org": org_config["org"],
+            "count": len(rows),
+            "feedback": [
+                {
+                    "id": r.id,
+                    "scan_id": r.scan_id,
+                    "created_at": r.created_at,
+                    "feedback_type": r.feedback_type,
+                    "notes": r.notes,
+                    "image_path": r.image_path,
+                    "image_width": r.image_width,
+                    "image_height": r.image_height,
+                    "predicted_entities": r.predicted_entities,
+                    "corrected_entities": r.corrected_entities,
+                }
+                for r in rows
+            ],
+        }
+    )
+
+
+@app.get("/api/feedback/export")
+async def export_feedback(
+    request: Request,
+    fmt: str = "yolo",
+    as_zip: bool = False,
+) -> JSONResponse:
+    """Export labeled feedback as a YOLO or COCO object-detection dataset."""
+    org_config, error = AUTH.authenticate(request)
+    if error:
+        return error
+    try:
+        if as_zip:
+            path = FEEDBACK_STORE.export_zip(org_config["org"], fmt=fmt)
+            return FileResponse(path, media_type="application/zip", filename=f"haul_feedback_{org_config['org']}_{fmt}.zip")
+        else:
+            path = (
+                FEEDBACK_STORE.export_yolo(org_config["org"])
+                if fmt == "yolo"
+                else FEEDBACK_STORE.export_coco(org_config["org"])
+            )
+            return JSONResponse({"export_dir": path, "format": fmt})
+    except Exception:
+        logger.exception("Feedback export failed")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to export feedback dataset."},
+        )
 
 
 # --------------------------------------------------------------------
