@@ -1,0 +1,83 @@
+name: Deploy Photo AI Haul Scanner to Oracle VM
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app.py'
+      - 'runtime/photo_ai_haul.py'
+      - 'requirements.txt'
+      - '.github/workflows/deploy-photo-ai-haul.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Deploy Photo AI Haul Scanner to Oracle VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ORACLE_VM_HOST }}
+          username: opc
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          port: 22
+          debug: true
+          script: |
+            set -e
+
+            if [ -d ~/already-here-llc ]; then
+              cd ~/already-here-llc && git pull origin main
+            else
+              git clone https://github.com/quantam101/already-here-llc.git ~/already-here-llc
+            fi
+
+            cd ~/already-here-llc
+
+            export PATH="$HOME/.local/bin:$PATH"
+            if ! python3 -m pip --version >/dev/null 2>&1; then
+              curl -sS https://bootstrap.pypa.io/get-pip.py | python3 - --user --quiet
+            fi
+            python3 -m pip install --user --quiet -r requirements.txt
+
+            mkdir -p runtime data
+            touch runtime/.env
+            grep -q '^HAUL_SCANNER_PORT=' runtime/.env || cat >> runtime/.env << 'ENVEOF'
+            HAUL_SCANNER_HOST=0.0.0.0
+            HAUL_SCANNER_PORT=8000
+            HAUL_CORS_ORIGINS=*
+            HAUL_TRAILER_CAPACITY_CU_YD=10.6
+            HAUL_BASE_DISPATCH_FEE_USD=75.0
+            HAUL_RATE_PER_CU_YD_USD=38.0
+            HAUL_RECOVERY_CREDIT_PCT=0.25
+            HAUL_MAX_UPLOAD_BYTES=26214400
+            HAUL_PROCESS_TIMEOUT_SECONDS=30.0
+            GMAOS_MODE=strict_zero_spend
+            GMAOS_PAID_ADAPTERS_ENABLED=false
+            ENVEOF
+
+            export PATH="$HOME/.npm-global/bin:$PATH"
+            if ! command -v pm2 &>/dev/null; then
+              npm install -g pm2
+            fi
+
+            if pm2 describe photo-ai-haul > /dev/null 2>&1; then
+              pm2 reload photo-ai-haul --update-env
+            else
+              pm2 start "python3 -m uvicorn app:app --host 0.0.0.0 --port 8000" \
+                --name photo-ai-haul \
+                --cwd ~/already-here-llc \
+                --exp-backoff-restart-delay=100
+            fi
+
+            pm2 save
+
+            sleep 5
+            curl -sf http://localhost:8000/healthz | grep '"status":"ok"'
+            echo ""
+            echo "Photo AI Haul Scanner deployed successfully"
+            echo "Access: http://$(curl -s ifconfig.me):8000"
