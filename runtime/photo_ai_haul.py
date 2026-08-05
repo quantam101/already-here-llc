@@ -27,6 +27,7 @@ import asyncio
 import base64
 import io
 import json
+import ast
 import logging
 import math
 import multiprocessing as mp
@@ -699,16 +700,56 @@ def _iou(a: Tuple[float, float, float, float], b: Tuple[float, float, float, flo
 
 
 class _YoloOnnxDetector:
-    """Lazy-singleton wrapper around a YOLOv8 ONNX model for CPU inference."""
+    """Lazy-singleton wrapper around a YOLO ONNX model for CPU inference.
+
+    Reads the model input size, class count, and class names from the ONNX
+    file itself so the same detector works with the original COCO YOLOv8n
+    model and a domain-fine-tuned hauling model.
+    """
 
     _instance: Optional["_YoloOnnxDetector"] = None
-    _lock = False
 
     def __new__(cls) -> "_YoloOnnxDetector":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._session = None
+            cls._instance._class_names: List[str] = []
+            cls._instance._input_h = 640
+            cls._instance._input_w = 640
         return cls._instance
+
+    def _load_meta(self, session: Any) -> None:
+        """Parse class names and input size from ONNX custom metadata / shape."""
+        shape = session.get_inputs()[0].shape
+        if len(shape) >= 4:
+            try:
+                self._input_h = int(shape[2])
+                self._input_w = int(shape[3])
+            except Exception:
+                pass
+
+        meta = session.get_modelmeta().custom_metadata_map
+        imgsz = meta.get("imgsz")
+        if imgsz:
+            try:
+                parsed = ast.literal_eval(imgsz)
+                if isinstance(parsed, (list, tuple)):
+                    if len(parsed) == 2:
+                        self._input_h, self._input_w = int(parsed[0]), int(parsed[1])
+                    else:
+                        self._input_h = self._input_w = int(parsed[0])
+            except Exception:
+                pass
+
+        names = meta.get("names")
+        if names:
+            try:
+                names_dict = ast.literal_eval(names)
+                self._class_names = [names_dict[i] for i in range(len(names_dict))]
+            except Exception:
+                self._class_names = list(_COCO_NAMES)
+        else:
+            self._class_names = list(_COCO_NAMES)
 
     @property
     def available(self) -> bool:
@@ -721,22 +762,30 @@ class _YoloOnnxDetector:
                 if not model_path.exists():
                     return False
                 self._session = ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
-            return self._session is not None
+                self._load_meta(self._session)
+            return self._session is not None and len(self._class_names) > 0
         except Exception as exc:
             logger.warning("YOLO ONNX detector not available: %s", exc)
             return False
+
+    @property
+    def class_names(self) -> List[str]:
+        if not self._class_names:
+            self.available
+        return self._class_names
 
     def _preprocess(self, image: Any) -> Tuple[np.ndarray, float, float, int, int]:
         """Letterbox resize and return float32 NCHW tensor plus scale/padding."""
         from PIL import Image as PILImage
         orig_w, orig_h = image.size
-        scale = 640.0 / max(orig_w, orig_h)
+        input_w, input_h = self._input_w, self._input_h
+        scale = min(input_w / orig_w, input_h / orig_h)
         new_w = int(orig_w * scale)
         new_h = int(orig_h * scale)
-        pad_w = (640 - new_w) // 2
-        pad_h = (640 - new_h) // 2
+        pad_w = (input_w - new_w) // 2
+        pad_h = (input_h - new_h) // 2
 
-        letter = PILImage.new("RGB", (640, 640), (114, 114, 114))
+        letter = PILImage.new("RGB", (input_w, input_h), (114, 114, 114))
         resized = image.convert("RGB").resize((new_w, new_h), PILImage.Resampling.LANCZOS)
         letter.paste(resized, (pad_w, pad_h))
 
@@ -744,22 +793,24 @@ class _YoloOnnxDetector:
         input_tensor = np.transpose(arr, (2, 0, 1))[None, ...]
         return input_tensor, scale, pad_w, pad_h, orig_w, orig_h
 
-    def get_boxes(self, image: Any) -> List[Dict[str, Any]]:
-        """Run YOLOv8 ONNX NMS and return filtered detections in original image coordinates."""
-        import onnxruntime as ort
-        if self._session is None:
-            raise RuntimeError("ONNX session not initialized")
+    def _is_allowed_class(self, class_name: str) -> bool:
+        """Allow COCO whitelist classes and any hauling-catalog class."""
+        name = class_name.lower()
+        return name in _HAULING_COCO_WHITELIST or name in _HAULING_ITEM_CATALOG
 
-        input_tensor, scale, pad_w, pad_h, orig_w, orig_h = self._preprocess(image)
-        outputs = self._session.run(None, {self._session.get_inputs()[0].name: input_tensor})
-        predictions = outputs[0][0].T  # [8400, 84]
-
+    def _extract_raw_boxes(
+        self,
+        predictions: np.ndarray,
+        scale: float,
+        pad_w: int,
+        pad_h: int,
+        orig_w: int,
+        orig_h: int,
+        offset_x: float = 0.0,
+        offset_y: float = 0.0,
+    ) -> Tuple[List[np.ndarray], List[float], List[int]]:
+        """Convert ONNX output rows to XYXY boxes in (offset) original image coordinates."""
         conf_threshold = _env_float("HAUL_YOLO_CONF", 0.55)
-        min_area_ratio = _env_float("HAUL_YOLO_MIN_AREA_RATIO", 0.01)
-        max_area_ratio = _env_float("HAUL_YOLO_MAX_AREA_RATIO", 0.5)
-        max_detections = _env_int("HAUL_YOLO_MAX_DETECTIONS", 8)
-        min_area_px = orig_w * orig_h * min_area_ratio
-        max_area_px = orig_w * orig_h * max_area_ratio
 
         boxes_xyxy: List[np.ndarray] = []
         confidences: List[float] = []
@@ -774,48 +825,137 @@ class _YoloOnnxDetector:
             if confidence < conf_threshold:
                 continue
 
-            class_name = _COCO_NAMES[class_id]
-            if class_name not in _HAULING_COCO_WHITELIST:
+            class_name = self._class_names[class_id] if class_id < len(self._class_names) else ""
+            if not class_name or not self._is_allowed_class(class_name):
                 continue
 
             x1, y1 = x - w / 2.0, y - h / 2.0
             x2, y2 = x + w / 2.0, y + h / 2.0
             # Remove padding and scale back to original image coordinates.
-            x1 = (x1 - pad_w) / scale
-            x2 = (x2 - pad_w) / scale
-            y1 = (y1 - pad_h) / scale
-            y2 = (y2 - pad_h) / scale
+            x1 = (x1 - pad_w) / scale + offset_x
+            x2 = (x2 - pad_w) / scale + offset_x
+            y1 = (y1 - pad_h) / scale + offset_y
+            y2 = (y2 - pad_h) / scale + offset_y
 
-            # Clip to image bounds and drop degenerate boxes.
-            x1, y1 = max(0.0, x1), max(0.0, y1)
-            x2, y2 = min(orig_w, x2), min(orig_h, y2)
+            x1 = max(offset_x, x1)
+            y1 = max(offset_y, y1)
+            x2 = min(offset_x + orig_w, x2)
+            y2 = min(offset_y + orig_h, y2)
             area = max(0.0, x2 - x1) * max(0.0, y2 - y1)
-            if area < min_area_px or area > max_area_px:
+            if area <= 0:
                 continue
 
             boxes_xyxy.append(np.array([x1, y1, x2, y2]))
             confidences.append(confidence)
             class_ids.append(class_id)
 
+        return boxes_xyxy, confidences, class_ids
+
+    def _run_on_image(
+        self,
+        image: Any,
+        offset_x: float = 0.0,
+        offset_y: float = 0.0,
+    ) -> Tuple[List[np.ndarray], List[float], List[int]]:
+        """Run a single ONNX inference on an image (possibly a crop) and return raw boxes."""
+        input_tensor, scale, pad_w, pad_h, orig_w, orig_h = self._preprocess(image)
+        outputs = self._session.run(None, {self._session.get_inputs()[0].name: input_tensor})
+        predictions = outputs[0][0].T  # [anchors, 4 + nc]
+        return self._extract_raw_boxes(
+            predictions, scale, pad_w, pad_h, orig_w, orig_h, offset_x, offset_y
+        )
+
+    @staticmethod
+    def _tile_crops(width: int, height: int, grid: int, overlap: float) -> List[Tuple[float, float, float, float]]:
+        """Generate overlapping crop boxes covering the image in a grid."""
+        if grid <= 1:
+            return [(0.0, 0.0, float(width), float(height))]
+        crops = []
+        tile_w = width / grid * (1.0 + overlap)
+        tile_h = height / grid * (1.0 + overlap)
+        step_x = width / grid
+        step_y = height / grid
+        for row in range(grid):
+            for col in range(grid):
+                x1 = col * step_x
+                y1 = row * step_y
+                x2 = min(float(width), x1 + tile_w)
+                y2 = min(float(height), y1 + tile_h)
+                crops.append((x1, y1, x2, y2))
+        return crops
+
+    def get_boxes(self, image: Any) -> List[Dict[str, Any]]:
+        """Run YOLO ONNX NMS and return filtered detections in original image coordinates.
+
+        Includes a multi-scale tiling pass for small objects (helmets, tools, etc.)
+        when the source image is much larger than the model input.
+        """
+        import onnxruntime as ort
+        if self._session is None:
+            raise RuntimeError("ONNX session not initialized")
+
+        from PIL import Image as PILImage
+        image = image.convert("RGB") if image.mode != "RGB" else image
+        full_w, full_h = image.size
+        min_area_ratio = _env_float("HAUL_YOLO_MIN_AREA_RATIO", 0.01)
+        max_area_ratio = _env_float("HAUL_YOLO_MAX_AREA_RATIO", 0.5)
+        min_area_px = full_w * full_h * min_area_ratio
+        max_area_px = full_w * full_h * max_area_ratio
+
+        boxes_xyxy: List[np.ndarray] = []
+        confidences: List[float] = []
+        class_ids: List[int] = []
+
+        # Full-image pass.
+        b, c, ids = self._run_on_image(image)
+        boxes_xyxy.extend(b)
+        confidences.extend(c)
+        class_ids.extend(ids)
+
+        # Tiling pass for small objects.
+        tile_grid = _env_int("HAUL_YOLO_TILE_GRID", 2)
+        tile_overlap = _env_float("HAUL_YOLO_TILE_OVERLAP", 0.2)
+        if tile_grid > 1 and (full_w > self._input_w * 1.5 or full_h > self._input_h * 1.5):
+            for x1, y1, x2, y2 in self._tile_crops(full_w, full_h, tile_grid, tile_overlap):
+                crop = image.crop((int(x1), int(y1), int(x2), int(y2)))
+                b, c, ids = self._run_on_image(crop, offset_x=x1, offset_y=y1)
+                boxes_xyxy.extend(b)
+                confidences.extend(c)
+                class_ids.extend(ids)
+
         if not boxes_xyxy:
             return []
 
-        boxes = np.stack(boxes_xyxy)
-        keep = _nms(boxes, np.array(confidences), iou_threshold=_env_float("HAUL_YOLO_IOU", 0.3))
+        # Filter by area relative to full image.
+        filtered = [
+            (box, conf, cid)
+            for box, conf, cid in zip(boxes_xyxy, confidences, class_ids)
+            if min_area_px <= (box[2] - box[0]) * (box[3] - box[1]) <= max_area_px
+        ]
+        if not filtered:
+            return []
 
-        # Keep only the highest-confidence detections to avoid hallucination floods.
+        boxes = np.stack([box for box, _, _ in filtered])
+        scores = np.array([conf for _, conf, _ in filtered])
+        class_ids = [cid for _, _, cid in filtered]
+
+        max_detections = _env_int("HAUL_YOLO_MAX_DETECTIONS", 12)
+        keep = _nms(boxes, scores, iou_threshold=_env_float("HAUL_YOLO_IOU", 0.3))
         keep = keep[:max_detections]
 
         results: List[Dict[str, Any]] = []
         for idx in keep:
             x1, y1, x2, y2 = boxes[idx]
-            class_name = _COCO_NAMES[class_ids[idx]]
+            class_name = self._class_names[class_ids[idx]]
+            category = _coco_to_category(class_name)
+            spec = _HAULING_ITEM_CATALOG.get(class_name.lower())
             results.append({
                 "bbox": (float(x1), float(y1), float(x2), float(y2)),
                 "class_name": class_name,
-                "category": _coco_to_category(class_name),
-                "confidence": round(confidences[idx], 2),
+                "category": category,
+                "confidence": round(float(scores[idx]), 2),
                 "pixel_area": float((x2 - x1) * (y2 - y1)),
+                "spec": spec,
             })
         return results
 
@@ -1057,9 +1197,10 @@ def _yolo_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity]
         _region_to_entity(
             {"area": b["pixel_area"]},
             b["category"],
-            f"{b['class_name'].title()} / {_label_for_category(b['category'])}",
+            b["spec"].label if b.get("spec") else f"{b['class_name'].title()} / {_label_for_category(b['category'])}",
             b["confidence"],
             pixels_per_m2,
+            spec=b.get("spec"),
             pixel_bbox=b["bbox"],
         )
         for b in boxes
@@ -1075,6 +1216,7 @@ def _entity_for_detection(
     fallback_label: str,
     fallback_confidence: float,
     pixels_per_m2: float,
+    fallback_spec: Optional[HaulingItemSpec] = None,
 ) -> Optional[DetectedEntity]:
     """Classify a detection crop with TinyCLIP, then build a DetectedEntity."""
     classification = _classify_crop(image, bbox)
@@ -1092,12 +1234,14 @@ def _entity_for_detection(
         )
     if pixel_area < 0.0001:
         return None
+    spec = fallback_spec
     return _region_to_entity(
         {"area": pixel_area},
-        fallback_category,
-        fallback_label,
+        spec.category if spec else fallback_category,
+        spec.label if spec else fallback_label,
         fallback_confidence,
         pixels_per_m2,
+        spec=spec,
         pixel_bbox=bbox,
     )
 
@@ -1166,7 +1310,12 @@ def _fused_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity
             deterministic_category = region.get("category", Category.GENERAL_DEBRIS)
             fused_category, fused_label = _resolve_fused_category(yolo["class_name"], deterministic_category)
             region["category"] = fused_category
-            region["yolo_label"] = f"{yolo['class_name'].title()} / {fused_label}"
+            yolo_spec = yolo.get("spec") or _HAULING_ITEM_CATALOG.get(yolo["class_name"].lower())
+            region["yolo_spec"] = yolo_spec
+            if yolo_spec:
+                region["yolo_label"] = yolo_spec.label
+            else:
+                region["yolo_label"] = f"{yolo['class_name'].title()} / {fused_label}"
             region["yolo_confidence"] = yolo["confidence"]
             region["yolo_bbox"] = yolo["bbox"]
             region["yolo_pixel_area"] = yolo["pixel_area"]
@@ -1185,10 +1334,12 @@ def _fused_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity
             fallback_category = region["category"]
             fallback_label = region["yolo_label"]
             fallback_confidence = region["yolo_confidence"]
+            fallback_spec = region.get("yolo_spec")
         else:
             fallback_category = region["category"]
             fallback_label = _label_for_category(region["category"])
             fallback_confidence = _classify_dominant_color(region["mean_hsv"])[1]
+            fallback_spec = None
 
         detections.append({
             "bbox": bbox,
@@ -1196,6 +1347,7 @@ def _fused_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity
             "fallback_category": fallback_category,
             "fallback_label": fallback_label,
             "fallback_confidence": fallback_confidence,
+            "fallback_spec": fallback_spec,
         })
 
     # Add YOLO boxes that did not overlap any segment (large standalone objects).
@@ -1205,13 +1357,15 @@ def _fused_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity
         box = yolo["bbox"]
         if yolo["class_name"] == "person":
             continue
+        yolo_spec = yolo.get("spec")
         pixel_area = max(1.0, (box[2] - box[0]) * (box[3] - box[1]))
         detections.append({
             "bbox": box,
             "pixel_area": pixel_area,
-            "fallback_category": yolo["category"],
-            "fallback_label": f"{yolo['class_name'].title()} / {_label_for_category(yolo['category'])}",
+            "fallback_category": yolo_spec.category if yolo_spec else yolo["category"],
+            "fallback_label": yolo_spec.label if yolo_spec else f"{yolo['class_name'].title()} / {_label_for_category(yolo['category'])}",
             "fallback_confidence": yolo["confidence"],
+            "fallback_spec": yolo_spec,
         })
 
     # Classify the most promising crops first to keep latency low.
@@ -1234,7 +1388,7 @@ def _fused_detect(image_bytes: bytes, scan_id: str) -> Tuple[List[DetectedEntity
             "category": spec.category if spec else det["fallback_category"],
             "label": spec.label if spec else det["fallback_label"],
             "confidence": clip_score / 25.0 if spec else det["fallback_confidence"],
-            "spec": spec,
+            "spec": spec if spec else det.get("fallback_spec"),
             "clip_key": clip_key,
         })
 

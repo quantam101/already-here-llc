@@ -1,0 +1,9 @@
+# Training-only dependencies for scripts/build_training_db.py and scripts/train_haul_detector.py
+# Install in addition to requirements.txt when fine-tuning the hauling YOLO detector.
+
+torch==2.13.0
+torchvision==0.28.0
+ultralytics==8.4.115
+onnx==1.22.0
+onnxslim==0.1.95
+opencv-python==4.8.1.78
