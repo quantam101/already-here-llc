@@ -257,36 +257,44 @@ For reporting and human review, the physical tables group into:
 ## 5. Opportunity Ranking Algorithm
 
 ### 5.1 Scoring Dimensions
-Each opportunity is scored on the following dimensions, rated 0–10. The 0–10 scale maps directly to the `RevenueCommandRecord` numeric fields.
+Each opportunity is scored on a 0–10 scale. Component scores are drawn from `RevenueCommandRecord` numeric fields or derived from canonical record fields (`estimated_revenue`, `cost_required`, `required_effort`, `setup_cost`, `time_to_revenue`, `stacking_fit`).
 
-| Dimension | Weight | Record Field | Higher Means |
+| Dimension | Weight | Source | Higher Score Means |
 | :-- | :-- | :-- | :-- |
-| Speed to revenue | 15% | `speedToProofOfWork` / `dailyRevenueImpact` | Can close quickly. |
-| Profit potential | 15% | `dailyRevenueImpact` + margin estimate | High net margin. |
-| Recurring income | 20% | `recurringRevenuePotential` | Creates MRR/retainer. |
-| Audience fit / trust | 10% | `dataNetworkValue` | Matches existing buyers and trust base. |
-| Margin | 10% | `dailyRevenueImpact` + cost model | Strong gross/net margin. |
-| Required effort | -5% | inverted `buildDependency` | Lower effort is better. |
-| Setup cost | -5% | inverted `systemRiskReduction` | Lower setup cost is better. |
-| Compatibility / stacking fit | 10% | `buildDependency` + stack tags | Fits current tooling and lanes. |
-| Proof-of-work value | 10% | `speedToProofOfWork` | Fast internal demonstration. |
-| Reusable asset value | 10% | `reusableProductPotential` | Can become template or product. |
+| Speed to revenue | 15% | `speedToRevenueScore = 10 - normalize(time_to_revenue, MAX_DAYS=90)` | Faster time to first dollar. |
+| Profit potential | 15% | `dailyRevenueImpact` | Higher net revenue impact. |
+| Recurring income | 20% | `recurringRevenuePotential` | Strong MRR or retainer potential. |
+| Audience fit / trust | 10% | `audienceTrustScore = (dataNetworkValue + systemRiskReduction) / 2` | Better buyer fit and lower trust risk. |
+| Margin | 10% | `marginScore = 10 * ((estimated_revenue - cost_required) / estimated_revenue)` | Strong gross/net margin. |
+| Required effort | 5% | `effortCompatibilityScore = 10 - effortEstimate` | Lower required effort. `effortEstimate` defaults to `buildDependency` when `required_effort` is absent. |
+| Setup cost | 5% | `setupCostCompatibilityScore = 10 - setupCostEstimate` | Lower setup cost. `setupCostEstimate` defaults to `cost_required / MAX_SETUP_COST_USD` when `setup_cost` is absent. |
+| Compatibility / stacking fit | 10% | `compatibilityScore = stackMatchRatio * 10` | Better fit with current tooling and lanes. |
+| Proof-of-work value | 5% | `speedToProofOfWork` | Fast internal demonstration. |
+| Reusable asset value | 5% | `reusableProductPotential` | Can become template or product. |
+
+**Normalization rules**
+- All derived scores are clamped to `[0, 10]`.
+- `normalize(value, max)` returns `min(10, max(0, (value / max) * 10))`.
+- `MAX_DAYS` = 90. `MAX_SETUP_COST_USD` = 10,000.
+- `stackMatchRatio` = matching `stacking_fit` tags / current stack tag count; defaults to 0.5 when no stack data exists.
 
 ### 5.2 Formula
 ```text
-rawScore = (0.15 * speedToRevenue)
-        + (0.15 * profitPotential)
-        + (0.20 * recurringIncome)
-        + (0.10 * audienceFit)
-        + (0.10 * margin)
-        - (0.05 * effortPenalty)
-        - (0.05 * setupCostPenalty)
-        + (0.10 * compatibility)
-        + (0.10 * proofOfWorkValue)
-        + (0.10 * reusableAssetValue)
+rawScore = (0.15 * speedToRevenueScore)
+        + (0.15 * profitScore)
+        + (0.20 * recurringScore)
+        + (0.10 * audienceTrustScore)
+        + (0.10 * marginScore)
+        + (0.05 * effortCompatibilityScore)
+        + (0.05 * setupCostCompatibilityScore)
+        + (0.10 * compatibilityScore)
+        + (0.05 * proofOfWorkScore)
+        + (0.05 * reusableAssetScore)
 
-normalizedScore = round(rawScore, 2)
+normalizedScore = round(clamp(rawScore, 0, 10), 2)
 ```
+
+Weights sum to `1.0` and every term uses a field whose semantics match its sign, so the maximum score is `10.0` and the `P0` threshold is reachable.
 
 ### 5.3 Priority Tiers
 | Score | Priority | Action |
@@ -297,7 +305,7 @@ normalizedScore = round(rawScore, 2)
 
 ### 5.4 Tie-Breakers
 1. Highest `recurringRevenuePotential`.
-2. Lowest `buildDependency`.
+2. Lowest `buildDependency` (fewer blocking dependencies).
 3. Highest `dataNetworkValue`.
 4. Earliest `recommendedFollowUpDate`.
 
