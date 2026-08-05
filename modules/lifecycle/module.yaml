@@ -1,13 +1,30 @@
 module:
   id: lifecycle
-  name: lifecycle
-  version: 0.1.0
-  state: disabled_stale_scaffold
+  name: Lifecycle Management
+  version: 2.0.0
+  state: production_ready
   cost_mode: zero_spend
-  enabled: false
-  disabled_reason: "Placeholder module is not production source. Keep disabled until replaced by verified implementation."
+  enabled: true
+  owner: stephen-franklin
+  purpose: Lifelong Catch and Correct, proof loops, quality governance, and correction logging.
+  allowed_connectors:
+    - local_files
+    - github_read
+  agents:
+    - agent_lifelong_catch_correct
+    - agent_proof
+    - agent_compliance
+  forbidden_actions:
+    - any_cost
+    - public_post
+    - paid_api_call
   requires_approval_for:
+    - policy_update
     - external_write
-    - paid_call
-    - production_change
-  healthcheck: null
+  healthcheck:
+    path: /api/enterprise/orchestrator?operation=catch_correct&source=lifecycle
+    port: 3000
+    method: GET
+    expected_status: 200
+  env_required: []
+  env_optional: []

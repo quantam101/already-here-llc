@@ -1,13 +1,31 @@
 module:
   id: security
-  name: security
-  version: 0.1.0
-  state: disabled_stale_scaffold
+  name: Security and Compliance
+  version: 2.0.0
+  state: production_ready
   cost_mode: zero_spend
-  enabled: false
-  disabled_reason: "Placeholder module is not production source. Keep disabled until replaced by verified implementation."
+  enabled: true
+  owner: stephen-franklin
+  purpose: Security model, no-spend enforcement, compliance gates, audit, and risk suppression.
+  allowed_connectors:
+    - local_files
+    - github_read
+  agents:
+    - agent_compliance
+    - agent_backend_command
+  forbidden_actions:
+    - any_cost
+    - paid_api_call
+    - public_post
+    - production_deploy
   requires_approval_for:
-    - external_write
-    - paid_call
+    - policy_update
+    - any_external_action
     - production_change
-  healthcheck: null
+  healthcheck:
+    path: /api/enterprise/orchestrator?operation=evaluate_security_gate&source=security
+    port: 3000
+    method: GET
+    expected_status: 200
+  env_required: []
+  env_optional: []

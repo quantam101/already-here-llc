@@ -1,13 +1,28 @@
 module:
   id: profitengine
-  name: profitengine
-  version: 1.0.0
-  state: active
+  name: ProfitEngine
+  version: 2.0.0
+  state: production_ready
   cost_mode: api_spend
   enabled: true
+  owner: stephen-franklin
+  purpose: Automated content generation, product publishing, and revenue intelligence pipeline.
   app_dir: profitengine/
   entry: profitengine/index.js
   ecosystem_config: ops/profitengine/ecosystem.config.cjs
+  allowed_connectors:
+    - local_files
+    - github_read
+  agents:
+    - agent_revenue_os
+    - agent_revenue
+    - agent_outreach
+  forbidden_actions:
+    - live_trade
+    - place_order
+    - move_money
+    - public_post
+    - paid_api_call
   requires_approval_for:
     - external_write
     - paid_call
@@ -15,6 +30,8 @@ module:
   healthcheck:
     path: /api/health
     port: 3000
+    method: GET
+    expected_status: 200
   env_required:
     - GROQ_API_KEY
   env_optional:

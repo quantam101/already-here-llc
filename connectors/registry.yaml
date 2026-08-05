@@ -23,6 +23,26 @@ connectors:
     state: free_core
     enabled: false
     permissions: [local_inference]
+  gmail_read:
+    state: owner_data
+    enabled: false
+    permissions: [read_owner_email, read_owner_thread]
+  public_web_search:
+    state: free_external
+    enabled: true
+    permissions: [search_public_web]
+  government_api_read:
+    state: free_external
+    enabled: false
+    permissions: [query_public_api]
+  sourcewell_naspo_read:
+    state: free_external
+    enabled: true
+    permissions: [read_public_procurement_page]
+  sam_gov_read:
+    state: free_external
+    enabled: false
+    permissions: [query_public_api]
   openai_api:
     state: optional_paid_disabled
     enabled: false
