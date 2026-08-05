@@ -533,4 +533,234 @@ The Revenue Intelligence & Monetization Engine is successful when it consistentl
 
 ---
 
+# Appendices
+
+## Appendix A: 90-Day Execution Roadmap
+
+This roadmap aligns the engine build with `docs/monetization/PRIORITY_BUILD_PLAN.md` and `REVENUE_AUTOMATION_RUNBOOK.md`.
+
+### Days 0–30: Foundation and Proof-of-Work
+
+| Week | Focus | Deliverable | Owner Agent | Exit Criterion |
+| :-- | :-- | :-- | :-- | :-- |
+| 1 | Canonical data spine | `DATABASE_TABLES` schema validated; sample records in `opportunities`, `organizations`, and `proof_of_work` | `agent:record-keeper` | At least one complete `RevenueCommandRecord` stored and scored |
+| 2 | Scoring engine | `agent:scoring` computes P0/P1/P2 from all inputs; `agent:dashboard` emits daily ranking | `agent:scoring` | ≥ 10 scored sample opportunities and no weighting errors |
+| 3 | Field Operations Template Library | Intake, arrival, closeout, and photo-checklist templates in mobile / PDF / JSON / CSV / printable / QR formats | `agent:product-lane` | One internal field job executed end to end with timestamps and closeout packet |
+| 4 | n8n Workflow Template Library | Lead-to-approval, field-job closeout, and revenue follow-up templates with no secrets and disabled outbound actions by default | `agent:automation-lane` | Three workflows validated in local n8n with synthetic data |
+
+### Days 31–60: Lane Expansion and Partner Packets
+
+| Week | Focus | Deliverable | Owner Agent | Exit Criterion |
+| :-- | :-- | :-- | :-- | :-- |
+| 5 | MSP overflow bench | Jobber / HighLevel / ServiceTitan implementation packets and Arizona MSP target list | `agent:msp-lane` | ≥ 10 qualified MSP overflow prospects in the pipeline |
+| 6 | AI intake agent | Missed-call capture and quote workflow proof; landing-page copy and demo outline | `agent:ai-lane` | One AI intake flow tested internally with synthetic lead |
+| 7 | Field Service Profit Tracker | Quoted, collected, labor, mileage, parts, fees, margin, net profit, and unpaid exposure per job | `agent:field-lane` | Three completed jobs reconciled against manual calculations |
+| 8 | Partner proof packets | Jotform, n8n, FreshBooks, Jobber, Make packets prepared but not submitted | `agent:affiliate-lane` | One complete packet per partner, with compliance disclosure and proof screenshots |
+
+### Days 61–90: Scale and Recurring Revenue
+
+| Week | Focus | Deliverable | Owner Agent | Exit Criterion |
+| :-- | :-- | :-- | :-- | :-- |
+| 9 | Marketplace and affiliate mapping | Ranked marketplace and partner opportunities with risk flags and marketing assets | `agent:discovery` | ≥ 25 marketplace/partner opportunities scored per week |
+| 10 | Retainer and recurring offers | Retainer / SOW templates and pricing for MSP overflow and compliance monitoring | `agent:product-lane` | Retainer package documented, priced, and queued for approval |
+| 11 | Revenue dashboard live | Weekly automated report: top opportunities, pipeline status, revenue breakdown, health metrics | `agent:dashboard` | Dashboard exported automatically and reviewed by Executive |
+| 12 | Catch and Correct cycle | Review first 90 days, update scoring weights if needed, archive P2s, document lessons in `catch_correct_events` | `agent:quality` | One published `catch_correct_events` entry and updated version history |
+
+---
+
+## Appendix B: Discovery Source Catalog
+
+| Lane | Primary Sources | Signals to Capture | Frequency |
+| :-- | :-- | :-- | :-- |
+| **AI** | LinkedIn company posts, r/smallbusiness, local chamber agendas, website analytics drop-off pages, missed-call logs | "missed leads," "AI receptionist," "website not converting," "too many voicemails" | Daily |
+| **Automation** | n8n community workflows, Zapier app directory, Make partner directory, r/automation, client intake forms | "manual data entry," "no follow-up," "spreadsheet hell," "copy/paste between tools" | Daily |
+| **Field Service** | Field Nation, Workiz marketplace, HomeAdvisor Pro, local RFP boards, MSP overflow Slack channels, subcontractor forums | "same-day dispatch," "onsite tech needed," "overflow," "Phoenix" | Daily |
+| **MSP** | ConnectWise partner finder, HighLevel marketplace, NinjaOne / Syncro / Rewst partner pages, MSPGeek, local IT groups | "overflow bench," "after-hours coverage," "helpdesk backup" | Daily |
+| **Mechanic** | Fleet forums, mechanic subreddits, diagnostic scanner reviews, local fleet maintenance RFPs | "fleet downtime," "diagnostic cost," "maintenance tracker" | Weekly |
+| **Fleet** | DOT compliance forums, fleet management LinkedIn groups, dash cam / GPS vendor partner pages | "compliance audit," "dash cam," "GPS tracking," "DOT fine" | Weekly |
+| **Drone** | FAA training directories, local survey / inspection company RFPs, construction project boards | "site survey," "drone training," "aerial documentation" | Weekly |
+| **Compliance** | OSHA / inspection tracking searches, equipment management RFPs, tool tracking search trends | "inspection due," "tool tracking," "annual renewal," "compliance gap" | Weekly |
+| **Digital Products** | Internal support logs, repeated customer questions, template search trends, Gumroad-style marketplaces | "checklist," "SOP," "intake form," "tracker," "how do I..." | Weekly |
+
+### Collection rules
+- Every source is a signal, not a scrape target. Do not bypass `robots.txt` or terms of service.
+- Manual observations and permissioned emails are preferred over automated extraction.
+- Each discovery must include `source`, `lane`, `company` or `buyer`, `signal`, and `risk_flags`.
+- Public posts may be summarized; do not copy full text or PII into the canonical record without consent.
+
+---
+
+## Appendix C: Human-in-the-Loop, RACI, and Escalation Matrix
+
+### RACI by process
+
+| Process | Responsible | Accountable | Consulted | Informed |
+| :-- | :-- | :-- | :-- | :-- |
+| Discover and score opportunities | Lane agent + `agent:scoring` | `agent:scoring` | `agent:record-keeper` | Executive (dashboard) |
+| Build canonical records | `agent:record-keeper` | `agent:record-keeper` | Lane agent | `agent:audit` |
+| Generate marketing assets | `agent:asset-forge` | `agent:asset-forge` | `agent:security-enforcer` | Executive (approval queue) |
+| Draft outreach | `agent:outreach-drafter` | `agent:outreach-drafter` | `agent:security-enforcer` | Executive (approval queue) |
+| Send outreach | Executive / delegated reviewer | Executive | `agent:security-enforcer` (if risky) | `agent:audit` |
+| Accept payment under new offer | Executive | Executive | Finance / compliance | `agent:audit` |
+| Deploy to production | `agent:change-control` | Executive | `agent:security-enforcer` | `agent:audit` |
+| Failover / degraded mode | `agent:health` | `agent:health` | `agent:audit` | Executive |
+
+### Escalation path
+1. Owning agent detects condition outside its authority, confidence floor, or risk threshold.
+2. ASI Core validates the escalation and routes it to `agent:health` or `agent:security-enforcer`.
+3. If risk or spend threshold is exceeded, the item is queued in the approval dashboard for Executive review.
+4. Executive approves, rejects, or reruns with new constraints.
+5. Every escalation is recorded in `audit_logs` with before / after state.
+
+### Autonomy boundaries
+- **Autonomous**: discovery, scoring, deduplication, drafting, follow-up reminders, report generation, dashboard updates.
+- **Approval-gated**: outbound send, public publish, payment acceptance, account creation, partner application, paid API call, production deploy.
+
+---
+
+## Appendix D: Anti-Patterns and Mistakes to Avoid
+
+1. **Chasing affiliate-first revenue** — Affiliate and referral income is supplemental. Core revenue must come from owned services and products.
+2. **Publishing before proof-of-work** — No landing page, social post, or outreach is sent until the play is internally tested and approved.
+3. **Running paid APIs in `strict_zero_spend` mode** — The cost guard must fail closed. If a paid call is attempted without approval, the agent aborts and logs the violation.
+4. **Storing secrets in manifests, prompts, or logs** — Secrets live in environment variables or an approved vault. Never in repo, bundles, screenshots, or prompt text.
+5. **Allowing two agents to write the same record concurrently** — Persistence is serialized through the ASI Core. Swarm parallelism is limited to discovery and scoring.
+6. **Skipping risk flags** — Every P0/P1 record must carry at least one risk flag and a mitigation note.
+7. **Conflating speed with profit** — Use `time_to_revenue` and `speedToProofOfWork` for speed; use `dailyRevenueImpact` and margin for profit. Do not double-count.
+8. **Selling outside supported lanes** — New lanes require proof-of-work and a lane owner agent before promotion.
+9. **Ignoring approval gates** — Outbound action, spend, and public claims require recorded approval. No exceptions.
+10. **Treating marketplace revenue as core** — Marketplace revenue is lane 5 for a reason; platform dependency is a risk flag.
+
+---
+
+## Appendix E: Worked Example — Scoring an MSP Overflow Opportunity
+
+### Inputs
+A Phoenix MSP posts in a local IT group: *"Need reliable after-hours onsite tech for credit union clients, 2–4 calls/week, W-9 and COI required."*
+
+Human summary fields:
+- `estimated_revenue`: $4,800 / month
+- `cost_required`: $1,200 / month (labor, mileage, insurance)
+- `time_to_revenue`: 14 days
+- `required_effort`: 4 / 10
+- `setup_cost`: 2 / 10
+- `stacking_fit`: `["msp", "field-service", "highlevel"]`
+- Current stack: `["msp", "field-service", "highlevel"]`
+
+`RevenueCommandRecord` numeric fields:
+- `dailyRevenueImpact`: 7
+- `recurringRevenuePotential`: 9
+- `dataNetworkValue`: 8
+- `systemRiskReduction`: 7
+- `buildDependency`: 4
+- `speedToProofOfWork`: 8
+- `reusableProductPotential`: 6
+
+### Step 1 — Derive component scores
+
+| Dimension | Calculation | Score |
+| :-- | :-- | :-- |
+| Speed to revenue | `10 - normalize(14, 90)` | 8.44 |
+| Profit potential | `dailyRevenueImpact` | 7.00 |
+| Recurring income | `recurringRevenuePotential` | 9.00 |
+| Audience fit / trust | `(dataNetworkValue + systemRiskReduction) / 2` | 7.50 |
+| Margin | `10 * ((4800 - 1200) / 4800)` | 7.50 |
+| Required effort | `10 - 4` | 6.00 |
+| Setup cost | `10 - 2` | 8.00 |
+| Compatibility / stacking fit | `(3 matching tags / 3 current tags) * 10` | 10.00 |
+| Proof-of-work value | `speedToProofOfWork` | 8.00 |
+| Reusable asset value | `reusableProductPotential` | 6.00 |
+
+### Step 2 — Apply weights
+
+```text
+rawScore = (0.15 * 8.44)
+        + (0.15 * 7.00)
+        + (0.20 * 9.00)
+        + (0.10 * 7.50)
+        + (0.10 * 7.50)
+        + (0.05 * 6.00)
+        + (0.05 * 8.00)
+        + (0.10 * 10.00)
+        + (0.05 * 8.00)
+        + (0.05 * 6.00)
+
+rawScore ≈ 8.02
+```
+
+### Step 3 — Priority and next action
+
+- `normalizedScore`: 8.02
+- `priority`: **P0**
+- `nextAction`: `agent:msp-lane` drafts an outreach packet for Executive approval; `agent:asset-forge` prepares email, landing-page headline, elevator pitch, demo outline, and FAQ.
+- `recommendedFollowUpDate`: +2 business days.
+- `risk_flags`: `compliance_review` (W-9 / COI), `platform_dependency` (MSP relationship).
+
+---
+
+## Appendix F: Sample `RevenueCommandRecord` JSON and VHLL Manifest
+
+### Sample JSON record
+
+```json
+{
+  "id": "rev-opp-phx-msp-001",
+  "lane": "msp",
+  "systemModule": "ASI Revenue Intelligence Engine",
+  "repoOrPlatform": "quantam101/already-here-llc",
+  "affectedDataTable": "organizations, opportunities, proof_of_work, conversations",
+  "revenueLaneSupported": "msp",
+  "priority": "P0",
+  "blocker": "None — awaiting Executive approval for outreach.",
+  "nextAction": "Draft outreach packet and demo outline for Phoenix MSP overflow; queue for approval.",
+  "expectedRevenueOrOperationalValue": "$4,800/m recurring MSP overflow bench plus reusable field-service proof-of-work.",
+  "securityRisk": "medium",
+  "testVerificationMethod": "Internal dry-run of dispatch, closeout, and invoice workflow with a synthetic work order.",
+  "status": "ready_for_build",
+  "recommendedFollowUpDate": "2026-08-07",
+  "dailyRevenueImpact": 7,
+  "recurringRevenuePotential": 9,
+  "dataNetworkValue": 8,
+  "buildDependency": 4,
+  "systemRiskReduction": 7,
+  "speedToProofOfWork": 8,
+  "reusableProductPotential": 6
+}
+```
+
+### Sample VHLL manifest
+
+```vhll
+manifest:
+  id: rev-opp-phx-msp-001
+  version: 1.0-A+
+  objective: Capture and rank Phoenix MSP overflow opportunity into a recurring field-service bench engagement.
+  lane: msp
+  owner_agent: agent:msp-lane
+  approval_gate: review
+  cost_guard: strict_zero_spend
+  inputs:
+    - source: local_msp_slack_channel
+    - signal: "Need reliable after-hours onsite tech for credit union clients, 2-4 calls/week"
+    - region: Phoenix, AZ
+    - buyer_fit: msp_overflow
+    - estimated_revenue: 4800
+    - cost_required: 1200
+    - time_to_revenue_days: 14
+    - required_effort: 4
+    - setup_cost: 2
+    - stacking_fit: ["msp", "field-service", "highlevel"]
+  invariants:
+    - company_name is not null
+    - estimated_revenue > cost_required
+    - risk_flags is not empty
+    - approval_gate == "review" before any outbound send
+  outputs:
+    - record: opportunities
+    - assets: email, landing_headline, elevator_pitch, demo_outline, faq
+    - next_action: draft_outreach
+```
+
+---
+
 *End of document.*
