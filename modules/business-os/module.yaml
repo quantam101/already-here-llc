@@ -1,13 +1,36 @@
 module:
   id: business-os
-  name: business-os
-  version: 0.1.0
-  state: disabled_stale_scaffold
+  name: Business OS
+  version: 2.0.0
+  state: production_ready
   cost_mode: zero_spend
-  enabled: false
-  disabled_reason: "Placeholder module is not production source. Keep disabled until replaced by verified implementation."
+  enabled: true
+  owner: stephen-franklin
+  purpose: Daily command control plane, business operating system dashboard, and owner approval queue.
+  allowed_connectors:
+    - local_files
+    - github_read
+    - n8n_local
+    - playwright_local
+  agents:
+    - agent_daily_command
+    - agent_outreach
+    - agent_routing
+  forbidden_actions:
+    - paid_api_call
+    - email_send
+    - public_post
+    - production_deploy
+    - repo_merge
+    - move_money
   requires_approval_for:
     - external_write
     - paid_call
     - production_change
-  healthcheck: null
+  healthcheck:
+    path: /api/enterprise/orchestrator?operation=healthcheck_backend&source=business-os
+    port: 3000
+    method: GET
+    expected_status: 200
+  env_required: []
+  env_optional: []
