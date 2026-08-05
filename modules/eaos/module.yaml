@@ -1,13 +1,35 @@
 module:
   id: eaos
-  name: eaos
-  version: 0.1.0
-  state: disabled_stale_scaffold
+  name: Enterprise AI Operating System
+  version: 2.0.0
+  state: production_ready
   cost_mode: zero_spend
-  enabled: false
-  disabled_reason: "Placeholder module is not production source. Keep disabled until replaced by verified implementation."
+  enabled: true
+  owner: stephen-franklin
+  purpose: Declarative VHLL orchestration layer and super-AI control plane that runs one agent per process.
+  allowed_connectors:
+    - local_files
+    - github_read
+    - n8n_local
+  agents:
+    - super_ai_orchestrator
+    - agent_backend_command
+    - agent_compliance
+  forbidden_actions:
+    - any_direct_external_action
+    - paid_api_call
+    - public_post
+    - production_deploy
+    - repo_merge
   requires_approval_for:
-    - external_write
+    - any_external_action
     - paid_call
     - production_change
-  healthcheck: null
+    - policy_update
+  healthcheck:
+    path: /api/enterprise/orchestrator?operation=healthcheck_backend&source=eaos
+    port: 3000
+    method: GET
+    expected_status: 200
+  env_required: []
+  env_optional: []

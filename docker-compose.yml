@@ -32,8 +32,12 @@ services:
       NODE_ENV: production
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://www.alreadyherellc.com}
       NEXT_PUBLIC_COMMAND_CENTER_URL: ${NEXT_PUBLIC_COMMAND_CENTER_URL:-https://app.alreadyherellc.com}
+      ENTERPRISE_STORE_TYPE: sqlite
+      ENTERPRISE_SQLITE_PATH: data/enterprise-asios.db
     expose:
       - "3000"
+    volumes:
+      - enterprise_data:/app/data
     depends_on:
       - runtime
 
@@ -142,6 +146,7 @@ volumes:
   caddy_data:
   caddy_config:
   gmaos_data:
+  enterprise_data:
   postgres_data:
   n8n_data:
   uptime_data:
