@@ -14,6 +14,7 @@ const navItems = [
   { href: '/mobility', label: 'Mobility' },
   { href: '/ginc', label: 'GINC' },
   { href: '/connect', label: 'GINC Work' },
+  { href: '/enterprise', label: 'Enterprise' },
   { href: '/scooter-rentals', label: 'Scooter Rentals' },
   { href: '/industries', label: 'Industries' },
   { href: '/dashboard', label: 'Dashboard' },
