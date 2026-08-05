@@ -24,7 +24,7 @@ module:
     - paid_call
     - production_change
   healthcheck:
-    path: /api/enterprise/orchestrator?operation=advise_intake&source=content-engine
+    path: /api/enterprise/orchestrator?operation=healthcheck_backend&source=content-engine
     port: 3000
     method: GET
     expected_status: 200

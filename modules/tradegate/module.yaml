@@ -24,7 +24,7 @@ module:
     - paid_call
     - live_trade
   healthcheck:
-    path: /api/enterprise/orchestrator?operation=sync_field_network&source=tradegate
+    path: /api/enterprise/orchestrator?operation=healthcheck_backend&source=tradegate
     port: 3000
     method: GET
     expected_status: 200

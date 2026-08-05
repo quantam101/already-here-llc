@@ -55,9 +55,9 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const operation = toOperation(url.searchParams.get('operation'));
 
-  if (INTERNAL_API_KEY && operation !== 'healthcheck_backend') {
+  if (operation !== 'healthcheck_backend') {
     const provided = request.headers.get('x-internal-api-key');
-    if (provided !== INTERNAL_API_KEY) {
+    if (!INTERNAL_API_KEY || provided !== INTERNAL_API_KEY) {
       return unauthorized();
     }
   }
@@ -69,6 +69,7 @@ export async function GET(request: Request) {
     body: url.searchParams.get('body') ?? undefined,
     source: url.searchParams.get('source') ?? undefined,
     estimatedValue: url.searchParams.get('estimatedValue') ?? 0,
+    requestedAction: url.searchParams.get('requestedAction') ?? undefined,
   });
 
   if (!parseResult.success) {
@@ -80,11 +81,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (INTERNAL_API_KEY) {
-    const provided = request.headers.get('x-internal-api-key');
-    if (provided !== INTERNAL_API_KEY) {
-      return unauthorized();
-    }
+  const provided = request.headers.get('x-internal-api-key');
+  if (!INTERNAL_API_KEY || provided !== INTERNAL_API_KEY) {
+    return unauthorized();
   }
 
   const rawBody = await request.json().catch(() => ({}));

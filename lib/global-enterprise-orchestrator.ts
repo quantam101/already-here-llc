@@ -410,18 +410,38 @@ export const ENTERPRISE_PROCESS_IDS: readonly EnterpriseProcessId[] = [
   'global_enterprise',
 ];
 
-function isEnterpriseItem(item: unknown): item is EnterpriseItem {
-  if (!item || typeof item !== 'object') return false;
+function normalizeQueueItem(item: unknown): EnterpriseItem | undefined {
+  if (!item || typeof item !== 'object') return undefined;
   const candidate = item as Partial<EnterpriseItem>;
-  return (
-    typeof candidate.title === 'string' &&
-    typeof candidate.process === 'string' &&
-    ENTERPRISE_PROCESS_IDS.includes(candidate.process as EnterpriseProcessId) &&
-    typeof candidate.estimatedValue === 'number' &&
-    Number.isFinite(candidate.estimatedValue) &&
-    (candidate.priority === undefined || VALID_PRIORITIES.includes(candidate.priority as EnterpriseItem['priority'])) &&
-    (candidate.status === undefined || VALID_STATUSES.includes(candidate.status as EnterpriseItem['status']))
-  );
+  if (typeof candidate.title !== 'string' || !candidate.title.trim()) return undefined;
+
+  const title = candidate.title.trim();
+  const body = typeof candidate.body === 'string' ? candidate.body.trim() : title;
+  const estimatedValue = Number.isFinite(Number(candidate.estimatedValue)) ? Number(candidate.estimatedValue) : 0;
+  const process =
+    candidate.process && ENTERPRISE_PROCESS_IDS.includes(candidate.process as EnterpriseProcessId)
+      ? (candidate.process as EnterpriseProcessId)
+      : 'global_enterprise';
+  const source = typeof candidate.source === 'string' ? candidate.source : 'enterprise-asios';
+  const lane = typeof candidate.lane === 'string' ? candidate.lane : classifyLane(`${title} ${body}`);
+  const priority = VALID_PRIORITIES.includes(candidate.priority as EnterpriseItem['priority'])
+    ? (candidate.priority as EnterpriseItem['priority'])
+    : priorityFor(`${title} ${body}`, estimatedValue);
+  const status = VALID_STATUSES.includes(candidate.status as EnterpriseItem['status'])
+    ? (candidate.status as EnterpriseItem['status'])
+    : 'new';
+
+  return {
+    itemId: typeof candidate.itemId === 'string' ? candidate.itemId : stableId('entitem', `${title}-${body}`),
+    process,
+    source,
+    title,
+    body,
+    lane,
+    priority,
+    estimatedValue,
+    status,
+  };
 }
 
 export function buildEnterpriseItem(input: {
@@ -516,7 +536,10 @@ export function runEnterpriseOperation(input: {
     estimatedValue,
   });
 
-  const queue = [...(input.queue?.filter(isEnterpriseItem) || []), item].sort((left, right) => {
+  const queue = [
+    ...(input.queue?.map(normalizeQueueItem).filter((entry): entry is EnterpriseItem => entry !== undefined) || []),
+    item,
+  ].sort((left, right) => {
     const rank = { P0: 0, P1: 1, P2: 2 } as const;
     return rank[left.priority] - rank[right.priority] || right.estimatedValue - left.estimatedValue;
   });

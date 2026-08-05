@@ -30,7 +30,7 @@ module:
     - paid_call
     - external_share
   healthcheck:
-    path: /api/enterprise/orchestrator?operation=scan_opportunities&source=procurement
+    path: /api/enterprise/orchestrator?operation=healthcheck_backend&source=procurement
     port: 3000
     method: GET
     expected_status: 200

@@ -22,7 +22,7 @@ module:
     - policy_update
     - external_write
   healthcheck:
-    path: /api/enterprise/orchestrator?operation=catch_correct&source=lifecycle
+    path: /api/enterprise/orchestrator?operation=healthcheck_backend&source=lifecycle
     port: 3000
     method: GET
     expected_status: 200

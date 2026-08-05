@@ -23,7 +23,7 @@ module:
     - any_external_action
     - production_change
   healthcheck:
-    path: /api/enterprise/orchestrator?operation=evaluate_security_gate&source=security
+    path: /api/enterprise/orchestrator?operation=healthcheck_backend&source=security
     port: 3000
     method: GET
     expected_status: 200
