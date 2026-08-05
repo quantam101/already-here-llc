@@ -78,3 +78,53 @@ agents:
     forbidden_actions: [global_policy_change_without_approval]
     approval_required_actions: [policy_update]
     verifier_required: true
+
+  - id: polymarket-orchestrator
+    name: Polymarket Tracker Orchestrator
+    version: 0.1.0
+    mission: Coordinate on-chain listener, wallet profiler, risk guard, and Telegram alert agents.
+    max_cost_usd: 0
+    allowed_connectors: [polygon_rpc, telegram_api, the_graph, redis, sqlite]
+    forbidden_actions: [any_cost, live_money_execution, market_manipulation, unapproved_copy_trade]
+    approval_required_actions: [live_execution, paid_api_call]
+    verifier_required: true
+
+  - id: polymarket-listener
+    name: Polymarket On-Chain Listener Agent
+    version: 0.1.0
+    mission: Ingest OrderFilled / OrdersMatched / Transfer events from Polygon RPC/WebSocket.
+    max_cost_usd: 0
+    allowed_connectors: [polygon_rpc, websocket]
+    forbidden_actions: [any_cost, write_to_exchange, market_manipulation]
+    approval_required_actions: [paid_rpc_tier]
+    verifier_required: false
+
+  - id: polymarket-profiler
+    name: Polymarket Wallet Profiler Agent
+    version: 0.1.0
+    mission: Compute 30-day P&L, win-rate, Sharpe, and conviction for tracked wallets.
+    max_cost_usd: 0
+    allowed_connectors: [the_graph, clob_api, polynode_api, sqlite]
+    forbidden_actions: [any_cost, market_manipulation, unapproved_copy_trade]
+    approval_required_actions: [paid_api_call]
+    verifier_required: true
+
+  - id: polymarket-risk-guard
+    name: Polymarket Risk Guard Agent
+    version: 0.1.0
+    mission: Enforce max slippage, fixed order sizing, blacklists, and cooldowns before any copy trade.
+    max_cost_usd: 0
+    allowed_connectors: [sqlite]
+    forbidden_actions: [any_cost, live_money_execution, override_risk_limits]
+    approval_required_actions: [live_execution]
+    verifier_required: false
+
+  - id: polymarket-alert-engine
+    name: Polymarket Telegram Alert Agent
+    version: 0.1.0
+    mission: Dispatch sub-second Markdown alerts to configured Telegram chats.
+    max_cost_usd: 0
+    allowed_connectors: [telegram_api]
+    forbidden_actions: [any_cost, public_post_to_unauthorized_channels]
+    approval_required_actions: []
+    verifier_required: false
