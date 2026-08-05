@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import Link from 'next/link';
+import { siteConfig } from '@/lib/site';
 import { ScooterRentalForm } from '@/components/ScooterRentalForm';
 import { addOnItems, baseInclusions, fleetAvailability, fleetFinancials, ownerResponsibilities, proDeliveryKit, rentalPricing, renterResponsibilities } from '@/lib/scooter-rental';
 
@@ -190,6 +191,14 @@ export default function ScooterRentalsPage() {
             <ScooterRentalForm />
           </Suspense>
         </div>
+      </section>
+
+      <section className="mt-8 rounded-2xl border border-borderBrand bg-soft p-6 text-sm leading-6 text-slate-700">
+        <strong>Billing and payment questions:</strong> Contact{' '}
+        <a href={`mailto:${siteConfig.billingEmail}`} className="text-action underline">
+          {siteConfig.billingEmail}
+        </a>{' '}
+        for invoices, deposits, W-9 requests, and vendor setup. Include invoice number, work-order number, client name, and service location when applicable.
       </section>
     </div>
   );

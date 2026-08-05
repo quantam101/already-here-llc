@@ -70,7 +70,9 @@ export default function GovernmentContractingPage() {
           <Link href="/capability-statement" className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-white hover:text-navy">Capability Statement</Link>
           <Link href="/rfq" className="link-ring inline-flex items-center justify-center rounded-full border border-white/35 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10">Submit RFQ</Link>
         </div>
-        <p className="mt-6 text-sm font-semibold text-white/90">Procurement email: {siteConfig.email}</p>
+        <p className="mt-6 text-sm font-semibold text-white/90">
+          Procurement / billing email: {siteConfig.billingEmail} · Operations email: {siteConfig.email}
+        </p>
       </section>
     </section>
   );

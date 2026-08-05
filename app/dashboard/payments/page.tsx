@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { siteConfig } from '@/lib/site';
 import { StripePaymentButton } from '@/components/StripePaymentButton';
 
 export const metadata: Metadata = {
@@ -36,6 +37,14 @@ export default function PaymentsPage() {
 
       <section className="mt-10 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
         This is a preview page. To activate payments, add <code>STRIPE_SECRET_KEY</code>, <code>STRIPE_PUBLISHABLE_KEY</code>, and <code>STRIPE_WEBHOOK_SECRET</code> to environment variables, then connect the checkout API routes.
+      </section>
+
+      <section className="mt-10 rounded-2xl border border-borderBrand bg-soft p-5 text-sm leading-6 text-slate-700">
+        <strong>Billing support:</strong> For invoices, payment questions, W-9 requests, and vendor setup, contact{' '}
+        <a href={`mailto:${siteConfig.billingEmail}`} className="text-action underline">
+          {siteConfig.billingEmail}
+        </a>
+        . Include invoice number, work-order number, client name, and service location when applicable.
       </section>
     </div>
   );
