@@ -36,7 +36,11 @@
     "@upstash/redis": "^1.38.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
+    "better-sqlite3": "^13.0.3",
+    "docx": "^9.7.1",
+    "jszip": "^3.10.1",
     "next": "16.2.10",
+    "pdf-lib": "^1.17.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "remark": "^15.0.1",
@@ -45,6 +49,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "26.1.1",
     "@types/react": "18.2.66",
     "@types/react-dom": "18.2.22",
