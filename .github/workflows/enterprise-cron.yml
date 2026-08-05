@@ -1,0 +1,15 @@
+name: Enterprise ASIOS Cron
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger daily enterprise scan
+        run: |
+          curl -fsS -H "x-cron-secret: ${{ secrets.AHFOS_CRON_SECRET }}" \
+            "https://www.alreadyherellc.com/api/enterprise/cron" || true

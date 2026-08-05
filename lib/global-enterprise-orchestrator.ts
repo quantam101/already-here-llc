@@ -1,3 +1,5 @@
+import { getEnterpriseStore, createEnterpriseEvent, type EnterpriseStore } from './enterprise-store';
+
 export type EnterpriseProcessId =
   | 'opportunity_intelligence'
   | 'daily_command'
@@ -97,6 +99,8 @@ export interface EnterpriseOperationResult {
   summary: string;
   item?: EnterpriseItem;
   queue?: EnterpriseItem[];
+  stats?: { queueCount: number; p0: number; p1: number; p2: number; eventCount: number };
+  recentEvents?: { eventId: string; agentId: string; operation: string; summary: string; timestamp: string }[];
   blockedActions: string[];
   approvalRequired: boolean;
   nextAgent: EnterpriseAgentId | 'owner_approval_gate';
@@ -499,6 +503,7 @@ export function runEnterpriseOperation(input: {
   estimatedValue?: number;
   queue?: EnterpriseItem[];
   requestedAction?: string;
+  store?: EnterpriseStore;
 }): EnterpriseOperationResult {
   const operation =
     (input.operation && ENTERPRISE_OPERATIONS.includes(input.operation as EnterpriseOperation)
@@ -536,13 +541,13 @@ export function runEnterpriseOperation(input: {
     estimatedValue,
   });
 
-  const queue = [
-    ...(input.queue?.map(normalizeQueueItem).filter((entry): entry is EnterpriseItem => entry !== undefined) || []),
-    item,
-  ].sort((left, right) => {
-    const rank = { P0: 0, P1: 1, P2: 2 } as const;
-    return rank[left.priority] - rank[right.priority] || right.estimatedValue - left.estimatedValue;
-  });
+  const store = input.store || getEnterpriseStore();
+  for (const queueItem of input.queue?.map(normalizeQueueItem).filter((entry): entry is EnterpriseItem => entry !== undefined) || []) {
+    store.saveQueueItem(queueItem);
+  }
+  store.saveQueueItem(item);
+
+  const queue = store.getQueueByPriority();
 
   let summary: string;
   switch (operation) {
@@ -592,6 +597,25 @@ export function runEnterpriseOperation(input: {
       summary = summarizeQueue(queue);
   }
 
+  store.appendEvent(
+    createEnterpriseEvent(agent, operation, summary, {
+      itemId: item.itemId,
+      title: item.title,
+      lane: item.lane,
+      priority: item.priority,
+      source: input.source || 'enterprise-asios',
+    })
+  );
+
+  const stats = store.getStats();
+  const recentEvents = store.getRecentEvents(5).map((event) => ({
+    eventId: event.eventId,
+    agentId: event.agentId,
+    operation: event.operation,
+    summary: event.summary,
+    timestamp: event.timestamp,
+  }));
+
   return {
     ok: true,
     service: 'already-here-global-enterprise-asios',
@@ -601,6 +625,8 @@ export function runEnterpriseOperation(input: {
     summary,
     item,
     queue,
+    stats,
+    recentEvents,
     blockedActions: BLOCKED_OPERATIONS,
     approvalRequired: true,
     nextAgent: agent.handoffTo,
