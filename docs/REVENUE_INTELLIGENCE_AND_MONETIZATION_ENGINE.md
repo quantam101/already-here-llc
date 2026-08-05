@@ -228,7 +228,7 @@ Every opportunity is stored with the schema defined in `lib/revenue-command-spin
 | `testVerificationMethod` | string | How the opportunity is verified. |
 | `status` | `ready_for_build` \| `in_progress` \| `blocked` \| `live_ready` \| `needs_verification` | Lifecycle state. |
 | `recommendedFollowUpDate` | string | Next follow-up or review date. |
-| `dailyRevenueImpact` | number 0–10 | Speed and immediacy of revenue. |
+| `dailyRevenueImpact` | number 0–10 | Estimated immediate revenue / profit impact. |
 | `recurringRevenuePotential` | number 0–10 | Long-term recurring value. |
 | `dataNetworkValue` | number 0–10 | Compounding data/network effects. |
 | `buildDependency` | number 0–10 | Dependency on other builds. |
