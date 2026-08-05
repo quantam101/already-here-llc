@@ -4,11 +4,15 @@ node_modules
 .vercel
 tsconfig.tsbuildinfo
 .tmp/
+.tmp
 
 # GMAOS / EAOS
 __pycache__/
 data/
 *.sqlite3
+*.db
+*.db-wal
+*.db-shm
 backups/
 .env
 hermes/receipts/

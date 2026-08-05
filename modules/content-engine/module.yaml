@@ -1,13 +1,32 @@
 module:
   id: content-engine
-  name: content-engine
-  version: 0.1.0
-  state: disabled_stale_scaffold
+  name: Content Engine
+  version: 2.0.0
+  state: production_ready
   cost_mode: zero_spend
-  enabled: false
-  disabled_reason: "Placeholder module is not production source. Keep disabled until replaced by verified implementation."
+  enabled: true
+  owner: stephen-franklin
+  purpose: AI-assisted content repurposing, proof generation, and client-facing copy validation.
+  allowed_connectors:
+    - local_files
+    - ollama_local
+    - playwright_local
+  agents:
+    - agent_ai_operations_advisor
+    - agent_proof
+  forbidden_actions:
+    - paid_api_call
+    - public_post
+    - email_send
+    - production_deploy
   requires_approval_for:
     - external_write
     - paid_call
     - production_change
-  healthcheck: null
+  healthcheck:
+    path: /api/enterprise/orchestrator?operation=healthcheck_backend&source=content-engine
+    port: 3000
+    method: GET
+    expected_status: 200
+  env_required: []
+  env_optional: []
