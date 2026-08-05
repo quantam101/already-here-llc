@@ -1,0 +1,370 @@
+enterprise_agents:
+  - id: super_ai_orchestrator
+    name: Super-AI Orchestrator
+    version: 2.0.0
+    process: global_enterprise
+    operation: orchestrate
+    purpose: Receive enterprise objectives and dispatch exactly one deterministic agent per process.
+    handoff_to: owner_approval_gate
+    max_cost_usd: 0
+    allowed_connectors: [all_registered_agents]
+    forbidden_actions:
+      - any_direct_external_action
+      - paid_api_call
+      - public_post
+      - email_send
+      - production_deploy
+      - repo_merge
+      - move_money
+    approval_required_actions:
+      - any_external_action
+      - production_change
+      - policy_update
+    verifier_required: true
+    risk_tier: high
+
+  - id: agent_opportunity_intelligence
+    name: Opportunity Intelligence Agent
+    version: 2.0.0
+    process: opportunity_intelligence
+    operation: scan_opportunities
+    purpose: Search, filter, score, and route procurement, grant, field-dispatch, and teaming opportunities.
+    handoff_to: agent_scoring
+    max_cost_usd: 0
+    allowed_connectors:
+      - local_files
+      - github_read
+      - playwright_local
+      - public_web_search
+    forbidden_actions:
+      - paid_api_call
+      - email_send
+      - public_post
+      - submit_application
+      - create_external_account
+    approval_required_actions:
+      - external_write
+      - paid_call
+      - external_share
+    verifier_required: true
+    risk_tier: medium
+
+  - id: agent_scoring
+    name: Scoring Agent
+    version: 2.0.0
+    process: opportunity_intelligence
+    operation: score_opportunity
+    purpose: Rate opportunity fit, value, deadline, certification, cost, risk, and strategic value.
+    handoff_to: agent_routing
+    max_cost_usd: 0
+    allowed_connectors: [local_files]
+    forbidden_actions:
+      - any_external_write
+      - paid_api_call
+      - email_send
+      - public_post
+    approval_required_actions:
+      - external_write
+      - paid_call
+    verifier_required: true
+    risk_tier: low
+
+  - id: agent_routing
+    name: Routing Agent
+    version: 2.0.0
+    process: daily_command
+    operation: recommend_next_action
+    purpose: Recommend next action such as apply, attend, counter, suppress, prepare packet, partner review, or closeout.
+    handoff_to: agent_daily_command
+    max_cost_usd: 0
+    allowed_connectors: [local_files]
+    forbidden_actions:
+      - any_external_action
+      - paid_api_call
+      - email_send
+      - public_post
+    approval_required_actions:
+      - external_write
+      - paid_call
+    verifier_required: true
+    risk_tier: medium
+
+  - id: agent_daily_command
+    name: Daily Command Agent
+    version: 2.0.0
+    process: daily_command
+    operation: summarize_daily_command
+    purpose: Summarize and queue daily leads, opportunities, closeouts, approvals, system health, and revenue actions.
+    handoff_to: owner_approval_gate
+    max_cost_usd: 0
+    allowed_connectors:
+      - local_files
+      - github_read
+      - n8n_local
+    forbidden_actions:
+      - paid_api_call
+      - email_send
+      - public_post
+      - production_deploy
+    approval_required_actions:
+      - external_write
+      - paid_call
+      - production_change
+    verifier_required: true
+    risk_tier: medium
+
+  - id: agent_ai_operations_advisor
+    name: AI Operations Advisor Agent
+    version: 2.0.0
+    process: ai_operations_advisor
+    operation: advise_intake
+    purpose: Handle intake, qualification, routing, first-tier support, and proof-of-work capture.
+    handoff_to: agent_intake
+    max_cost_usd: 0
+    allowed_connectors:
+      - local_files
+      - ollama_local
+      - playwright_local
+    forbidden_actions:
+      - paid_api_call
+      - public_post
+      - email_send
+    approval_required_actions:
+      - external_share
+      - paid_call
+    verifier_required: true
+    risk_tier: medium
+
+  - id: agent_intake
+    name: Intake Agent
+    version: 2.0.0
+    process: ai_operations_advisor
+    operation: normalize_intake
+    purpose: Normalize Gmail, website, RFQ, dispatch, grant, and procurement inputs into canonical records.
+    handoff_to: agent_scoring
+    max_cost_usd: 0
+    allowed_connectors:
+      - local_files
+      - gmail_read
+      - public_web_search
+    forbidden_actions:
+      - paid_api_call
+      - public_post
+      - email_send
+      - create_external_account
+    approval_required_actions:
+      - external_write
+      - paid_call
+      - external_share
+    verifier_required: true
+    risk_tier: medium
+
+  - id: agent_field_network
+    name: Field Network Agent
+    version: 2.0.0
+    process: field_network
+    operation: sync_field_network
+    purpose: Maintain partner intelligence, technician profiles, dispatch leads, RFQs, and verified closeouts.
+    handoff_to: agent_revenue
+    max_cost_usd: 0
+    allowed_connectors:
+      - local_files
+      - github_read
+    forbidden_actions:
+      - paid_api_call
+      - dispatch_technician
+      - accept_work
+      - public_post
+    approval_required_actions:
+      - external_write
+      - paid_call
+      - dispatch
+    verifier_required: true
+    risk_tier: medium
+
+  - id: agent_revenue
+    name: Revenue Agent
+    version: 2.0.0
+    process: revenue_os
+    operation: record_revenue_event
+    purpose: Track quoted, booked, closed, paid, and disputed revenue and payment-risk items.
+    handoff_to: owner_approval_gate
+    max_cost_usd: 0
+    allowed_connectors: [local_files]
+    forbidden_actions:
+      - paid_api_call
+      - move_money
+      - public_post
+      - invoice_send
+    approval_required_actions:
+      - external_write
+      - paid_call
+    verifier_required: true
+    risk_tier: medium
+
+  - id: agent_revenue_os
+    name: Revenue OS Agent
+    version: 2.0.0
+    process: revenue_os
+    operation: track_revenue
+    purpose: Run CRM, partner intelligence, scoring, follow-up, dispatch handoff, and verified revenue tracking.
+    handoff_to: agent_revenue
+    max_cost_usd: 0
+    allowed_connectors:
+      - local_files
+      - github_read
+    forbidden_actions:
+      - paid_api_call
+      - move_money
+      - public_post
+    approval_required_actions:
+      - external_write
+      - paid_call
+    verifier_required: true
+    risk_tier: medium
+
+  - id: agent_procurement_grant
+    name: Procurement and Grant Tracking Agent
+    version: 2.0.0
+    process: grant_procurement_packet_library
+    operation: track_funding_sources
+    purpose: Track federal, state, local, cooperative, SBIR/STTR, veteran, and private funding sources.
+    handoff_to: agent_grant_procurement_packet
+    max_cost_usd: 0
+    allowed_connectors:
+      - local_files
+      - github_read
+      - playwright_local
+      - public_web_search
+    forbidden_actions:
+      - paid_api_call
+      - submit_application
+      - create_external_account
+      - email_send
+    approval_required_actions:
+      - external_write
+      - paid_call
+    verifier_required: true
+    risk_tier: medium
+
+  - id: agent_grant_procurement_packet
+    name: Grant and Procurement Packet Agent
+    version: 2.0.0
+    process: grant_procurement_packet_library
+    operation: prepare_packet
+    purpose: Generate reusable DOCX/PDF/ZIP packets from real database records.
+    handoff_to: owner_approval_gate
+    max_cost_usd: 0
+    allowed_connectors:
+      - local_files
+      - document_intelligence
+    forbidden_actions:
+      - paid_api_call
+      - submit_application
+      - email_send
+      - public_post
+    approval_required_actions:
+      - external_share
+      - paid_call
+      - production_change
+    verifier_required: true
+    risk_tier: medium
+
+  - id: agent_backend_command
+    name: Backend Command Agent
+    version: 2.0.0
+    process: backend_command
+    operation: healthcheck_backend
+    purpose: Verify portable backend health, persistence, proof events, export, and owner-alert workflows.
+    handoff_to: owner_approval_gate
+    max_cost_usd: 0
+    allowed_connectors:
+      - local_files
+      - github_read
+    forbidden_actions:
+      - paid_api_call
+      - production_deploy
+      - repo_merge
+    approval_required_actions:
+      - external_write
+      - paid_call
+      - production_change
+    verifier_required: true
+    risk_tier: low
+
+  - id: agent_proof
+    name: Proof Agent
+    version: 2.0.0
+    process: lifelong_catch_correct
+    operation: build_proof_packet
+    purpose: Build evidence packets from intake to closeout and revenue attribution.
+    handoff_to: agent_lifelong_catch_correct
+    max_cost_usd: 0
+    allowed_connectors:
+      - local_files
+      - document_intelligence
+    forbidden_actions:
+      - paid_api_call
+      - public_post
+      - external_share
+    approval_required_actions:
+      - external_share
+      - paid_call
+    verifier_required: true
+    risk_tier: low
+
+  - id: agent_outreach
+    name: Outreach Agent
+    version: 2.0.0
+    process: daily_command
+    operation: draft_outreach
+    purpose: Draft emails, replies, capability notes, registration support messages, and partner requests.
+    handoff_to: owner_approval_gate
+    max_cost_usd: 0
+    allowed_connectors: [local_files]
+    forbidden_actions:
+      - email_send
+      - public_post
+      - paid_api_call
+      - create_external_account
+    approval_required_actions:
+      - external_share
+      - paid_call
+    verifier_required: true
+    risk_tier: medium
+
+  - id: agent_compliance
+    name: Compliance Agent
+    version: 2.0.0
+    process: backend_command
+    operation: evaluate_security_gate
+    purpose: Block risky actions, expired items, unsupported certifications, hidden fees, scraping issues, or low-margin jobs.
+    handoff_to: owner_approval_gate
+    max_cost_usd: 0
+    allowed_connectors: [local_files]
+    forbidden_actions:
+      - any_cost
+      - paid_api_call
+      - public_post
+    approval_required_actions:
+      - any_external_action
+      - policy_update
+    verifier_required: true
+    risk_tier: high
+
+  - id: agent_lifelong_catch_correct
+    name: Lifelong Catch and Correct Agent
+    version: 2.0.0
+    process: lifelong_catch_correct
+    operation: catch_correct
+    purpose: Capture errors, corrections, changelog entries, and reusable rules.
+    handoff_to: owner_approval_gate
+    max_cost_usd: 0
+    allowed_connectors: [local_files]
+    forbidden_actions:
+      - any_cost
+      - public_post
+    approval_required_actions:
+      - policy_update
+    verifier_required: true
+    risk_tier: low

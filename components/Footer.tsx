@@ -51,6 +51,8 @@ export function Footer() {
             <li><Link href="/capability-statement" className="hover:text-action">Capability Statement</Link></li>
             <li><Link href="/blog" className="hover:text-action">Field Insights</Link></li>
             <li><Link href="/privacy" className="hover:text-action">Privacy Policy</Link></li>
+            <li><Link href="/legal/terms" className="hover:text-action">Terms of Service</Link></li>
+            <li><Link href="/legal/gdpr" className="hover:text-action">GDPR & Data Rights</Link></li>
             <li><Link href="/profitengine" className="hover:text-action">System Status</Link></li>
           </ul>
         </div>
