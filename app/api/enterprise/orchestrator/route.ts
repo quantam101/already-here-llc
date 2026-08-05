@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { z } from 'zod';
 import {
   runEnterpriseOperation,
@@ -35,6 +36,33 @@ const requestSchema = z.object({
 });
 
 const INTERNAL_API_KEY = process.env.AHFOS_INTERNAL_API_KEY;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 30;
+const requestLog = new Map<string, number[]>();
+
+function getClientId(request: Request): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return request.headers.get('x-real-ip') ?? 'unknown';
+}
+
+function isRateLimited(clientId: string): boolean {
+  const now = Date.now();
+  const timestamps = requestLog.get(clientId) ?? [];
+  const recent = timestamps.filter((timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS);
+  if (recent.length >= RATE_LIMIT_MAX) return true;
+  recent.push(now);
+  requestLog.set(clientId, recent);
+  return false;
+}
+
+function isValidKey(provided: string | null): boolean {
+  if (!INTERNAL_API_KEY || !provided) return false;
+  const expected = Buffer.from(INTERNAL_API_KEY);
+  const actual = Buffer.from(provided);
+  if (expected.length !== actual.length) return false;
+  return timingSafeEqual(expected, actual);
+}
 
 function toOperation(value: string | null | undefined): EnterpriseOperation | undefined {
   if (!value) return undefined;
@@ -47,19 +75,24 @@ function unauthorized(): NextResponse {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 }
 
+function tooManyRequests(): NextResponse {
+  return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+}
+
 function invalidInput(error: z.ZodError): NextResponse {
   return NextResponse.json({ error: 'Invalid input', issues: error.issues }, { status: 400 });
 }
 
 export async function GET(request: Request) {
+  if (isRateLimited(getClientId(request))) {
+    return tooManyRequests();
+  }
+
   const url = new URL(request.url);
   const operation = toOperation(url.searchParams.get('operation'));
 
-  if (operation !== 'healthcheck_backend') {
-    const provided = request.headers.get('x-internal-api-key');
-    if (!INTERNAL_API_KEY || provided !== INTERNAL_API_KEY) {
-      return unauthorized();
-    }
+  if (operation !== 'healthcheck_backend' && !isValidKey(request.headers.get('x-internal-api-key'))) {
+    return unauthorized();
   }
 
   const parseResult = requestSchema.safeParse({
@@ -81,8 +114,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const provided = request.headers.get('x-internal-api-key');
-  if (!INTERNAL_API_KEY || provided !== INTERNAL_API_KEY) {
+  if (isRateLimited(getClientId(request))) {
+    return tooManyRequests();
+  }
+
+  if (!isValidKey(request.headers.get('x-internal-api-key'))) {
     return unauthorized();
   }
 
