@@ -644,7 +644,6 @@ _HAULING_ITEM_CATALOG: Dict[str, HaulingItemSpec] = {
     "suitcase": HaulingItemSpec(Category.SPORTING_GOODS, (0.60, 0.40, 0.25), 25.0, 30.0, "Suitcase / Sporting Goods"),
     "backpack": HaulingItemSpec(Category.SPORTING_GOODS, (0.45, 0.30, 0.20), 10.0, 20.0, "Backpack / Sporting Goods"),
     "potted plant": HaulingItemSpec(Category.YARD_WASTE, (0.30, 0.30, 0.60), 30.0, 0.0, "Potted Plant / Yard Waste"),
-    "refrigerator": HaulingItemSpec(Category.APPLIANCE, (0.80, 0.70, 1.80), 300.0, 100.0, "Refrigerator / Appliance"),
     "chair": HaulingItemSpec(Category.BULKY_FURNITURE, (0.50, 0.50, 0.90), 40.0, 20.0, "Chair / Furniture"),
     "couch": HaulingItemSpec(Category.BULKY_FURNITURE, (2.00, 0.90, 0.85), 180.0, 60.0, "Couch / Furniture"),
     "dining table": HaulingItemSpec(Category.BULKY_FURNITURE, (1.50, 0.90, 0.75), 120.0, 80.0, "Dining Table / Furniture"),
