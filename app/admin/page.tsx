@@ -1,6 +1,6 @@
 import { timingSafeEqual } from 'crypto';
 import type { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
+import { headers } from 'next/headers';
 import { loadNetwork } from '@/lib/ginc-store';
 
 export const metadata: Metadata = {
@@ -26,11 +26,10 @@ function constantTimeEqual(a: string, b: string): boolean {
 async function isAdminAuthorized(): Promise<boolean> {
   if (!ADMIN_KEY) return false;
   const headerStore = await headers();
-  const cookieStore = await cookies();
   const headerKey = headerStore.get('x-admin-key') ?? '';
-  const cookieKey = cookieStore.get('ginc-admin-key')?.value ?? '';
-  if (headerKey && headerKey.length === ADMIN_KEY.length && constantTimeEqual(headerKey, ADMIN_KEY)) return true;
-  if (cookieKey && cookieKey.length === ADMIN_KEY.length && constantTimeEqual(cookieKey, ADMIN_KEY)) return true;
+  if (headerKey && headerKey.length === ADMIN_KEY.length) {
+    return constantTimeEqual(headerKey, ADMIN_KEY);
+  }
   return false;
 }
 
@@ -49,7 +48,7 @@ export default async function AdminPage() {
       <div className="container-shell py-16 lg:py-24">
         <h1 className="section-title">Admin access required</h1>
         <p className="mt-4 max-w-2xl text-sm text-slate-600">
-          Provide the admin key using the <code className="rounded bg-slate-100 px-1 py-0.5">x-admin-key</code> request header or a <code className="rounded bg-slate-100 px-1 py-0.5">ginc-admin-key</code> cookie.
+          Provide the admin key using the <code className="rounded bg-slate-100 px-1 py-0.5">x-admin-key</code> request header.
         </p>
       </div>
     );
