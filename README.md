@@ -107,6 +107,26 @@ The default vision pipeline is **yolov8_tinyclip_fused** (YOLOv8 ONNX boxes + Ti
 
 Per-organization scan metadata (quotes, recovery values, detected entities) is persisted to `HAUL_SCAN_STORE` and exposed via `/api/scans`, `/api/usage`, and `/api/billing`. Scan images can be saved to `HAUL_SCAN_IMAGES_DIR` when `HAUL_SAVE_SCAN_IMAGES=true` so drivers/reviewers can later submit corrected labels via `POST /api/feedback`; these labeled photos export as YOLO/COCO datasets from `GET /api/feedback/export` for model fine-tuning.
 
+### Training data bootstrap
+
+To build an initial labeled photo database for training a hauling-specific detector, run the public-dataset importer. It downloads the COCO 2017 validation set, maps COCO categories to the hauling catalog (furniture, appliances, electronics, sporting goods, motor vehicles), and stores them as synthetic feedback records:
+
+```bash
+python scripts/build_training_db.py --max-per-class 100 --max-total 2000 --workers 8
+```
+
+- COCO: http://cocodataset.org/#home — 35 relevant categories including motorcycle, bicycle, sofa, chair, bed, dining table, potted plant, tv, laptop, refrigerator, microwave, backpack, suitcase, bottle, cup, vase, umbrella, skateboard, tennis racket, skis, snowboard, surfboard, etc.
+- TACO: http://tacodataset.org/ — trash/waste annotations for debris/scrap/metal classes (can be added to the importer as a future source).
+- Open Images V7: https://storage.googleapis.com/openimages/web/index.html — large-scale detection for 600 classes, useful for expanding coverage (FiftyOne/Voxel51 tooling).
+
+After import, export a YOLO or COCO training set:
+
+```bash
+python scripts/build_training_db.py --export yolo --max-per-class 100 --max-total 2000 --workers 8
+# or use the running API:
+# GET /api/feedback/export?fmt=yolo&as_zip=true
+```
+
 ### Verification
 
 ```bash
