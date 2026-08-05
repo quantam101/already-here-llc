@@ -115,7 +115,10 @@ export interface EnterpriseOrchestratorCapability {
 
 const BLOCKED_OPERATIONS = [
   'send_email',
+  'email_send',
+  'send_emails',
   'send_sms',
+  'send_message',
   'production_deploy',
   'submit_application',
   'create_external_account',
@@ -135,6 +138,29 @@ const BLOCKED_OPERATIONS = [
   'any_external_action',
   'any_cost',
 ];
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function hasTerm(value: string, term: string): boolean {
+  const pattern = `(?:^|[^a-z0-9])${escapeRegExp(term.toLowerCase())}(?:$|[^a-z0-9])`;
+  return new RegExp(pattern, 'i').test(value);
+}
+
+function normalizeAction(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function isBlockedAction(requestedAction: string | undefined): boolean {
+  if (!requestedAction) return false;
+  const normalized = normalizeAction(requestedAction);
+  if (!normalized) return false;
+  const normalizedBlocklist = BLOCKED_OPERATIONS.map(normalizeAction);
+  return normalizedBlocklist.some(
+    (block) => normalized === block || (normalized.includes(block) && block.length >= 4)
+  );
+}
 
 const AGENTS: EnterpriseAgent[] = [
   {
@@ -288,39 +314,39 @@ function stableId(prefix: string, input: string): string {
 function classifyLane(text: string): string {
   const value = text.toLowerCase();
 
-  if (['daily command', 'dashboard', 'queue', 'summary', 'outreach'].some((term) => value.includes(term))) {
+  if (['daily command', 'dashboard', 'queue', 'summary', 'outreach'].some((term) => hasTerm(value, term))) {
     return 'Daily Command';
   }
 
-  if (['intake', 'ai advisor', 'support', 'chat', 'website'].some((term) => value.includes(term))) {
+  if (['intake', 'ai advisor', 'support', 'chat', 'website'].some((term) => hasTerm(value, term))) {
     return 'AI Advisor';
   }
 
   if (
     ['field', 'dispatch', 'technician', 'closeout', 'network', 'cabling', 'printer', 'pos', 'smart hands'].some(
-      (term) => value.includes(term)
+      (term) => hasTerm(value, term)
     )
   ) {
     return 'Field Network';
   }
 
-  if (['revenue', 'crm', 'pipeline', 'payment', 'invoice'].some((term) => value.includes(term))) {
+  if (['revenue', 'crm', 'pipeline', 'payment', 'invoice'].some((term) => hasTerm(value, term))) {
     return 'Revenue OS';
   }
 
-  if (['opportunity', 'solicitation', 'rfp', 'rfq', 'procurement', 'grant', 'funding'].some((term) => value.includes(term))) {
+  if (['opportunity', 'solicitation', 'rfp', 'rfq', 'procurement', 'grant', 'funding'].some((term) => hasTerm(value, term))) {
     return 'Opportunity Intelligence';
   }
 
-  if (['packet', 'sba scale', 'capability', 'attendance kit', 'rfi response'].some((term) => value.includes(term))) {
+  if (['packet', 'sba scale', 'capability', 'attendance kit', 'rfi response'].some((term) => hasTerm(value, term))) {
     return 'Packet Library';
   }
 
-  if (['backend', 'health', 'sqlite', 'docker', 'backup', 'security', 'compliance'].some((term) => value.includes(term))) {
+  if (['backend', 'health', 'sqlite', 'docker', 'backup', 'security', 'compliance'].some((term) => hasTerm(value, term))) {
     return 'Backend Command';
   }
 
-  if (['catch', 'correct', 'changelog', 'proof', 'audit', 'lifecycle'].some((term) => value.includes(term))) {
+  if (['catch', 'correct', 'changelog', 'proof', 'audit', 'lifecycle'].some((term) => hasTerm(value, term))) {
     return 'Lifelong Catch and Correct';
   }
 
@@ -332,8 +358,8 @@ function priorityFor(text: string, estimatedValue: number): EnterpriseItem['prio
   let score = 0;
 
   if (
-    ['urgent', 'today', 'same-day', 'by noon', 'asap', 'failed', 'security', 'compliance', 'blocked'].some(
-      (term) => value.includes(term)
+    ['urgent', 'today', 'same-day', 'by noon', 'asap', 'failed', 'security', 'compliance', 'blocked'].some((term) =>
+      hasTerm(value, term)
     )
   ) {
     score += 40;
@@ -341,7 +367,7 @@ function priorityFor(text: string, estimatedValue: number): EnterpriseItem['prio
 
   if (
     ['revenue', '$500', 'paid', 'invoice', 'dispatch', 'quote', 'rfq', 'opportunity', 'grant'].some((term) =>
-      value.includes(term)
+      hasTerm(value, term)
     )
   ) {
     score += 30;
@@ -349,13 +375,13 @@ function priorityFor(text: string, estimatedValue: number): EnterpriseItem['prio
 
   if (
     ['procurement', 'federal', 'municipal', 'va', 'subcontract', 'prime', 'sbir', 'healthcare'].some((term) =>
-      value.includes(term)
+      hasTerm(value, term)
     )
   ) {
     score += 20;
   }
 
-  if (estimatedValue >= 500 || value.includes('$500')) {
+  if (estimatedValue >= 500 || hasTerm(value, '$500')) {
     score += 25;
   } else {
     score += Math.min(10, Math.max(0, estimatedValue) / 100);
@@ -368,6 +394,34 @@ function priorityFor(text: string, estimatedValue: number): EnterpriseItem['prio
 
 function agentFor(operation: EnterpriseOperation): EnterpriseAgent {
   return AGENTS.find((candidate) => candidate.operation === operation) ?? AGENTS[0];
+}
+
+const VALID_PRIORITIES: readonly EnterpriseItem['priority'][] = ['P0', 'P1', 'P2'];
+const VALID_STATUSES: readonly EnterpriseItem['status'][] = ['new', 'ranked', 'blocked', 'approved'];
+export const ENTERPRISE_PROCESS_IDS: readonly EnterpriseProcessId[] = [
+  'opportunity_intelligence',
+  'daily_command',
+  'ai_operations_advisor',
+  'field_network',
+  'revenue_os',
+  'grant_procurement_packet_library',
+  'backend_command',
+  'lifelong_catch_correct',
+  'global_enterprise',
+];
+
+function isEnterpriseItem(item: unknown): item is EnterpriseItem {
+  if (!item || typeof item !== 'object') return false;
+  const candidate = item as Partial<EnterpriseItem>;
+  return (
+    typeof candidate.title === 'string' &&
+    typeof candidate.process === 'string' &&
+    ENTERPRISE_PROCESS_IDS.includes(candidate.process as EnterpriseProcessId) &&
+    typeof candidate.estimatedValue === 'number' &&
+    Number.isFinite(candidate.estimatedValue) &&
+    (candidate.priority === undefined || VALID_PRIORITIES.includes(candidate.priority as EnterpriseItem['priority'])) &&
+    (candidate.status === undefined || VALID_STATUSES.includes(candidate.status as EnterpriseItem['status']))
+  );
 }
 
 export function buildEnterpriseItem(input: {
@@ -435,7 +489,7 @@ export function runEnterpriseOperation(input: {
   const requestedAction = input.requestedAction?.toLowerCase().trim();
 
   if (operation === 'evaluate_security_gate') {
-    const blocked = requestedAction ? BLOCKED_OPERATIONS.includes(requestedAction) : false;
+    const blocked = isBlockedAction(requestedAction);
     return {
       ok: true,
       service: 'already-here-global-enterprise-asios',
@@ -451,18 +505,18 @@ export function runEnterpriseOperation(input: {
     };
   }
 
-  const title = (input.title || input.prompt || 'Enterprise item').trim();
-  const body = (input.body || input.prompt || title).trim();
   const estimatedValue = Number.isFinite(Number(input.estimatedValue)) ? Number(input.estimatedValue) : 0;
 
   const item = buildEnterpriseItem({
-    prompt: `${title} ${body}`,
+    title: input.title,
+    body: input.body,
+    prompt: input.prompt,
     process: agent.process,
     source: input.source || 'enterprise-asios',
     estimatedValue,
   });
 
-  const queue = [...(input.queue || []), item].sort((left, right) => {
+  const queue = [...(input.queue?.filter(isEnterpriseItem) || []), item].sort((left, right) => {
     const rank = { P0: 0, P1: 1, P2: 2 } as const;
     return rank[left.priority] - rank[right.priority] || right.estimatedValue - left.estimatedValue;
   });

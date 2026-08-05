@@ -29,7 +29,7 @@ connectors:
     permissions: [read_owner_email, read_owner_thread]
   public_web_search:
     state: free_external
-    enabled: true
+    enabled: false
     permissions: [search_public_web]
   government_api_read:
     state: free_external
@@ -37,12 +37,16 @@ connectors:
     permissions: [query_public_api]
   sourcewell_naspo_read:
     state: free_external
-    enabled: true
+    enabled: false
     permissions: [read_public_procurement_page]
   sam_gov_read:
     state: free_external
     enabled: false
     permissions: [query_public_api]
+  document_intelligence:
+    state: free_core
+    enabled: false
+    permissions: [read_workspace, generate_document_draft]
   openai_api:
     state: optional_paid_disabled
     enabled: false
