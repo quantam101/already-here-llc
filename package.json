@@ -41,7 +41,7 @@
     "jszip": "^3.10.1",
     "next": "16.2.10",
     "pdf-lib": "^1.17.1",
-    "react": "18.2.0",
+    "react": "19.2.8",
     "react-dom": "18.2.0",
     "remark": "^15.0.1",
     "remark-html": "^16.0.1",
@@ -51,7 +51,7 @@
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "26.1.1",
-    "@types/react": "18.2.66",
+    "@types/react": "19.2.18",
     "@types/react-dom": "18.2.22",
     "autoprefixer": "10.5.2",
     "eslint": "9.39.4",
