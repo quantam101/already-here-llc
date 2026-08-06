@@ -69,6 +69,7 @@ class ScanStore:
                 """
             )
             conn.execute("CREATE INDEX IF NOT EXISTS idx_scans_org_created ON scans(org_id, created_at)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_scans_scan_id ON scans(scan_id)")
 
     def record_scan(
         self,
@@ -142,6 +143,23 @@ class ScanStore:
                     (org_id, limit),
                 ).fetchall()
         return [self._row_to_record(r) for r in rows]
+
+    def get_scan(self, org_id: str, scan_id: str) -> Optional[ScanRecord]:
+        """Return a single scan record by org + scan_id."""
+        if self._memory_mode:
+            for r in reversed(self._memory):
+                if r["org_id"] == org_id and r["scan_id"] == scan_id:
+                    return self._row_to_record(r)
+            return None
+        with sqlite3.connect(self._store_path) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                "SELECT * FROM scans WHERE org_id = ? AND scan_id = ?",
+                (org_id, scan_id),
+            ).fetchone()
+        if not row:
+            return None
+        return self._row_to_record(row)
 
     def get_usage(self, org_id: str, period_days: int = 30) -> Dict[str, Any]:
         # Simplistic rolling-window query; date arithmetic handled in Python for portability.

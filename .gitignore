@@ -9,16 +9,18 @@ tsconfig.tsbuildinfo
 __pycache__/
 data/
 *.sqlite3
-*.db
-*.db-wal
-*.db-shm
 backups/
 .env
 hermes/receipts/
 
 # Photo AI Haul Scanner
 models/*.onnx
+!models/yolov8n.onnx
+!models/yolov8n-haul.onnx
 models/tinyclip40/
+runs/
+*.pt
+yolov8n.pt
 test-plan-*.md
 test-report-*.md
 

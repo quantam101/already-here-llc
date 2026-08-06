@@ -55,17 +55,24 @@ Open `http://localhost:8000` on your phone (same Wi-Fi) and tap **SNAP LOAD PHOT
 | `HAUL_RECOVERY_CREDIT_PCT` | `0.25` | Recovery credit applied to net quote |
 | `HAUL_FRAME_WIDTH_METERS` | `2.5` | Assumed real-world frame width for local spatial calibration |
 | `HAUL_MAX_UPLOAD_BYTES` | `26214400` | Max photo upload size (25 MiB) |
-| `HAUL_RATE_LIMIT_PER_MINUTE` | `30` | Per-IP rate limit for `/api/scan` |
+| `HAUL_MAX_IMAGE_PIXELS` | `50000000` | Decompression-bomb guard: max decoded pixels for uploads |
+| `HAUL_RATE_LIMIT_PER_MINUTE` | `30` | Per-org rate limit for `/api/scan` (also applies to anonymous org) |
+| `HAUL_ANONYMOUS_DAILY_QUOTA` | `1000` | Daily scan quota for the default anonymous org (when no API keys configured) |
 | `HAUL_API_KEY` | *(none)* | Optional API key required by `/api/scan` |
-| `HAUL_CORS_ORIGINS` | `*` | Comma-separated allowed CORS origins |
+| `HAUL_API_KEYS` | *(none)* | Multi-tenant API keys as JSON |
+| `HAUL_CORS_ORIGINS` | `*` | Comma-separated allowed CORS origins (`*` disables credentials) |
 | `GMAOS_PAID_ADAPTERS_ENABLED` | `false` | Enable cloud vision (Gemini) |
 | `GEMINI_API_KEY` | *(none)* | Gemini API key for cloud vision |
 | `HAUL_YOLO_ENABLED` | `true` | Run YOLOv8 ONNX local object detection |
-| `HAUL_YOLO_MODEL_PATH` | `models/yolov8n.onnx` | ONNX model path |
+| `HAUL_YOLO_MODEL_PATH` | `models/yolov8n-haul.onnx` | ONNX model path (fine-tuned; set `models/yolov8n.onnx` for pretrained COCO baseline) |
 | `HAUL_VISION_SOURCE_ORDER` | `fused,cloud,deterministic` | Vision pipeline priority |
 | `HAUL_YOLO_CONF` | `0.55` | Minimum YOLO class confidence |
 | `HAUL_YOLO_IOU` | `0.3` | YOLO NMS IoU threshold |
-| `HAUL_YOLO_MAX_DETECTIONS` | `8` | Max YOLO detections per image |
+| `HAUL_YOLO_MAX_DETECTIONS` | `12` | Max YOLO detections per image |
+| `HAUL_YOLO_MIN_AREA_RATIO` | `0.01` | Minimum detection area as a fraction of image area |
+| `HAUL_YOLO_MAX_AREA_RATIO` | `0.5` | Maximum detection area as a fraction of image area |
+| `HAUL_YOLO_TILE_GRID` | `2` | Multi-scale tiling grid (2 = 2x2 crops) for small objects |
+| `HAUL_YOLO_TILE_OVERLAP` | `0.2` | Tile overlap fraction (0.2 = 20%) |
 | `HAUL_CLIP_ENABLED` | `true` | Run TinyCLIP zero-shot classification for fine-grained labels |
 | `HAUL_CLIP_MODEL_DIR` | `models/tinyclip40` | TinyCLIP ONNX artifacts directory |
 | `HAUL_CLIP_CONF` | `7.0` | Minimum TinyCLIP logit score for a label to be accepted |
@@ -95,7 +102,7 @@ The default vision pipeline is **yolov8_tinyclip_fused** (YOLOv8 ONNX boxes + Ti
 | `HAUL_API_KEYS` | *(none)* | Multi-tenant keys as JSON: `{key: {org, tier, rpm, daily_quota}}` |
 | `REDIS_URL` | *(none)* | Optional Redis for global per-org rate limits and quotas across pods |
 | `HAUL_SCAN_STORE` | `data/haul_scans.db` | SQLite path or `memory` for scan persistence |
-| `HAUL_REQUEST_SIGNING_SECRET` | *(none)* | Optional HMAC-SHA256 signature secret for `/api/scan` |
+| `HAUL_REQUEST_SIGNING_SECRET` | *(none)* | Optional HMAC-SHA256 secret: `sig = HMAC-SHA256("METHOD|PATH|TIMESTAMP|NONCE|" + body)`; requires `X-Haul-Timestamp`, `X-Haul-Nonce`, `X-Haul-Signature` |
 | `HAUL_FEEDBACK_ENABLED` | `true` | Enable labeled feedback collection |
 | `HAUL_SAVE_SCAN_IMAGES` | `true` | Save uploaded scan images for later review/training |
 | `HAUL_FEEDBACK_DIR` | `data/feedback` | Directory for labeled feedback images |
@@ -126,6 +133,30 @@ python scripts/build_training_db.py --export yolo --max-per-class 100 --max-tota
 # or use the running API:
 # GET /api/feedback/export?fmt=yolo&as_zip=true
 ```
+
+### Fine-tuning a hauling-specific YOLO detector
+
+After building the labeled database, fine-tune `yolov8n` and export the best weights to ONNX:
+
+```bash
+# Install training deps (in addition to requirements.txt)
+pip install -r requirements-train.txt
+
+# Train on the feedback store (CPU; use --device 0 for GPU)
+python scripts/train_haul_detector.py \
+  --model yolov8n.pt \
+  --epochs 25 \
+  --imgsz 416 \
+  --batch 4 \
+  --workers 0 \
+  --device cpu \
+  --export-onnx \
+  --onnx-path models/yolov8n-haul.onnx
+```
+
+The script exports a YOLOv8 dataset from `FeedbackStore`, runs training, and copies `runs/detect/haul_detector/weights/best.onnx` to `models/yolov8n-haul.onnx`. Set `HAUL_YOLO_MODEL_PATH=models/yolov8n-haul.onnx` to wire it into `/api/scan`.
+
+The ONNX export requires `onnx>=1.12.0` and `onnxslim>=0.1.82` (included in `requirements-train.txt`).
 
 ### Verification
 

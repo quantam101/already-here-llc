@@ -255,6 +255,8 @@ class FeedbackStore:
             entities = r.corrected_entities if corrected_only else r.predicted_entities
             if not entities or not r.image_path or not Path(r.image_path).exists():
                 continue
+            if r.image_width <= 0 or r.image_height <= 0:
+                continue
 
             dest_img = root / "images" / f"{r.id}.jpg"
             shutil.copy(r.image_path, dest_img)
@@ -307,12 +309,14 @@ class FeedbackStore:
 
         images = []
         annotations = []
-        categories = [{"id": i, "name": name} for i, name in enumerate(class_names)]
+        categories = [{"id": i + 1, "name": name} for i, name in enumerate(class_names)]
         ann_id = 1
 
         for r in records:
             entities = r.corrected_entities if corrected_only else r.predicted_entities
             if not entities or not r.image_path or not Path(r.image_path).exists():
+                continue
+            if r.image_width <= 0 or r.image_height <= 0:
                 continue
 
             dest_img = root / "images" / f"{r.id}.jpg"
