@@ -2,14 +2,14 @@ import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { authenticated, err, ok, safeJson } from '@/lib/ahfos/api-utils';
 import { canAccessJob } from '@/lib/ahfos/auth';
-import { closeoutAgent, dispatchAgent, invoiceAgent, reviewAgent, technicianAgent } from '@/lib/ahfos/agents';
+import { closeoutAgent, dispatchAgent, invoiceAgent, qaAgent, reviewAgent, technicianAgent } from '@/lib/ahfos/agents';
 import { AhfosRole, CloseoutPayloadSchema, JobStatus, totalJobCostCents } from '@/lib/ahfos/schema';
 import { appendJobEvent, createKnowledgeEntry, getJobById, getJobs, getUsers, updateJob } from '@/lib/ahfos/store';
 
 export const runtime = 'nodejs';
 
 const AgentRequestSchema = z.object({
-  agent: z.enum(['dispatch', 'technician', 'closeout', 'invoice', 'review', 'kb']),
+  agent: z.enum(['dispatch', 'technician', 'closeout', 'invoice', 'review', 'kb', 'qa']),
   payload: z.record(z.string(), z.unknown()).default({}),
 }).strict();
 
@@ -18,6 +18,7 @@ const TECHNICIAN_ROLES: AhfosRole[] = ['admin', 'dispatcher', 'project_manager',
 const INVOICE_ROLES: AhfosRole[] = ['admin', 'accounting', 'dispatcher'];
 const REVIEW_ROLES: AhfosRole[] = ['admin', 'sales', 'dispatcher'];
 const KB_ROLES: AhfosRole[] = ['admin', 'dispatcher', 'project_manager', 'technician'];
+const QA_ROLES: AhfosRole[] = ['admin', 'dispatcher', 'project_manager', 'office_manager'];
 
 function hasRole(user: { roles: string[] }, roles: readonly string[]): boolean {
   return user.roles.some((r) => roles.includes(r));
@@ -163,6 +164,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     await updateJob(job);
     await appendJobEvent({ jobId: id, type: 'agent.review', agent: 'reviewAgent', actorId: user.id, actorRole: user.roles[0], payload: job.review, timestamp: now });
     return ok({ review: job.review, job });
+  }
+
+  if (agent === 'qa') {
+    if (!hasRole(user, QA_ROLES)) return err('Forbidden', 403);
+    if (!(await canAccessJob(user, job, DISPATCH_ADMIN_ROLES))) return err('Forbidden', 403);
+    if (!isInStatus(job.status, POST_CLOSE_FROM)) return err('QA score can only be generated for completed or closed jobs.', 400);
+
+    const result = qaAgent(job);
+    job.qa = { score: result.score, missingItems: result.missingItems, scoredAt: now, scoredBy: user.id };
+    job.updatedAt = now;
+    await updateJob(job);
+    await appendJobEvent({ jobId: id, type: 'agent.qa', agent: 'qaAgent', actorId: user.id, actorRole: user.roles[0], payload: { score: result.score, missingItems: result.missingItems }, timestamp: now });
+    return ok({ qa: job.qa, job });
   }
 
   if (agent === 'kb') {

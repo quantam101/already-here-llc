@@ -183,6 +183,12 @@ export const JobSchema = z.object({
     comment: z.string().max(2000).optional(),
     sentAt: z.string().datetime().optional(),
   }).default({ status: 'pending' }),
+  qa: z.object({
+    score: z.number().int().min(0).max(100),
+    missingItems: z.array(z.string().max(200)).default([]),
+    scoredAt: z.string().datetime(),
+    scoredBy: z.string().uuid().optional(),
+  }).optional(),
   kbEntryId: z.string().uuid().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

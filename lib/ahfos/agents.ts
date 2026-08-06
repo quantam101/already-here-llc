@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { llmComplete } from '@/lib/llm-gateway';
-import {
+import { totalJobCostCents } from './schema';
+import type {
   Asset,
   ChecklistItem,
   CloseoutPayload,
@@ -13,7 +14,6 @@ import {
   MaterialLine,
   Photo,
   ServiceRequest,
-  totalJobCostCents,
 } from './schema';
 
 export type AgentContext = {
@@ -226,6 +226,87 @@ export async function closeoutAgent(job: Job, payload: CloseoutPayload): Promise
       sourceJobId: job.id,
     },
     note: 'Closeout packet generated. Invoice and review triggers queued.',
+  };
+}
+
+export type QaResult = {
+  score: number;
+  missingItems: string[];
+};
+
+export function qaAgent(job: Job): QaResult {
+  const missingItems: string[] = [];
+  let score = 0;
+
+  if (job.beforePhotos.length > 0) score += 15; else missingItems.push('Before photos');
+  if (job.afterPhotos.length > 0) score += 15; else missingItems.push('After photos');
+  if (job.signature) score += 15; else missingItems.push('Customer signature');
+  if (job.workNotes.trim().length >= 20) score += 15; else missingItems.push('Work notes (min 20 characters)');
+  if (job.labor.length > 0) score += 10; else missingItems.push('Labor lines');
+  if (job.recommendations.length > 0) score += 10; else missingItems.push('Maintenance recommendations');
+
+  if (job.checklist.length === 0) {
+    missingItems.push('Safety/work checklist');
+  } else {
+    const checked = job.checklist.filter((c) => c.checked).length;
+    score += Math.round((checked / job.checklist.length) * 20);
+    if (checked < job.checklist.length) missingItems.push(`Unchecked checklist items (${job.checklist.length - checked})`);
+  }
+
+  return { score: Math.min(100, score), missingItems };
+}
+
+export type ManagementReport = {
+  generatedAt: string;
+  jobCounts: Record<string, number>;
+  openJobs: number;
+  completedToday: number;
+  revenueCents: number;
+  averageQaScore: number | null;
+  technicianRanking: Array<{ technicianId: string; name: string; completedJobs: number; averageQaScore: number | null }>;
+};
+
+export function managementAgent(
+  jobs: Job[],
+  technicians: Array<{ id: string; name: string }>,
+): ManagementReport {
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const jobCounts: Record<string, number> = {};
+  let revenueCents = 0;
+  let completedToday = 0;
+  const qaScores: number[] = [];
+
+  for (const job of jobs) {
+    jobCounts[job.status] = (jobCounts[job.status] ?? 0) + 1;
+    if (['completed', 'closed'].includes(job.status)) {
+      revenueCents += job.invoice.totalCents;
+      if (job.updatedAt.slice(0, 10) === today) completedToday += 1;
+    }
+    if (job.qa) qaScores.push(job.qa.score);
+  }
+
+  const technicianRanking = technicians
+    .map((tech) => {
+      const techJobs = jobs.filter((j) => j.assignedTo === tech.id && ['completed', 'closed'].includes(j.status));
+      const techQa = techJobs.flatMap((j) => (j.qa ? [j.qa.score] : []));
+      return {
+        technicianId: tech.id,
+        name: tech.name,
+        completedJobs: techJobs.length,
+        averageQaScore: techQa.length ? Math.round(techQa.reduce((a, b) => a + b, 0) / techQa.length) : null,
+      };
+    })
+    .sort((a, b) => b.completedJobs - a.completedJobs || (b.averageQaScore ?? 0) - (a.averageQaScore ?? 0));
+
+  return {
+    generatedAt: now.toISOString(),
+    jobCounts,
+    openJobs: jobs.filter((j) => !['completed', 'closed', 'cancelled'].includes(j.status)).length,
+    completedToday,
+    revenueCents,
+    averageQaScore: qaScores.length ? Math.round(qaScores.reduce((a, b) => a + b, 0) / qaScores.length) : null,
+    technicianRanking,
   };
 }
 

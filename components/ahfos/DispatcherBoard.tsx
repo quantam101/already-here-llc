@@ -13,6 +13,7 @@ type JobSummary = {
   createdAt: string;
   intake: { problemDescription: string };
   dispatcherPacket: { summary: string };
+  qa?: { score: number; missingItems: string[] };
 };
 
 type UserSummary = { id: string; name: string; email: string; roles: string[]; skills?: string[] };
@@ -121,6 +122,9 @@ export function DispatcherBoard() {
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-navy">{job.status}</span>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-navy">{job.priority}</span>
               <span className="text-sm text-slate-400">{new Date(job.createdAt).toLocaleString()}</span>
+              {job.qa && (
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-navy">QA {job.qa.score}/100</span>
+              )}
             </div>
             <h2 className="mt-3 text-lg font-semibold text-navy">{job.trade}</h2>
             <p className="mt-1 text-sm text-slate-600">{job.dispatcherPacket.summary || job.intake.problemDescription.slice(0, 200)}</p>
@@ -171,6 +175,9 @@ export function DispatcherBoard() {
                       </button>
                       <button onClick={() => runAgent(job.id, 'kb')} className="flex-1 rounded-full border border-borderBrand px-4 py-2 text-sm font-semibold text-slate-300 hover:border-action hover:text-action">
                         Add to KB
+                      </button>
+                      <button onClick={() => runAgent(job.id, 'qa')} className="flex-1 rounded-full border border-borderBrand px-4 py-2 text-sm font-semibold text-slate-300 hover:border-action hover:text-action">
+                        QA score
                       </button>
                     </>
                   )}
