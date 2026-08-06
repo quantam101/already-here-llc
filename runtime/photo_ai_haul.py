@@ -819,9 +819,10 @@ class _YoloOnnxDetector:
         for row in predictions:
             x, y, w, h = row[:4]
             scores = row[4:]
-            sigmoid_scores = 1.0 / (1.0 + np.exp(-scores))
-            class_id = int(np.argmax(sigmoid_scores))
-            confidence = float(sigmoid_scores[class_id])
+            # Ultralytics YOLOv8 ONNX export already applies sigmoid() to class
+            # logits in the Detect head, so `scores` are already probabilities.
+            class_id = int(np.argmax(scores))
+            confidence = float(scores[class_id])
             if confidence < conf_threshold:
                 continue
 
@@ -1135,10 +1136,8 @@ def _merge_detections(
     for i in range(n):
         for j in range(i + 1, n):
             a, b = detections[i], detections[j]
-            same_group = (
-                a["category"] == b["category"]
-                or a.get("clip_key") == b.get("clip_key")
-            )
+            clip_match = a.get("clip_key") and a.get("clip_key") == b.get("clip_key")
+            same_group = a["category"] == b["category"] or clip_match
             if not same_group:
                 continue
             iou = _iou(a["bbox"], b["bbox"])

@@ -55,9 +55,12 @@ Open `http://localhost:8000` on your phone (same Wi-Fi) and tap **SNAP LOAD PHOT
 | `HAUL_RECOVERY_CREDIT_PCT` | `0.25` | Recovery credit applied to net quote |
 | `HAUL_FRAME_WIDTH_METERS` | `2.5` | Assumed real-world frame width for local spatial calibration |
 | `HAUL_MAX_UPLOAD_BYTES` | `26214400` | Max photo upload size (25 MiB) |
-| `HAUL_RATE_LIMIT_PER_MINUTE` | `30` | Per-IP rate limit for `/api/scan` |
+| `HAUL_MAX_IMAGE_PIXELS` | `50000000` | Decompression-bomb guard: max decoded pixels for uploads |
+| `HAUL_RATE_LIMIT_PER_MINUTE` | `30` | Per-org rate limit for `/api/scan` (also applies to anonymous org) |
+| `HAUL_ANONYMOUS_DAILY_QUOTA` | `1000` | Daily scan quota for the default anonymous org (when no API keys configured) |
 | `HAUL_API_KEY` | *(none)* | Optional API key required by `/api/scan` |
-| `HAUL_CORS_ORIGINS` | `*` | Comma-separated allowed CORS origins |
+| `HAUL_API_KEYS` | *(none)* | Multi-tenant API keys as JSON |
+| `HAUL_CORS_ORIGINS` | `*` | Comma-separated allowed CORS origins (`*` disables credentials) |
 | `GMAOS_PAID_ADAPTERS_ENABLED` | `false` | Enable cloud vision (Gemini) |
 | `GEMINI_API_KEY` | *(none)* | Gemini API key for cloud vision |
 | `HAUL_YOLO_ENABLED` | `true` | Run YOLOv8 ONNX local object detection |
@@ -99,7 +102,7 @@ The default vision pipeline is **yolov8_tinyclip_fused** (YOLOv8 ONNX boxes + Ti
 | `HAUL_API_KEYS` | *(none)* | Multi-tenant keys as JSON: `{key: {org, tier, rpm, daily_quota}}` |
 | `REDIS_URL` | *(none)* | Optional Redis for global per-org rate limits and quotas across pods |
 | `HAUL_SCAN_STORE` | `data/haul_scans.db` | SQLite path or `memory` for scan persistence |
-| `HAUL_REQUEST_SIGNING_SECRET` | *(none)* | Optional HMAC-SHA256 signature secret for `/api/scan` |
+| `HAUL_REQUEST_SIGNING_SECRET` | *(none)* | Optional HMAC-SHA256 secret: `sig = HMAC-SHA256("METHOD|PATH|TIMESTAMP|NONCE|" + body)`; requires `X-Haul-Timestamp`, `X-Haul-Nonce`, `X-Haul-Signature` |
 | `HAUL_FEEDBACK_ENABLED` | `true` | Enable labeled feedback collection |
 | `HAUL_SAVE_SCAN_IMAGES` | `true` | Save uploaded scan images for later review/training |
 | `HAUL_FEEDBACK_DIR` | `data/feedback` | Directory for labeled feedback images |

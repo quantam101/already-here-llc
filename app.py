@@ -84,6 +84,32 @@ def _save_scan_image(scan_id: str, image_bytes: bytes) -> Optional[str]:
         logger.exception("Failed to save scan image")
     return None
 
+
+# Allowed image formats and a decompression-bomb guard.
+HAUL_MAX_IMAGE_PIXELS = _env_int("HAUL_MAX_IMAGE_PIXELS", 50_000_000)
+_ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP", "GIF"}
+
+
+def _validate_image_bytes(image_bytes: bytes) -> Tuple[bool, str, int, int]:
+    """Validate uploaded image bytes: format, size, and decompression-bomb guard."""
+    from PIL import Image
+    import io
+
+    try:
+        Image.MAX_IMAGE_PIXELS = HAUL_MAX_IMAGE_PIXELS
+        with Image.open(io.BytesIO(image_bytes)) as img:
+            if img.format not in _ALLOWED_IMAGE_FORMATS:
+                return False, f"Unsupported image format: {img.format}", 0, 0
+            img.load()
+            width, height = img.size
+            if width * height > HAUL_MAX_IMAGE_PIXELS:
+                return False, "Image dimensions exceed decompression limit", width, height
+            return True, "", width, height
+    except Image.DecompressionBombError as exc:
+        return False, f"Decompression bomb detected: {exc}", 0, 0
+    except Exception as exc:
+        return False, f"Invalid image: {exc}", 0, 0
+
 # --------------------------------------------------------------------
 # Logging setup
 # --------------------------------------------------------------------
@@ -184,14 +210,29 @@ def _parse_trailer_fill_pct(value: str) -> float:
 def _verify_request_signature(request: Request, body: bytes) -> bool:
     """
     Optional HMAC-SHA256 request signing for enterprise webhooks.
-    Expects the X-Haul-Signature header as a hex digest of the request body.
+
+    The signature must be a hex digest of:
+        METHOD|PATH|TIMESTAMP|NONCE|BODY
+    using the shared secret. Requests older than 5 minutes or missing a nonce
+    are rejected to prevent replay attacks.
     """
     if not HAUL_REQUEST_SIGNING_SECRET:
         return True
     signature = request.headers.get("x-haul-signature", "")
+    timestamp = request.headers.get("x-haul-timestamp", "")
+    nonce = request.headers.get("x-haul-nonce", "")
+    if not timestamp or not nonce:
+        return False
+    try:
+        ts = int(timestamp)
+    except ValueError:
+        return False
+    if abs(time.time() - ts) > 300:
+        return False
+    payload = f"{request.method}|{request.url.path}|{timestamp}|{nonce}|".encode("utf-8") + body
     expected = hmac.new(
         HAUL_REQUEST_SIGNING_SECRET.encode("utf-8"),
-        body,
+        payload,
         hashlib.sha256,
     ).hexdigest()
     # Constant-time compare to prevent timing side-channels.
@@ -383,7 +424,12 @@ class _EnterpriseAuth:
 
     def authenticate(self, request: Request) -> Tuple[Optional[Dict[str, Any]], Optional[JSONResponse]]:
         if not self.keys:
-            return {"org": "anonymous", "tier": "none", "rpm": 0, "daily_quota": 0}, None
+            return {
+                "org": "anonymous",
+                "tier": "none",
+                "rpm": _env_int("HAUL_RATE_LIMIT_PER_MINUTE", 30),
+                "daily_quota": _env_int("HAUL_ANONYMOUS_DAILY_QUOTA", 1000),
+            }, None
 
         header = request.headers.get("x-haul-api-key", "")
         auth = request.headers.get("authorization", "")
@@ -552,6 +598,11 @@ async def handle_mobile_scan(request: Request, file: UploadFile = File(...)) -> 
             content={"error": f"Upload exceeds {MAX_UPLOAD_BYTES} bytes limit."},
         )
 
+    valid, error_msg, _, _ = _validate_image_bytes(image_bytes)
+    if not valid:
+        METRICS.inc("haul_scan_errors_total", {"reason": "invalid_image"})
+        return JSONResponse(status_code=400, content={"error": error_msg})
+
     # Optional request-signature hardening for enterprise webhooks.
     if HAUL_REQUEST_SIGNING_SECRET and not _verify_request_signature(request, image_bytes):
         METRICS.inc("haul_scan_errors_total", {"reason": "invalid_signature"})
@@ -671,11 +722,9 @@ async def record_feedback(
         predicted = []
         if scan_id:
             # Attach the original predicted entities for reference.
-            history = SCAN_STORE.get_scan_history(org_id, limit=1)
-            for h in history:
-                if h.scan_id == scan_id:
-                    predicted = h.entities
-                    break
+            scan_record = SCAN_STORE.get_scan(org_id, scan_id)
+            if scan_record:
+                predicted = scan_record.entities
         corrected = json.loads(corrected_entities)
         feedback_id = FEEDBACK_STORE.record_feedback(
             org_id=org_id,
