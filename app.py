@@ -66,6 +66,19 @@ LOG_JSON = _env_bool("HAUL_LOG_JSON", False)
 SAVE_SCAN_IMAGES = _env_bool("HAUL_SAVE_SCAN_IMAGES", True)
 SCAN_IMAGES_DIR = _env("HAUL_SCAN_IMAGES_DIR", "data/scan_images")
 
+# Endpoints allowed without an API key when no keys are configured.
+_PUBLIC_PATHS = {
+    "/",
+    "/healthz",
+    "/readyz",
+    "/manifest.json",
+    "/.well-known/assetlinks.json",
+    "/service-worker.js",
+    "/icon-192.png",
+    "/icon-512.png",
+    "/api/scan",
+}
+
 # --------------------------------------------------------------------
 # Helpers
 # --------------------------------------------------------------------
@@ -424,6 +437,12 @@ class _EnterpriseAuth:
 
     def authenticate(self, request: Request) -> Tuple[Optional[Dict[str, Any]], Optional[JSONResponse]]:
         if not self.keys:
+            if request.url.path not in _PUBLIC_PATHS:
+                return None, JSONResponse(
+                    status_code=401,
+                    content={"error": "API key required. Configure HAUL_API_KEY or HAUL_API_KEYS."},
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
             return {
                 "org": "anonymous",
                 "tier": "none",
@@ -478,8 +497,15 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "HEAD", "OPTIONS"],
+    allow_headers=[
+        "Content-Type",
+        "X-Haul-Api-Key",
+        "X-Haul-Signature",
+        "X-Haul-Timestamp",
+        "X-Haul-Nonce",
+        "X-Request-Id",
+    ],
 )
 
 
