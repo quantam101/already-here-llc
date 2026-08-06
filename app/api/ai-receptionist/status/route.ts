@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server.js';
+import { getDatabaseStats } from '@/lib/revenue-command-db';
 
 export const runtime = 'nodejs';
 
@@ -15,6 +16,7 @@ export async function GET() {
   const isPro = tier === 'pro' || tier === 'officeManager';
   const isOfficeManager = tier === 'officeManager';
 
+  const stats = getDatabaseStats();
   return NextResponse.json({
     ok: true,
     service: 'ai-receptionist-status',
@@ -34,6 +36,13 @@ export async function GET() {
       revenueReporting: isOfficeManager
     },
     tierRule: 'Basic includes intake and recording. Pro adds speech, SMS, and scoring. Office Manager adds booking, CRM, and reporting.',
+    ownedRecordCounts: {
+      contacts: stats.contacts,
+      leads: stats.leads,
+      opportunities: stats.opportunities,
+      ai_conversations: stats.ai_conversations,
+      ai_tasks: stats.ai_tasks
+    },
     timestamp: new Date().toISOString()
   });
 }

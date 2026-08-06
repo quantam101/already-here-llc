@@ -11,11 +11,12 @@ export async function POST(request: Request) {
   const speech = clean(formData.get('SpeechResult'));
   const payload = {
     source: speech ? 'twilio_speech_qualified_voice' : 'twilio_voice_recording',
-    name: clean(formData.get('From')) || 'Voice caller',
+    fullName: clean(formData.get('From')) || 'Voice caller',
     phone: clean(formData.get('From')),
     serviceType: speech ? 'Speech-qualified service request' : 'Voice intake recording',
     urgency: /urgent|emergency|same day|down|asap/i.test(speech) ? 'urgent_voice_lead' : 'callback_required',
     leadState: speech ? 'qualified_voice_lead' : 'voice_recording_review',
+    transcript: speech,
     message: speech || [
       `Recording URL: ${clean(formData.get('RecordingUrl'))}`,
       `Recording duration: ${clean(formData.get('RecordingDuration')) || 'unknown'} seconds`,

@@ -1,5 +1,7 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server.js';
+import { persistDatabaseReadyWrites } from '@/lib/revenue-command-db';
+import { buildRevenueIntakeProof, type RevenueIntakeInput } from '@/lib/revenue-command-intake';
 
 export const runtime = 'nodejs';
 
@@ -105,6 +107,23 @@ async function sendResendEmail(payload: Record<string, unknown>): Promise<string
   return data.id || '';
 }
 
+function toRevenueIntakeInput(payload: Record<string, string>): RevenueIntakeInput {
+  return {
+    source: payload.source || 'ai_receptionist_intake',
+    fullName: payload.fullName || payload.name || 'Unknown Contact',
+    company: payload.company || 'Unknown Organization',
+    email: payload.email || '',
+    phone: payload.phone || undefined,
+    title: payload.title || `AI receptionist lead: ${payload.serviceType || payload.service || 'service request'}`,
+    body: payload.message || payload.notes || payload.body || 'No details provided.',
+    location: payload.location || [payload.city, payload.zip].filter(Boolean).join(' ') || undefined,
+    serviceType: payload.serviceType || payload.service || undefined,
+    requestedWindow: payload.preferredTime || payload.schedule || payload.requestedWindow || undefined,
+    estimatedValueCents: Number(payload.estimatedValueCents) || 0,
+    transcript: payload.transcript
+  };
+}
+
 async function deliverLead(payload: Record<string, string>, leadId: string): Promise<{ delivery: string; messageId?: string }> {
   const to = process.env.AI_RECEPTIONIST_TO_EMAIL || process.env.DISPATCH_TO_EMAIL;
   if (process.env.RESEND_API_KEY && to) {
@@ -151,7 +170,9 @@ export async function POST(request: Request) {
   const leadId = generateLeadId();
   try {
     const delivery = await deliverLead(payload, leadId);
-    return NextResponse.json({ ok: true, leadId, status: 'received', ...delivery, nextAction: 'Review lead, quote/schedule if valid, discard if not qualified.' });
+    const proof = buildRevenueIntakeProof(toRevenueIntakeInput(payload));
+    const { inserted, errors } = await persistDatabaseReadyWrites(proof.databaseReadyWrites);
+    return NextResponse.json({ ok: true, leadId, status: 'received', ...delivery, persistedToOwnedDatabase: inserted, persistenceErrors: errors, nextAction: 'Review lead, quote/schedule if valid, discard if not qualified.' });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'AI receptionist intake failed.';
     return NextResponse.json({ ok: false, leadId, message }, { status: 502 });
