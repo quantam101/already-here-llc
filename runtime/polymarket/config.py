@@ -178,7 +178,7 @@ class PolymarketConfig:
             portfolio_consecutive_loss_limit=_env_int("POLYMARKET_PORTFOLIO_CONSECUTIVE_LOSS_LIMIT", 5),
             claude_api_key=os.environ.get("CLAUDE_API_KEY", ""),
             claude_enabled=(os.environ.get("POLYMARKET_CLAUDE_ENABLED", "false").lower() == "true"),
-            claude_model=os.environ.get("POLYMARKET_CLAUDE_MODEL", "claude-3-5-sonnet-20241022"),
+            claude_model=os.environ.get("POLYMARKET_CLAUDE_MODEL", "claude-sonnet-5"),
             claude_max_tokens=_env_int("POLYMARKET_CLAUDE_MAX_TOKENS", 120),
             claude_timeout_seconds=float(os.environ.get("POLYMARKET_CLAUDE_TIMEOUT_SECONDS", "4.0")),
             audit_log_path=os.environ.get("POLYMARKET_AUDIT_LOG", "./data/polymarket_audit.jsonl"),
