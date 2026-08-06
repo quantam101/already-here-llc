@@ -3,6 +3,7 @@ node_modules
 .env.local
 .vercel
 tsconfig.tsbuildinfo
+.tmp/
 .tmp
 
 # GMAOS / EAOS
