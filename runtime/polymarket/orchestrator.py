@@ -54,25 +54,25 @@ class PolymarketOrchestrator:
     """
 
     def __init__(self, config: Optional[PolymarketConfig] = None) -> None:
-        self.config = config or PolymarketConfig.from_env()
-        _setup_logging(self.config.log_level)
-        self._state = StateManager(self.config.db_path)
-        self._state.set_watched_wallets(self.config.watched_wallets)
-        self._state.set_market_blacklist(self.config.blacklist_market_ids)
+        self._config = config or PolymarketConfig.from_env()
+        _setup_logging(self._config.log_level)
+        self._state = StateManager(self._config.db_path)
+        self._state.set_watched_wallets(self._config.watched_wallets)
+        self._state.set_market_blacklist(self._config.blacklist_market_ids)
 
-        self._listener = PolymarketListener(self.config, on_fill=self._on_fill)
-        self._profiler = WalletProfiler(self.config, self._state)
+        self._listener = PolymarketListener(self._config, on_fill=self._on_fill)
+        self._profiler = WalletProfiler(self._config, self._state)
         self._claude = ClaudeSummarizer(
-            api_key=self.config.claude_api_key,
-            enabled=self.config.claude_enabled,
-            model=self.config.claude_model,
-            max_tokens=self.config.claude_max_tokens,
-            timeout=self.config.claude_timeout_seconds,
+            api_key=self._config.claude_api_key,
+            enabled=self._config.claude_enabled,
+            model=self._config.claude_model,
+            max_tokens=self._config.claude_max_tokens,
+            timeout=self._config.claude_timeout_seconds,
         )
-        self._alerts = TelegramAlertEngine(self.config, self._state, summarizer=self._claude)
-        self._risk = RiskGuard(self.config, self._state)
-        self._portfolio = PortfolioRiskGuard(self.config, self._state)
-        self._confluence = SignalConfluence(self.config)
+        self._alerts = TelegramAlertEngine(self._config, self._state, summarizer=self._claude)
+        self._risk = RiskGuard(self._config, self._state)
+        self._portfolio = PortfolioRiskGuard(self._config, self._state)
+        self._confluence = SignalConfluence(self._config)
 
         self._profile_cb = CircuitBreaker("profiler", failure_threshold=3, reset_timeout_seconds=60.0)
         self._profile_cache: Dict[str, Any] = {}
@@ -180,7 +180,7 @@ class PolymarketOrchestrator:
                 continue
 
             confluence = self._confluence.assess(event["token_id"], event["side"], price)
-            if self.config.confluence_enabled and not confluence.agree:
+            if self._config.confluence_enabled and not confluence.agree:
                 logger.info(
                     "Confluence filter blocked %s on %s: score=%s side=%s",
                     wallet,
@@ -189,7 +189,7 @@ class PolymarketOrchestrator:
                     event["side"],
                 )
                 continue
-            if self.config.confluence_enabled and confluence.confidence < self.config.confluence_min_confidence:
+            if self._config.confluence_enabled and confluence.confidence < self._config.confluence_min_confidence:
                 logger.info(
                     "Confluence confidence too low for %s on %s: %s",
                     wallet,
@@ -246,12 +246,12 @@ class PolymarketOrchestrator:
             return
         self._running = True
         # Pre-warm profiles for watched wallets
-        if self.config.watched_wallets:
+        if self._config.watched_wallets:
             threading.Thread(
                 target=lambda: self.profiler_agent(), daemon=True, name="poly-profiler-warm"
             ).start()
         self._listener.start()
-        logger.info("Polymarket orchestrator started; watching %d wallets", len(self.config.watched_wallets))
+        logger.info("Polymarket orchestrator started; watching %d wallets", len(self._config.watched_wallets))
 
     def stop(self) -> None:
         self._running = False
