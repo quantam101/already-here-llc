@@ -33,7 +33,7 @@ class ClaudeSummary:
 class ClaudeSummarizer:
     """Optional Claude 3/4 summarizer with circuit breaker and zero-spend fallback."""
 
-    DEFAULT_MODEL = "claude-3-5-sonnet-20241022"
+    DEFAULT_MODEL = "claude-sonnet-5"
     API_URL = "https://api.anthropic.com/v1/messages"
 
     def __init__(

@@ -94,7 +94,7 @@ class PolymarketConfig:
     # Claude signal summarizer (opt-in; disabled unless API key + env toggle set)
     claude_api_key: str = ""
     claude_enabled: bool = False
-    claude_model: str = "claude-3-5-sonnet-20241022"
+    claude_model: str = "claude-sonnet-5"
     claude_max_tokens: int = 120
     claude_timeout_seconds: float = 4.0
 
