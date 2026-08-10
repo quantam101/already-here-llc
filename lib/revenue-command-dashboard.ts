@@ -12,7 +12,9 @@ export interface RevenueCommandDashboard {
   };
   revenue: {
     paidTodayCents: number;
+    productTodayCents: number;
     verifiedAiAttributedTodayCents: number;
+    realizedTodayCents: number;
     monthToDateCents: number;
     targetTodayCents: number;
     targetGapCents: number;
@@ -45,6 +47,7 @@ export interface RevenueCommandDashboard {
     securityFindingsOpen: number;
     catchCorrectEvents: number;
     codexEvents: number;
+    verificationEvents: number;
   };
   topOpportunities: Array<Record<string, unknown>>;
 }
@@ -76,6 +79,11 @@ function isOpenStatus(status: unknown): boolean {
   return !['completed', 'paid', 'closed', 'cancelled', 'canceled', 'discarded', 'archived', 'inactive'].includes(value);
 }
 
+function isRecognizedRevenue(event: Record<string, unknown>): boolean {
+  const type = String(event.event_type || '').toLowerCase();
+  return ['paid', 'product_order', 'verified_ai_attributed_revenue', 'commission', 'affiliate'].includes(type);
+}
+
 export function buildRevenueCommandDashboard(now = new Date()): RevenueCommandDashboard {
   const phoenixDate = phoenixDateKey(now);
   const phoenixMonth = phoenixMonthKey(now);
@@ -97,19 +105,26 @@ export function buildRevenueCommandDashboard(now = new Date()): RevenueCommandDa
   const security = listRecords('security_findings', 5000);
   const catchCorrect = listRecords('catch_correct_events', 5000);
   const codex = listRecords('codex_changelog', 5000);
+  const verification = listRecords('verification_history', 5000);
   const health = getDatabaseHealth();
 
-  const paidTodayCents = revenueEvents
-    .filter((event) => event.event_type === 'paid' && phoenixDateKey(String(event.created_at || '')) === phoenixDate)
+  const todaysRevenue = revenueEvents.filter((event) => phoenixDateKey(String(event.created_at || '')) === phoenixDate);
+  const paidTodayCents = todaysRevenue
+    .filter((event) => event.event_type === 'paid')
     .reduce((sum, event) => sum + cents(event), 0);
-  const verifiedAiAttributedTodayCents = revenueEvents
+  const productTodayCents = todaysRevenue
+    .filter((event) => event.event_type === 'product_order')
+    .reduce((sum, event) => sum + cents(event), 0);
+  const verifiedAiAttributedTodayCents = todaysRevenue
     .filter((event) => event.event_type === 'verified_ai_attributed_revenue')
     .filter((event) => event.verification_status === 'verified')
-    .filter((event) => phoenixDateKey(String(event.created_at || '')) === phoenixDate)
+    .reduce((sum, event) => sum + cents(event), 0);
+  const realizedTodayCents = todaysRevenue
+    .filter(isRecognizedRevenue)
     .reduce((sum, event) => sum + cents(event), 0);
   const monthToDateCents = revenueEvents
     .filter((event) => phoenixMonthKey(String(event.created_at || '')) === phoenixMonth)
-    .filter((event) => ['paid', 'verified_ai_attributed_revenue', 'commission', 'affiliate'].includes(String(event.event_type || '')))
+    .filter(isRecognizedRevenue)
     .reduce((sum, event) => sum + cents(event), 0);
 
   const openOpportunities = opportunities.filter((opportunity) => isOpenStatus(opportunity.status));
@@ -121,7 +136,6 @@ export function buildRevenueCommandDashboard(now = new Date()): RevenueCommandDa
   const pendingReview = reviews.filter((review) => String(review.decision || '').toLowerCase() === 'queued').length
     + approvalActions.filter((action) => String(action.decision || '').toLowerCase() === 'pending').length;
   const targetTodayCents = 50000;
-  const realizedToday = paidTodayCents;
 
   const topOpportunities = [...openOpportunities]
     .sort((a, b) => Number(b.score || 0) - Number(a.score || 0) || Number(b.estimated_value_cents || 0) - Number(a.estimated_value_cents || 0))
@@ -151,10 +165,12 @@ export function buildRevenueCommandDashboard(now = new Date()): RevenueCommandDa
     },
     revenue: {
       paidTodayCents,
+      productTodayCents,
       verifiedAiAttributedTodayCents,
+      realizedTodayCents,
       monthToDateCents,
       targetTodayCents,
-      targetGapCents: Math.max(0, targetTodayCents - realizedToday)
+      targetGapCents: Math.max(0, targetTodayCents - realizedTodayCents)
     },
     pipeline: {
       opportunities: opportunities.length,
@@ -183,7 +199,8 @@ export function buildRevenueCommandDashboard(now = new Date()): RevenueCommandDa
       failingHealthSignals: healthSignals.filter((item) => ['failing', 'failed', 'unhealthy'].includes(String(item.status || item.state || '').toLowerCase())).length,
       securityFindingsOpen: security.filter((item) => !['closed', 'resolved', 'remediated'].includes(String(item.status || '').toLowerCase())).length,
       catchCorrectEvents: catchCorrect.length,
-      codexEvents: codex.length
+      codexEvents: codex.length,
+      verificationEvents: verification.length
     },
     topOpportunities
   };
