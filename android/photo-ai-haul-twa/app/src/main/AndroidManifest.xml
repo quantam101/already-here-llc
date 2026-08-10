@@ -32,7 +32,7 @@
 
             <meta-data
                 android:name="android.support.customtabs.trusted.DEFAULT_URL"
-                android:value="https://REPLACE_WITH_YOUR_DOMAIN/" />
+                android:value="https://www.alreadyherellc.com/" />
 
             <meta-data
                 android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR"

@@ -144,7 +144,7 @@ export const howItWorks = [
   ['Track', 'Condition photos, inspection checkpoints, and telemetry keep both sides protected.']
 ] as const;
 
-export const sampleListings: Array<{
+export const fleetMarketplaceListings: Array<{
   id: string;
   title: string;
   category: string;

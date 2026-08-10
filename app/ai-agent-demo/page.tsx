@@ -35,7 +35,7 @@ const demoSteps = [
   }
 ] as const;
 
-const sampleRows = [
+const demoRows = [
   ['Lead ID', 'AIA-20260609Z-DEMO1234'],
   ['Grade / score', 'A / 88'],
   ['Next action', 'Call within 15 minutes and offer Growth Agent.'],
@@ -128,7 +128,7 @@ export default function AiAgentDemoPage() {
               <h3 className="mt-2 text-2xl font-semibold text-white">New AI Web Agent Lead</h3>
             </div>
             <div className="divide-y divide-borderBrand">
-              {sampleRows.map(([label, value]) => (
+              {demoRows.map(([label, value]) => (
                 <div key={label} className="grid gap-2 px-6 py-4 sm:grid-cols-[0.36fr_0.64fr]">
                   <p className="text-sm font-semibold text-navy">{label}</p>
                   <p className="text-sm leading-6 text-slate-600">{value}</p>
