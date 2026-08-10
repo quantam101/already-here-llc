@@ -129,8 +129,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           suppressHydrationWarning
           dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
         />
-        <RevenueCommandAuthGate />
         <TrafficTracker />
+        <RevenueCommandAuthGate />
         <Header />
         <main>{children}</main>
         <HomeAiAgentAwareness />
