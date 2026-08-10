@@ -1,6 +1,6 @@
-import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { ALLOWED_TABLES, getDatabaseHealth, getDatabaseStats, getRecord, listRecords } from '@/lib/revenue-command-db';
+import { authorizeRevenueCommandInternalRequest } from '@/lib/revenue-command-api-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,15 +11,6 @@ const PUBLIC_OPPORTUNITY_FIELDS = [
   'blocker', 'next_action', 'status', 'recommended_follow_up_date', 'created_at', 'updated_at'
 ];
 
-function internalAuthorized(request: Request): boolean {
-  const expected = process.env.REVENUE_COMMAND_INTERNAL_TOKEN;
-  if (!expected) return false;
-  const supplied = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') || request.headers.get('x-revenue-command-token') || '';
-  const expectedBuffer = Buffer.from(expected);
-  const suppliedBuffer = Buffer.from(supplied);
-  return expectedBuffer.length === suppliedBuffer.length && timingSafeEqual(expectedBuffer, suppliedBuffer);
-}
-
 function sanitizeOpportunity(record: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(PUBLIC_OPPORTUNITY_FIELDS.filter((field) => field in record).map((field) => [field, record[field]]));
 }
@@ -29,7 +20,7 @@ export async function GET(request: Request) {
   const table = url.searchParams.get('table') || '';
   const id = url.searchParams.get('id') || '';
   const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || '50'), 1), 500);
-  const internal = internalAuthorized(request);
+  const internal = authorizeRevenueCommandInternalRequest(request).ok;
 
   if (!table) {
     const database = getDatabaseHealth();
