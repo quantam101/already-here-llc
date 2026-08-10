@@ -10,7 +10,7 @@ function isReviewAction(value: unknown): value is ReviewAction {
 export async function GET() {
   return NextResponse.json({
     ...getRevenueCommandSpineResponse(),
-    agents: getRevenueCommandAgents({ persist: true }),
+    agents: getRevenueCommandAgents(),
     agentCoverage: validateRevenueAgentCoverage()
   });
 }

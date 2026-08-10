@@ -71,11 +71,29 @@ function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
+const MAX_MEMORY_RECORDS = 10_000;
+
 class MemoryCanonicalStore implements CanonicalStore {
   private records: Map<string, Record<string, unknown>> = new Map();
 
   private key(table: string, id: string): string {
     return `${table}:${id}`;
+  }
+
+  private trimRecords(): void {
+    while (this.records.size > MAX_MEMORY_RECORDS) {
+      let oldestKey: string | undefined;
+      let oldestTime = '';
+      for (const [key, record] of this.records.entries()) {
+        const createdAt = String(record.created_at ?? '');
+        if (!oldestKey || createdAt.localeCompare(oldestTime) < 0) {
+          oldestKey = key;
+          oldestTime = createdAt;
+        }
+      }
+      if (!oldestKey) break;
+      this.records.delete(oldestKey);
+    }
   }
 
   executeWrites(writes: DatabaseReadyWrite[]): WriteResult {
@@ -93,6 +111,7 @@ class MemoryCanonicalStore implements CanonicalStore {
           source: write.record['source'] ?? write.table,
         };
         this.records.set(this.key(write.table, write.id), record);
+        this.trimRecords();
         result.insertedIds.push(write.id);
       } catch (error) {
         result.failed.push({
@@ -162,7 +181,8 @@ class MemoryCanonicalStore implements CanonicalStore {
   }
 
   getRecord(table: string, id: string): Record<string, unknown> | undefined {
-    return clone(this.records.get(this.key(table, id)));
+    const record = this.records.get(this.key(table, id));
+    return record ? clone(record) : undefined;
   }
 
   queryTable(table: string, limit = 1000): Record<string, unknown>[] {

@@ -48,9 +48,7 @@ export async function GET(request: Request) {
   });
 
   const proof = buildRevenueIntakeProof(input);
-  const store = getCanonicalStore();
-  const writeResult = store.executeWrites(proof.databaseReadyWrites);
-  return NextResponse.json({ ...proof, writeResult });
+  return NextResponse.json(proof);
 }
 
 export async function POST(request: Request) {
