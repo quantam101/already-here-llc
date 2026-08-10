@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import type { DatabaseReadyWrite } from './revenue-command-intake';
 
 const DEFAULT_DB_PATH = 'data/revenue-command.sqlite3';
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 export const ALLOWED_TABLES = new Set([
   'organizations',
@@ -98,6 +98,66 @@ function initialize(db: Database.Database): void {
     );
     CREATE INDEX IF NOT EXISTS idx_owned_records_table_created
       ON owned_records(table_name, created_at DESC);
+
+    CREATE TRIGGER IF NOT EXISTS trg_completed_payment_revenue_event_insert
+    AFTER INSERT ON owned_records
+    WHEN NEW.table_name = 'payments'
+      AND json_extract(NEW.record_json, '$.payment_status') = 'completed'
+    BEGIN
+      INSERT INTO owned_records(table_name, id, record_json, created_at, updated_at)
+      VALUES (
+        'revenue_events',
+        'revenue_' || NEW.id,
+        json_object(
+          'id', 'revenue_' || NEW.id,
+          'payment_id', NEW.id,
+          'invoice_id', json_extract(NEW.record_json, '$.invoice_id'),
+          'opportunity_id', json_extract(NEW.record_json, '$.opportunity_id'),
+          'contact_id', json_extract(NEW.record_json, '$.contact_id'),
+          'event_type', 'paid',
+          'amount_cents', COALESCE(json_extract(NEW.record_json, '$.payment_amount_cents'), 0),
+          'currency', 'USD',
+          'source', 'revenue_command_payment',
+          'created_at', NEW.created_at,
+          'updated_at', NEW.updated_at
+        ),
+        NEW.created_at,
+        NEW.updated_at
+      )
+      ON CONFLICT(table_name, id) DO UPDATE SET
+        record_json = excluded.record_json,
+        updated_at = excluded.updated_at;
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS trg_completed_payment_revenue_event_update
+    AFTER UPDATE OF record_json ON owned_records
+    WHEN NEW.table_name = 'payments'
+      AND json_extract(NEW.record_json, '$.payment_status') = 'completed'
+    BEGIN
+      INSERT INTO owned_records(table_name, id, record_json, created_at, updated_at)
+      VALUES (
+        'revenue_events',
+        'revenue_' || NEW.id,
+        json_object(
+          'id', 'revenue_' || NEW.id,
+          'payment_id', NEW.id,
+          'invoice_id', json_extract(NEW.record_json, '$.invoice_id'),
+          'opportunity_id', json_extract(NEW.record_json, '$.opportunity_id'),
+          'contact_id', json_extract(NEW.record_json, '$.contact_id'),
+          'event_type', 'paid',
+          'amount_cents', COALESCE(json_extract(NEW.record_json, '$.payment_amount_cents'), 0),
+          'currency', 'USD',
+          'source', 'revenue_command_payment',
+          'created_at', NEW.created_at,
+          'updated_at', NEW.updated_at
+        ),
+        NEW.created_at,
+        NEW.updated_at
+      )
+      ON CONFLICT(table_name, id) DO UPDATE SET
+        record_json = excluded.record_json,
+        updated_at = excluded.updated_at;
+    END;
   `);
   db.prepare(`
     INSERT INTO revenue_command_meta(key, value, updated_at)
