@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getDatabaseHealth, listRecords } from '@/lib/revenue-command-db';
+import { authorizeRevenueCommandInternalRequest, internalAuthError } from '@/lib/revenue-command-api-auth';
 
 function pick(record: Record<string, unknown>, fields: string[]): Record<string, unknown> {
   return Object.fromEntries(fields.filter((field) => field in record).map((field) => [field, record[field]]));
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = authorizeRevenueCommandInternalRequest(request);
+  if (!auth.ok) return NextResponse.json({ ok: false, ...internalAuthError(auth.reason) }, { status: 401 });
   const database = getDatabaseHealth();
   const health = listRecords('system_health_signals', 50);
   const catchCorrect = listRecords('catch_correct_events', 20);
