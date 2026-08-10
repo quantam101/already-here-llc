@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { persistDatabaseReadyWrites } from './revenue-command-db';
+import { getRecord, persistDatabaseReadyWrites } from './revenue-command-db';
 import type { DatabaseReadyWrite } from './revenue-command-intake';
 
 export interface AhfosJobSnapshot {
@@ -28,17 +28,44 @@ function stableId(prefix: string, value: string): string {
   return `${prefix}_${createHash('sha256').update(value).digest('hex').slice(0, 18)}`;
 }
 
-export async function ingestAhfosJobSnapshot(snapshot: AhfosJobSnapshot): Promise<{ ok: boolean; jobId: string; proofId: string; inserted: number; errors: string[] }> {
+export async function ingestAhfosJobSnapshot(snapshot: AhfosJobSnapshot): Promise<{ ok: boolean; jobId: string; opportunityId: string; proofId: string; inserted: number; errors: string[] }> {
   const observedAt = snapshot.observedAt || new Date().toISOString();
   const jobId = snapshot.jobId;
   const opportunityId = snapshot.opportunityId || stableId('opp', `ahfos:${jobId}`);
   const proofId = stableId('proof', `ahfos:${jobId}:${snapshot.status}`);
   const completed = ['completed', 'closed', 'invoiced', 'paid'].includes(snapshot.status.toLowerCase());
-  const writes: DatabaseReadyWrite[] = [
+  const writes: DatabaseReadyWrite[] = [];
+
+  if (!getRecord('opportunities', opportunityId)) {
+    writes.push({
+      table: 'opportunities', id: opportunityId, action: 'insert', record: {
+        id: opportunityId,
+        lead_id: null,
+        source_record_id: jobId,
+        source_customer_id: snapshot.customerId || null,
+        lane: 'Dispatch',
+        revenue_lane_supported: 'Field Services',
+        title: snapshot.serviceType || `AHFOS field job ${jobId}`,
+        summary: snapshot.closeoutNotes || 'AHFOS field job reconciled into Revenue Command.',
+        estimated_value_cents: Math.max(0, Math.trunc(snapshot.invoiceAmountCents || 0)),
+        priority: 'P1',
+        score: 70,
+        blocker: 'External actions remain approval-gated.',
+        next_action: completed ? 'Review closeout, invoice/payment state, and repeat-service potential.' : 'Review dispatch and technician assignment.',
+        status: completed ? 'proof_recorded' : 'dispatched',
+        source_system: 'AHFOS',
+        created_at: observedAt,
+        updated_at: observedAt
+      }
+    });
+  }
+
+  writes.push(
     {
       table: 'jobs', id: jobId, action: 'insert', record: {
         id: jobId,
         opportunity_id: opportunityId,
+        customer_id: snapshot.customerId || null,
         job_type: snapshot.serviceType || 'ahfos_field_job',
         site_address: snapshot.siteAddress || null,
         scheduled_start: snapshot.scheduledStart || null,
@@ -97,7 +124,7 @@ export async function ingestAhfosJobSnapshot(snapshot: AhfosJobSnapshot): Promis
         created_at: observedAt
       }
     }
-  ];
+  );
 
   if (typeof snapshot.qaScore === 'number') {
     writes.push({
@@ -116,5 +143,5 @@ export async function ingestAhfosJobSnapshot(snapshot: AhfosJobSnapshot): Promis
   }
 
   const result = await persistDatabaseReadyWrites(writes);
-  return { ok: result.errors.length === 0, jobId, proofId, inserted: result.inserted, errors: result.errors };
+  return { ok: result.errors.length === 0, jobId, opportunityId, proofId, inserted: result.inserted, errors: result.errors };
 }
