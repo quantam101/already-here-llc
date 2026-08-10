@@ -8,16 +8,14 @@ const protectedPrefixes = ['/revenue-command', '/command-center', '/operations',
 export function RevenueCommandAuthGate() {
   const pathname = usePathname();
   const protectedRoute = useMemo(() => protectedPrefixes.some((prefix) => pathname?.startsWith(prefix)), [pathname]);
+  const loginRoute = pathname?.startsWith('/revenue-command/login') === true;
   const [status, setStatus] = useState<'checking' | 'authorized' | 'required' | 'unconfigured'>('checking');
   const [token, setToken] = useState('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!protectedRoute || pathname?.startsWith('/revenue-command/login')) {
-      setStatus('authorized');
-      return;
-    }
+    if (!protectedRoute || loginRoute) return;
     let active = true;
     fetch('/api/revenue-command-spine/auth', { cache: 'no-store' })
       .then(async (response) => {
@@ -29,9 +27,9 @@ export function RevenueCommandAuthGate() {
       })
       .catch(() => active && setStatus('required'));
     return () => { active = false; };
-  }, [pathname, protectedRoute]);
+  }, [loginRoute, protectedRoute]);
 
-  if (!protectedRoute || status === 'authorized') return null;
+  if (!protectedRoute || loginRoute || status === 'authorized') return null;
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
