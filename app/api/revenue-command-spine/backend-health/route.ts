@@ -10,5 +10,5 @@ export async function GET(request: Request) {
   if (!auth.ok) return NextResponse.json({ ok: false, ...internalAuthError(auth.reason) }, { status: 401 });
   const result = await probeConfiguredOciBackend();
   if (!result.configured) return NextResponse.json({ ok: false, configured: false, state: 'unknown', error: 'OCI_BACKEND_BASE_URL is not configured.' }, { status: 503 });
-  return NextResponse.json({ ok: result.result?.ok === true, configured: true, ...result }, { status: result.result?.ok ? 200 : 503 });
+  return NextResponse.json({ ...result, ok: result.result?.ok === true }, { status: result.result?.ok ? 200 : 503 });
 }
