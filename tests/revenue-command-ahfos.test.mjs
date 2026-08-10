@@ -9,11 +9,16 @@ const db = await import('../lib/revenue-command-db.ts');
 const ahfos = await import('../lib/revenue-command-ahfos.ts');
 
 const result = await ahfos.ingestAhfosJobSnapshot({
-  jobId: 'AHFOS-JOB-1', opportunityId: 'opp-ahfos-1', technicianId: 'tech-1', status: 'completed', serviceType: 'network smart hands',
+  jobId: 'AHFOS-JOB-1', opportunityId: 'opp-ahfos-1', customerId: 'customer-1', technicianId: 'tech-1', status: 'completed', serviceType: 'network smart hands',
   siteAddress: 'Phoenix, AZ', closeoutNotes: 'Completed and verified', beforePhotos: ['before.jpg'], afterPhotos: ['after.jpg'], signatureRef: 'signature.png', checklistComplete: true, qaScore: 94, invoiceAmountCents: 50000,
   observedAt: '2026-08-10T17:00:00.000Z'
 });
 assert.equal(result.ok, true);
+const opportunity = db.getRecord('opportunities', result.opportunityId);
+assert.ok(opportunity);
+assert.equal(opportunity.source_system, 'AHFOS');
+assert.equal(opportunity.source_customer_id, 'customer-1');
+assert.equal(opportunity.estimated_value_cents, 50000);
 assert.equal(db.getRecord('jobs', 'AHFOS-JOB-1')?.source_system, 'AHFOS');
 const dispatches = db.listRecords('dispatches', 10);
 assert.equal(dispatches.length, 1);
