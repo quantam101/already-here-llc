@@ -11,6 +11,7 @@ const checks = [
   { id: 'typecheck', command: 'npm', args: ['run', 'typecheck', '--if-present'] },
   { id: 'build', command: 'npm', args: ['run', 'build', '--if-present'] },
   { id: 'test', command: 'npm', args: ['run', 'test', '--if-present'] },
+  { id: 'security', command: 'npm', args: ['run', 'qa:security', '--if-present'] },
   { id: 'seo-route-audit', command: 'node', args: ['scripts/seo-route-audit.mjs'] },
   { id: 'content-guard', command: 'npm', args: ['run', 'qa:content', '--if-present'] }
 ];
@@ -18,20 +19,10 @@ const checks = [
 function runCheck(check) {
   const startedAt = new Date().toISOString();
   const commandLine = [check.command, ...check.args].join(' ');
-  if (check.id === 'build') {
-    rmSync(join(repoRoot, '.next'), { recursive: true, force: true });
-  }
+  if (check.id === 'build') rmSync(join(repoRoot, '.next'), { recursive: true, force: true });
   const result = process.platform === 'win32'
-    ? spawnSync(commandLine, {
-      cwd: repoRoot,
-      encoding: 'utf8',
-      shell: true
-    })
-    : spawnSync(check.command, check.args, {
-    cwd: repoRoot,
-    encoding: 'utf8',
-    shell: false
-  });
+    ? spawnSync(commandLine, { cwd: repoRoot, encoding: 'utf8', shell: true })
+    : spawnSync(check.command, check.args, { cwd: repoRoot, encoding: 'utf8', shell: false });
 
   return {
     id: check.id,
@@ -49,22 +40,15 @@ function runCheck(check) {
 const results = checks.map(runCheck);
 const status = results.every((result) => result.status === 'pass') ? 'pass' : 'fail';
 const receipt = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   mission: 'quality.gate',
   status,
   checkedAt: new Date().toISOString(),
-  checks: results.map((result) => ({
-    id: result.id,
-    command: result.command,
-    status: result.status,
-    exitCode: result.exitCode,
-    error: result.error
-  }))
+  checks: results.map((result) => ({ id: result.id, command: result.command, status: result.status, exitCode: result.exitCode, error: result.error }))
 };
 
 const receiptPath = join(receiptDir, `${receipt.checkedAt.replace(/[:.]/g, '-')}-quality-gate.json`);
 writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + '\n');
-
 console.log(JSON.stringify({ status, receipt: receiptPath, checks: receipt.checks }, null, 2));
 
 if (status !== 'pass') {
