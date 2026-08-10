@@ -45,7 +45,7 @@ assert.equal(sqliteHeader, 'SQLite format 3\u0000');
 const health = getDatabaseHealth();
 assert.equal(health.driver, 'sqlite');
 assert.equal(health.durable, true);
-assert.equal(health.schemaVersion, 2);
+assert.equal(health.schemaVersion, 3);
 assert.ok(health.recordCount >= dispatch.databaseReadyWrites.length);
 assert.equal(health.warning, undefined);
 
@@ -79,13 +79,45 @@ assert.ok(byPriority);
 assert.equal(byPriority.id, opportunityId);
 assert.equal(findRecordBy('opportunities', 'priority; DROP TABLE owned_records', 'P0'), undefined);
 
+const now = new Date().toISOString();
+const paymentResult = await persistDatabaseReadyWrites([
+  {
+    table: 'payments',
+    id: 'payment_db_test',
+    action: 'insert',
+    record: {
+      id: 'payment_db_test',
+      invoice_id: null,
+      opportunity_id: opportunityId,
+      contact_id: null,
+      payment_amount_cents: 50000,
+      payment_method: 'test',
+      payment_status: 'completed',
+      created_at: now,
+      updated_at: now
+    }
+  }
+]);
+assert.equal(paymentResult.errors.length, 0);
+assert.equal(paymentResult.inserted, 1);
+
+const revenueEvent = getRecord('revenue_events', 'revenue_payment_db_test');
+assert.ok(revenueEvent, 'completed payments must create a revenue event in the same SQLite transaction');
+assert.equal(revenueEvent.opportunity_id, opportunityId);
+assert.equal(revenueEvent.amount_cents, 50000);
+assert.equal(revenueEvent.event_type, 'paid');
+
+const healthAfterRevenue = getDatabaseHealth();
+assert.equal(healthAfterRevenue.recordCount, health.recordCount + 2);
+
 closeDatabase();
 
 // Re-open the database and prove that committed business records survive process lifecycle.
 const reopened = getRecord('opportunities', opportunityId);
 assert.ok(reopened);
 assert.equal(reopened.id, opportunityId);
-assert.equal(getDatabaseHealth().recordCount, health.recordCount);
+assert.equal(getRecord('revenue_events', 'revenue_payment_db_test')?.amount_cents, 50000);
+assert.equal(getDatabaseHealth().recordCount, healthAfterRevenue.recordCount);
 
 const rejected = await persistDatabaseReadyWrites([
   {
