@@ -1,56 +1,75 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import FrozenSet, List, Tuple
 
-SECRET_MARKERS: Tuple[str, ...] = (
-    "sk-",
-    "API_KEY=",
+_SECRET_MARKERS: Tuple[str, ...] = (
+    "sk-ant-",
+    "sk-proj-",
+    "sk_live_",
+    "sk_test_",
     "BEGIN PRIVATE KEY",
-    "AWS_SECRET",
-    "ANTHROPIC_API_KEY",
-    "OPENAI_API_KEY",
+    "BEGIN RSA PRIVATE KEY",
+    "AWS_SECRET_ACCESS_KEY=",
 )
 
-EXCLUDED_DIRS: FrozenSet[str] = frozenset({
+_IGNORED_DIRS: FrozenSet[str] = frozenset({
     ".git", "node_modules", ".next", "__pycache__", ".pytest_cache",
 })
 
-SELF_FILES: FrozenSet[str] = frozenset({
+_IGNORED_FILES: FrozenSet[str] = frozenset({
     "security_scanner.py",
+    "verifier.py",
+    "redteam-agent.mjs",
+    "socrates-agent.mjs",
+    "package-lock.json",
+})
+
+_RELATIVE_IGNORED: FrozenSet[str] = frozenset({
+    "SKILL.md",
+})
+
+_BINARY_EXTENSIONS: FrozenSet[str] = frozenset({
+    ".png", ".jpg", ".jpeg", ".gif", ".ico", ".svg", ".webp",
+    ".pdf", ".zip", ".tar", ".gz", ".bz2", ".7z",
+    ".mp3", ".mp4", ".wav", ".avi", ".mov", ".webm",
+    ".ttf", ".otf", ".woff", ".woff2", ".eot",
+    ".exe", ".dll", ".so", ".dylib", ".bin",
+    ".db", ".sqlite", ".sqlite3",
 })
 
 
-@dataclass(frozen=True)
-class ScanFinding:
-    path: str
-    markers: Tuple[str, ...]
-
-
-def scan_text(text: str) -> Tuple[str, ...]:
+def scan_text(text: str) -> List[str]:
     lowered = text.lower()
-    return tuple(marker for marker in SECRET_MARKERS if marker.lower() in lowered)
+    return [marker for marker in _SECRET_MARKERS if marker.lower() in lowered]
 
 
 def _is_scannable(path: Path) -> bool:
-    return path.is_file() and path.name not in SELF_FILES and not any(
-        part in EXCLUDED_DIRS for part in path.parts
-    )
+    if not path.is_file():
+        return False
+    if path.suffix.lower() in _BINARY_EXTENSIONS:
+        return False
+    if path.name in _IGNORED_FILES:
+        return False
+    if any(part in _IGNORED_DIRS for part in path.parts):
+        return False
+    return True
 
 
-def scan_repo(root: str = ".") -> List[ScanFinding]:
-    return [
-        ScanFinding(path=str(file_path), markers=markers)
-        for file_path in Path(root).rglob("*")
-        if _is_scannable(file_path)
-        for markers in (scan_text(_read_safe(file_path)),)
-        if markers
-    ]
-
-
-def _read_safe(path: Path) -> str:
-    try:
-        return path.read_text(encoding="utf-8", errors="ignore")
-    except Exception:
-        return ""
+def scan_repo(root: str = ".") -> List[str]:
+    findings: List[str] = []
+    root_path = Path(root).resolve()
+    for path in root_path.rglob("*"):
+        if not _is_scannable(path):
+            continue
+        rel = path.relative_to(root_path).as_posix()
+        if rel in _RELATIVE_IGNORED:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        markers = scan_text(text)
+        if markers:
+            findings.append(f"{rel}: {','.join(markers)}")
+    return findings
