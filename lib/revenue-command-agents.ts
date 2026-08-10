@@ -1,4 +1,5 @@
-import { getDatabaseReadyRecords, type RevenueCommandRecord, type RevenuePriority, type RevenueStatus, type SecurityRisk } from './revenue-command-spine';
+import { getCanonicalStore } from './canonical-store';
+import { getDatabaseReadyRecords, scoreRecord, type RevenueCommandRecord, type RevenuePriority, type RevenueStatus, type SecurityRisk } from './revenue-command-spine';
 
 export type RevenueAgentPolicy = 'one_agent_one_task';
 export type RevenueAgentExecutionScope = 'local_proof_only';
@@ -90,8 +91,34 @@ export function buildAgentForRecord(record: RevenueCommandRecord): RevenueComman
   };
 }
 
-export function getRevenueCommandAgents(): RevenueCommandAgent[] {
-  return getDatabaseReadyRecords().map(buildAgentForRecord);
+export function getRevenueCommandAgents(options: { persist?: boolean } = {}): RevenueCommandAgent[] {
+  return getDatabaseReadyRecords().map((record) => {
+    const agent = buildAgentForRecord(record);
+    if (options.persist) {
+      persistAgentForRecord(record, agent);
+    }
+    return agent;
+  });
+}
+
+export function persistAgentForRecord(record: RevenueCommandRecord, agent: RevenueCommandAgent): string {
+  const score = scoreRecord(record);
+  const confidence = Math.min(100, Math.max(0, Math.round(score / 5)));
+  return getCanonicalStore().recordAiRun({
+    agentId: agent.id,
+    targetTable: 'revenue_command_records',
+    targetId: record.id,
+    action: agent.operation,
+    recommendation: record.nextAction,
+    confidence,
+    approvalRequired: true,
+    persistedExternally: false,
+    resultJson: JSON.stringify({ lane: record.lane, priority: record.priority, status: record.status, handoffTo: agent.handoffTo, blockedExternalActions: agent.blockedExternalActions }),
+    evidenceJson: JSON.stringify({ record }),
+    outcomeJson: '{}',
+    feedbackJson: '{}',
+    source: 'revenue_command_agent_builder'
+  });
 }
 
 export function validateRevenueAgentCoverage(): RevenueAgentCoverageReport {

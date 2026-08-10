@@ -1,5 +1,6 @@
-import { createHash } from 'crypto';
 import { getRevenueCommandAgents } from './revenue-command-agents';
+import { canonicalId } from './canonical-ids';
+import type { DatabaseReadyWrite } from './canonical-store';
 
 export type IntakeLane = 'Dispatch' | 'AutoWorks' | 'Hauling' | 'Procurement' | 'Product / Affiliate' | 'AI lead capture';
 export type IntakePriority = 'P0' | 'P1' | 'P2';
@@ -20,12 +21,7 @@ export interface RevenueIntakeInput {
   submittedAt?: string;
 }
 
-export interface DatabaseReadyWrite {
-  table: string;
-  id: string;
-  action: 'insert';
-  record: Record<string, unknown>;
-}
+export type { DatabaseReadyWrite };
 
 export interface RevenueIntakeProof {
   ok: true;
@@ -45,10 +41,6 @@ export interface RevenueIntakeProof {
 }
 
 const BLOCKED_EXTERNAL_ACTIONS = ['restricted_outbound_action', 'restricted_infrastructure_action', 'restricted_financial_action', 'restricted_credential_action'];
-
-function hashId(prefix: string, value: string): string {
-  return `${prefix}_${createHash('sha256').update(value).digest('hex').slice(0, 16)}`;
-}
 
 function text(input: RevenueIntakeInput): string {
   return `${input.title} ${input.body} ${input.serviceType || ''}`.toLowerCase();
@@ -86,23 +78,23 @@ function assignedAgentFor(lane: IntakeLane) {
 
 function moduleWrite(lane: IntakeLane, opportunityId: string, contactId: string, submittedAt: string, input: RevenueIntakeInput): DatabaseReadyWrite | null {
   if (lane === 'Dispatch') {
-    const id = hashId('dispatch', opportunityId);
-    return { table: 'dispatches', id, action: 'insert', record: { id, job_id: hashId('job', opportunityId), dispatch_status: 'queued_for_review', skill_match_score: 0, route_fit_score: 0, created_at: submittedAt, updated_at: submittedAt } };
+    const id = canonicalId('dispatch', opportunityId);
+    return { table: 'dispatches', id, action: 'insert', record: { id, job_id: canonicalId('job', opportunityId), dispatch_status: 'queued_for_review', skill_match_score: 0, route_fit_score: 0, created_at: submittedAt, updated_at: submittedAt } };
   }
   if (lane === 'AutoWorks') {
-    const id = hashId('vehicle', `${contactId}:${input.body}`);
+    const id = canonicalId('vehicle', contactId, input.body);
     return { table: 'vehicles', id, action: 'insert', record: { id, contact_id: contactId, fuel_scope: 'gas_light_duty', photos_json: '[]', created_at: submittedAt, updated_at: submittedAt } };
   }
   if (lane === 'Hauling') {
-    const id = hashId('hauling', opportunityId);
+    const id = canonicalId('hauling', opportunityId);
     return { table: 'hauling_jobs', id, action: 'insert', record: { id, opportunity_id: opportunityId, pickup_address: input.location || 'needs_review', load_type: 'needs_review', estimated_value_cents: input.estimatedValueCents || 0, status: 'queued_for_review', created_at: submittedAt, updated_at: submittedAt } };
   }
   if (lane === 'Procurement') {
-    const id = hashId('procurement', opportunityId);
-    return { table: 'procurement_targets', id, action: 'insert', record: { id, organization_id: hashId('org', input.company), target_type: input.serviceType || 'procurement_target', compliance_status: 'needs_review', submission_status: 'blocked_pending_owner_approval', created_at: submittedAt, updated_at: submittedAt } };
+    const id = canonicalId('procurement', opportunityId);
+    return { table: 'procurement_targets', id, action: 'insert', record: { id, organization_id: canonicalId('org', input.company), target_type: input.serviceType || 'procurement_target', compliance_status: 'needs_review', submission_status: 'blocked_pending_owner_approval', created_at: submittedAt, updated_at: submittedAt } };
   }
   if (lane === 'Product / Affiliate') {
-    const id = hashId('product', `${input.company}:${input.title}`);
+    const id = canonicalId('product', input.company, input.title);
     return { table: 'products', id, action: 'insert', record: { id, product_name: input.title, product_type: 'proof_lane', proof_status: 'not_proven', price_cents: input.estimatedValueCents || 0, status: 'draft', created_at: submittedAt, updated_at: submittedAt } };
   }
   return null;
@@ -112,18 +104,18 @@ export function buildRevenueIntakeProof(input: RevenueIntakeInput): RevenueIntak
   const submittedAt = input.submittedAt || new Date().toISOString();
   const lane = classifyRevenueIntake(input);
   const { priority, score } = scoreRevenueIntake(input, lane);
-  const intakeId = hashId('intake', `${input.company}:${input.email}:${input.title}:${submittedAt}`);
-  const organizationId = hashId('org', input.company || 'unknown');
-  const contactId = hashId('contact', `${organizationId}:${input.email || input.fullName}`);
-  const leadId = hashId('lead', `${intakeId}:lead`);
-  const opportunityId = hashId('opp', `${leadId}:${lane}`);
-  const conversationId = hashId('conversation', leadId);
-  const reviewId = hashId('review', opportunityId);
+  const intakeId = canonicalId('intake', input.company, input.email, input.title, submittedAt);
+  const organizationId = canonicalId('org', input.company || 'unknown');
+  const contactId = canonicalId('contact', organizationId, input.email || input.fullName);
+  const leadId = canonicalId('lead', intakeId, 'lead');
+  const opportunityId = canonicalId('opp', leadId, lane);
+  const conversationId = canonicalId('conversation', leadId);
+  const reviewId = canonicalId('review', opportunityId);
   const agent = assignedAgentFor(lane);
-  const aiActionId = hashId('ai_action', `${agent.id}:${opportunityId}`);
-  const proofId = hashId('proof', opportunityId);
-  const analyticsId = hashId('analytics', intakeId);
-  const auditId = hashId('audit', intakeId);
+  const aiActionId = canonicalId('ai_action', agent.id, opportunityId);
+  const proofId = canonicalId('proof', opportunityId);
+  const analyticsId = canonicalId('analytics', intakeId);
+  const auditId = canonicalId('audit', intakeId);
 
   const writes: DatabaseReadyWrite[] = [
     { table: 'organizations', id: organizationId, action: 'insert', record: { id: organizationId, name: input.company || 'Unknown Organization', organization_type: 'lead_source', source: input.source, service_area: input.location || null, created_at: submittedAt, updated_at: submittedAt } },

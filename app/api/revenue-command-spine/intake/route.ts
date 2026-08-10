@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { buildRevenueCommandProofDemos, buildRevenueIntakeProof, type RevenueIntakeInput } from '@/lib/revenue-command-intake';
+import { getCanonicalStore } from '@/lib/canonical-store';
 
 function asString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
@@ -46,10 +47,15 @@ export async function GET(request: Request) {
     estimatedValueCents: url.searchParams.get('estimatedValueCents') || 50000
   });
 
-  return NextResponse.json(buildRevenueIntakeProof(input));
+  const proof = buildRevenueIntakeProof(input);
+  const store = getCanonicalStore();
+  const writeResult = store.executeWrites(proof.databaseReadyWrites);
+  return NextResponse.json({ ...proof, writeResult });
 }
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  return NextResponse.json(buildRevenueIntakeProof(inputFromBody(body)));
+  const proof = buildRevenueIntakeProof(inputFromBody(body));
+  const writeResult = getCanonicalStore().executeWrites(proof.databaseReadyWrites);
+  return NextResponse.json({ ...proof, writeResult });
 }
