@@ -113,57 +113,53 @@ export async function recordProductOrder(input: ProductOrderInput): Promise<{ ok
   const quantity = Math.max(1, Math.trunc(input.quantity || 1));
   const gross = Math.max(0, Math.trunc(input.grossAmountCents));
   const orderId = stableId('order', `${input.productId}:${input.externalReference || occurredAt}:${gross}:${quantity}`);
+  let commissionId: string | undefined;
+  let commissionCents = 0;
+
+  if (input.affiliateLinkId) {
+    const link = getRecord('affiliate_links', input.affiliateLinkId);
+    if (!link) return { ok: false, orderId: '', errors: [`Affiliate link not found: ${input.affiliateLinkId}`] };
+    const model = String(link.commission_model || 'unknown');
+    const value = Number(link.commission_value || 0);
+    commissionCents = model === 'percent' ? Math.round(gross * value / 100) : model === 'flat' ? Math.round(value) : 0;
+    commissionId = stableId('commission', `${orderId}:${input.affiliateLinkId}`);
+  }
+
   const writes: DatabaseReadyWrite[] = [{
-    table: 'product_orders', id: orderId, action: 'insert', record: {
-      id: orderId,
+    table: 'revenue_events', id: `revenue_${orderId}`, action: 'insert', record: {
+      id: `revenue_${orderId}`,
+      order_id: orderId,
       product_id: input.productId,
       opportunity_id: input.opportunityId || null,
       contact_id: input.contactId || null,
       affiliate_link_id: input.affiliateLinkId || null,
       external_reference: input.externalReference || null,
       quantity,
-      gross_amount_cents: gross,
+      event_type: 'product_order',
+      amount_cents: gross,
+      commission_amount_cents: commissionCents,
+      net_amount_cents: Math.max(0, gross - commissionCents),
       currency: 'USD',
-      order_status: 'recorded',
       source: input.source || 'product_order',
       created_at: occurredAt,
       updated_at: occurredAt
     }
   }, {
-    table: 'revenue_events', id: `revenue_${orderId}`, action: 'insert', record: {
-      id: `revenue_${orderId}`,
-      order_id: orderId,
-      opportunity_id: input.opportunityId || null,
-      contact_id: input.contactId || null,
-      event_type: 'product_order',
-      amount_cents: gross,
-      currency: 'USD',
+    table: 'analytics_events', id: stableId('analytics', orderId), action: 'insert', record: {
+      id: stableId('analytics', orderId),
       source: input.source || 'product_order',
-      created_at: occurredAt,
-      updated_at: occurredAt
+      module: 'Product / Affiliate',
+      action: 'product_order_recorded',
+      target_table: 'products',
+      target_id: input.productId,
+      conversion_value_cents: gross,
+      order_id: orderId,
+      affiliate_link_id: input.affiliateLinkId || null,
+      commission_id: commissionId || null,
+      commission_amount_cents: commissionCents,
+      created_at: occurredAt
     }
   }];
-
-  let commissionId: string | undefined;
-  if (input.affiliateLinkId) {
-    const link = getRecord('affiliate_links', input.affiliateLinkId);
-    if (!link) return { ok: false, orderId: '', errors: [`Affiliate link not found: ${input.affiliateLinkId}`] };
-    const model = String(link.commission_model || 'unknown');
-    const value = Number(link.commission_value || 0);
-    const commissionCents = model === 'percent' ? Math.round(gross * value / 100) : model === 'flat' ? Math.round(value) : 0;
-    commissionId = stableId('commission', `${orderId}:${input.affiliateLinkId}`);
-    writes.push({ table: 'affiliate_commissions', id: commissionId, action: 'insert', record: {
-      id: commissionId,
-      order_id: orderId,
-      affiliate_link_id: input.affiliateLinkId,
-      commission_model: model,
-      commission_value: value,
-      commission_amount_cents: commissionCents,
-      status: 'calculated_unpaid',
-      created_at: occurredAt,
-      updated_at: occurredAt
-    }});
-  }
 
   const result = await persistDatabaseReadyWrites(writes);
   return { ok: result.errors.length === 0, orderId, commissionId, errors: result.errors };
