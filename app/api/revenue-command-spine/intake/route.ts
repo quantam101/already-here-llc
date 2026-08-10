@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { persistDatabaseReadyWrites } from '@/lib/revenue-command-db';
 import { buildRevenueCommandProofDemos, buildRevenueIntakeProof, type RevenueIntakeInput } from '@/lib/revenue-command-intake';
+import { authorizeRevenueCommandInternalRequest, internalAuthError } from '@/lib/revenue-command-api-auth';
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 20;
@@ -10,6 +11,11 @@ const MAX_FIELD_LENGTH = 300;
 
 type RateLimitEntry = { count: number; resetAt: number };
 const rateLimits = new Map<string, RateLimitEntry>();
+
+function denied(request: Request): NextResponse | null {
+  const auth = authorizeRevenueCommandInternalRequest(request);
+  return auth.ok ? null : NextResponse.json({ ok: false, ...internalAuthError(auth.reason) }, { status: 401 });
+}
 
 function clientIp(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -38,10 +44,7 @@ function asNumber(value: unknown): number {
 }
 
 function clampString(value: string, max: number): string {
-  if (value.length > max) {
-    return value.slice(0, max);
-  }
-  return value;
+  return value.length > max ? value.slice(0, max) : value;
 }
 
 function inputFromBody(body: Record<string, unknown>): RevenueIntakeInput {
@@ -63,11 +66,10 @@ function inputFromBody(body: Record<string, unknown>): RevenueIntakeInput {
 }
 
 export async function GET(request: Request) {
+  const unauthorized = denied(request);
+  if (unauthorized) return unauthorized;
   const url = new URL(request.url);
-  if (url.searchParams.get('demo') === 'all') {
-    return NextResponse.json({ ok: true, demos: buildRevenueCommandProofDemos() });
-  }
-
+  if (url.searchParams.get('demo') === 'all') return NextResponse.json({ ok: true, demos: buildRevenueCommandProofDemos() });
   const input = inputFromBody({
     source: url.searchParams.get('source') || 'api_revenue_command_intake_get',
     fullName: url.searchParams.get('fullName') || 'Smoke Test',
@@ -79,16 +81,14 @@ export async function GET(request: Request) {
     serviceType: url.searchParams.get('serviceType') || 'Technical field operations',
     estimatedValueCents: url.searchParams.get('estimatedValueCents') || 50000
   });
-
   return NextResponse.json(buildRevenueIntakeProof(input));
 }
 
 export async function POST(request: Request) {
+  const unauthorized = denied(request);
+  if (unauthorized) return unauthorized;
   const ip = clientIp(request);
-  if (isRateLimited(ip)) {
-    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
-  }
-
+  if (isRateLimited(ip)) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
   const body = await request.json().catch(() => ({}));
   const proof = buildRevenueIntakeProof(inputFromBody(body));
   const { inserted, errors } = await persistDatabaseReadyWrites(proof.databaseReadyWrites);
