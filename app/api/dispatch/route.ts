@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { after, NextResponse } from 'next/server.js';
+import { persistDatabaseReadyWrites } from '@/lib/revenue-command-db';
 import { buildRevenueIntakeProof } from '@/lib/revenue-command-intake';
 
 export const runtime = 'nodejs';
@@ -317,6 +318,8 @@ export async function POST(request: Request) {
   const dispatchId = generateDispatchId();
   const revenueSpine = buildRevenueSpineProof(dispatchId, formData);
 
+  const { inserted, errors } = await persistDatabaseReadyWrites(revenueSpine.databaseReadyWrites);
+
   if (localProofMode || (!hasResend && !hasFormspree)) {
     return NextResponse.json({
       ok: true,
@@ -324,6 +327,8 @@ export async function POST(request: Request) {
       recordLocation: 'revenue_command_spine_local_proof',
       delivery: 'local_proof_only',
       persistedExternally: false,
+      persistedToOwnedDatabase: inserted,
+      persistenceErrors: errors,
       revenueSpine
     });
   }
@@ -361,7 +366,7 @@ export async function POST(request: Request) {
       ).catch(() => {});
     }
 
-    return NextResponse.json({ ok: true, dispatchId, recordLocation: hasResend ? 'dispatch_email_json_attachment' : 'formspree_payload', revenueSpine });
+    return NextResponse.json({ ok: true, dispatchId, recordLocation: hasResend ? 'dispatch_email_json_attachment' : 'formspree_payload', persistedToOwnedDatabase: inserted, persistenceErrors: errors, revenueSpine });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Dispatch submission failed.';
     return NextResponse.json({ message, dispatchId, revenueSpine }, { status: 502 });

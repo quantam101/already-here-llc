@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import { buildAiOperationWrites } from './revenue-command-ai';
 import { getRevenueCommandAgents } from './revenue-command-agents';
 
 export type IntakeLane = 'Dispatch' | 'AutoWorks' | 'Hauling' | 'Procurement' | 'Product / Affiliate' | 'AI lead capture';
@@ -18,6 +19,9 @@ export interface RevenueIntakeInput {
   requestedWindow?: string;
   estimatedValueCents?: number;
   submittedAt?: string;
+  transcript?: string;
+  goal?: string;
+  confidence?: number;
 }
 
 export interface DatabaseReadyWrite {
@@ -124,22 +128,76 @@ export function buildRevenueIntakeProof(input: RevenueIntakeInput): RevenueIntak
   const proofId = hashId('proof', opportunityId);
   const analyticsId = hashId('analytics', intakeId);
   const auditId = hashId('audit', intakeId);
+  const agentId = hashId('revenue_agent', agent.id);
+
+  const revenueAgentWrite: DatabaseReadyWrite = {
+    table: 'revenue_agents',
+    id: agentId,
+    action: 'insert',
+    record: {
+      id: agentId,
+      record_id: agent.recordId,
+      name: agent.name,
+      operation: agent.operation,
+      run_policy: agent.runPolicy,
+      execution_scope: agent.executionScope,
+      handoff_to: agent.handoffTo,
+      blocked_external_actions_json: JSON.stringify(agent.blockedExternalActions),
+      allowed_local_actions_json: JSON.stringify(agent.allowedLocalActions),
+      created_at: submittedAt,
+      updated_at: submittedAt
+    }
+  };
 
   const writes: DatabaseReadyWrite[] = [
+    revenueAgentWrite,
     { table: 'organizations', id: organizationId, action: 'insert', record: { id: organizationId, name: input.company || 'Unknown Organization', organization_type: 'lead_source', source: input.source, service_area: input.location || null, created_at: submittedAt, updated_at: submittedAt } },
     { table: 'contacts', id: contactId, action: 'insert', record: { id: contactId, organization_id: organizationId, full_name: input.fullName || 'Unknown Contact', email: input.email || null, phone: input.phone || null, source: input.source, consent_status: 'unknown', created_at: submittedAt, updated_at: submittedAt } },
     { table: 'leads', id: leadId, action: 'insert', record: { id: leadId, contact_id: contactId, organization_id: organizationId, source_channel: input.source, lane, title: input.title, body: input.body, raw_payload_json: JSON.stringify(input), status: 'new', created_at: submittedAt, updated_at: submittedAt } },
     { table: 'opportunities', id: opportunityId, action: 'insert', record: { id: opportunityId, lead_id: leadId, lane, revenue_lane_supported: lane, estimated_value_cents: input.estimatedValueCents || 0, priority, score, blocker: 'Owner review required before external action.', next_action: 'Review, pass, reply draft, quote draft, schedule draft, or prove locally.', status: 'queued_for_review', recommended_follow_up_date: '2026-06-19', created_at: submittedAt, updated_at: submittedAt } },
     { table: 'conversations', id: conversationId, action: 'insert', record: { id: conversationId, lead_id: leadId, contact_id: contactId, channel: input.source, transcript: input.body, summary: input.title, created_at: submittedAt, updated_at: submittedAt } },
     { table: 'reviews', id: reviewId, action: 'insert', record: { id: reviewId, target_table: 'opportunities', target_id: opportunityId, action: 'review', decision: 'queued', persisted_externally: 0, approval_required: 1, created_at: submittedAt } },
-    { table: 'ai_actions', id: aiActionId, action: 'insert', record: { id: aiActionId, agent_id: agent.id, target_table: 'opportunities', target_id: opportunityId, action: agent.operation, result_json: JSON.stringify({ lane, priority, score }), persisted_externally: 0, approval_required: 1, created_at: submittedAt } },
+    { table: 'ai_actions', id: aiActionId, action: 'insert', record: { id: aiActionId, agent_id: agentId, target_table: 'opportunities', target_id: opportunityId, action: agent.operation, result_json: JSON.stringify({ lane, priority, score }), persisted_externally: 0, approval_required: 1, created_at: submittedAt } },
     { table: 'analytics_events', id: analyticsId, action: 'insert', record: { id: analyticsId, source: input.source, module: lane, action: 'intake_captured', target_table: 'opportunities', target_id: opportunityId, conversion_value_cents: input.estimatedValueCents || 0, created_at: submittedAt } },
     { table: 'audit_logs', id: auditId, action: 'insert', record: { id: auditId, actor: 'revenue_command_intake_agent', action: 'capture_intake_local_proof', target_table: 'opportunities', target_id: opportunityId, risk_level: 'medium', allowed: 1, reason: 'Local database-ready proof only. External actions blocked.', created_at: submittedAt } },
     { table: 'proof_of_work', id: proofId, action: 'insert', record: { id: proofId, opportunity_id: opportunityId, module: lane, proof_type: 'intake_to_database_ready_records', evidence_json: JSON.stringify([{ table: 'leads', id: leadId }, { table: 'opportunities', id: opportunityId }, { table: 'ai_actions', id: aiActionId }]), outcome_summary: 'Inbound intake normalized into owned database-ready records and assigned to a one-operation agent.', reusable_product_candidate: 1, created_at: submittedAt, updated_at: submittedAt } }
   ];
 
+  if (lane === 'Dispatch') {
+    const jobId = hashId('job', opportunityId);
+    writes.push({
+      table: 'jobs',
+      id: jobId,
+      action: 'insert',
+      record: {
+        id: jobId,
+        opportunity_id: opportunityId,
+        job_type: 'dispatch',
+        site_address: input.location || null,
+        status: 'queued_for_review',
+        created_at: submittedAt,
+        updated_at: submittedAt
+      }
+    });
+  }
+
   const laneWrite = moduleWrite(lane, opportunityId, contactId, submittedAt, input);
   if (laneWrite) writes.push(laneWrite);
+
+  const aiWrites = buildAiOperationWrites({
+    contactId,
+    leadId,
+    opportunityId,
+    intakeId,
+    source: input.source,
+    submittedAt,
+    summary: input.title,
+    transcript: input.transcript || input.body,
+    goal: input.goal,
+    confidence: input.confidence ?? score,
+    channel: input.source
+  });
+  writes.push(...aiWrites);
 
   return { ok: true, service: 'already-here-revenue-command-intake', intakeId, lane, priority, score, persistedExternally: false, externalActions: 'blocked_by_default', assignedAgentId: agent.id, assignedAgentOperation: agent.operation, databaseReadyWrites: writes, proofOfWorkSummary: `${lane} intake normalized into ${writes.length} database-ready write(s), assigned to ${agent.name}, priority ${priority}.`, blockedExternalActions: BLOCKED_EXTERNAL_ACTIONS, nextLocalActions: ['review', 'pass', 'reply_draft_only', 'quote_draft_only', 'schedule_draft_only', 'prove_local_only'] };
 }

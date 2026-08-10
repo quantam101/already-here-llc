@@ -1,5 +1,8 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server.js';
+import { persistDatabaseReadyWrites } from '@/lib/revenue-command-db';
+import { buildRevenueIntakeProof, type RevenueIntakeInput } from '@/lib/revenue-command-intake';
+import { reconcileLeadIdentity } from '@/lib/revenue-command-reconcile';
 
 export const runtime = 'nodejs';
 
@@ -65,7 +68,7 @@ function leadRows(payload: Record<string, string>, leadId: string): Array<[strin
     ['Urgency', payload.urgency],
     ['Location', payload.location || [payload.city, payload.zip].filter(Boolean).join(' ')],
     ['Preferred time', payload.preferredTime || payload.schedule],
-    ['Decision state', 'Proceed / Quote / Schedule / Discard required'],
+    ['Decision state', 'Review / Pass / Reply / Quote / Schedule approval required'],
     ['Notes', payload.message || payload.notes]
   ];
 }
@@ -105,7 +108,29 @@ async function sendResendEmail(payload: Record<string, unknown>): Promise<string
   return data.id || '';
 }
 
+function toRevenueIntakeInput(payload: Record<string, string>): RevenueIntakeInput {
+  return {
+    source: payload.source || 'ai_receptionist_intake',
+    fullName: payload.fullName || payload.name || 'Unknown Contact',
+    company: payload.company || 'Unknown Organization',
+    email: payload.email || '',
+    phone: payload.phone || undefined,
+    title: payload.title || `AI receptionist lead: ${payload.serviceType || payload.service || 'service request'}`,
+    body: payload.message || payload.notes || payload.body || 'No details provided.',
+    location: payload.location || [payload.city, payload.zip].filter(Boolean).join(' ') || undefined,
+    serviceType: payload.serviceType || payload.service || undefined,
+    requestedWindow: payload.preferredTime || payload.schedule || payload.requestedWindow || undefined,
+    estimatedValueCents: Number(payload.estimatedValueCents) || 0,
+    transcript: payload.transcript
+  };
+}
+
+function deliveryApproved(): boolean {
+  return process.env.AI_RECEPTIONIST_AUTO_DELIVERY === 'true';
+}
+
 async function deliverLead(payload: Record<string, string>, leadId: string): Promise<{ delivery: string; messageId?: string }> {
+  if (!deliveryApproved()) return { delivery: 'approval-gated-not-sent' };
   const to = process.env.AI_RECEPTIONIST_TO_EMAIL || process.env.DISPATCH_TO_EMAIL;
   if (process.env.RESEND_API_KEY && to) {
     const messageId = await sendResendEmail({
@@ -149,22 +174,54 @@ export async function POST(request: Request) {
   if (validationError) return NextResponse.json({ ok: false, message: validationError }, { status: 400 });
 
   const leadId = generateLeadId();
-  try {
-    const delivery = await deliverLead(payload, leadId);
-    return NextResponse.json({ ok: true, leadId, status: 'received', ...delivery, nextAction: 'Review lead, quote/schedule if valid, discard if not qualified.' });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'AI receptionist intake failed.';
-    return NextResponse.json({ ok: false, leadId, message }, { status: 502 });
+  const proof = buildRevenueIntakeProof(toRevenueIntakeInput(payload));
+  const { inserted, errors } = await persistDatabaseReadyWrites(proof.databaseReadyWrites);
+  const ownedLead = proof.databaseReadyWrites.find((write) => write.table === 'leads');
+  const reconciliation = ownedLead
+    ? await reconcileLeadIdentity(ownedLead.id, 'ai_receptionist')
+    : { ok: false, errors: ['No lead record generated for reconciliation.'] };
+
+  let delivery: { delivery: string; messageId?: string } = { delivery: 'approval-gated-not-sent' };
+  let deliveryError: string | undefined;
+  if (deliveryApproved()) {
+    try {
+      delivery = await deliverLead(payload, leadId);
+    } catch (error) {
+      deliveryError = error instanceof Error ? error.message : 'AI receptionist notification delivery failed.';
+    }
   }
+
+  const persistenceOk = errors.length === 0 && reconciliation.ok;
+  return NextResponse.json({
+    ok: persistenceOk,
+    leadId,
+    status: persistenceOk ? 'received_and_persisted' : 'received_with_persistence_errors',
+    ...delivery,
+    deliveryError: deliveryError || null,
+    deliveryApprovalRequired: !deliveryApproved(),
+    persistedToOwnedDatabase: inserted,
+    persistenceErrors: errors,
+    identityReconciliation: reconciliation,
+    nextAction: 'Review lead, then Pass, Reply, Quote, Assign, or Schedule through the approval ledger.'
+  }, { status: persistenceOk ? 200 : 500 });
 }
 
 export async function GET() {
+  const approved = deliveryApproved();
   return NextResponse.json({
     ok: true,
     service: 'ai-receptionist-intake',
     status: 'ready',
-    delivery: process.env.RESEND_API_KEY && (process.env.AI_RECEPTIONIST_TO_EMAIL || process.env.DISPATCH_TO_EMAIL) ? 'resend' : process.env.FORMSPREE_ENDPOINT ? 'formspree' : 'dry-run-no-delivery-configured',
+    persistenceOrder: 'owned_database_first',
+    identityResolution: 'canonical_reconciliation_enabled',
+    delivery: approved
+      ? process.env.RESEND_API_KEY && (process.env.AI_RECEPTIONIST_TO_EMAIL || process.env.DISPATCH_TO_EMAIL)
+        ? 'resend'
+        : process.env.FORMSPREE_ENDPOINT ? 'formspree' : 'dry-run-no-delivery-configured'
+      : 'approval-gated-not-sent',
+    deliveryApprovalRequired: !approved,
     env: {
+      AI_RECEPTIONIST_AUTO_DELIVERY: approved,
       RESEND_API_KEY: Boolean(process.env.RESEND_API_KEY),
       AI_RECEPTIONIST_TO_EMAIL: Boolean(process.env.AI_RECEPTIONIST_TO_EMAIL),
       DISPATCH_TO_EMAIL: Boolean(process.env.DISPATCH_TO_EMAIL),

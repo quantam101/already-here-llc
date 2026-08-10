@@ -5,6 +5,8 @@ import { Footer } from '@/components/Footer';
 import { HomeAiAgentAwareness } from '@/components/HomeAiAgentAwareness';
 import { TrafficTracker } from '@/components/TrafficTracker';
 import { FloatingRevenueCtas } from '@/components/FloatingRevenueCtas';
+import { LifelongCatchCorrectPanel } from '@/components/LifelongCatchCorrectPanel';
+import { RevenueCommandAuthGate } from '@/components/RevenueCommandAuthGate';
 import { siteConfig } from '@/lib/site';
 
 export const viewport: Viewport = {
@@ -128,11 +130,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
         />
         <TrafficTracker />
+        <RevenueCommandAuthGate />
         <Header />
         <main>{children}</main>
         <HomeAiAgentAwareness />
         <Footer />
         <FloatingRevenueCtas />
+        <LifelongCatchCorrectPanel />
       </body>
     </html>
   );

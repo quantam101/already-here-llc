@@ -82,6 +82,52 @@ CREATE TABLE IF NOT EXISTS dispatches (
   updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS quotes (
+  id TEXT PRIMARY KEY,
+  opportunity_id TEXT REFERENCES opportunities(id),
+  contact_id TEXT REFERENCES contacts(id),
+  quote_amount_cents INTEGER NOT NULL DEFAULT 0,
+  quote_status TEXT NOT NULL DEFAULT 'draft',
+  approved_by TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS invoices (
+  id TEXT PRIMARY KEY,
+  opportunity_id TEXT REFERENCES opportunities(id),
+  contact_id TEXT REFERENCES contacts(id),
+  invoice_amount_cents INTEGER NOT NULL DEFAULT 0,
+  invoice_status TEXT NOT NULL DEFAULT 'draft',
+  issued_at TEXT,
+  paid_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS payments (
+  id TEXT PRIMARY KEY,
+  invoice_id TEXT REFERENCES invoices(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  contact_id TEXT REFERENCES contacts(id),
+  payment_amount_cents INTEGER NOT NULL DEFAULT 0,
+  payment_method TEXT,
+  payment_status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS repeating_customers (
+  id TEXT PRIMARY KEY,
+  organization_id TEXT REFERENCES organizations(id),
+  contact_id TEXT REFERENCES contacts(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  repeat_score INTEGER NOT NULL DEFAULT 0,
+  next_service_due_date TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS technicians (
   id TEXT PRIMARY KEY,
   contact_id TEXT REFERENCES contacts(id),
@@ -240,6 +286,68 @@ CREATE TABLE IF NOT EXISTS ai_actions (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS ai_conversations (
+  id TEXT PRIMARY KEY,
+  lead_id TEXT REFERENCES leads(id),
+  contact_id TEXT REFERENCES contacts(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  channel TEXT NOT NULL,
+  transcript TEXT,
+  summary TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ai_memory (
+  id TEXT PRIMARY KEY,
+  contact_id TEXT REFERENCES contacts(id),
+  lead_id TEXT REFERENCES leads(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  source TEXT NOT NULL,
+  observation TEXT NOT NULL,
+  confidence INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ai_feedback (
+  id TEXT PRIMARY KEY,
+  contact_id TEXT REFERENCES contacts(id),
+  lead_id TEXT REFERENCES leads(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  feedback_type TEXT NOT NULL,
+  feedback_text TEXT NOT NULL,
+  outcome TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ai_tasks (
+  id TEXT PRIMARY KEY,
+  contact_id TEXT REFERENCES contacts(id),
+  lead_id TEXT REFERENCES leads(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  task_type TEXT NOT NULL,
+  description TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open',
+  priority TEXT NOT NULL DEFAULT 'P1',
+  due_date TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ai_goals (
+  id TEXT PRIMARY KEY,
+  contact_id TEXT REFERENCES contacts(id),
+  lead_id TEXT REFERENCES leads(id),
+  opportunity_id TEXT REFERENCES opportunities(id),
+  goal TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  progress_percent INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS analytics_events (
   id TEXT PRIMARY KEY,
   source TEXT NOT NULL,
@@ -307,6 +415,43 @@ CREATE TABLE IF NOT EXISTS system_health_signals (
   state TEXT NOT NULL,
   severity TEXT NOT NULL,
   next_fix TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS roles (
+  id TEXT PRIMARY KEY,
+  role_name TEXT NOT NULL UNIQUE,
+  permissions_json TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS permissions (
+  id TEXT PRIMARY KEY,
+  permission_name TEXT NOT NULL UNIQUE,
+  resource TEXT NOT NULL,
+  action TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_roles (
+  id TEXT PRIMARY KEY,
+  contact_id TEXT REFERENCES contacts(id),
+  role_id TEXT REFERENCES roles(id),
+  granted_by TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS security_findings (
+  id TEXT PRIMARY KEY,
+  finding_type TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  resource TEXT NOT NULL,
+  description TEXT NOT NULL,
+  remediation TEXT,
+  status TEXT NOT NULL DEFAULT 'open',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
