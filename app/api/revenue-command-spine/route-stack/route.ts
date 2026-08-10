@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { buildRouteStack, persistRouteStack } from '@/lib/revenue-command-routing';
+import { authorizeRevenueCommandInternalRequest, internalAuthError } from '@/lib/revenue-command-api-auth';
 
 const PointSchema = z.object({
   latitude: z.number().min(-90).max(90),
@@ -34,6 +35,8 @@ const RequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const auth = authorizeRevenueCommandInternalRequest(request);
+  if (!auth.ok) return NextResponse.json({ ok: false, ...internalAuthError(auth.reason) }, { status: 401 });
   const body = await request.json().catch(() => null);
   const parsed = RequestSchema.safeParse(body);
   if (!parsed.success) {
