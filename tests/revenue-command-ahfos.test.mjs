@@ -15,7 +15,10 @@ const result = await ahfos.ingestAhfosJobSnapshot({
 });
 assert.equal(result.ok, true);
 assert.equal(db.getRecord('jobs', 'AHFOS-JOB-1')?.source_system, 'AHFOS');
-assert.equal(db.getRecord('dispatches', 'dispatch_5aac31fe0c7a536ad6')?.source_system ?? 'AHFOS', 'AHFOS');
+const dispatches = db.listRecords('dispatches', 10);
+assert.equal(dispatches.length, 1);
+assert.equal(dispatches[0].source_system, 'AHFOS');
+assert.equal(dispatches[0].job_id, 'AHFOS-JOB-1');
 assert.ok(db.getRecord('proof_of_work', result.proofId));
 assert.equal(db.getDatabaseStats().outcomes, 1);
 assert.equal(db.getDatabaseStats().analytics_events, 1);
