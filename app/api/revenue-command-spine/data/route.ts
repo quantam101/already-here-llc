@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ALLOWED_TABLES, getDatabaseStats, getRecord, listRecords } from '@/lib/revenue-command-db';
+import { ALLOWED_TABLES, getDatabaseHealth, getDatabaseStats, getRecord, listRecords } from '@/lib/revenue-command-db';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -8,7 +8,13 @@ export async function GET(request: Request) {
   const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || '50'), 1), 500);
 
   if (!table) {
-    return NextResponse.json({ ok: true, stats: getDatabaseStats() });
+    const database = getDatabaseHealth();
+    return NextResponse.json({
+      ok: true,
+      stats: getDatabaseStats(),
+      database,
+      authoritative: database.durable
+    });
   }
 
   if (!ALLOWED_TABLES.has(table)) {
