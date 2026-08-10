@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import { ingestCatchCorrectEvent, ingestCodexChangelog, ingestSystemHealthSignal } from '@/lib/revenue-command-engineering';
+import { authorizeRevenueCommandInternalRequest, internalAuthError } from '@/lib/revenue-command-api-auth';
 
 export const runtime = 'nodejs';
 
+function denied(request: Request): NextResponse | null {
+  const auth = authorizeRevenueCommandInternalRequest(request);
+  return auth.ok ? null : NextResponse.json({ ok: false, ...internalAuthError(auth.reason) }, { status: 401 });
+}
+
 export async function POST(request: Request) {
+  const unauthorized = denied(request);
+  if (unauthorized) return unauthorized;
   const body = await request.json().catch(() => ({}));
   const type = String(body?.type || '');
 
@@ -50,11 +58,13 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const unauthorized = denied(request);
+  if (unauthorized) return unauthorized;
   return NextResponse.json({
     ok: true,
     service: 'revenue-command-spine-engineering',
     types: ['codex', 'health', 'catch_correct'],
-    description: 'POST codex changelog entries, system health signals, or catch-and-correct events into the owned operational database.'
+    description: 'Internal engineering evidence ingestion for the owned operational database.'
   });
 }
