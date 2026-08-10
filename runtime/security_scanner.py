@@ -19,6 +19,7 @@ _IGNORED_DIRS: FrozenSet[str] = frozenset({
 
 _IGNORED_FILES: FrozenSet[str] = frozenset({
     "security_scanner.py",
+    "secret-history-audit.mjs",
     "verifier.py",
     "redteam-agent.mjs",
     "socrates-agent.mjs",
