@@ -5,7 +5,7 @@ import { supportedLanguageOptions } from '@/lib/ai-agent-products';
 
 const demoOptions = [
   'Automated presentation',
-  'Try a sample agent for my business',
+  'Try a demo agent for my business',
   'Use my website as the demo context',
   'Show lead capture and owner alert',
   'Show quote intake and qualification',

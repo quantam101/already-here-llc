@@ -124,7 +124,7 @@ export default function AiAgentDemoPage() {
           </div>
           <div className="card overflow-hidden" data-proof-surface>
             <div className="border-b border-borderBrand bg-[#071B34] px-6 py-5">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/70">Sample owner alert</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/70">Demo owner alert</p>
               <h3 className="mt-2 text-2xl font-semibold text-white">New AI Web Agent Lead</h3>
             </div>
             <div className="divide-y divide-borderBrand">
