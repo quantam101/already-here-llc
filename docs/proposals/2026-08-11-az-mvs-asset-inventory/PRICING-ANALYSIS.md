@@ -30,7 +30,7 @@ Our $450 per-site inventory/tagging rate sits inside the published Site Survey (
 
 ## Small / local competitor benchmarks
 
-We intentionally did not benchmark against national fixed-asset inventory firms with hundreds of technicians. Those economies of scale do not match a small Phoenix-area operator. Instead, we looked at local small-business IT pricing:
+We benchmarked against both local small-business IT pricing and national fixed-asset inventory service providers. Local rates keep us honest about Phoenix technician costs; national rates show where a 24-site baseline inventory would be priced by a larger firm.
 
 | Source | Rate / Package | What it tells us |
 |---|---|---|
@@ -46,6 +46,22 @@ Onsite inventory & tagging: $450/site ÷ ~4 hrs = **$112.50/hr**.
 Effective site rate including the $1,675 fixed mobilization recovery: ($10,800 + $1,675) ÷ 24 visits ÷ ~4 hrs = **~$130/hr**.
 
 Both are inside the small-business MSP range ($100–$180/hr) and below the $140–$180/hr Turning Point charges. The $1,675 fixed mobilization line recovers the first-job printer, scanner, label/ribbon stock, and mileage.
+
+---
+
+## National / large fixed-asset inventory provider benchmarks
+
+Large firms rarely publish flat rates because they scope per project, but public pricing gives useful anchors for a 24-site, ~700-asset baseline inventory.
+
+| Source | Published pricing | What it tells us |
+|---|---|---|
+| **CPCON** multi-site fixed asset inventory guide | Small facilities under 1,000 assets: **$8,000–$15,000 per site**; small multi-site program (5–10 sites): **$8,000–$20,000 per site / $50K–$200K total** | National fixed-asset inventory firms carry high per-site minimums for dispersed sites, even when the asset count at each site is small. |
+| **CPCON** asset tagging cost guide | Professional barcode tagging + data capture: **$3–$15 per asset**; 10,000-asset program labor alone **$30,000–$60,000** | Labor and data capture dominate the price, not tags. At 700 assets this implies ~$2,100–$10,500 for tagging/data before travel and project minimums. |
+| **TD SYNNEX** government contract pricing | Asset Tag Services **$8.00 per unit**; UID Tagging & Reporting **$16.00 per unit** | A large IT distributor/reseller charges $8–$16 per unit just for tagging and reporting, before travel or project management. |
+| **IFTI** nationwide fixed-rate inventory | Starting **under $1,000 per space** | A per-space nationwide inventory service can start below $1,000, but scope is usually smaller/simpler than wall-to-wall QR tagging with full reconciliation. |
+| **RESEAT** building-level inventory platform | **$1,500/building/year** (up to 500 items), **$3,000/building/year** unlimited; multi-site cap **$60K/year** | At 24 buildings, a building-level platform + inventory model runs ~$24,000–$36,000/year at scale; initial on-site audits may be additional. |
+
+**Estimated large-firm quote for our scope:** A national fixed-asset inventory provider would likely quote **$20,000–$45,000** for a turnkey 700-asset / 24-site baseline inventory, tag application, data capture, and reconciliation, with a 3–6 month timeline and higher per-site minimums. Our **$15,600 fixed price sits below that range** while remaining profitable for a small operator.
 
 ---
 
@@ -72,7 +88,7 @@ Both are inside the small-business MSP range ($100–$180/hr) and below the $140
 
 ## Why this is competitive and profitable
 
-1. **It is not a race-to-the-bottom quote.** At $15,600 we are cheaper than a $140–$180/hr MSP would be for the same 96+ hours of work, while the $1,675 fixed mobilization line recovers the field equipment and mileage this first job requires.
+1. **It is not a race-to-the-bottom quote.** At $15,600 we are cheaper than a $140–$180/hr small-business MSP for the same 96+ hours of work, and materially below the $20,000–$45,000 a national fixed-asset inventory firm would likely quote for 24 dispersed sites.
 2. **It aligns with our own website.** The inventory/tagging rate of $450/visit sits inside the published Site Survey ($250–$500) and New Store/Site Survey ($350+) ranges. The additional $1,675 fixed mobilization recovery keeps the blended rate competitive for a small operator that must buy gear to execute.
 3. **Per-tag cost is fair.** $1.25 covers a durable polyester QR label, printing, handling, and a small contingency for tag replacement or damaged assets. Bulk tag-only material pricing is ~$0.25–$0.38, so the per-tag price also helps absorb the extra labor for hard-to-reach or high-touch assets.
 4. **The fixed PM and data-processing fees protect us.** $1,500 for kickoff/coordination and $750 for final reconciliation/QA are real hours that do not scale with tag count.
@@ -82,7 +98,7 @@ Both are inside the small-business MSP range ($100–$180/hr) and below the $140
 
 ## What we are *not* doing
 
-- We are not matching the $3–$15/asset rates national fixed-asset inventory firms quote for 10,000+ asset facilities. Those rates rely on volume and cannot cover 24 dispersed Phoenix metro sites.
+- We are not using the $3–$15/asset national volume rates or the $20K–$45K large-firm quotes as our price anchor; those reflect 10,000+ asset facilities or high per-site minimums that do not match a 24-site Phoenix rollout by a small operator.
 - We are not using the cheapest tag-only material price as our total. Labor, travel, reconciliation, and project management are the real costs.
 
 ---

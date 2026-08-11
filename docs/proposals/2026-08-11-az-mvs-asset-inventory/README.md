@@ -26,7 +26,7 @@ This proposal includes:
 
 Our base one-time price for the full scope is **$15,600** (assuming approximately 700 tagged assets; the site-visit, mobilization, and processing components are fixed, and tags are priced per actual unit). This works out to an all-in cost of approximately **$22.29 per tagged asset** at the 700-asset estimate.
 
-Pricing is anchored to our public rate card and compared against local small-business IT service rates, not national firms. The attached `PRICING-ANALYSIS.md` explains how the numbers were built.
+Pricing is anchored to our public rate card and compared against both local small-business IT service rates and national fixed-asset inventory provider benchmarks. The attached `PRICING-ANALYSIS.md` explains how the numbers were built.
 
 We can mobilize within one week of signed SOW and confirmed site schedule. I am available for a call to walk through the methodology, staffing model, and tag sample.
 
