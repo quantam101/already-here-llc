@@ -39,7 +39,7 @@ cover = (
     "Dear Jeff,\n\n"
     "Thank you for inviting Already Here LLC to bid on the Arizona multi-site electronics asset inventory and 2D QR tagging project. We reviewed the RFP and the master location schedule, and we are ready to execute this turnkey baseline across all 24 physical site visits.\n\n"
     "Our proposal includes a wall-to-wall physical inventory of qualifying electronics at each site, durable scannable 2D QR asset tags with unique human-readable asset IDs, data capture and nightly reconciliation against the RFP required data fields, and a consolidated enterprise master asset register in Excel and CSV with location-level files, an exception report, site completion certifications, and a final project summary.\n\n"
-    "Our base one-time price for the full scope is $15,200 (assuming approximately 700 tagged assets; the site-visit, mobilization, and processing components are fixed, and tags are priced per actual unit). This is an all-in cost of approximately $21.71 per tagged asset at the 700-asset estimate. Pricing is anchored to our published rate card and compared against local small-business IT service rates, not national firms.\n\n"
+    "Our base one-time price for the full scope is $15,600 (assuming approximately 700 tagged assets; the site-visit, mobilization, and processing components are fixed, and tags are priced per actual unit). This is an all-in cost of approximately $22.29 per tagged asset at the 700-asset estimate. Pricing is anchored to our published rate card and compared against local small-business IT service rates, not national firms.\n\n"
     "We can mobilize within one week of a signed SOW and confirmed site schedule. I am available for a call to walk through the methodology, staffing model, and tag sample.\n\n"
     "Best regards,\n\n"
     "Stephen Franklin\n"
@@ -74,7 +74,7 @@ scope_items = [
     "Exception identification: flag assets that are damaged, obsolete, unused, stored, missing identifying information, inaccessible, duplicated, or otherwise require follow-up.",
     "Quality assurance: reconcile tag counts to inventory records, review duplicate/missing serials and asset IDs, perform a spot-check of not less than 10% of tagged assets per site, and provide a site completion/exception report before closing each location.",
     "Final deliverables: consolidated enterprise master asset register plus location-level inventory files in Excel and CSV, data dictionary, exception log, site completion certifications, and project completion summary.",
-    "PawnCo P4 option: if exercised, a separate pre-opening sweep after equipment is staged/installed, tagged and registered at $500 per sweep plus $0.75 per tag.",
+    "PawnCo P4 option: if exercised, a separate pre-opening sweep after equipment is staged/installed, tagged and registered at $500 per sweep plus $1.25 per tag.",
 ]
 for item in scope_items:
     doc.add_paragraph(item, style="List Bullet")
@@ -89,7 +89,7 @@ tag_items = [
     "Service life: 5+ years under normal indoor commercial conditions.",
     "Tamper-evident: destructible or void-pattern option available for high-touch assets.",
     "QR content: unique internal asset identifier only (no URLs, network credentials, or confidential data). Optional hosted lookup available under the optional software platform.",
-    "Replacement: lost or damaged tags replaced at $0.75 each during the project; after project closeout, replacement tags available at the same rate plus a dispatch fee.",
+    "Replacement: lost or damaged tags replaced at $1.25 each during the project; after project closeout, replacement tags available at the same rate plus a dispatch fee.",
 ]
 for item in tag_items:
     doc.add_paragraph(item, style="List Bullet")
@@ -160,12 +160,12 @@ pricing_rows = [
     ["Project management / kickoff", "1 project", "—", "$1,500.00"],
     ["Onsite inventory & tagging", "24 site visits", "$450.00/visit", "$10,800.00"],
     ["Mobilization & first-job equipment recovery", "24 site visits", "$67.00/visit", "$1,608.00"],
-    ["Asset tags", "Per tag (actual)", "$0.75/tag", "~$525.00 (est. 700 tags)"],
+    ["Asset tags", "Per tag (actual)", "$1.25/tag", "~$875.00 (est. 700 tags)"],
     ["Data capture & reconciliation", "Included + final QA pass", "$750.00 fixed", "$750.00"],
     ["Photos", "Included per asset", "Included", "Included"],
     ["Travel / mileage", "Phoenix metro", "Included in mobilization", "Included"],
     ["PawnCo P4 pre-opening option", "1 site option", "$500 + tags", "$500.00 (if exercised)"],
-    ["TOTAL ONE-TIME PROJECT PRICE (base)", "—", "—", "$15,183.00"],
+    ["TOTAL ONE-TIME PROJECT PRICE (base)", "—", "—", "$15,558.00"],
 ]
 
 ptable = doc.add_table(rows=1, cols=4)
@@ -183,14 +183,14 @@ for row in pricing_rows:
 
 doc.add_paragraph()
 add_paragraph(
-    "Assumed total asset count: approximately 700 tagged assets across 24 physical site visits. Estimated all-in cost per tagged asset: ~$21.71 at 700 assets; ~$19.00 at 800 assets; ~$25.33 at 600 assets. Rounded proposal total: $15,200. Proposal validity: 30 days. Payment terms: Net 15, 50% on kickoff and 50% on final delivery. Base scope not to exceed $16,500 without a written change order."
+    "Assumed total asset count: approximately 700 tagged assets across 24 physical site visits. Estimated all-in cost per tagged asset: ~$22.29 at 700 assets; ~$19.50 at 800 assets; ~$26.00 at 600 assets. Rounded proposal total: $15,600. Proposal validity: 30 days. Payment terms: Net 15, 50% on kickoff and 50% on final delivery. Base scope not to exceed $16,500 without a written change order."
 )
 
 add_heading("7. Optional Services", level=2)
 opt_rows = [
     ["Hosted asset-management platform", "$1,200/year or $100/month", "Web register, mobile QR scanning, CSV/XLSX export, non-proprietary data export guaranteed."],
     ["Annual physical re-inventory", "$7,200/year ($300/site x 24)", "Validates asset moves, updates register, replaces missing/damaged tags."],
-    ["PawnCo P4 pre-opening sweep", "$500 per visit + $0.75/tag", "Performed after equipment is staged/installed."],
+    ["PawnCo P4 pre-opening sweep", "$500 per visit + $1.25/tag", "Performed after equipment is staged/installed."],
 ]
 otable = doc.add_table(rows=1, cols=3)
 otable.style = "Table Grid"
