@@ -1,4 +1,3 @@
-import type { Database, Statement } from 'better-sqlite3';
 import { canonicalId } from './canonical-ids';
 
 export interface DatabaseReadyWrite {
@@ -69,6 +68,42 @@ function isoNow(): string {
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
+}
+
+interface SqliteStatement {
+  run(...args: unknown[]): unknown;
+  get(...args: unknown[]): unknown;
+  all(...args: unknown[]): unknown[];
+}
+
+interface SqliteDatabase {
+  exec(sql: string): void;
+  prepare(sql: string): SqliteStatement;
+  close(): void;
+}
+
+function createBetterSqlite3Database(path: string): SqliteDatabase {
+  const nodeModule = process.getBuiltinModule('node:module') as
+    | { createRequire: (filename: string) => NodeRequire }
+    | undefined;
+  if (!nodeModule) {
+    throw new Error('Cannot load better-sqlite3: node:module is unavailable');
+  }
+  const requireFn = nodeModule.createRequire('file://' + process.cwd() + '/lib/canonical-store.js');
+  const BetterSqlite3 = requireFn('better-sqlite3') as new (path: string) => SqliteDatabase;
+  return new BetterSqlite3(path);
+}
+
+function openSqliteDatabase(path: string): SqliteDatabase {
+  const nodeSqlite = process.getBuiltinModule('node:sqlite') as
+    | { DatabaseSync: new (path: string) => SqliteDatabase }
+    | undefined;
+  if (nodeSqlite?.DatabaseSync) {
+    const db = new nodeSqlite.DatabaseSync(path);
+    db.exec('PRAGMA journal_mode = WAL;');
+    return db;
+  }
+  return createBetterSqlite3Database(path);
 }
 
 const MAX_MEMORY_RECORDS = 10_000;
@@ -207,18 +242,15 @@ class MemoryCanonicalStore implements CanonicalStore {
 }
 
 class SqliteCanonicalStore implements CanonicalStore {
-  private db: Database;
-  private insertStmt: Statement<unknown[]>;
+  private db: SqliteDatabase;
+  private insertStmt: SqliteStatement;
 
   constructor(path: string) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const BetterSqlite3 = require('better-sqlite3') as new (path: string) => Database;
-    this.db = new BetterSqlite3(path);
-    this.db.pragma('journal_mode = WAL');
+    this.db = openSqliteDatabase(path);
     this.migrate();
     this.insertStmt = this.db.prepare(
       `INSERT OR REPLACE INTO canonical_records (id, table_name, payload, source, created_at, updated_at)
-       VALUES (@id, @table_name, @payload, @source, @created_at, @updated_at)`
+       VALUES ($id, $table_name, $payload, $source, $created_at, $updated_at)`
     );
   }
 
@@ -364,8 +396,13 @@ let sharedStore: CanonicalStore | undefined;
 export function getCanonicalStore(): CanonicalStore {
   if (sharedStore) return sharedStore;
   if (shouldUseSqlite()) {
-    sharedStore = new SqliteCanonicalStore(defaultSqlitePath());
-    return sharedStore;
+    try {
+      sharedStore = new SqliteCanonicalStore(defaultSqlitePath());
+      return sharedStore;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`SQLite canonical store unavailable (${message}); falling back to memory.`);
+    }
   }
   sharedStore = new MemoryCanonicalStore();
   return sharedStore;

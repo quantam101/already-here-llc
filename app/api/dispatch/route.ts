@@ -363,7 +363,14 @@ export async function POST(request: Request) {
       ).catch(() => {});
     }
 
-    return NextResponse.json({ ok: true, dispatchId, recordLocation: hasResend ? 'dispatch_email_json_attachment' : 'formspree_payload', revenueSpine });
+    return NextResponse.json({
+      ok: true,
+      dispatchId,
+      recordLocation: hasResend ? 'dispatch_email_json_attachment' : 'formspree_payload',
+      delivery: hasResend ? 'resend' : 'formspree',
+      persistedExternally: true,
+      revenueSpine
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Dispatch submission failed.';
     return NextResponse.json({ message, dispatchId, revenueSpine }, { status: 502 });
