@@ -35,6 +35,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTex
 
 import uvicorn
 
+from runtime.photo_ai_booking import create_haul_booking
 from runtime.photo_ai_feedback import FeedbackStore, get_feedback_store
 from runtime.photo_ai_haul import HaulScanner, MAX_UPLOAD_BYTES
 from runtime.photo_ai_store import ScanStore
@@ -596,6 +597,36 @@ async def handle_mobile_scan(request: Request, file: UploadFile = File(...)) -> 
     return JSONResponse(content=result.__dict__)
 
 
+@app.post("/api/book")
+async def handle_booking(request: Request) -> JSONResponse:
+    """Close the photo-to-quote loop: customer + scan -> canonical graph + training feedback."""
+    org_config, error = AUTH.authenticate(request)
+    if error:
+        return error
+    org_id = org_config["org"] if org_config else "anonymous"
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"error": "Invalid JSON body"})
+
+    scan = body.get("scan")
+    customer = body.get("customer", {})
+    if not isinstance(scan, dict):
+        return JSONResponse(status_code=400, content={"error": "scan object is required"})
+    if not (customer.get("full_name") or customer.get("fullName")):
+        return JSONResponse(status_code=400, content={"error": "customer full_name is required"})
+    if not (customer.get("pickup_address") or customer.get("pickupAddress")):
+        return JSONResponse(status_code=400, content={"error": "customer pickup_address is required"})
+
+    try:
+        booking = create_haul_booking(scan, customer, org_id=org_id)
+    except Exception:
+        logger.exception("Booking failed for org=%s", org_id)
+        return JSONResponse(status_code=500, content={"error": "Booking could not be persisted"})
+
+    return JSONResponse(content=booking)
+
+
 @app.get("/api/usage")
 async def usage(request: Request) -> JSONResponse:
     org_config, error = AUTH.authenticate(request)
@@ -788,6 +819,8 @@ _MOBILE_HTML = """<!DOCTYPE html>
         #loading { display: none; text-align: center; font-style: italic; color: var(--accent); margin: 20px 0; }
         #preview { width: 100%; border-radius: 12px; margin-top: 12px; display: none; }
         .fine-print { font-size: 11px; color: #64748b; text-align: center; margin-top: 12px; }
+        .form-input { width: 100%; margin-bottom: 10px; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #f8fafc; font-size: 14px; }
+        .form-input::placeholder { color: #64748b; }
     </style>
 </head>
 <body>
@@ -816,8 +849,6 @@ _MOBILE_HTML = """<!DOCTYPE html>
                     <div class="metric-lbl">Trailer Fill</div>
                 </div>
             </div>
-            <button class="btn btn-green" onclick="confirmBooking()">ACCEPT &amp; BOOK LOAD</button>
-            <p class="fine-print">Cloud vision disabled by default. Enable paid mode to use Gemini 2.5 Flash.</p>
         </div>
 
         <div class="card">
@@ -825,6 +856,22 @@ _MOBILE_HTML = """<!DOCTYPE html>
             <div style="font-size: 20px; font-weight: bold; color: var(--green);" id="scrapVal">+$0.00 Yield</div>
             <div id="alertList" style="margin-top: 8px;"></div>
         </div>
+
+        <div id="customerForm" class="card" style="display:none;">
+            <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px;">Booking Details</div>
+            <input class="form-input" type="text" id="custFullName" placeholder="Full name">
+            <input class="form-input" type="text" id="custCompany" placeholder="Company (optional)">
+            <input class="form-input" type="email" id="custEmail" placeholder="Email">
+            <input class="form-input" type="tel" id="custPhone" placeholder="Phone">
+            <input class="form-input" type="text" id="custAddress" placeholder="Pickup address">
+            <input class="form-input" type="text" id="custCity" placeholder="City">
+            <input class="form-input" type="text" id="custZip" placeholder="ZIP">
+            <input class="form-input" type="text" id="custVehicle" placeholder="Vehicle preference (optional)">
+            <textarea class="form-input" id="custNotes" rows="2" placeholder="Access notes / special instructions"></textarea>
+            <button class="btn btn-green" onclick="confirmBooking()">ACCEPT &amp; BOOK LOAD</button>
+            <div id="bookingResult" style="margin-top: 10px; font-size: 13px; color: var(--green);"></div>
+        </div>
+        <p class="fine-print">Cloud vision disabled by default. Enable paid mode to use Gemini 2.5 Flash.</p>
     </div>
 
     <script>
@@ -866,15 +913,48 @@ _MOBILE_HTML = """<!DOCTYPE html>
                     div.innerText = inst;
                     alertContainer.appendChild(div);
                 });
+
+                window.lastScan = data;
+                document.getElementById('customerForm').style.display = 'block';
             } catch (err) {
                 alert('Scan failed: ' + err.message);
                 document.getElementById('loading').style.display = 'none';
             }
         }
 
-        function confirmBooking() {
-            const quote = document.getElementById('netQuote').innerText;
-            alert('Booking confirmed at ' + quote + '. Dispatch will be notified.');
+        async function confirmBooking() {
+            if (!window.lastScan) {
+                alert('Please scan a load first.');
+                return;
+            }
+            const customer = {
+                full_name: document.getElementById('custFullName').value.trim(),
+                company: document.getElementById('custCompany').value.trim(),
+                email: document.getElementById('custEmail').value.trim(),
+                phone: document.getElementById('custPhone').value.trim(),
+                pickup_address: document.getElementById('custAddress').value.trim(),
+                site_city: document.getElementById('custCity').value.trim(),
+                site_zip: document.getElementById('custZip').value.trim(),
+                vehicle_type: document.getElementById('custVehicle').value.trim(),
+                notes: document.getElementById('custNotes').value.trim()
+            };
+            if (!customer.full_name || !customer.pickup_address) {
+                alert('Please enter your full name and pickup address.');
+                return;
+            }
+            try {
+                const res = await fetch('/api/book', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ scan: window.lastScan, customer })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Booking failed');
+                document.getElementById('bookingResult').innerText = 'Booking ' + data.booking_id + ' saved. Records: ' + data.record_count + '.';
+                alert('Booking confirmed: ' + data.booking_id + '. Dispatch will review before external action.');
+            } catch (err) {
+                alert('Booking failed: ' + err.message);
+            }
         }
 
         if ('serviceWorker' in navigator) {
