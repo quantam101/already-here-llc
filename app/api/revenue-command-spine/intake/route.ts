@@ -2,31 +2,77 @@ import { NextResponse } from 'next/server';
 import { buildRevenueCommandProofDemos, buildRevenueIntakeProof, type RevenueIntakeInput } from '@/lib/revenue-command-intake';
 import { getCanonicalStore } from '@/lib/canonical-store';
 
-function asString(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 10;
+const rateLimit = new Map<string, { count: number; resetAt: number }>();
+
+const FIELD_LIMITS: Record<keyof RevenueIntakeInput, number> = {
+  source: 120,
+  fullName: 120,
+  company: 160,
+  email: 160,
+  phone: 40,
+  title: 240,
+  body: 4000,
+  location: 160,
+  serviceType: 120,
+  ticketNumber: 80,
+  requestedWindow: 120,
+  estimatedValueCents: 12,
+  submittedAt: 30,
+};
+
+function getClientKey(request: Request): string {
+  const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  const realIp = request.headers.get('x-real-ip')?.trim();
+  return forwardedFor || realIp || 'unknown';
+}
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now();
+  const current = rateLimit.get(key);
+  if (!current || current.resetAt <= now) {
+    rateLimit.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  current.count += 1;
+  return current.count > RATE_LIMIT_MAX;
+}
+
+function asString(value: unknown, maxLength: number): string {
+  const s = typeof value === 'string' ? value.trim() : '';
+  return s.length > maxLength ? s.slice(0, maxLength) : s;
 }
 
 function asNumber(value: unknown): number {
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.min(parsed, 99_999_999_999));
 }
 
 function inputFromBody(body: Record<string, unknown>): RevenueIntakeInput {
   return {
-    source: asString(body.source) || 'api_revenue_command_intake',
-    fullName: asString(body.fullName) || 'Unknown Contact',
-    company: asString(body.company) || 'Unknown Organization',
-    email: asString(body.email),
-    phone: asString(body.phone),
-    title: asString(body.title) || asString(body.serviceType) || 'Revenue intake',
-    body: asString(body.body) || asString(body.message) || 'No message provided.',
-    location: asString(body.location) || asString(body.siteCity),
-    serviceType: asString(body.serviceType),
-    ticketNumber: asString(body.ticketNumber),
-    requestedWindow: asString(body.requestedWindow),
+    source: asString(body.source, FIELD_LIMITS.source) || 'api_revenue_command_intake',
+    fullName: asString(body.fullName, FIELD_LIMITS.fullName) || 'Unknown Contact',
+    company: asString(body.company, FIELD_LIMITS.company) || 'Unknown Organization',
+    email: asString(body.email, FIELD_LIMITS.email),
+    phone: asString(body.phone, FIELD_LIMITS.phone),
+    title: asString(body.title, FIELD_LIMITS.title) || asString(body.serviceType, FIELD_LIMITS.serviceType) || 'Revenue intake',
+    body: asString(body.body, FIELD_LIMITS.body) || asString(body.message, FIELD_LIMITS.body) || 'No message provided.',
+    location: asString(body.location || body.siteCity, FIELD_LIMITS.location),
+    serviceType: asString(body.serviceType, FIELD_LIMITS.serviceType),
+    ticketNumber: asString(body.ticketNumber, FIELD_LIMITS.ticketNumber),
+    requestedWindow: asString(body.requestedWindow, FIELD_LIMITS.requestedWindow),
     estimatedValueCents: asNumber(body.estimatedValueCents),
-    submittedAt: asString(body.submittedAt) || undefined
+    submittedAt: asString(body.submittedAt, FIELD_LIMITS.submittedAt) || undefined
   };
+}
+
+function validateInput(input: RevenueIntakeInput): string | null {
+  if (!input.fullName || input.fullName.length < 2) return 'fullName is required';
+  if (!input.title || input.title.length < 3) return 'title or serviceType is required';
+  if (input.email && !input.email.includes('@')) return 'Invalid email';
+  return null;
 }
 
 export async function GET(request: Request) {
@@ -47,13 +93,29 @@ export async function GET(request: Request) {
     estimatedValueCents: url.searchParams.get('estimatedValueCents') || 50000
   });
 
+  const validationError = validateInput(input);
+  if (validationError) {
+    return NextResponse.json({ ok: false, error: validationError }, { status: 400 });
+  }
+
   const proof = buildRevenueIntakeProof(input);
   return NextResponse.json(proof);
 }
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}));
-  const proof = buildRevenueIntakeProof(inputFromBody(body));
+  const clientKey = getClientKey(request);
+  if (isRateLimited(clientKey)) {
+    return NextResponse.json({ ok: false, error: 'Rate limit exceeded. Try again later.' }, { status: 429 });
+  }
+
+  const rawBody = await request.json().catch(() => ({}));
+  const input = inputFromBody(rawBody);
+  const validationError = validateInput(input);
+  if (validationError) {
+    return NextResponse.json({ ok: false, error: validationError }, { status: 400 });
+  }
+
+  const proof = buildRevenueIntakeProof(input);
   const writeResult = getCanonicalStore().executeWrites(proof.databaseReadyWrites);
   return NextResponse.json({ ...proof, writeResult });
 }
