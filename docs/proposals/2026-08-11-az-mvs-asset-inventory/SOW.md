@@ -24,7 +24,7 @@ The engagement is scoped from kickoff through final deliverables, with all work 
 | 6 | Exception identification | Flag assets that are damaged, obsolete, unused, stored, missing identifying information, inaccessible, duplicated, or otherwise require follow-up. |
 | 7 | Quality assurance | Reconcile tag counts to inventory records, review duplicate/missing serials and asset IDs, perform a spot-check of not less than 10% of tagged assets per site, and provide a site completion/exception report before closing each location. |
 | 8 | Final deliverables | Consolidated enterprise master asset register plus location-level inventory files in Excel and CSV, data dictionary, exception log, site completion certifications, and project completion summary. |
-| 9 | PawnCo P4 option | If exercised, a separate pre-opening sweep after equipment is staged/installed, tagged and registered at $500 per sweep plus $1.25 per tag. |
+| 9 | PawnCo P4 option | If exercised, a separate pre-opening sweep after equipment is staged/installed, tagged and registered at $500 per sweep plus $0.75 per tag. |
 
 **Out of scope:** Low-value consumables and accessories (ordinary cables, keyboards, mice, power cords, chargers) unless specifically directed by Client; disconnecting, powering down, moving, opening, or altering production equipment without express authorization; after-hours work without advance written approval; travel beyond the Phoenix metro area (>60 miles one-way from downtown Phoenix) without a written travel addendum; and optional asset-management software unless separately ordered.
 
@@ -81,15 +81,15 @@ PawnCo P4 will be scheduled separately if the pre-opening option is exercised.
 
 ## 5. Pricing
 
-☑ **Fixed price:** **$13,250.00** for the base scope, assuming approximately 700 tagged assets across 24 physical site visits. Invoiced 50% upon kickoff, 50% upon delivery of final register.
+☑ **Fixed price:** **$13,600.00** for the base scope, assuming approximately 700 tagged assets across 24 physical site visits. Invoiced 50% upon kickoff, 50% upon delivery of final register.
 
-☑ **Per-unit adjustment:** Asset tags priced at **$1.25 each** based on actual tag count; all other line items fixed.
+☑ **Per-unit adjustment:** Asset tags priced at **$0.75 each** based on actual tag count; all other line items fixed.
 
-☑ **Not-to-exceed:** Base scope not to exceed **$15,000** without written change order.
+☑ **Not-to-exceed:** Base scope not to exceed **$14,750** without written change order.
 
 Materials/parts: Tags supplied by Provider and billed per actual unit. Optional software/platform priced separately.
 
-Full details: see `BID-FORM.md` in this directory.
+Full details: see `BID-FORM.md` and `PRICING-ANALYSIS.md` in this directory.
 
 ## 6. Methodology and Staffing
 
@@ -108,7 +108,7 @@ Full details: see `BID-FORM.md` in this directory.
 - **Service life:** 5+ years under normal indoor commercial conditions.
 - **Tamper-evident:** Destructible or void-pattern option available for high-touch assets; standard labels are durable and tamper-resistant.
 - **QR content:** Unique internal asset identifier only (no URLs, network credentials, or confidential data). Optional hosted lookup available under the optional software platform.
-- **Replacement:** Lost or damaged tags replaced at $1.25 each during the project; after project closeout, replacement tags available at the same rate plus a dispatch fee.
+- **Replacement:** Lost or damaged tags replaced at $0.75 each during the project; after project closeout, replacement tags available at the same rate plus a dispatch fee.
 
 ## 8. Data Capture and Quality Assurance
 
