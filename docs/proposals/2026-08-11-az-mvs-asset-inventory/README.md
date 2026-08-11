@@ -24,7 +24,7 @@ This proposal includes:
 - A consolidated enterprise master asset register in Excel and CSV, location-level files, exception report, site completion certifications, and a final project summary.
 - Optional annual re-inventory and optional hosted asset-management platform, priced separately.
 
-Our base one-time price for the full scope is **$15,600** (assuming approximately 700 tagged assets; the site-visit, mobilization, and processing components are fixed, and tags are priced per actual unit). This works out to an all-in cost of approximately **$22.29 per tagged asset** at the 700-asset estimate.
+Our base one-time price for the full scope is **$17,800** (assuming approximately 700 tagged assets; the site-visit, mobilization, processing, and return-visit/contingency components are fixed, and tags are priced per actual unit). This works out to an all-in cost of approximately **$25.43 per tagged asset** at the 700-asset estimate.
 
 Pricing is anchored to our public rate card and compared against both local small-business IT service rates and national fixed-asset inventory provider benchmarks. The attached `PRICING-ANALYSIS.md` explains how the numbers were built.
 

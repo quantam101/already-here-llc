@@ -16,22 +16,23 @@
 | Mobilization & first-job equipment recovery | 24 physical site visits | fixed | $1,675.00 |
 | Asset tags | Per tag / estimated actual | $1.25 per tag | ~$875.00 (estimated 700 tags) |
 | Data capture & reconciliation | Included in site visit + final QA pass | $750.00 fixed processing | $750.00 |
+| Return visits, complications & reschedule allowance | 1 project | fixed | $2,200.00 |
 | Photos | State included / per asset | Included | Included |
 | Travel / mileage | Arizona project (Phoenix metro) | Included in mobilization | Included |
 | PawnCo P4 construction / pre-opening option | 1 site option | $500.00 per sweep + tags | $500.00 (if exercised) |
 | Optional asset-management software | Annual / monthly | $1,200.00 per year or $100.00/month | Priced separately |
 | Optional annual physical re-inventory | 24 sites | $300.00 per site | $7,200.00 per year |
-| Other fees - specify | — | — | None |
-| **TOTAL ONE-TIME PROJECT PRICE** | — | — | **$15,600.00** |
+| Other fees - specify | — | — | Included in contingency allowance |
+| **TOTAL ONE-TIME PROJECT PRICE** | — | — | **$17,800.00** |
 
 **Assumed total asset count:** ~700 tagged assets across 24 physical site visits.  
-**Estimated all-in cost per tagged asset:** ~$22.29 at 700 assets; ~$19.50 at 800 assets; ~$26.00 at 600 assets.  
+**Estimated all-in cost per tagged asset:** ~$25.43 at 700 assets; ~$22.25 at 800 assets; ~$29.67 at 600 assets.  
 **Estimated project duration:** 4–5 weeks from kickoff to final deliverables.  
 **Estimated field days:** 12–16 business days (2–3 sites per day, depending on site size and access).  
 **Estimated assets per technician per day:** 30–50 assets, varying by site density and access.  
 **Proposal validity period:** 30 days from date of issue.  
 **Payment terms:** Net 15. One-time project invoiced 50% upon kickoff, 50% upon delivery of final register.  
-**Not-to-exceed:** Base scope not to exceed $16,500 without written change order (excludes P4 option, optional software, and annual re-inventory).
+**Not-to-exceed:** Base scope not to exceed $18,500 without written change order (excludes P4 option, optional software, and annual re-inventory).
 
 ---
 
@@ -50,4 +51,5 @@
 - Site-visit pricing is anchored to our published rate card: Smart Hands Half-Day ($400/4 hrs), Site Survey ($250–$500), and New Store / Site Survey ($350+). Each inventory/tagging visit is priced at $450, which covers a bundled half-day of onsite inventory, tagging, and data capture across the Phoenix metropolitan area.
 - The per-tag rate of $1.25 covers durable 2D QR polyester labels (≈1" × 2") with human-readable asset IDs, printing, handling, and a small contingency for damaged or hard-to-tag assets.
 - Data capture and reconciliation includes on-device barcode/QR capture, nightly spreadsheet sync, duplicate-ID checks, missing-serial review, photo linking, and final export processing.
+- The $2,200 return visits, complications & reschedule allowance covers the extra technician time, mileage, and re-coordination typical on a multi-site rollout where access is delayed, a site needs a second pass, serials must be re-read, or the schedule shifts. This replaces the change-order approach larger firms typically use for these items.
 - Photos are included for assets over $500 replacement value or any asset specifically requested by Client; one photo per qualifying asset, filename keyed to Asset ID.

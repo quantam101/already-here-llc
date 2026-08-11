@@ -81,11 +81,11 @@ PawnCo P4 will be scheduled separately if the pre-opening option is exercised.
 
 ## 5. Pricing
 
-☑ **Fixed price:** **$15,600.00** for the base scope, assuming approximately 700 tagged assets across 24 physical site visits. Invoiced 50% upon kickoff, 50% upon delivery of final register.
+☑ **Fixed price:** **$17,800.00** for the base scope, assuming approximately 700 tagged assets across 24 physical site visits. Invoiced 50% upon kickoff, 50% upon delivery of final register.
 
 ☑ **Per-unit adjustment:** Asset tags priced at **$1.25 each** based on actual tag count; all other line items fixed.
 
-☑ **Not-to-exceed:** Base scope not to exceed **$16,500** without written change order.
+☑ **Not-to-exceed:** Base scope not to exceed **$18,500** without written change order.
 
 Materials/parts: Tags supplied by Provider and billed per actual unit. Optional software/platform priced separately.
 
