@@ -100,8 +100,10 @@ export function buildQaPacket(input: QaPacketInput): QaPacket {
 
   const haulingJobs = store.queryTable('hauling_jobs').filter((r) => opportunityIds.has(str(r as LooseRecord, 'opportunity_id') ?? ''));
   const dispatches = store.queryTable('dispatches').filter((r) => {
-    const jobId = str(r as LooseRecord, 'job_id');
-    return haulingJobs.some((j) => str(j as LooseRecord, 'id') === jobId);
+    const rec = r as LooseRecord;
+    const jobId = str(rec, 'job_id');
+    const oppId = str(rec, 'opportunity_id');
+    return (jobId && haulingJobs.some((j) => str(j as LooseRecord, 'id') === jobId)) || (oppId && opportunityIds.has(oppId));
   });
   const revenueEvents = store.queryTable('revenue_events').filter((r) => opportunityIds.has(str(r as LooseRecord, 'opportunity_id') ?? ''));
   const qaScores = store.queryTable('qa_scores').filter((r) => opportunityIds.has(str(r as LooseRecord, 'opportunity_id') ?? ''));
@@ -110,8 +112,16 @@ export function buildQaPacket(input: QaPacketInput): QaPacket {
   const auditLogs = store.queryTable('audit_logs').filter((r) => opportunityIds.has(str(r as LooseRecord, 'target_id') ?? ''));
 
   const qaScoreValues = qaScores.map((r) => num(r as LooseRecord, 'score')).filter((v): v is number => v !== undefined);
-  const totalRevenueCents = revenueEvents.reduce((sum, r) => sum + (num(r as LooseRecord, 'amount_cents') ?? 0), 0);
-  const activeJobs = haulingJobs.filter((r) => str(r as LooseRecord, 'status') !== 'closed').length;
+  let totalRevenueCents = revenueEvents.reduce((sum, r) => sum + (num(r as LooseRecord, 'amount_cents') ?? 0), 0);
+  if (totalRevenueCents === 0) {
+    totalRevenueCents = opportunities.reduce((sum, r) => sum + (num(r as LooseRecord, 'estimated_value_cents') ?? 0), 0);
+  }
+  const haulingActive = haulingJobs.filter((r) => str(r as LooseRecord, 'status') !== 'closed');
+  const dispatchActive = dispatches.filter((r) => {
+    const rec = r as LooseRecord;
+    return str(rec, 'dispatch_status') !== 'closed' && str(rec, 'status') !== 'closed';
+  });
+  const activeJobs = new Set([...haulingActive, ...dispatchActive].map((r) => str(r as LooseRecord, 'id')).filter(Boolean)).size;
   const pendingReviews = reviews.filter((r) => str(r as LooseRecord, 'decision') === 'pending').length;
 
   const summary = {
