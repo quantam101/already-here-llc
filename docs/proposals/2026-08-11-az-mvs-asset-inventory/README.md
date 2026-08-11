@@ -24,7 +24,7 @@ This proposal includes:
 - A consolidated enterprise master asset register in Excel and CSV, location-level files, exception report, site completion certifications, and a final project summary.
 - Optional annual re-inventory and optional hosted asset-management platform, priced separately.
 
-Our base one-time price for the full scope is **$13,600** (assuming approximately 700 tagged assets; the site-visit and processing components are fixed, and tags are priced per actual unit). This works out to an all-in cost of approximately **$19.43 per tagged asset** at the 700-asset estimate.
+Our base one-time price for the full scope is **$15,200** (assuming approximately 700 tagged assets; the site-visit, mobilization, and processing components are fixed, and tags are priced per actual unit). This works out to an all-in cost of approximately **$21.71 per tagged asset** at the 700-asset estimate.
 
 Pricing is anchored to our public rate card and compared against local small-business IT service rates, not national firms. The attached `PRICING-ANALYSIS.md` explains how the numbers were built.
 
@@ -47,7 +47,8 @@ www.alreadyherellc.com
 |---|---|
 | `SOW.md` | Statement of Work covering scope, deliverables, sites, schedule, assumptions, change management, and acceptance. |
 | `BID-FORM.md` | Completed RFP Bid Form / Pricing Schedule with line-item pricing and totals. |
-| `PRICING-ANALYSIS.md` | How the proposal pricing was derived from our published rate card and small/local competitor benchmarks. |
+| `PRICING-ANALYSIS.md` | How the proposal pricing was derived from our published rate card and small/local competitor benchmarks, plus an internal cost-vs-profit breakdown. |
+| `PROJECT-COST-SHEET.md` | Internal equipment purchase list, per-project consumables, and mileage cost estimate. |
 | `PROPOSAL.docx` | Consolidated Word document combining the cover letter, SOW, and bid form, ready for external distribution. |
 
 All pricing is based on the RFP scope, the 24 physical site visits listed in `Arizona_Master_Locations_Schedule.xlsx`, and the asset classes and data fields described in the RFP.

@@ -13,26 +13,27 @@
 |---|---|---|---|
 | Project management / kickoff | 1 project | — | $1,500.00 |
 | Onsite inventory & tagging | 24 physical site visits | $450.00 per visit | $10,800.00 |
+| Mobilization & first-job equipment recovery | 24 physical site visits | $67.00 per visit | $1,608.00 |
 | Asset tags | Per tag / estimated actual | $0.75 per tag | ~$525.00 (estimated 700 tags) |
 | Data capture & reconciliation | Included in site visit + final QA pass | $750.00 fixed processing | $750.00 |
 | Photos | State included / per asset | Included | Included |
-| Travel / mobilization | Arizona project (Phoenix metro) | Included | Included |
+| Travel / mileage | Arizona project (Phoenix metro) | Included in mobilization | Included |
 | PawnCo P4 construction / pre-opening option | 1 site option | $500.00 per sweep + tags | $500.00 (if exercised) |
 | Optional asset-management software | Annual / monthly | $1,200.00 per year or $100.00/month | Priced separately |
 | Optional annual physical re-inventory | 24 sites | $300.00 per site | $7,200.00 per year |
 | Other fees - specify | — | — | None |
-| **TOTAL ONE-TIME PROJECT PRICE (base)** | — | — | **$13,575.00** |
+| **TOTAL ONE-TIME PROJECT PRICE (base)** | — | — | **$15,183.00** |
 
-Rounded proposal total: **$13,600.00**.
+Rounded proposal total: **$15,200.00**.
 
 **Assumed total asset count:** ~700 tagged assets across 24 physical site visits.  
-**Estimated all-in cost per tagged asset:** ~$19.43 at 700 assets; ~$17.00 at 800 assets; ~$22.67 at 600 assets.  
+**Estimated all-in cost per tagged asset:** ~$21.71 at 700 assets; ~$19.00 at 800 assets; ~$25.33 at 600 assets.  
 **Estimated project duration:** 4–5 weeks from kickoff to final deliverables.  
 **Estimated field days:** 12–16 business days (2–3 sites per day, depending on site size and access).  
 **Estimated assets per technician per day:** 30–50 assets, varying by site density and access.  
 **Proposal validity period:** 30 days from date of issue.  
 **Payment terms:** Net 15. One-time project invoiced 50% upon kickoff, 50% upon delivery of final register.  
-**Not-to-exceed:** Base scope not to exceed $14,750 without written change order (excludes P4 option, optional software, and annual re-inventory).
+**Not-to-exceed:** Base scope not to exceed $16,500 without written change order (excludes P4 option, optional software, and annual re-inventory).
 
 ---
 

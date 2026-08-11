@@ -24,7 +24,7 @@ From **alreadyherellc.com/arizona-field-coverage**:
 | General Onsite Service | **$100/hr** | Standard technician rate. |
 | Minimum Dispatch | **$130** | Trip charge included in the per-site visit. |
 
-Our per-site rate of **$450** sits inside the published site-survey band and is only $50 above the Smart Hands Half-Day, while covering inventory, tagging, data capture, and travel.
+Our blended per-site rate of **$517** ($450 for inventory/tagging + $67 for mobilization and first-job equipment recovery) sits inside the published site-survey band and the small-MSP hourly range, while covering inventory, tagging, data capture, travel, and field equipment.
 
 ---
 
@@ -42,9 +42,10 @@ We intentionally did not benchmark against national fixed-asset inventory firms 
 
 **Effective hourly of our proposal:**
 
-$450/site ÷ ~4 hrs = **$112.50/hr**.
+Onsite inventory & tagging: $450/site ÷ ~4 hrs = **$112.50/hr**.  
+Blended site rate including mobilization: $517/site ÷ ~4 hrs = **$129.25/hr**.
 
-That is between the state-contract baseline and the small MSP bucket rates, and below the $140–$180/hr Turning Point charges. It is a fair small-business rate that does not leave money on the table.
+Both are inside the small-business MSP range ($100–$180/hr) and below the $140–$180/hr Turning Point charges. The additional $67/visit mobilization line recovers the first-job printer, scanner, label/ribbon stock, and mileage.
 
 ---
 
@@ -54,25 +55,26 @@ That is between the state-contract baseline and the small MSP bucket rates, and 
 |---|---|---|---|
 | Project management / kickoff | 1 project | fixed | $1,500 |
 | Onsite inventory & tagging | 24 site visits | $450/visit | $10,800 |
+| Mobilization & first-job equipment recovery | 24 site visits | $67/visit | $1,608 |
 | Asset tags | per actual tag | $0.75/tag | ~$525 (est. 700) |
 | Data capture & final reconciliation | fixed processing | $750 | $750 |
 | Photos | included | — | included |
-| Travel / mobilization | Phoenix metro | included | included |
-| **Base total** | | | **$13,575** |
-| **Rounded proposal total** | | | **$13,600** |
+| Travel / mileage | Phoenix metro | included in mobilization | included |
+| **Base total** | | | **$15,183** |
+| **Rounded proposal total** | | | **$15,200** |
 
 **All-in cost per tagged asset:**
 
-- 600 assets → **$22.67/tag**
-- 700 assets → **$19.43/tag**
-- 800 assets → **$17.00/tag**
+- 600 assets → **$25.33/tag**
+- 700 assets → **$21.71/tag**
+- 800 assets → **$19.00/tag**
 
 ---
 
 ## Why this is competitive and profitable
 
-1. **It is not a race-to-the-bottom quote.** At $13,600 we are cheaper than a $140–$180/hr MSP would be for the same 96+ hours of work, but more realistic than a one-person mobile repair rate because this is project work, not break/fix.
-2. **It aligns with our own website.** $450/visit is inside the published Site Survey ($250–$500) and New Store/Site Survey ($350+) ranges, and only $50 above our Smart Hands Half-Day.
+1. **It is not a race-to-the-bottom quote.** At $15,200 we are cheaper than a $140–$180/hr MSP would be for the same 96+ hours of work, while the $67/visit mobilization line recovers the field equipment and mileage this first job requires.
+2. **It aligns with our own website.** The inventory/tagging rate of $450/visit sits inside the published Site Survey ($250–$500) and New Store/Site Survey ($350+) ranges. The additional $67/visit mobilization recovery keeps the blended rate competitive for a small operator that must buy gear to execute.
 3. **Per-tag cost is fair.** $0.75 covers a durable polyester QR label, printing, and handling. Bulk tag-only pricing is ~$0.25–$0.38, so we are not gouging on material.
 4. **The fixed PM and data-processing fees protect us.** $1,500 for kickoff/coordination and $750 for final reconciliation/QA are real hours that do not scale with tag count.
 5. **It leaves room for a follow-on retainer.** The optional annual re-inventory ($300/site × 24 = $7,200/year) and hosted platform ($100/month) become recurring revenue without requiring us to underbid the first job.
@@ -88,7 +90,7 @@ That is between the state-contract baseline and the small MSP bucket rates, and 
 
 ## Internal cost breakdown and margin (internal use only)
 
-This is a small-business cost estimate so you can see what the $13,600 proposal actually has to cover. It assumes **one technician** completing 12 two-site days, plus owner/PM time for kickoff and final QA.
+This is a small-business cost estimate so you can see what the $15,200 proposal actually has to cover. It assumes **one technician** completing 12 two-site days, plus owner/PM time for kickoff and final QA. The equipment line uses the midpoint of the one-time purchase range; use the low or high end to see the margin range.
 
 | Cost category | Calculation | Estimated cost |
 |---|---|---|
@@ -96,18 +98,18 @@ This is a small-business cost estimate so you can see what the $13,600 proposal 
 | Travel/drive time | 12 days × ~1.5 hrs × $40/hr | $720 |
 | Mileage reimbursement | 647.4 miles × $0.67/mile | $434 |
 | Tag consumables | 700 tags (labels + ribbon amortization) | ~$57 |
-| Equipment amortization | Printer/scanner/labels/ribbon spread over ~5 similar jobs | ~$300 |
+| Field equipment / supplies | Printer, scanner, labels, ribbon, case, power bank, misc (midpoint) | ~$1,300 |
 | Project management / QA labor | Kickoff, scheduling, reconciliation, client coordination | ~$1,200 |
-| **Estimated total direct cost** | | **~$6,550** |
-| **Proposal revenue** | | **$13,600** |
-| **Estimated gross margin** | | **~$7,050 (~52%)** |
+| **Estimated total direct cost** | | **~$7,551** |
+| **Proposal revenue** | | **$15,200** |
+| **Estimated gross margin** | | **~$7,649 (~50%)** |
 
 ### What this tells us
 
-- Even after paying the technician, mileage, materials, and PM time, **the proposal leaves roughly $7,000 gross margin** before taxes, insurance, and overhead.
-- The $450/site rate more than covers the ~$195/site direct labor + mileage + tag cost.
+- Even after paying the technician, mileage, materials, full equipment purchase, and PM time, **the proposal leaves roughly $7,600 gross margin** before taxes, insurance, and overhead.
+- The $517/site blended rate ($450 inventory + $67 mobilization) more than covers the ~$315/site direct labor + mileage + tag + equipment cost.
+- The $1,608 mobilization/equipment-recovery line is recovered by the client; if this job wins, the printer and scanner are already paid for, making future tagging jobs much more profitable.
 - If two technicians are used or sites take longer than 4 hours, margin shrinks but stays healthy unless every visit runs 6+ hours.
-- The one-time equipment (printer, scanner, labels, ribbon) is paid back by this job alone; future tagging jobs have almost no capital cost.
 
 See `PROJECT-COST-SHEET.md` for the full purchase list, per-tag material cost, and detailed mileage calculation.
 

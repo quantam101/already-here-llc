@@ -39,7 +39,7 @@ cover = (
     "Dear Jeff,\n\n"
     "Thank you for inviting Already Here LLC to bid on the Arizona multi-site electronics asset inventory and 2D QR tagging project. We reviewed the RFP and the master location schedule, and we are ready to execute this turnkey baseline across all 24 physical site visits.\n\n"
     "Our proposal includes a wall-to-wall physical inventory of qualifying electronics at each site, durable scannable 2D QR asset tags with unique human-readable asset IDs, data capture and nightly reconciliation against the RFP required data fields, and a consolidated enterprise master asset register in Excel and CSV with location-level files, an exception report, site completion certifications, and a final project summary.\n\n"
-    "Our base one-time price for the full scope is $13,600 (assuming approximately 700 tagged assets; the site-visit and processing components are fixed, and tags are priced per actual unit). This is an all-in cost of approximately $19.43 per tagged asset at the 700-asset estimate. Pricing is anchored to our published rate card and compared against local small-business IT service rates, not national firms.\n\n"
+    "Our base one-time price for the full scope is $15,200 (assuming approximately 700 tagged assets; the site-visit, mobilization, and processing components are fixed, and tags are priced per actual unit). This is an all-in cost of approximately $21.71 per tagged asset at the 700-asset estimate. Pricing is anchored to our published rate card and compared against local small-business IT service rates, not national firms.\n\n"
     "We can mobilize within one week of a signed SOW and confirmed site schedule. I am available for a call to walk through the methodology, staffing model, and tag sample.\n\n"
     "Best regards,\n\n"
     "Stephen Franklin\n"
@@ -159,12 +159,13 @@ add_heading("6. Pricing", level=2)
 pricing_rows = [
     ["Project management / kickoff", "1 project", "—", "$1,500.00"],
     ["Onsite inventory & tagging", "24 site visits", "$450.00/visit", "$10,800.00"],
+    ["Mobilization & first-job equipment recovery", "24 site visits", "$67.00/visit", "$1,608.00"],
     ["Asset tags", "Per tag (actual)", "$0.75/tag", "~$525.00 (est. 700 tags)"],
     ["Data capture & reconciliation", "Included + final QA pass", "$750.00 fixed", "$750.00"],
     ["Photos", "Included per asset", "Included", "Included"],
-    ["Travel / mobilization", "Phoenix metro", "Included", "Included"],
+    ["Travel / mileage", "Phoenix metro", "Included in mobilization", "Included"],
     ["PawnCo P4 pre-opening option", "1 site option", "$500 + tags", "$500.00 (if exercised)"],
-    ["TOTAL ONE-TIME PROJECT PRICE (base)", "—", "—", "$13,575.00"],
+    ["TOTAL ONE-TIME PROJECT PRICE (base)", "—", "—", "$15,183.00"],
 ]
 
 ptable = doc.add_table(rows=1, cols=4)
@@ -182,7 +183,7 @@ for row in pricing_rows:
 
 doc.add_paragraph()
 add_paragraph(
-    "Assumed total asset count: approximately 700 tagged assets across 24 physical site visits. Estimated all-in cost per tagged asset: ~$19.43 at 700 assets; ~$17.00 at 800 assets; ~$22.67 at 600 assets. Rounded proposal total: $13,600. Proposal validity: 30 days. Payment terms: Net 15, 50% on kickoff and 50% on final delivery. Base scope not to exceed $14,750 without a written change order."
+    "Assumed total asset count: approximately 700 tagged assets across 24 physical site visits. Estimated all-in cost per tagged asset: ~$21.71 at 700 assets; ~$19.00 at 800 assets; ~$25.33 at 600 assets. Rounded proposal total: $15,200. Proposal validity: 30 days. Payment terms: Net 15, 50% on kickoff and 50% on final delivery. Base scope not to exceed $16,500 without a written change order."
 )
 
 add_heading("7. Optional Services", level=2)
