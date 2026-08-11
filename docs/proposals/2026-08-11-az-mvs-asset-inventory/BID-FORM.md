@@ -27,8 +27,8 @@
 
 **Assumed total asset count:** ~700 tagged assets across 24 physical site visits.  
 **Estimated all-in cost per tagged asset:** ~$25.43 at 700 assets; ~$22.25 at 800 assets; ~$29.67 at 600 assets.  
-**Estimated project duration:** 3–6 weeks from kickoff to final deliverables, depending on the Client’s required completion date.  
-**Estimated field days:** 12 field days at 2 sites per day (can be compressed or stretched as needed).  
+**Estimated project duration:** 4–6 weeks from kickoff to final deliverables, depending on the Client’s required completion date.  
+**Estimated field days:** Up to 24 business days at 1 site per day (can be compressed to 2 sites per day or expanded into weekend days where site access allows).  
 **Estimated assets per technician per day:** 30–50 assets, varying by site density and access.  
 **Proposal validity period:** 30 days from date of issue.  
 **Payment terms:** Net 15. One-time project invoiced 50% upon kickoff, 50% upon delivery of final register.  
