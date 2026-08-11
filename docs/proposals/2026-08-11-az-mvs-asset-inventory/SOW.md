@@ -73,11 +73,11 @@ The following 24 physical site visits are based on the RFP's `Arizona_Master_Loc
 
 **Schedule estimate:**
 
-Actual dates will be coordinated with Client once the SOW is signed and the required completion date is confirmed. Field work is planned as **up to 24 business days at one site per day**, grouped by geography to keep daily mileage and technician fatigue low. This can be extended to weekend days where site operating hours and security/access allow — weekend availability will be confirmed with each site contact during kickoff. If the Client requires a tighter deadline, two nearby sites may be paired on the same day. Travel is included in the fixed project price.
+Actual dates will be coordinated with Client once the SOW is signed and the required completion date is confirmed. Field work is planned as **4 weeks of Monday–Friday site visits**, with one site scheduled per day. A **second site may be added on the same day** when two nearby locations complement each other and do not extend the technician beyond a normal workday. A **5th week is reserved for return visits, reschedules, and exception resolution** covered by the $2,200 return-visit/contingency allowance. Weekend access may be used if site operating hours and security allow; weekend availability will be confirmed during kickoff. Travel is included in the fixed project price.
 
 - Week 1 — Kickoff, site contact confirmation, tag specification/sample approval, data template finalization, and confirmation of weekday/weekend access for each site.
-- Weeks 2–6 — Field inventory and tagging, one site per business day, sequenced by geography.
-- Final week — QA/reconciliation, exception resolution, final register and closeout package delivery.
+- Weeks 2–5 — Field inventory and tagging, one site per business day with paired days where nearby sites complement each other.
+- Week 5/6 — Return visits, reschedules, and exception resolution as needed; final QA/reconciliation and closeout package delivery.
 
 PawnCo P4 will be scheduled separately if the pre-opening option is exercised.
 

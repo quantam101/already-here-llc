@@ -28,7 +28,7 @@ Our base one-time price for the full scope is **$17,800** (assuming approximatel
 
 Pricing is anchored to our public rate card and compared against both local small-business IT service rates and national fixed-asset inventory provider benchmarks. The attached `PRICING-ANALYSIS.md` explains how the numbers were built.
 
-We can mobilize within one week of signed SOW and confirmed site schedule. Field work is planned as up to 24 business days at one site per day, grouped by geography; we can add weekend days where sites allow access and pair nearby sites if the Client needs a tighter completion date. I am available for a call to walk through the methodology, staffing model, and tag sample.
+We can mobilize within one week of signed SOW and confirmed site schedule. Field work is planned as 4 weeks of Monday–Friday site visits (one site per day, with a second nearby site added on days when locations complement each other), plus a 5th week reserved for return visits, reschedules, and exception resolution. Weekend access will be confirmed during kickoff. I am available for a call to walk through the methodology, staffing model, and tag sample.
 
 Best regards,
 

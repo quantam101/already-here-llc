@@ -107,7 +107,7 @@ for step in method_steps:
     doc.add_paragraph(step, style="List Number")
 
 add_paragraph(
-    "Estimated duration: 4-6 weeks from kickoff to final deliverables, depending on the Client’s required completion date. Field work is planned as up to 24 business days at one site per day, grouped by geography to keep daily travel low. Two nearby sites may be paired on the same day if a tighter deadline is required. Weekend days may be used where site operating hours and security/access allow; weekend availability will be confirmed with each site contact during kickoff. Estimated assets per technician per day: 30-50 assets, varying by site density and access."
+    "Estimated duration: 5-6 weeks from kickoff to final deliverables. Field work is planned as 4 weeks of Monday–Friday site visits, with one site per day. A second site may be added on the same day when two nearby locations complement each other and do not extend the technician beyond a normal workday. A 5th week is reserved for return visits, reschedules, and exception resolution covered by the $2,200 return-visit/contingency allowance. Weekend days may be used where site operating hours and security/access allow; weekend availability will be confirmed with each site contact during kickoff. Estimated assets per technician per day: 30-50 assets, varying by site density and access."
 )
 
 add_heading("5. Site Schedule", level=2)
@@ -154,7 +154,7 @@ for row in sites:
     for i, v in enumerate(row):
         cells[i].text = v
 
-add_paragraph("Proposed field schedule: one site per business day over up to 24 working days, sequenced by geography to keep daily travel low. Weekend days may be added where the site allows access; weekend availability will be confirmed with each site contact during kickoff. If the Client needs a tighter completion date, two nearby sites may be paired on a single day. A detailed day-by-day schedule will be finalized with the Client during kickoff.")
+add_paragraph("Proposed field schedule: 4 weeks of Monday–Friday site visits, one site per day, with a second site added on days when two nearby locations complement each other. Week 5 is reserved for return visits, reschedules, and exception resolution. Weekend access will be confirmed with each site contact during kickoff. A detailed day-by-day schedule will be finalized with the Client during kickoff.")
 add_paragraph("Travel is included in the fixed project price. PawnCo P4 will be scheduled separately if the pre-opening option is exercised.")
 
 doc.add_paragraph()
