@@ -73,9 +73,27 @@ The following 24 physical site visits are based on the RFP's `Arizona_Master_Loc
 
 **Schedule estimate:**
 
+Actual dates will be coordinated with Client once the SOW is signed and the required completion date is confirmed. The rollout is planned as **12 field days of 2 sites per day** (24 site visits total), clustered by geography to keep daily mileage and technician fatigue low. Travel is included in the fixed project price.
+
+| Field Day | Proposed Sites | Approx. Round-Trip Miles |
+|---|---|---|
+| 1 | MVS 10, Corporate Office | 15.1 |
+| 2 | MVS 32, MVS 20 | 26.2 |
+| 3 | MVS 28, MVS 13 | 33.8 |
+| 4 | MVS 51 / Motor Carrier, PawnCo P4 – Thunderbird | 29.7 |
+| 5 | MVS 29, MVS 05 | 46.8 |
+| 6 | MVS 14, MVS 26 | 47.8 |
+| 7 | PawnCo P2, MVS 23 | 64.7 |
+| 8 | PawnCo P3, MVS 24 | 53.7 |
+| 9 | MVS 12, MVS 27 | 65.1 |
+| 10 | The Grove Restaurant & Bar, MVS 16 | 79.0 |
+| 11 | MVS 34, MVS 22 | 84.8 |
+| 12 | MVS 33, PawnCo P1 | 100.6 |
+| **Total** | | **647.4** |
+
 - Week 1 — Kickoff, site contact confirmation, tag specification/sample approval, data template finalization.
-- Weeks 2–4 — Field inventory and tagging (2–3 sites per business day, sequenced by geography and site access).
-- Week 4/5 — QA/reconciliation, exception resolution, final register and closeout package delivery.
+- Weeks 2+ — Field inventory and tagging spread as needed (2 sites per day; can be compressed or stretched depending on Client’s required completion date).
+- Final week — QA/reconciliation, exception resolution, final register and closeout package delivery.
 
 PawnCo P4 will be scheduled separately if the pre-opening option is exercised.
 

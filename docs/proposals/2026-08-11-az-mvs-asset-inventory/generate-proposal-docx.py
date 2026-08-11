@@ -107,11 +107,11 @@ for step in method_steps:
     doc.add_paragraph(step, style="List Number")
 
 add_paragraph(
-    "Estimated duration: 4-5 weeks from kickoff to final deliverables. Estimated field days: 12-16 business days (2-3 sites per day). Estimated assets per technician per day: 30-50 assets, varying by site density and access."
+    "Estimated duration: 3-6 weeks from kickoff to final deliverables, depending on the Client’s required completion date. Field work is planned as 12 field days of 2 sites per day, clustered by geography. The schedule can be compressed or stretched as needed. Estimated assets per technician per day: 30-50 assets, varying by site density and access."
 )
 
 add_heading("5. Site Schedule", level=2)
-add_paragraph("The following 24 physical site visits are based on the RFP master location schedule.")
+add_paragraph("The following 24 physical site visits are based on the RFP master location schedule. Actual dates will be coordinated with the Client once the SOW is signed and the required completion date is confirmed.")
 
 sites = [
     ["MVS 05", "Motor Vehicle", "940 N Alma School Rd, Suite 105", "Chandler", "85224", "Operating"],
@@ -153,6 +153,38 @@ for row in sites:
     cells = table.add_row().cells
     for i, v in enumerate(row):
         cells[i].text = v
+
+add_paragraph("Proposed field schedule (dates to be coordinated with the Client):")
+schedule_rows = [
+    ["Field Day", "Proposed Sites", "Approx. Round-Trip Miles"],
+    ["1", "MVS 10, Corporate Office", "15.1"],
+    ["2", "MVS 32, MVS 20", "26.2"],
+    ["3", "MVS 28, MVS 13", "33.8"],
+    ["4", "MVS 51 / Motor Carrier, PawnCo P4 - Thunderbird", "29.7"],
+    ["5", "MVS 29, MVS 05", "46.8"],
+    ["6", "MVS 14, MVS 26", "47.8"],
+    ["7", "PawnCo P2, MVS 23", "64.7"],
+    ["8", "PawnCo P3, MVS 24", "53.7"],
+    ["9", "MVS 12, MVS 27", "65.1"],
+    ["10", "The Grove Restaurant & Bar, MVS 16", "79.0"],
+    ["11", "MVS 34, MVS 22", "84.8"],
+    ["12", "MVS 33, PawnCo P1", "100.6"],
+    ["Total", "", "647.4"],
+]
+stable = doc.add_table(rows=1, cols=3)
+stable.style = "Table Grid"
+shdr = stable.rows[0].cells
+for i, h in enumerate(schedule_rows[0]):
+    shdr[i].text = h
+    for p in shdr[i].paragraphs:
+        for run in p.runs:
+            run.font.bold = True
+for row in schedule_rows[1:]:
+    cells = stable.add_row().cells
+    for i, v in enumerate(row):
+        cells[i].text = v
+
+add_paragraph("Travel is included in the fixed project price. PawnCo P4 will be scheduled separately if the pre-opening option is exercised.")
 
 doc.add_paragraph()
 add_heading("6. Pricing", level=2)

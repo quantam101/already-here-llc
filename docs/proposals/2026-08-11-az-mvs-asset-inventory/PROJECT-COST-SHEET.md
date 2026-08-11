@@ -91,8 +91,8 @@ If the sites are grouped into 8 days of 3 sites each, the optimized routing drop
 
 ### Context vs. proposal revenue
 
-- Proposal base price: **$13,600**
-- Less first-job out-of-pocket (midpoint ~$1,800): leaves **~$11,800** to cover labor, insurance, taxes, and profit.
+- Proposal base price: **$17,800**
+- Less first-job out-of-pocket (midpoint ~$1,800): leaves **~$16,000** to cover labor, insurance, taxes, and profit.
 - Per-site visit rate ($450 × 24 = $10,800) is already structured to absorb the technician’s time and the vehicle mileage.
 
 ---
