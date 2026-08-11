@@ -13,7 +13,7 @@
 |---|---|---|---|
 | Project management / kickoff | 1 project | — | $1,500.00 |
 | Onsite inventory & tagging | 24 physical site visits | $450.00 per visit | $10,800.00 |
-| Mobilization & first-job equipment recovery | 24 physical site visits | $67.00 per visit | $1,608.00 |
+| Mobilization & first-job equipment recovery | 24 physical site visits | fixed | $1,675.00 |
 | Asset tags | Per tag / estimated actual | $1.25 per tag | ~$875.00 (estimated 700 tags) |
 | Data capture & reconciliation | Included in site visit + final QA pass | $750.00 fixed processing | $750.00 |
 | Photos | State included / per asset | Included | Included |
@@ -22,9 +22,7 @@
 | Optional asset-management software | Annual / monthly | $1,200.00 per year or $100.00/month | Priced separately |
 | Optional annual physical re-inventory | 24 sites | $300.00 per site | $7,200.00 per year |
 | Other fees - specify | — | — | None |
-| **TOTAL ONE-TIME PROJECT PRICE (base)** | — | — | **$15,558.00** |
-
-Rounded proposal total: **$15,600.00**.
+| **TOTAL ONE-TIME PROJECT PRICE** | — | — | **$15,600.00** |
 
 **Assumed total asset count:** ~700 tagged assets across 24 physical site visits.  
 **Estimated all-in cost per tagged asset:** ~$22.29 at 700 assets; ~$19.50 at 800 assets; ~$26.00 at 600 assets.  

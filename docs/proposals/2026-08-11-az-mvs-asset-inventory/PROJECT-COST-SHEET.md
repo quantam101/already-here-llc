@@ -1,6 +1,6 @@
 # AZ-MVS Asset Inventory Project — Internal Cost Sheet
 
-This is an internal estimate of the equipment/supplies to purchase and the mileage cost to execute the 24-site AZ-MVS asset inventory and 2D QR tagging project. It is **not** part of the client proposal; the proposal already includes travel/mobilization in the per-site rate.
+This is an internal estimate of the equipment/supplies to purchase and the mileage cost to execute the 24-site AZ-MVS asset inventory and 2D QR tagging project. It is **not** part of the client proposal; the proposal includes a $1,675 fixed mobilization/equipment recovery line.
 
 ---
 

@@ -159,13 +159,13 @@ add_heading("6. Pricing", level=2)
 pricing_rows = [
     ["Project management / kickoff", "1 project", "—", "$1,500.00"],
     ["Onsite inventory & tagging", "24 site visits", "$450.00/visit", "$10,800.00"],
-    ["Mobilization & first-job equipment recovery", "24 site visits", "$67.00/visit", "$1,608.00"],
+    ["Mobilization & first-job equipment recovery", "24 site visits", "fixed", "$1,675.00"],
     ["Asset tags", "Per tag (actual)", "$1.25/tag", "~$875.00 (est. 700 tags)"],
     ["Data capture & reconciliation", "Included + final QA pass", "$750.00 fixed", "$750.00"],
     ["Photos", "Included per asset", "Included", "Included"],
     ["Travel / mileage", "Phoenix metro", "Included in mobilization", "Included"],
     ["PawnCo P4 pre-opening option", "1 site option", "$500 + tags", "$500.00 (if exercised)"],
-    ["TOTAL ONE-TIME PROJECT PRICE (base)", "—", "—", "$15,558.00"],
+    ["TOTAL ONE-TIME PROJECT PRICE", "—", "—", "$15,600.00"],
 ]
 
 ptable = doc.add_table(rows=1, cols=4)
@@ -183,7 +183,7 @@ for row in pricing_rows:
 
 doc.add_paragraph()
 add_paragraph(
-    "Assumed total asset count: approximately 700 tagged assets across 24 physical site visits. Estimated all-in cost per tagged asset: ~$22.29 at 700 assets; ~$19.50 at 800 assets; ~$26.00 at 600 assets. Rounded proposal total: $15,600. Proposal validity: 30 days. Payment terms: Net 15, 50% on kickoff and 50% on final delivery. Base scope not to exceed $16,500 without a written change order."
+    "Assumed total asset count: approximately 700 tagged assets across 24 physical site visits. Estimated all-in cost per tagged asset: ~$22.29 at 700 assets; ~$19.50 at 800 assets; ~$26.00 at 600 assets. Total one-time project price: $15,600.00. Proposal validity: 30 days. Payment terms: Net 15, 50% on kickoff and 50% on final delivery. Base scope not to exceed $16,500 without a written change order."
 )
 
 add_heading("7. Optional Services", level=2)
