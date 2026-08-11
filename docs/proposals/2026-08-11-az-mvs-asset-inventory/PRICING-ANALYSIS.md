@@ -86,6 +86,33 @@ That is between the state-contract baseline and the small MSP bucket rates, and 
 
 ---
 
+## Internal cost breakdown and margin (internal use only)
+
+This is a small-business cost estimate so you can see what the $13,600 proposal actually has to cover. It assumes **one technician** completing 12 two-site days, plus owner/PM time for kickoff and final QA.
+
+| Cost category | Calculation | Estimated cost |
+|---|---|---|
+| On-site labor | 24 visits × 4 hrs × $40/hr loaded tech cost | $3,840 |
+| Travel/drive time | 12 days × ~1.5 hrs × $40/hr | $720 |
+| Mileage reimbursement | 647.4 miles × $0.67/mile | $434 |
+| Tag consumables | 700 tags (labels + ribbon amortization) | ~$57 |
+| Equipment amortization | Printer/scanner/labels/ribbon spread over ~5 similar jobs | ~$300 |
+| Project management / QA labor | Kickoff, scheduling, reconciliation, client coordination | ~$1,200 |
+| **Estimated total direct cost** | | **~$6,550** |
+| **Proposal revenue** | | **$13,600** |
+| **Estimated gross margin** | | **~$7,050 (~52%)** |
+
+### What this tells us
+
+- Even after paying the technician, mileage, materials, and PM time, **the proposal leaves roughly $7,000 gross margin** before taxes, insurance, and overhead.
+- The $450/site rate more than covers the ~$195/site direct labor + mileage + tag cost.
+- If two technicians are used or sites take longer than 4 hours, margin shrinks but stays healthy unless every visit runs 6+ hours.
+- The one-time equipment (printer, scanner, labels, ribbon) is paid back by this job alone; future tagging jobs have almost no capital cost.
+
+See `PROJECT-COST-SHEET.md` for the full purchase list, per-tag material cost, and detailed mileage calculation.
+
+---
+
 ## Optional services
 
 | Service | Price | Rationale |
