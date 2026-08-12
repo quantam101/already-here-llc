@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 
 export const runtime = 'nodejs';
 
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-06-24.dahlia' }) : null;
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-07-29.dahlia' }) : null;
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
 
 export async function POST(request: Request) {
