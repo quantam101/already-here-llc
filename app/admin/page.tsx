@@ -1,4 +1,6 @@
+import { timingSafeEqual } from 'crypto';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { loadNetwork } from '@/lib/ginc-store';
 
 export const metadata: Metadata = {
@@ -10,7 +12,48 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+const ADMIN_KEY = process.env.GINC_ADMIN_KEY;
+
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  try {
+    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+  } catch {
+    return false;
+  }
+}
+
+async function isAdminAuthorized(): Promise<boolean> {
+  if (!ADMIN_KEY) return false;
+  const headerStore = await headers();
+  const headerKey = headerStore.get('x-admin-key') ?? '';
+  if (headerKey && headerKey.length === ADMIN_KEY.length) {
+    return constantTimeEqual(headerKey, ADMIN_KEY);
+  }
+  return false;
+}
+
 export default async function AdminPage() {
+  if (!ADMIN_KEY) {
+    return (
+      <div className="container-shell py-16 lg:py-24">
+        <h1 className="section-title">Admin dashboard not configured</h1>
+        <p className="mt-4 text-sm text-slate-600">Set the <code className="rounded bg-slate-100 px-1 py-0.5">GINC_ADMIN_KEY</code> environment variable to enable the admin dashboard.</p>
+      </div>
+    );
+  }
+
+  if (!(await isAdminAuthorized())) {
+    return (
+      <div className="container-shell py-16 lg:py-24">
+        <h1 className="section-title">Admin access required</h1>
+        <p className="mt-4 max-w-2xl text-sm text-slate-600">
+          Provide the admin key using the <code className="rounded bg-slate-100 px-1 py-0.5">x-admin-key</code> request header.
+        </p>
+      </div>
+    );
+  }
+
   const network = await loadNetwork();
 
   return (
@@ -18,7 +61,7 @@ export default async function AdminPage() {
       <span className="eyebrow">Admin</span>
       <h1 className="section-title mt-5">GINC network dashboard</h1>
       <p className="mt-4 max-w-2xl text-sm text-slate-600">
-        This is an internal monitoring view. Full moderation tools, role-based access controls, and audit event review are available through the platform API and future admin console releases.
+        Internal monitoring view. Full moderation tools, role-based access controls, and audit event review are available through the platform API and future admin console releases.
       </p>
 
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -49,7 +92,7 @@ export default async function AdminPage() {
           <li className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Rate limiting and security headers</li>
           <li className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Privacy, Terms, and GDPR pages</li>
           <li className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Role-based access helpers (admin/moderator/member)</li>
-          <li className="flex items-center gap-2"><span className="text-amber-600">~</span> Admin key-gated moderation API (scaffolded)</li>
+          <li className="flex items-center gap-2"><span className="text-amber-600">~</span> Admin key-gated moderation API and dashboard</li>
           <li className="flex items-center gap-2"><span className="text-amber-600">~</span> SSO / identity provider integration (future phase)</li>
         </ul>
       </div>

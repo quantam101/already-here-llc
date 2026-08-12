@@ -127,18 +127,27 @@ export async function loadNetwork(retries = 3): Promise<GincNetwork> {
         const data = legacy
           ? (typeof legacy === 'string' ? (JSON.parse(legacy) as GincNetwork) : (legacy as unknown as GincNetwork))
           : await loadFromDisk();
-        await saveNetwork(data);
+        if (data.members.length > 0 || data.listings.length > 0 || data.jobs.length > 0) {
+          await saveNetwork(data);
+        } else {
+          memoryCache = data;
+          return data;
+        }
       } finally {
         // Lock expires automatically; no need to delete.
       }
-    } else if (retries > 0) {
-      // Another process is seeding; wait briefly and re-read.
+      if (retries > 0) return loadNetwork(retries - 1);
+      return { members: [], listings: [], jobs: [] };
+    }
+
+    if (retries > 0) {
+      // Another process may be seeding; wait briefly and re-read.
       await new Promise((resolve) => setTimeout(resolve, 100));
       return loadNetwork(retries - 1);
     }
 
-    // After seeding (or if lock could not be acquired), re-read the lists.
-    return loadNetwork(retries - 1);
+    // No data and no more retries — return an empty network rather than recursing forever.
+    return { members: [], listings: [], jobs: [] };
   }
 
   if (!memoryCache) {

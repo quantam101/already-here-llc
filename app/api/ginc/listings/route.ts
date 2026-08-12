@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server.js';
 import { logAudit } from '@/lib/audit';
+import { clientKey } from '@/lib/client-key';
 import { GincListing } from '@/lib/ginc';
 import { gincListingSchema } from '@/lib/ginc-schemas';
 import { addListing, addMember, buildGincMember, generateGincId, isRateLimited, loadNetwork } from '@/lib/ginc-store';
@@ -7,18 +8,6 @@ import { addListing, addMember, buildGincMember, generateGincId, isRateLimited, 
 export const runtime = 'nodejs';
 
 const allowedStatuses = new Set(['available', 'rented', 'sold', 'unavailable']);
-
-function clientKey(request: Request): string {
-  const realIp = request.headers.get('x-real-ip')?.trim();
-  if (realIp) return realIp;
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    const parts = forwarded.split(',').map((s) => s.trim()).filter(Boolean);
-    const last = parts[parts.length - 1];
-    if (last) return last;
-  }
-  return 'unknown';
-}
 
 function clean(value: unknown, max = 3000): string {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';

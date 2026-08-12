@@ -31,9 +31,10 @@ export async function logAudit(event: Omit<AuditEvent, 'timestamp'>): Promise<vo
 }
 
 export async function getRecentAudit(limit = 100): Promise<AuditEvent[]> {
+  const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(Math.floor(limit), 1000) : 100;
   const redis = getRedis();
   if (redis) {
-    const items = await redis.lrange<string>('ginc:audit', 0, limit - 1);
+    const items = await redis.lrange<string>('ginc:audit', 0, safeLimit - 1);
     return (items || []).map((item) => (typeof item === 'string' ? JSON.parse(item) : item));
   }
   try {
@@ -41,7 +42,7 @@ export async function getRecentAudit(limit = 100): Promise<AuditEvent[]> {
     return raw
       .split('\n')
       .filter(Boolean)
-      .slice(-limit)
+      .slice(-safeLimit)
       .map((line) => JSON.parse(line) as AuditEvent)
       .reverse();
   } catch {

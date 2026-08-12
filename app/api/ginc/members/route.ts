@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server.js';
 import { logAudit } from '@/lib/audit';
+import { clientKey } from '@/lib/client-key';
 import { GincMember } from '@/lib/ginc';
 import { gincMemberSchema } from '@/lib/ginc-schemas';
 import { addMember, generateGincId, isRateLimited, loadNetwork, sanitizeMember } from '@/lib/ginc-store';
@@ -7,19 +8,6 @@ import { addMember, generateGincId, isRateLimited, loadNetwork, sanitizeMember }
 export const runtime = 'nodejs';
 
 const allowedTypes = new Set(['owner', 'renter', 'worker', 'business']);
-
-function clientKey(request: Request): string {
-  const realIp = request.headers.get('x-real-ip')?.trim();
-  if (realIp) return realIp;
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    const parts = forwarded.split(',').map((s) => s.trim()).filter(Boolean);
-    // Use the rightmost entry, which is the closest proxy's/client's actual IP.
-    const last = parts[parts.length - 1];
-    if (last) return last;
-  }
-  return 'unknown';
-}
 
 function clean(value: unknown, max = 3000): string {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
