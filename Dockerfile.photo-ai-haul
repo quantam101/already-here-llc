@@ -17,13 +17,27 @@ COPY runtime/ ./runtime/
 COPY public/ ./public/
 
 # Download the YOLOv8n ONNX model and TinyCLIP 40M artifacts for trained object recognition.
+# SHA-256 checksums are pinned below; update them when upstream artifacts change.
 RUN mkdir -p models/tinyclip40 && \
     python - <<'PY'
-import urllib.request, os
-urllib.request.urlretrieve('https://huggingface.co/Kalray/yolov8/resolve/main/yolov8n.onnx', 'models/yolov8n.onnx')
+import hashlib, urllib.request, os
+
+def download(url, dest, expected_sha256):
+    urllib.request.urlretrieve(url, dest)
+    actual = hashlib.sha256(open(dest, 'rb').read()).hexdigest()
+    if actual != expected_sha256:
+        raise ValueError(f"Checksum mismatch for {dest}: expected {expected_sha256}, got {actual}")
+
+download('https://huggingface.co/Kalray/yolov8/resolve/main/yolov8n.onnx', 'models/yolov8n.onnx', '65158dad735be799c2466fa15e260c09558080bd530b42a8d0c3d1b419afd8b5')
 base = 'https://huggingface.co/onnx-community/TinyCLIP-ViT-40M-32-Text-19M-LAION400M-ONNX/resolve/main'
-for path in ['onnx/model_q4f16.onnx', 'tokenizer.json', 'preprocessor_config.json', 'config.json']:
-    urllib.request.urlretrieve(f'{base}/{path}', f'models/tinyclip40/{os.path.basename(path)}')
+artifacts = {
+    'onnx/model_q4f16.onnx': ('models/tinyclip40/model_q4f16.onnx', '1429bf85b449a8353ac716e07b693513597525b54e3b8f0abe5ab1d243b8d4ee'),
+    'tokenizer.json': ('models/tinyclip40/tokenizer.json', '6d9109cc838977f3ca94a379eec36aecc7c807e1785cd729660ca2fc0171fb35'),
+    'preprocessor_config.json': ('models/tinyclip40/preprocessor_config.json', '5df7e578c37e907a431daf47fd592fc49fa50d23ed4c41285a0a34a58a9d2e06'),
+    'config.json': ('models/tinyclip40/config.json', '3dbcf9357680164a897fa5ac6ec1dd99688bb242be5171b38319380350d802c9'),
+}
+for path, (dest, sha) in artifacts.items():
+    download(f'{base}/{path}', dest, sha)
 PY
 
 # Non-root runtime user.
