@@ -213,16 +213,27 @@ export function optimizeRoute(input: RouteStackInput): RoutePlan {
     };
   }
 
-  const feasible = stops.filter((s) => canServe(s, input.vehicle));
+  let startTime = input.startTime;
+  if (!startTime) {
+    const earliestWindow = stops
+      .map((s) => (s.windowStart ? new Date(s.windowStart).getTime() : Infinity))
+      .filter((t) => t !== Infinity);
+    if (earliestWindow.length > 0) {
+      startTime = new Date(Math.min(...earliestWindow)).toISOString();
+    }
+  }
+  const resolvedInput = { ...input, startTime };
+
+  const feasible = stops.filter((s) => canServe(s, resolvedInput.vehicle));
   if (feasible.length === 0) {
-    return evaluateRoute([], input);
+    return evaluateRoute([], resolvedInput);
   }
 
   const candidates = feasible.length <= 10 ? feasible : feasible.slice(0, 10);
-  let bestPlan = buildGreedyRoute(feasible, undefined, input);
+  let bestPlan = buildGreedyRoute(feasible, undefined, resolvedInput);
 
   for (const start of candidates) {
-    const plan = buildGreedyRoute(feasible, start.id, input);
+    const plan = buildGreedyRoute(feasible, start.id, resolvedInput);
     if (
       plan.feasibilityScore > bestPlan.feasibilityScore ||
       (plan.feasibilityScore === bestPlan.feasibilityScore &&
