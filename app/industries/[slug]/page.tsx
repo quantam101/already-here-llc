@@ -13,7 +13,7 @@ type Industry = {
   retainerFit: string;
 };
 
-const industries: Industry[] = [
+export const industries: Industry[] = [
   {
     slug: "healthcare",
     name: "Healthcare",

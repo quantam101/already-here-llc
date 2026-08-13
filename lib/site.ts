@@ -9,7 +9,7 @@ export const siteConfig = {
     'Already Here LLC provides onsite infrastructure execution and technical field operations for MSPs, commercial sites, retail environments, and critical systems from Phoenix with project coverage available nationwide depending on client scope.',
   description:
     'Phoenix-based onsite infrastructure execution and technical field operations partner for MSPs, vendors, commercial sites, retail environments, and critical systems, including RFID, barcode, asset tracking, IT asset recovery, store decommissioning, inventory capture, and return logistics support by scope.',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://alreadyherellc.com',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.alreadyherellc.com',
   phoneHref: 'tel:+16028822920',
   phoneDisplay: '(602) 882-2920',
   phoneNote: 'Dispatch and infrastructure assessment',

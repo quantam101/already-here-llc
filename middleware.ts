@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (pathname !== '/' && pathname.endsWith('/') && !pathname.startsWith('/content/')) {
+    const url = new URL(request.url);
+    url.pathname = pathname.replace(/\/+$/, '');
+    return NextResponse.redirect(url, 308);
+  }
+
   const response = NextResponse.next();
 
   const csp = [
