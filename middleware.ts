@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next();
-
+function applySecurityHeaders(response: NextResponse) {
   const csp = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
@@ -26,8 +24,19 @@ export function middleware(request: NextRequest) {
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   response.headers.set('X-DNS-Prefetch-Control', 'off');
   response.headers.set('X-Request-Id', crypto.randomUUID());
-
   return response;
+}
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (pathname !== '/' && pathname.endsWith('/') && !pathname.startsWith('/content/')) {
+    const url = new URL(request.url);
+    url.pathname = pathname.replace(/\/+$/, '');
+    return applySecurityHeaders(NextResponse.redirect(url, 308));
+  }
+
+  return applySecurityHeaders(NextResponse.next());
 }
 
 export const config = {
