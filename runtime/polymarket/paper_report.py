@@ -42,8 +42,12 @@ def _load_metrics(db_path: str, starting_bankroll: Decimal) -> Dict[str, Any]:
         if dd > max_dd:
             max_dd = dd
 
-    total_roi = Decimal(str(closed_row["roi"] or 0))
     realized_pnl = Decimal(str(closed_row["pnl"] or 0))
+    total_roi = (
+        (realized_pnl / starting_bankroll * Decimal("100")).quantize(Decimal("0.01"))
+        if starting_bankroll
+        else Decimal("0")
+    )
     bankroll = starting_bankroll + realized_pnl
 
     conn.close()
