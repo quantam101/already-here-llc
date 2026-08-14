@@ -30,6 +30,16 @@ export interface PolymarketStatus {
     enabled?: boolean;
     model?: string;
   };
+  paper?: {
+    enabled?: boolean;
+    openPositions?: number;
+    openNotional?: number;
+    closedTrades?: number;
+    realizedPnl?: number;
+    winRate?: number;
+    maxDrawdown?: number;
+    bankroll?: number;
+  };
   [key: string]: unknown;
 }
 
@@ -105,6 +115,11 @@ function Sparkline() {
 
 export function PolymarketDashboard({ status, sessionId }: Props) {
   const risk = status?.risk;
+  const paper = status?.paper;
+  const paperPnl = paper?.realizedPnl ?? 0;
+  const paperWinRate = paper?.winRate ?? 0;
+  const paperDrawdown = paper?.maxDrawdown ?? 0;
+  const bankroll = paper?.bankroll ?? 1000;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -133,10 +148,10 @@ export function PolymarketDashboard({ status, sessionId }: Props) {
         <section className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
           <Stat label="Watched Wallets" value={status?.watchedWalletCount ?? 0} />
           <Stat label="Mode" value={status?.mode ?? '—'} />
-          <Stat label="Win Rate" value="92.7%" sub="in-sample backtest" tone="up" />
-          <Stat label="30D P&L" value="+$10,320" sub="$1,000 bankroll" tone="up" />
-          <Stat label="Max Drawdown" value="9.1%" tone="warn" />
-          <Stat label="Profit Factor" value="3.99" tone="up" />
+          <Stat label="Paper Win Rate" value={`${paperWinRate.toFixed(1)}%`} sub={`${paper?.closedTrades ?? 0} closed trades`} tone={paperWinRate >= 50 ? 'up' : 'neutral'} />
+          <Stat label="Paper P&L" value={`${paperPnl >= 0 ? '+' : ''}$${paperPnl.toFixed(2)}`} sub={`$${bankroll.toFixed(0)} bankroll`} tone={paperPnl >= 0 ? 'up' : 'down'} />
+          <Stat label="Paper Drawdown" value={`$${paperDrawdown.toFixed(2)}`} tone={paperDrawdown > 100 ? 'warn' : 'neutral'} />
+          <Stat label="Open Paper Pos" value={paper?.openPositions ?? 0} sub={`$${(paper?.openNotional ?? 0).toFixed(0)} notional`} />
         </section>
 
         <section className="mt-8 grid gap-6 lg:grid-cols-3">

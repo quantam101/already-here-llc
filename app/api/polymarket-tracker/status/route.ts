@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Database from 'better-sqlite3';
+import path from 'path';
 
 export const runtime = 'nodejs';
 
@@ -14,6 +16,63 @@ function safeList(raw: string | undefined): string[] {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+function getPaperMetrics() {
+  try {
+    const dbPath = path.join(process.cwd(), 'data', 'polymarket_tracker.db');
+    const db = new Database(dbPath, { readonly: true, fileMustExist: false });
+    const open = db
+      .prepare('SELECT COUNT(*) as c, COALESCE(SUM(amount),0) as n FROM paper_positions WHERE closed = 0')
+      .get() as { c: number; n: number };
+    const closed = db
+      .prepare('SELECT COUNT(*) as c, COALESCE(SUM(pnl),0) as pnl FROM paper_positions WHERE closed = 1')
+      .get() as { c: number; pnl: number };
+    const trades = db
+      .prepare("SELECT pnl FROM closed_trades WHERE strategy = 'paper' ORDER BY closed_at")
+      .all() as Array<{ pnl: number }>;
+    db.close();
+
+    let wins = 0;
+    let losses = 0;
+    let peak = 0;
+    let maxDrawdown = 0;
+    let running = 0;
+    for (const t of trades) {
+      running += t.pnl;
+      if (running > peak) peak = running;
+      const dd = peak - running;
+      if (dd > maxDrawdown) maxDrawdown = dd;
+      if (t.pnl > 0) wins++;
+      else if (t.pnl < 0) losses++;
+    }
+    const total = wins + losses;
+    const winRate = total ? (wins / total) * 100 : 0;
+
+    return {
+      enabled: process.env.POLYMARKET_PAPER_TRADING === 'true',
+      openPositions: open.c || 0,
+      openNotional: open.n || 0,
+      closedTrades: closed.c || 0,
+      realizedPnl: closed.pnl || 0,
+      winRate,
+      maxDrawdown,
+      bankroll:
+        Number(process.env.POLYMARKET_PAPER_STARTING_BANKROLL ?? '1000') +
+        (closed.pnl || 0)
+    };
+  } catch {
+    return {
+      enabled: process.env.POLYMARKET_PAPER_TRADING === 'true',
+      openPositions: 0,
+      openNotional: 0,
+      closedTrades: 0,
+      realizedPnl: 0,
+      winRate: 0,
+      maxDrawdown: 0,
+      bankroll: Number(process.env.POLYMARKET_PAPER_STARTING_BANKROLL ?? '1000')
+    };
+  }
 }
 
 function isAuthenticated(request: NextRequest): boolean {
@@ -77,6 +136,7 @@ export async function GET(request: NextRequest) {
     hasClaude: Boolean(
       process.env.CLAUDE_API_KEY && process.env.POLYMARKET_CLAUDE_ENABLED === 'true'
     ),
+    paper: getPaperMetrics(),
     gated: false
   });
 }
