@@ -206,8 +206,8 @@ class PolymarketOrchestrator:
             event["confluence_confidence"] = str(confluence.confidence)
 
             self._record_trade(wallet, role, event)
-            self.alert_agent(event)
-            if self._paper:
+            alert_results = self.alert_agent(event)
+            if self._paper and alert_results:
                 event["id"] = self._paper._position_id(event)
                 event["wallet"] = wallet
                 self._paper.open_position(event)
