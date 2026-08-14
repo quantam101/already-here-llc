@@ -200,7 +200,8 @@ class PolymarketOrchestrator:
             return
 
         portfolio = self._portfolio.assess()
-        if not portfolio.can_trade:
+        bypass_for_paper = self._paper and self._config.paper_bypass_portfolio_guard
+        if not portfolio.can_trade and not bypass_for_paper:
             logger.info("Portfolio risk gate blocked %s: %s", wallet, portfolio.reasons)
             return
 
@@ -232,7 +233,10 @@ class PolymarketOrchestrator:
             event["id"] = self._paper._position_id(event)
             event["wallet"] = wallet
             self._paper.open_position(event)
-        self.alert_agent(event)
+        # Only alert when the portfolio guard is not blocking (paper training can
+        # bypass the guard, but alerts should still reflect viable live signals).
+        if portfolio.can_trade:
+            self.alert_agent(event)
 
     def _ensure_profile(self, wallet: str) -> None:
         with self._profile_lock:

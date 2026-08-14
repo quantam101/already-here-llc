@@ -354,6 +354,19 @@ class StateManager:
             rows = cur.execute("SELECT * FROM paper_positions WHERE closed = 0 ORDER BY opened_at").fetchall()
             return [dict(r) for r in rows]
 
+    def get_closed_paper_trades(
+        self, since: Optional[float] = None
+    ) -> List[Dict[str, Any]]:
+        sql = "SELECT * FROM paper_positions WHERE closed = 1"
+        params: List[Any] = []
+        if since is not None:
+            sql += " AND closed_at >= ?"
+            params.append(since)
+        sql += " ORDER BY closed_at"
+        with self._cursor() as cur:
+            rows = cur.execute(sql, params).fetchall()
+            return [dict(r) for r in rows]
+
     def close_paper_position(self, position_id: str, exit_price: float, pnl: float, roi: float) -> None:
         with self._cursor() as cur:
             cur.execute(

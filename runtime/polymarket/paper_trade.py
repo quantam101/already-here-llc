@@ -140,6 +140,28 @@ class PaperTrader:
                 logger.exception("Paper reconcile failed")
             self._stop_event.wait(self._config.paper_reconcile_interval_seconds)
 
+    def _training_target_reached(self) -> bool:
+        """Return True when the trailing training window meets or exceeds the configured win-rate target."""
+        if self._config.paper_training_target_win_rate <= 0:
+            return False
+        lookback = time.time() - (self._config.paper_training_lookback_days * 86400)
+        trades = self._state.get_closed_paper_trades(since=lookback)
+        total = len(trades)
+        if total < self._config.paper_training_min_sample_trades:
+            return False
+        wins = sum(1 for t in trades if (t.get("pnl") or 0) > 0)
+        win_rate = (wins / total) * 100
+        if win_rate >= float(self._config.paper_training_target_win_rate):
+            logger.info(
+                "Paper training target reached: %s/%s wins (%.2f%%) over the last %s days",
+                wins,
+                total,
+                win_rate,
+                self._config.paper_training_lookback_days,
+            )
+            return True
+        return False
+
     def _bankroll(self) -> Decimal:
         summary = self._state.paper_position_summary()
         return self._config.paper_starting_bankroll + Decimal(str(summary.get("realized_pnl", 0)))
@@ -150,6 +172,10 @@ class PaperTrader:
 
     def open_position(self, event: Dict[str, Any]) -> Optional[PaperPosition]:
         """Record a new simulated copy position for an alerted fill."""
+        if self._training_target_reached():
+            logger.info("Paper training target already reached; skipping new positions")
+            return None
+
         try:
             entry_price = Decimal(str(event.get("price", 0) or 0))
         except Exception:
@@ -160,7 +186,7 @@ class PaperTrader:
 
         amount = Decimal(str(self._config.fixed_order_usd))
         bankroll = self._bankroll()
-        if self._exposure() + amount > bankroll:
+        if not self._config.paper_unlimited_training and self._exposure() + amount > bankroll:
             logger.info(
                 "Paper trade skipped: exposure would exceed $%s bankroll",
                 bankroll,
