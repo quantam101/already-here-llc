@@ -94,6 +94,11 @@ class PolymarketConfig:
     portfolio_min_win_rate_pct: Decimal = Decimal("50.0")
     portfolio_consecutive_loss_limit: int = 5
 
+    # Paper trading (simulate $50 fixed orders, mark to market on settlement)
+    paper_trading: bool = False
+    paper_reconcile_interval_seconds: int = 300
+    paper_starting_bankroll: Decimal = Decimal("1000.00")
+
     # Claude signal summarizer (opt-in; disabled unless API key + env toggle set)
     claude_api_key: str = ""
     claude_enabled: bool = False
@@ -182,6 +187,9 @@ class PolymarketConfig:
             portfolio_max_drawdown_pct=_env_decimal("POLYMARKET_PORTFOLIO_MAX_DRAWDOWN_PCT", "30.0"),
             portfolio_min_win_rate_pct=_env_decimal("POLYMARKET_PORTFOLIO_MIN_WIN_RATE_PCT", "50.0"),
             portfolio_consecutive_loss_limit=_env_int("POLYMARKET_PORTFOLIO_CONSECUTIVE_LOSS_LIMIT", 5),
+            paper_trading=(os.environ.get("POLYMARKET_PAPER_TRADING", "false").lower() == "true"),
+            paper_reconcile_interval_seconds=_env_int("POLYMARKET_PAPER_RECONCILE_INTERVAL_SECONDS", 300),
+            paper_starting_bankroll=_env_decimal("POLYMARKET_PAPER_STARTING_BANKROLL", "1000.00"),
             claude_api_key=os.environ.get("CLAUDE_API_KEY", ""),
             claude_enabled=(os.environ.get("POLYMARKET_CLAUDE_ENABLED", "false").lower() == "true"),
             claude_model=os.environ.get("POLYMARKET_CLAUDE_MODEL", "claude-sonnet-5"),

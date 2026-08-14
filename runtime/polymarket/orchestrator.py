@@ -23,6 +23,7 @@ from runtime.polymarket.alerts import TelegramAlertEngine
 from runtime.polymarket.claude import ClaudeSummarizer
 from runtime.polymarket.config import PolymarketConfig
 from runtime.polymarket.listener import PolymarketListener
+from runtime.polymarket.paper_trade import PaperTrader
 from runtime.polymarket.portfolio import PortfolioRiskGuard
 from runtime.polymarket.profiler import WalletProfiler
 from runtime.polymarket.risk import RiskGuard
@@ -51,6 +52,7 @@ class PolymarketOrchestrator:
       - Signal Agent   : 90% win-rate style confluence filter on public price history
       - Claude Agent   : optional AI signal summarizer (disabled unless API key + env toggle set)
       - Alert Agent    : dispatches Telegram alerts in <2s
+      - Paper Trader   : fixed-size simulated copy positions with mark-to-market settlement
     """
 
     def __init__(self, config: Optional[PolymarketConfig] = None) -> None:
@@ -73,6 +75,7 @@ class PolymarketOrchestrator:
         self._risk = RiskGuard(self._config, self._state)
         self._portfolio = PortfolioRiskGuard(self._config, self._state)
         self._confluence = SignalConfluence(self._config)
+        self._paper = PaperTrader(self._config, self._state) if self._config.paper_trading else None
 
         self._profile_cb = CircuitBreaker("profiler", failure_threshold=3, reset_timeout_seconds=60.0)
         self._profile_cache: Dict[str, Any] = {}
@@ -204,6 +207,10 @@ class PolymarketOrchestrator:
 
             self._record_trade(wallet, role, event)
             self.alert_agent(event)
+            if self._paper:
+                event["id"] = self._paper._position_id(event)
+                event["wallet"] = wallet
+                self._paper.open_position(event)
 
     def _ensure_profile(self, wallet: str) -> None:
         with self._profile_lock:
@@ -250,11 +257,15 @@ class PolymarketOrchestrator:
             threading.Thread(
                 target=lambda: self.profiler_agent(), daemon=True, name="poly-profiler-warm"
             ).start()
+        if self._paper:
+            self._paper.start()
         self._listener.start()
         logger.info("Polymarket orchestrator started; watching %d wallets", len(self._config.watched_wallets))
 
     def stop(self) -> None:
         self._running = False
+        if self._paper:
+            self._paper.stop()
         self._listener.stop()
 
     def status(self) -> Dict[str, Any]:
@@ -268,6 +279,7 @@ class PolymarketOrchestrator:
             "portfolio": self._portfolio.status(),
             "confluence": self._confluence.status(),
             "profiler": self._profiler.status(),
+            "paper": self._paper.status() if self._paper else {"enabled": False},
             "profile_cache": {
                 k: v for k, v in self._profile_cache.items() if not k.startswith("_")
             },

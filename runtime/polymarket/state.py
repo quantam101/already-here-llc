@@ -120,6 +120,25 @@ class StateManager:
                 CREATE INDEX IF NOT EXISTS idx_closed_trades_wallet ON closed_trades(wallet);
                 CREATE INDEX IF NOT EXISTS idx_closed_trades_ts ON closed_trades(closed_at);
                 CREATE INDEX IF NOT EXISTS idx_closed_trades_token ON closed_trades(token_id);
+
+                CREATE TABLE IF NOT EXISTS paper_positions (
+                    id TEXT PRIMARY KEY,
+                    opened_at REAL,
+                    wallet TEXT,
+                    token_id TEXT,
+                    side TEXT,
+                    shares REAL,
+                    entry_price REAL,
+                    amount REAL,
+                    closed INTEGER DEFAULT 0,
+                    closed_at REAL,
+                    exit_price REAL,
+                    pnl REAL,
+                    roi REAL
+                );
+                CREATE INDEX IF NOT EXISTS idx_paper_positions_open ON paper_positions(closed);
+                CREATE INDEX IF NOT EXISTS idx_paper_positions_token ON paper_positions(token_id);
+                CREATE INDEX IF NOT EXISTS idx_paper_positions_wallet ON paper_positions(wallet);
                 """
             )
 
@@ -311,3 +330,73 @@ class StateManager:
         with self._cursor() as cur:
             rows = cur.execute(sql, params).fetchall()
             return [dict(r) for r in rows]
+
+    def record_paper_position(self, position: Dict[str, Any]) -> None:
+        with self._cursor() as cur:
+            cur.execute(
+                """INSERT OR IGNORE INTO paper_positions
+                   (id, opened_at, wallet, token_id, side, shares, entry_price, amount)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    position["id"],
+                    position.get("opened_at", time.time()),
+                    position.get("wallet", "").lower(),
+                    position.get("token_id", "").lower(),
+                    position.get("side", ""),
+                    float(position.get("shares", 0)),
+                    float(position.get("entry_price", 0)),
+                    float(position.get("amount", 0)),
+                ),
+            )
+
+    def get_open_paper_positions(self) -> List[Dict[str, Any]]:
+        with self._cursor() as cur:
+            rows = cur.execute("SELECT * FROM paper_positions WHERE closed = 0 ORDER BY opened_at").fetchall()
+            return [dict(r) for r in rows]
+
+    def close_paper_position(self, position_id: str, exit_price: float, pnl: float, roi: float) -> None:
+        with self._cursor() as cur:
+            cur.execute(
+                """UPDATE paper_positions
+                   SET closed = 1, closed_at = ?, exit_price = ?, pnl = ?, roi = ?
+                   WHERE id = ?""",
+                (time.time(), float(exit_price), float(pnl), float(roi), position_id),
+            )
+            row = cur.execute(
+                "SELECT * FROM paper_positions WHERE id = ?", (position_id,)
+            ).fetchone()
+            if not row:
+                return
+            pos = dict(row)
+            self.record_closed_trade(
+                {
+                    "id": pos["id"],
+                    "opened_at": pos["opened_at"],
+                    "closed_at": time.time(),
+                    "wallet": pos["wallet"],
+                    "token_id": pos["token_id"],
+                    "side": pos["side"],
+                    "shares": pos["shares"],
+                    "entry_price": pos["entry_price"],
+                    "exit_price": exit_price,
+                    "pnl": pnl,
+                    "roi": roi,
+                    "strategy": "paper",
+                }
+            )
+
+    def paper_position_summary(self) -> Dict[str, Any]:
+        with self._cursor() as cur:
+            open_rows = cur.execute(
+                "SELECT COUNT(*) as c, COALESCE(SUM(amount), 0) as notional FROM paper_positions WHERE closed = 0"
+            ).fetchone()
+            closed_rows = cur.execute(
+                "SELECT COUNT(*) as c, COALESCE(SUM(pnl), 0) as pnl, COALESCE(SUM(roi), 0) as roi FROM paper_positions WHERE closed = 1"
+            ).fetchone()
+            return {
+                "open_count": int(open_rows["c"]),
+                "open_notional": float(open_rows["notional"]),
+                "closed_count": int(closed_rows["c"]),
+                "realized_pnl": float(closed_rows["pnl"]),
+                "realized_roi": float(closed_rows["roi"]),
+            }

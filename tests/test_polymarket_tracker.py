@@ -331,3 +331,44 @@ def test_alert_window_allows_overnight(tmp_db):
     assert engine._in_alert_window(datetime(2026, 8, 14, 23, 0, tzinfo=timezone.utc))
     assert engine._in_alert_window(datetime(2026, 8, 14, 2, 0, tzinfo=timezone.utc))
     assert not engine._in_alert_window(datetime(2026, 8, 14, 12, 0, tzinfo=timezone.utc))
+
+
+def test_paper_trader_records_and_closes_position(tmp_db):
+    from runtime.polymarket.paper_trade import PaperTrader
+
+    state = StateManager(tmp_db)
+    config = PolymarketConfig(db_path=tmp_db, fixed_order_usd=Decimal("50.00"))
+    trader = PaperTrader(config, state)
+
+    event = {
+        "tx_hash": "0xabc",
+        "log_index": 1,
+        "wallet": "0x1234",
+        "token_id": "0xdead",
+        "side": "BUY",
+        "price": Decimal("0.5"),
+    }
+    pos = trader.open_position(event)
+    assert pos is not None
+    assert pos.shares == Decimal("100.0000")
+    assert pos.amount == Decimal("50.00")
+
+    summary_before = state.paper_position_summary()
+    assert summary_before["open_count"] == 1
+
+    # Simulate the market resolving in the token's favor.
+    pnl, roi = trader._compute_pnl(
+        {
+            "entry_price": 0.5,
+            "amount": 50.0,
+            "side": "BUY",
+        },
+        Decimal("1"),
+    )
+    assert float(pnl) == 50.0
+    assert float(roi) == 100.0
+
+    state.close_paper_position(pos.id, 1.0, float(pnl), float(roi))
+    summary_after = state.paper_position_summary()
+    assert summary_after["closed_count"] == 1
+    assert summary_after["realized_pnl"] == 50.0
