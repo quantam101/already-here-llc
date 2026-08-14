@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /api/
-Disallow: /_next/
-Disallow: /profitengine/
-Sitemap: https://www.alreadyherellc.com/sitemap.xml
-Sitemap: https://www.alreadyherellc.com/content/sitemap.xml
-Host: https://www.alreadyherellc.com
