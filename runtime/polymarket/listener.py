@@ -36,10 +36,12 @@ class PolymarketListener:
         self._cb = CircuitBreaker("polygon-ws", failure_threshold=5, reset_timeout_seconds=30.0)
         self._ws: Any = None
         self._ws_thread: Optional[threading.Thread] = None
+        self._http_thread: Optional[threading.Thread] = None
         self._running = False
         self._reconnect_delay = config.reconnect_delay_seconds
         self._http_index = 0
         self._last_seen_block = 0
+        self._http_lock = threading.Lock()
 
     @property
     def running(self) -> bool:
@@ -242,15 +244,67 @@ class PolymarketListener:
             logger.warning("Backfill failed: %s", exc)
             return 0
 
+    def _http_poll_loop(self) -> None:
+        """Poll HTTP RPC endpoints for new logs when WebSocket is unavailable."""
+        if not self._config.polygon_http_urls:
+            return
+
+        # Seed from recent history once, then poll forward.
+        try:
+            self.backfill(self._config.backfill_blocks)
+        except Exception as exc:
+            logger.warning("Initial HTTP backfill failed: %s", exc)
+
+        while self._running:
+            try:
+                url = self._config.polygon_http_urls[self._http_index % len(self._config.polygon_http_urls)]
+                latest_hex = self._http_rpc_call(url, "eth_blockNumber", [])
+                latest = int(latest_hex, 16)
+                from_block = self._last_seen_block + 1 if self._last_seen_block else max(0, latest - self._config.backfill_blocks)
+                if from_block <= latest:
+                    total = 0
+                    chunk_size = 2000
+                    current = from_block
+                    while current <= latest:
+                        to_block = min(current + chunk_size, latest)
+                        logs = self._fetch_http_logs(
+                            current,
+                            to_block,
+                            self._config.exchange_addresses,
+                            list(ALL_FILL_TOPICS),
+                        )
+                        for log in logs:
+                            parsed = parse_log(log)
+                            if parsed and self._on_fill:
+                                self._on_fill(parsed)
+                            if parsed and parsed["event"].startswith("Transfer") and self._on_transfer:
+                                self._on_transfer(parsed)
+                            total += 1
+                        current = to_block + 1
+                    self._last_seen_block = latest
+                    if total:
+                        logger.info("HTTP poll fetched %d logs up to block %d", total, latest)
+            except Exception as exc:
+                logger.warning("HTTP poll loop error: %s", exc)
+
+            time.sleep(self._config.http_poll_interval_seconds)
+
     def start(self) -> None:
         """Start the listener in a background thread."""
         if self._running:
             return
         self._running = True
-        import websocket
 
-        self._ws_thread = threading.Thread(target=self._ws_loop, daemon=True, name="poly-listener")
-        self._ws_thread.start()
+        if self._config.polygon_ws_url:
+            try:
+                import websocket  # noqa: F401
+                self._ws_thread = threading.Thread(target=self._ws_loop, daemon=True, name="poly-listener-ws")
+                self._ws_thread.start()
+            except ImportError:
+                logger.warning("websocket-client not installed; using HTTP poll only")
+
+        self._http_thread = threading.Thread(target=self._http_poll_loop, daemon=True, name="poly-listener-http")
+        self._http_thread.start()
         logger.info("Polymarket listener started")
 
     def stop(self) -> None:
@@ -268,4 +322,5 @@ class PolymarketListener:
             "circuit_breaker": self._cb.status(),
             "websocket_url_configured": bool(self._config.polygon_ws_url),
             "http_endpoints": len(self._config.polygon_http_urls),
+            "http_poll_active": bool(self._http_thread and self._http_thread.is_alive()),
         }
