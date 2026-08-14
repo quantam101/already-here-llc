@@ -138,79 +138,101 @@ class PolymarketOrchestrator:
     # Internal event pipeline
     # ------------------------------------------------------------------
     def _on_fill(self, fill: Dict[str, Any]) -> None:
-        for role, wallet in (("maker", fill.get("maker")), ("taker", fill.get("taker"))):
+        maker = (fill.get("maker") or "").lower()
+        taker = (fill.get("taker") or "").lower()
+        fill_side = fill.get("side") or "-"
+
+        # Pick the active side per fill. Prefer the taker; if only the maker is watched,
+        # copy the maker with the opposite side.
+        focal_wallet = ""
+        focal_role = ""
+        focal_side = "-"
+        for role, wallet, side in (
+            ("taker", taker, fill_side),
+            ("maker", maker, self._opposite_side(fill_side)),
+        ):
             if not wallet:
-                continue
-            wallet = wallet.lower()
-            if not self._state.is_watched(wallet) and not self._config.watched_wallets:
-                # If no watchlist configured, record all and alert none.
                 continue
             if self._config.watched_wallets and not self._state.is_watched(wallet):
                 continue
+            focal_wallet = wallet
+            focal_role = role
+            focal_side = side
+            break
 
-            self._ensure_profile(wallet)
-            score = self._profile_cache.get(wallet, {})
-            passes = score.get("passes_filter", False)
+        if not focal_wallet:
+            return
 
-            if not passes and self._config.watched_wallets:
-                logger.debug("Wallet %s does not pass performance filter", wallet)
-                continue
+        # If no watchlist is configured, record fills passively but do not alert/copy.
+        if not self._config.watched_wallets:
+            self._record_fill(focal_wallet, focal_role, fill)
+            return
 
-            token_id = fill.get("token_id") or fill.get("maker_asset_id") or fill.get("taker_asset_id")
-            price = derive_price_from_fill(fill)
-            amount_usd = derive_usd_notional(fill)
+        wallet = focal_wallet
+        role = focal_role
+        self._ensure_profile(wallet)
+        score = self._profile_cache.get(wallet, {})
+        passes = score.get("passes_filter", False)
 
-            event = {
-                "wallet": wallet,
-                "role": role.upper(),
-                "side": fill.get("side") or "-",
-                "token_id": token_id or "",
-                "amount_usd": amount_usd,
-                "price": price,
-                "tx_hash": fill.get("transaction_hash", ""),
-                "log_index": fill.get("log_index", 0),
-                "block_number": fill.get("block_number", 0),
-            }
+        if not passes and self._config.watched_wallets:
+            logger.debug("Wallet %s does not pass performance filter", wallet)
+            return
 
-            risk = self._risk.assess_alert(wallet, event["token_id"], amount_usd)
-            if not risk.pass_gate:
-                logger.info("Risk gate blocked %s: %s", wallet, risk.reasons)
-                continue
+        token_id = fill.get("token_id") or fill.get("maker_asset_id") or fill.get("taker_asset_id")
+        price = derive_price_from_fill(fill)
+        amount_usd = derive_usd_notional(fill)
 
-            portfolio = self._portfolio.assess()
-            if not portfolio.can_trade:
-                logger.info("Portfolio risk gate blocked %s: %s", wallet, portfolio.reasons)
-                continue
+        event = {
+            "wallet": wallet,
+            "role": role.upper(),
+            "side": focal_side,
+            "token_id": token_id or "",
+            "amount_usd": amount_usd,
+            "price": price,
+            "tx_hash": fill.get("transaction_hash", ""),
+            "log_index": fill.get("log_index", 0),
+            "block_number": fill.get("block_number", 0),
+        }
 
-            confluence = self._confluence.assess(event["token_id"], event["side"], price)
-            if self._config.confluence_enabled and not confluence.agree:
-                logger.info(
-                    "Confluence filter blocked %s on %s: score=%s side=%s",
-                    wallet,
-                    event["token_id"][:16],
-                    confluence.score,
-                    event["side"],
-                )
-                continue
-            if self._config.confluence_enabled and confluence.confidence < self._config.confluence_min_confidence:
-                logger.info(
-                    "Confluence confidence too low for %s on %s: %s",
-                    wallet,
-                    event["token_id"][:16],
-                    confluence.confidence,
-                )
-                continue
+        risk = self._risk.assess_alert(wallet, event["token_id"], amount_usd)
+        if not risk.pass_gate:
+            logger.info("Risk gate blocked %s: %s", wallet, risk.reasons)
+            return
 
-            event["portfolio_scale"] = str(portfolio.position_scale)
-            event["confluence_score"] = str(confluence.score)
-            event["confluence_confidence"] = str(confluence.confidence)
+        portfolio = self._portfolio.assess()
+        if not portfolio.can_trade:
+            logger.info("Portfolio risk gate blocked %s: %s", wallet, portfolio.reasons)
+            return
 
-            self._record_trade(wallet, role, event)
-            if self._paper:
-                event["id"] = self._paper._position_id(event)
-                event["wallet"] = wallet
-                self._paper.open_position(event)
-            self.alert_agent(event)
+        confluence = self._confluence.assess(event["token_id"], event["side"], price)
+        if self._config.confluence_enabled and not confluence.agree:
+            logger.info(
+                "Confluence filter blocked %s on %s: score=%s side=%s",
+                wallet,
+                event["token_id"][:16],
+                confluence.score,
+                event["side"],
+            )
+            return
+        if self._config.confluence_enabled and confluence.confidence < self._config.confluence_min_confidence:
+            logger.info(
+                "Confluence confidence too low for %s on %s: %s",
+                wallet,
+                event["token_id"][:16],
+                confluence.confidence,
+            )
+            return
+
+        event["portfolio_scale"] = str(portfolio.position_scale)
+        event["confluence_score"] = str(confluence.score)
+        event["confluence_confidence"] = str(confluence.confidence)
+
+        self._record_trade(wallet, role, event)
+        if self._paper:
+            event["id"] = self._paper._position_id(event)
+            event["wallet"] = wallet
+            self._paper.open_position(event)
+        self.alert_agent(event)
 
     def _ensure_profile(self, wallet: str) -> None:
         with self._profile_lock:
@@ -222,6 +244,9 @@ class PolymarketOrchestrator:
             self.profiler_agent(wallet)
         except Exception:
             logger.exception("Profile refresh failed for %s", wallet)
+
+    def _opposite_side(self, side: str) -> str:
+        return {"BUY": "SELL", "SELL": "BUY"}.get(side.upper(), side)
 
     def _record_trade(self, wallet: str, role: str, event: Dict[str, Any]) -> None:
         trade_id = hashlib.sha256(
@@ -241,6 +266,27 @@ class PolymarketOrchestrator:
                 "side": event["side"],
                 "amount_usd": event["amount_usd"],
                 "price": event["price"],
+            }
+        )
+
+    def _record_fill(self, wallet: str, role: str, fill: Dict[str, Any]) -> None:
+        trade_id = hashlib.sha256(
+            f"{fill.get('transaction_hash', '')}:{fill.get('log_index', 0)}:{wallet}:{role}".encode()
+        ).hexdigest()
+        self._state.record_trade(
+            {
+                "id": trade_id,
+                "tx_hash": fill.get("transaction_hash", ""),
+                "log_index": fill.get("log_index", 0),
+                "block_number": fill.get("block_number", 0),
+                "timestamp": time.time(),
+                "wallet": wallet,
+                "role": role.upper(),
+                "market_id": "",
+                "token_id": fill.get("token_id") or fill.get("maker_asset_id") or fill.get("taker_asset_id") or "",
+                "side": fill.get("side") or "-",
+                "amount_usd": derive_usd_notional(fill),
+                "price": derive_price_from_fill(fill),
             }
         )
 

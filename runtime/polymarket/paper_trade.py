@@ -140,6 +140,10 @@ class PaperTrader:
                 logger.exception("Paper reconcile failed")
             self._stop_event.wait(self._config.paper_reconcile_interval_seconds)
 
+    def _exposure(self) -> Decimal:
+        summary = self._state.paper_position_summary()
+        return Decimal(str(summary.get("open_notional", 0)))
+
     def open_position(self, event: Dict[str, Any]) -> Optional[PaperPosition]:
         """Record a new simulated copy position for an alerted fill."""
         try:
@@ -151,6 +155,12 @@ class PaperTrader:
             return None
 
         amount = Decimal(str(self._config.fixed_order_usd))
+        if self._exposure() + amount > self._config.paper_starting_bankroll:
+            logger.info(
+                "Paper trade skipped: exposure would exceed $%s bankroll",
+                self._config.paper_starting_bankroll,
+            )
+            return None
         shares = (amount / entry_price).quantize(Decimal("0.0001"))
         position_id = event.get("id") or self._position_id(event)
 
