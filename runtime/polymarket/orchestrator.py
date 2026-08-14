@@ -206,11 +206,11 @@ class PolymarketOrchestrator:
             event["confluence_confidence"] = str(confluence.confidence)
 
             self._record_trade(wallet, role, event)
-            alert_results = self.alert_agent(event)
-            if self._paper and alert_results:
+            if self._paper:
                 event["id"] = self._paper._position_id(event)
                 event["wallet"] = wallet
                 self._paper.open_position(event)
+            self.alert_agent(event)
 
     def _ensure_profile(self, wallet: str) -> None:
         with self._profile_lock:
