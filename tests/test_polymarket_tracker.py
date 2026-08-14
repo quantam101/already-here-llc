@@ -293,3 +293,41 @@ def test_claude_summarizer_message_build_includes_prompt():
     assert "Polymarket" in prompt or "prediction-market" in prompt
     assert "0xWallet" in prompt
     assert "$100.00" in prompt
+
+
+# ---------------------------------------------------------------------------
+# Alert time window
+# ---------------------------------------------------------------------------
+def test_alert_window_allows_only_configured_hours(tmp_db):
+    from datetime import datetime, timezone
+    from runtime.polymarket.alerts import TelegramAlertEngine
+
+    state = StateManager(tmp_db)
+    config = PolymarketConfig(
+        db_path=tmp_db,
+        alert_start_hour=4,
+        alert_end_hour=6,
+        alert_timezone="UTC",
+    )
+    engine = TelegramAlertEngine(config, state)
+    assert engine._in_alert_window(datetime(2026, 8, 14, 4, 30, tzinfo=timezone.utc))
+    assert engine._in_alert_window(datetime(2026, 8, 14, 5, 59, tzinfo=timezone.utc))
+    assert not engine._in_alert_window(datetime(2026, 8, 14, 6, 0, tzinfo=timezone.utc))
+    assert not engine._in_alert_window(datetime(2026, 8, 14, 3, 59, tzinfo=timezone.utc))
+
+
+def test_alert_window_allows_overnight(tmp_db):
+    from datetime import datetime, timezone
+    from runtime.polymarket.alerts import TelegramAlertEngine
+
+    state = StateManager(tmp_db)
+    config = PolymarketConfig(
+        db_path=tmp_db,
+        alert_start_hour=22,
+        alert_end_hour=4,
+        alert_timezone="UTC",
+    )
+    engine = TelegramAlertEngine(config, state)
+    assert engine._in_alert_window(datetime(2026, 8, 14, 23, 0, tzinfo=timezone.utc))
+    assert engine._in_alert_window(datetime(2026, 8, 14, 2, 0, tzinfo=timezone.utc))
+    assert not engine._in_alert_window(datetime(2026, 8, 14, 12, 0, tzinfo=timezone.utc))

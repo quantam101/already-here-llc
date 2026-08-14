@@ -66,6 +66,9 @@ class PolymarketConfig:
     alert_cooldown_seconds: int = 60
     max_daily_alerts_per_wallet: int = 100
     telegram_timeout_seconds: float = 2.0
+    alert_start_hour: int = 0
+    alert_end_hour: int = 24
+    alert_timezone: str = "UTC"
 
     # Risk guardrails
     max_slippage_pct: Decimal = Decimal("2.0")
@@ -158,6 +161,9 @@ class PolymarketConfig:
             telegram_timeout_seconds=float(
                 os.environ.get("TELEGRAM_TIMEOUT_SECONDS", "2.0")
             ),
+            alert_start_hour=_env_int("POLYMARKET_ALERT_START_HOUR", 4),
+            alert_end_hour=_env_int("POLYMARKET_ALERT_END_HOUR", 6),
+            alert_timezone=os.environ.get("POLYMARKET_ALERT_TIMEZONE", "America/Phoenix"),
             max_slippage_pct=_env_decimal("POLYMARKET_MAX_SLIPPAGE_PCT", "2.0"),
             fixed_order_usd=_env_decimal("POLYMARKET_FIXED_ORDER_USD", "50.00"),
             min_wallet_profit_usd=_env_decimal("POLYMARKET_MIN_PROFIT_USD", "10000.00"),

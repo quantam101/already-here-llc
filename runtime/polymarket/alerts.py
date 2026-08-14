@@ -7,8 +7,11 @@ import json
 import logging
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
+
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -61,6 +64,9 @@ class TelegramAlertEngine:
         self._rate = RateLimiter(max_calls=20, window_seconds=1)
         self._last_alert_at: Dict[str, float] = {}
         self._summarizer = summarizer
+        self._alert_start = config.alert_start_hour
+        self._alert_end = config.alert_end_hour
+        self._alert_timezone = config.alert_timezone
 
     def _api_url(self, method: str) -> str:
         return self.API_BASE.format(token=self._token, method=method)
@@ -133,7 +139,36 @@ class TelegramAlertEngine:
         if self._state.alert_count_today(wallet) >= self._max_daily:
             logger.warning("Daily alert cap reached for %s", wallet)
             return False
+        if not self._in_alert_window():
+            logger.info(
+                "Outside alert window (%02d:00-%02d:00 %s); skipping alert for %s",
+                self._alert_start,
+                self._alert_end,
+                self._alert_timezone,
+                wallet,
+            )
+            return False
         return True
+
+    def _in_alert_window(self, now: Optional[datetime] = None) -> bool:
+        """Return True if the current time is within the configured alert window."""
+        if self._alert_start == self._alert_end:
+            return True
+        try:
+            tz = ZoneInfo(self._alert_timezone)
+        except Exception:
+            tz = timezone.utc
+        if now is None:
+            now = datetime.now(tz)
+        elif now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc).astimezone(tz)
+        else:
+            now = now.astimezone(tz)
+        hour = now.hour
+        if self._alert_start < self._alert_end:
+            return self._alert_start <= hour < self._alert_end
+        # Overnight window (e.g., 22-04)
+        return hour >= self._alert_start or hour < self._alert_end
 
     def send_alert(
         self,
