@@ -210,7 +210,7 @@ class PolymarketListener:
                 logger.warning("HTTP RPC failed %s: %s", url, exc)
         return []
 
-    def backfill(self, blocks: Optional[int] = None) -> int:
+    def backfill(self, blocks: Optional[int] = None, process: bool = True) -> int:
         """Backfill recent blocks via HTTP RPC. Returns number of logs processed."""
         if not self._config.polygon_http_urls:
             return 0
@@ -225,17 +225,18 @@ class PolymarketListener:
             current = from_block
             while current <= latest:
                 to_block = min(current + chunk_size, latest)
-                logs = self._fetch_http_logs(
-                    current,
-                    to_block,
-                    self._config.exchange_addresses,
-                    list(ALL_FILL_TOPICS),
-                )
-                for log in logs:
-                    parsed = parse_log(log)
-                    if parsed and self._on_fill:
-                        self._on_fill(parsed)
-                        total += 1
+                if process:
+                    logs = self._fetch_http_logs(
+                        current,
+                        to_block,
+                        self._config.exchange_addresses,
+                        list(ALL_FILL_TOPICS),
+                    )
+                    for log in logs:
+                        parsed = parse_log(log)
+                        if parsed and self._on_fill:
+                            self._on_fill(parsed)
+                            total += 1
                 current = to_block + 1
             self._last_seen_block = latest
             logger.info("Backfilled %d logs from blocks %s to %s", total, from_block, latest)
@@ -249,11 +250,11 @@ class PolymarketListener:
         if not self._config.polygon_http_urls:
             return
 
-        # Seed from recent history once, then poll forward.
+        # Seed last seen block without processing stale history.
         try:
-            self.backfill(self._config.backfill_blocks)
+            self.backfill(self._config.backfill_blocks, process=False)
         except Exception as exc:
-            logger.warning("Initial HTTP backfill failed: %s", exc)
+            logger.warning("Initial HTTP seed failed: %s", exc)
 
         while self._running:
             try:
