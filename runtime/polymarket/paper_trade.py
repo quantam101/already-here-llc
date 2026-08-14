@@ -176,6 +176,15 @@ class PaperTrader:
             logger.info("Paper training target already reached; skipping new positions")
             return None
 
+        if self._config.paper_max_open_positions > 0:
+            open_count = self._state.paper_position_summary().get("open_count", 0)
+            if open_count >= self._config.paper_max_open_positions:
+                logger.info(
+                    "Paper max open positions reached (%s); skipping new positions",
+                    open_count,
+                )
+                return None
+
         try:
             entry_price = Decimal(str(event.get("price", 0) or 0))
         except Exception:

@@ -103,6 +103,7 @@ class PolymarketConfig:
     paper_training_target_win_rate: Decimal = Decimal("90.0")
     paper_training_lookback_days: int = 60
     paper_training_min_sample_trades: int = 30
+    paper_max_open_positions: int = 0
 
     # Claude signal summarizer (opt-in; disabled unless API key + env toggle set)
     claude_api_key: str = ""
@@ -200,6 +201,7 @@ class PolymarketConfig:
             paper_training_target_win_rate=_env_decimal("POLYMARKET_PAPER_TRAINING_TARGET_WIN_RATE", "90.0"),
             paper_training_lookback_days=_env_int("POLYMARKET_PAPER_TRAINING_LOOKBACK_DAYS", 60),
             paper_training_min_sample_trades=_env_int("POLYMARKET_PAPER_TRAINING_MIN_SAMPLE_TRADES", 30),
+            paper_max_open_positions=_env_int("POLYMARKET_PAPER_MAX_OPEN_POSITIONS", 0),
             claude_api_key=os.environ.get("CLAUDE_API_KEY", ""),
             claude_enabled=(os.environ.get("POLYMARKET_CLAUDE_ENABLED", "false").lower() == "true"),
             claude_model=os.environ.get("POLYMARKET_CLAUDE_MODEL", "claude-sonnet-5"),
