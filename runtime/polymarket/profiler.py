@@ -269,6 +269,11 @@ class WalletProfiler:
         """Return True if the wallet meets the high-performance criteria."""
         if self._config.whitelist_only:
             return self._state.is_watched(score.address)
+        # Prefer live adaptive score if available and recent.
+        if self._config.adaptive_learning_enabled:
+            adaptive = self._state.get_adaptive_wallet_score(score.address)
+            if adaptive and adaptive.get("trade_count", 0) >= self._config.adaptive_min_trades:
+                return bool(adaptive.get("passes", False))
         if score.profit_usd < self._config.min_wallet_profit_usd:
             return False
         if score.win_rate < self._config.min_win_rate_pct:

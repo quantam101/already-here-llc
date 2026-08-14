@@ -139,8 +139,50 @@ class StateManager:
                 CREATE INDEX IF NOT EXISTS idx_paper_positions_open ON paper_positions(closed);
                 CREATE INDEX IF NOT EXISTS idx_paper_positions_token ON paper_positions(token_id);
                 CREATE INDEX IF NOT EXISTS idx_paper_positions_wallet ON paper_positions(wallet);
+
+                CREATE TABLE IF NOT EXISTS adaptive_wallet_scores (
+                    wallet TEXT PRIMARY KEY,
+                    score REAL,
+                    passes INTEGER DEFAULT 0,
+                    win_rate REAL,
+                    profit_factor REAL,
+                    total_pnl REAL,
+                    trade_count INTEGER,
+                    updated_at REAL
+                );
+                CREATE INDEX IF NOT EXISTS idx_adaptive_wallet_scores_score ON adaptive_wallet_scores(score);
+
+                CREATE TABLE IF NOT EXISTS adaptive_confluence_thresholds (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    threshold REAL,
+                    min_confidence REAL,
+                    target_win_rate REAL,
+                    win_rate REAL,
+                    total_pnl REAL,
+                    trade_count INTEGER,
+                    updated_at REAL
+                );
+                CREATE INDEX IF NOT EXISTS idx_adaptive_confluence_thresholds_updated ON adaptive_confluence_thresholds(updated_at);
                 """
             )
+        self._migrate_columns()
+
+    def _migrate_columns(self) -> None:
+        """Add columns introduced after the initial schema without failing if they already exist."""
+        columns = [
+            ("closed_trades", "confluence_score"),
+            ("closed_trades", "confluence_confidence"),
+            ("closed_trades", "portfolio_scale"),
+            ("paper_positions", "confluence_score"),
+            ("paper_positions", "confluence_confidence"),
+            ("paper_positions", "portfolio_scale"),
+        ]
+        with self._cursor() as cur:
+            for table, column in columns:
+                try:
+                    cur.execute(f"ALTER TABLE {table} ADD COLUMN {column} REAL")
+                except sqlite3.OperationalError:
+                    pass
 
     def set_watched_wallets(self, addresses: List[str]) -> None:
         with self._cursor() as cur:
@@ -300,8 +342,9 @@ class StateManager:
             cur.execute(
                 """INSERT OR IGNORE INTO closed_trades
                    (id, opened_at, closed_at, wallet, token_id, side, shares,
-                    entry_price, exit_price, pnl, roi, strategy)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    entry_price, exit_price, pnl, roi, strategy,
+                    confluence_score, confluence_confidence, portfolio_scale)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     trade["id"],
                     trade.get("opened_at", trade.get("closed_at", time.time())),
@@ -315,6 +358,9 @@ class StateManager:
                     float(trade.get("pnl", 0)),
                     float(trade.get("roi", 0)),
                     trade.get("strategy", "copy"),
+                    float(trade.get("confluence_score", 0) or 0),
+                    float(trade.get("confluence_confidence", 0) or 0),
+                    float(trade.get("portfolio_scale", 0) or 0),
                 ),
             )
 
@@ -335,8 +381,9 @@ class StateManager:
         with self._cursor() as cur:
             cur.execute(
                 """INSERT OR IGNORE INTO paper_positions
-                   (id, opened_at, wallet, token_id, side, shares, entry_price, amount)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (id, opened_at, wallet, token_id, side, shares, entry_price, amount,
+                    confluence_score, confluence_confidence, portfolio_scale)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     position["id"],
                     position.get("opened_at", time.time()),
@@ -346,6 +393,9 @@ class StateManager:
                     float(position.get("shares", 0)),
                     float(position.get("entry_price", 0)),
                     float(position.get("amount", 0)),
+                    float(position.get("confluence_score", 0) or 0),
+                    float(position.get("confluence_confidence", 0) or 0),
+                    float(position.get("portfolio_scale", 0) or 0),
                 ),
             )
 
@@ -395,6 +445,9 @@ class StateManager:
                     "pnl": pnl,
                     "roi": roi,
                     "strategy": "paper",
+                    "confluence_score": pos.get("confluence_score"),
+                    "confluence_confidence": pos.get("confluence_confidence"),
+                    "portfolio_scale": pos.get("portfolio_scale"),
                 }
             )
 
@@ -413,3 +466,62 @@ class StateManager:
                 "realized_pnl": float(closed_rows["pnl"]),
                 "realized_roi": float(closed_rows["roi"]),
             }
+
+    def set_adaptive_wallet_score(self, score: Dict[str, Any]) -> None:
+        with self._cursor() as cur:
+            cur.execute(
+                """INSERT INTO adaptive_wallet_scores
+                   (wallet, score, passes, win_rate, profit_factor, total_pnl, trade_count, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(wallet) DO UPDATE SET
+                   score=excluded.score, passes=excluded.passes, win_rate=excluded.win_rate,
+                   profit_factor=excluded.profit_factor, total_pnl=excluded.total_pnl,
+                   trade_count=excluded.trade_count, updated_at=excluded.updated_at""",
+                (
+                    score["wallet"].lower(),
+                    float(score.get("score", 0) or 0),
+                    int(bool(score.get("passes", False))),
+                    float(score.get("win_rate", 0) or 0),
+                    float(score.get("profit_factor", 0) or 0),
+                    float(score.get("total_pnl", 0) or 0),
+                    int(score.get("trade_count", 0) or 0),
+                    float(score.get("updated_at", time.time())),
+                ),
+            )
+
+    def get_adaptive_wallet_score(self, wallet: str) -> Optional[Dict[str, Any]]:
+        with self._cursor() as cur:
+            row = cur.execute(
+                "SELECT * FROM adaptive_wallet_scores WHERE wallet = ?", (wallet.lower(),)
+            ).fetchone()
+            return dict(row) if row else None
+
+    def get_all_adaptive_wallet_scores(self) -> List[Dict[str, Any]]:
+        with self._cursor() as cur:
+            rows = cur.execute("SELECT * FROM adaptive_wallet_scores ORDER BY score DESC").fetchall()
+            return [dict(r) for r in rows]
+
+    def set_adaptive_confluence_threshold(self, threshold: Dict[str, Any]) -> None:
+        with self._cursor() as cur:
+            cur.execute(
+                """INSERT INTO adaptive_confluence_thresholds
+                   (threshold, min_confidence, target_win_rate, win_rate, total_pnl, trade_count, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    float(threshold.get("threshold", 0) or 0),
+                    float(threshold.get("min_confidence", 0) or 0),
+                    float(threshold.get("target_win_rate", 0) or 0),
+                    float(threshold.get("win_rate", 0) or 0),
+                    float(threshold.get("total_pnl", 0) or 0),
+                    int(threshold.get("trade_count", 0) or 0),
+                    float(threshold.get("updated_at", time.time())),
+                ),
+            )
+            cur.execute("DELETE FROM adaptive_confluence_thresholds WHERE id < ?", (cur.lastrowid - 100,))
+
+    def get_adaptive_confluence_threshold(self) -> Optional[Dict[str, Any]]:
+        with self._cursor() as cur:
+            row = cur.execute(
+                "SELECT * FROM adaptive_confluence_thresholds ORDER BY updated_at DESC LIMIT 1"
+            ).fetchone()
+            return dict(row) if row else None

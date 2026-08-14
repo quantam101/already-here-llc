@@ -29,6 +29,7 @@ from runtime.polymarket.profiler import WalletProfiler
 from runtime.polymarket.risk import RiskGuard
 from runtime.polymarket.signals import SignalConfluence
 from runtime.polymarket.state import StateManager
+from runtime.polymarket.adaptive import AdaptiveLearner
 from runtime.polymarket.utils import CircuitBreaker
 
 logger = logging.getLogger("polymarket-tracker")
@@ -74,8 +75,9 @@ class PolymarketOrchestrator:
         self._alerts = TelegramAlertEngine(self._config, self._state, summarizer=self._claude)
         self._risk = RiskGuard(self._config, self._state)
         self._portfolio = PortfolioRiskGuard(self._config, self._state)
-        self._confluence = SignalConfluence(self._config)
+        self._confluence = SignalConfluence(self._config, state=self._state)
         self._paper = PaperTrader(self._config, self._state) if self._config.paper_trading else None
+        self._adaptive = AdaptiveLearner(self._config, self._state)
 
         self._profile_cb = CircuitBreaker("profiler", failure_threshold=3, reset_timeout_seconds=60.0)
         self._profile_cache: Dict[str, Any] = {}
@@ -309,6 +311,8 @@ class PolymarketOrchestrator:
             ).start()
         if self._paper:
             self._paper.start()
+        if self._config.adaptive_learning_enabled:
+            self._adaptive.start()
         self._listener.start()
         logger.info("Polymarket orchestrator started; watching %d wallets", len(self._config.watched_wallets))
 
@@ -316,6 +320,7 @@ class PolymarketOrchestrator:
         self._running = False
         if self._paper:
             self._paper.stop()
+        self._adaptive.stop()
         self._listener.stop()
 
     def status(self) -> Dict[str, Any]:
@@ -329,6 +334,7 @@ class PolymarketOrchestrator:
             "portfolio": self._portfolio.status(),
             "confluence": self._confluence.status(),
             "profiler": self._profiler.status(),
+            "adaptive": self._adaptive.status(),
             "paper": self._paper.status() if self._paper else {"enabled": False},
             "profile_cache": {
                 k: v for k, v in self._profile_cache.items() if not k.startswith("_")

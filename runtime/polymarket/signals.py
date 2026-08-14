@@ -341,8 +341,9 @@ class SignalConfluence:
     uses only public Polymarket data and pure-Python statistics.
     """
 
-    def __init__(self, config: Optional[PolymarketConfig] = None) -> None:
+    def __init__(self, config: Optional[PolymarketConfig] = None, state: Optional[Any] = None) -> None:
         self.config = config or PolymarketConfig.from_env()
+        self._state = state
         self._history = ClobPriceHistory()
         self._order_book = ClobOrderBook()
         self._metadata = GammaMarketMetadata()
@@ -413,12 +414,14 @@ class SignalConfluence:
 
         # BUY is positive, SELL is negative.
         desired_sign = 1 if side == "BUY" else -1
-        agree = score * Decimal(desired_sign) >= Decimal(str(self.config.confluence_threshold))
+        threshold, min_confidence = self._adaptive_thresholds()
+        agree = score * Decimal(desired_sign) >= Decimal(str(threshold))
+        confidence_ok = confidence >= Decimal(str(min_confidence))
 
         return ConfluenceAssessment(
             token_id=token_id,
             side=side,
-            agree=agree,
+            agree=agree and confidence_ok,
             score=score,
             confidence=confidence,
             details={
@@ -427,14 +430,31 @@ class SignalConfluence:
                 "price_points": len(prices),
                 "order_book": self._order_book_for(token_id) is not None,
                 "market_metadata": self._metadata_for(token_id) is not None,
+                "adaptive_threshold": str(threshold),
+                "adaptive_min_confidence": str(min_confidence),
             },
         )
 
+    def _adaptive_thresholds(self) -> Tuple[Decimal, Decimal]:
+        """Return adaptive thresholds if learned, otherwise config defaults."""
+        if not self.config.adaptive_learning_enabled or self._state is None:
+            return self.config.confluence_threshold, self.config.confluence_min_confidence
+        threshold = self._state.get_adaptive_confluence_threshold()
+        if threshold:
+            return (
+                Decimal(str(threshold.get("threshold", self.config.confluence_threshold))),
+                Decimal(str(threshold.get("min_confidence", self.config.confluence_min_confidence))),
+            )
+        return self.config.confluence_threshold, self.config.confluence_min_confidence
+
     def status(self) -> Dict[str, Any]:
+        threshold, min_confidence = self._adaptive_thresholds()
         return {
             "enabled": self.config.confluence_enabled,
             "threshold": str(self.config.confluence_threshold),
             "min_confidence": str(self.config.confluence_min_confidence),
+            "adaptive_threshold": str(threshold),
+            "adaptive_min_confidence": str(min_confidence),
             "use_order_book": getattr(self.config, "confluence_use_order_book", True),
             "use_market_metadata": getattr(self.config, "confluence_use_market_metadata", True),
             "max_spread_pct": str(getattr(self.config, "confluence_max_spread_pct", Decimal("0.05"))),

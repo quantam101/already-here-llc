@@ -225,6 +225,9 @@ class PaperTrader:
                 "shares": float(pos.shares),
                 "entry_price": float(pos.entry_price),
                 "amount": float(pos.amount),
+                "confluence_score": float(event.get("confluence_score", 0) or 0),
+                "confluence_confidence": float(event.get("confluence_confidence", 0) or 0),
+                "portfolio_scale": float(event.get("portfolio_scale", 0) or 0),
             }
         )
         logger.info(

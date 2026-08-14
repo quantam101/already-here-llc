@@ -105,6 +105,17 @@ class PolymarketConfig:
     paper_training_min_sample_trades: int = 30
     paper_max_open_positions: int = 0
 
+    # Adaptive online learning (re-train wallet scores and confluence thresholds from closed paper trades)
+    adaptive_learning_enabled: bool = False
+    adaptive_retrain_interval_seconds: int = 3600
+    adaptive_lookback_days: int = 30
+    adaptive_min_trades: int = 10
+    adaptive_wallet_pnl_weight: Decimal = Decimal("0.40")
+    adaptive_wallet_win_rate_weight: Decimal = Decimal("0.30")
+    adaptive_wallet_profit_factor_weight: Decimal = Decimal("0.20")
+    adaptive_wallet_trade_count_weight: Decimal = Decimal("0.10")
+    adaptive_confluence_target_win_rate: Decimal = Decimal("60.0")
+
     # Claude signal summarizer (opt-in; disabled unless API key + env toggle set)
     claude_api_key: str = ""
     claude_enabled: bool = False
@@ -202,6 +213,15 @@ class PolymarketConfig:
             paper_training_lookback_days=_env_int("POLYMARKET_PAPER_TRAINING_LOOKBACK_DAYS", 60),
             paper_training_min_sample_trades=_env_int("POLYMARKET_PAPER_TRAINING_MIN_SAMPLE_TRADES", 30),
             paper_max_open_positions=_env_int("POLYMARKET_PAPER_MAX_OPEN_POSITIONS", 0),
+            adaptive_learning_enabled=(os.environ.get("POLYMARKET_ADAPTIVE_LEARNING_ENABLED", "false").lower() == "true"),
+            adaptive_retrain_interval_seconds=_env_int("POLYMARKET_ADAPTIVE_RETRAIN_INTERVAL_SECONDS", 3600),
+            adaptive_lookback_days=_env_int("POLYMARKET_ADAPTIVE_LOOKBACK_DAYS", 30),
+            adaptive_min_trades=_env_int("POLYMARKET_ADAPTIVE_MIN_TRADES", 10),
+            adaptive_wallet_pnl_weight=_env_decimal("POLYMARKET_ADAPTIVE_WALLET_PNL_WEIGHT", "0.40"),
+            adaptive_wallet_win_rate_weight=_env_decimal("POLYMARKET_ADAPTIVE_WALLET_WIN_RATE_WEIGHT", "0.30"),
+            adaptive_wallet_profit_factor_weight=_env_decimal("POLYMARKET_ADAPTIVE_WALLET_PROFIT_FACTOR_WEIGHT", "0.20"),
+            adaptive_wallet_trade_count_weight=_env_decimal("POLYMARKET_ADAPTIVE_WALLET_TRADE_COUNT_WEIGHT", "0.10"),
+            adaptive_confluence_target_win_rate=_env_decimal("POLYMARKET_ADAPTIVE_CONFLUENCE_TARGET_WIN_RATE", "60.0"),
             claude_api_key=os.environ.get("CLAUDE_API_KEY", ""),
             claude_enabled=(os.environ.get("POLYMARKET_CLAUDE_ENABLED", "false").lower() == "true"),
             claude_model=os.environ.get("POLYMARKET_CLAUDE_MODEL", "claude-sonnet-5"),
