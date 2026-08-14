@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import { canonicalId, canonicalSlug } from './canonical-ids';
 import type { CanonicalStore, DatabaseReadyWrite } from './canonical-store';
 
@@ -156,35 +156,52 @@ function parseJson(value: unknown): Record<string, unknown> | undefined {
   }
 }
 
+type SqliteRow = Record<string, string | number | bigint | null | Uint8Array | undefined>;
+
+function rowString(row: SqliteRow, key: string): string {
+  const value = row[key];
+  return typeof value === 'string' ? value : '';
+}
+
 function readSource(source: MigrationSource): MigrationRecord[] {
-  const db = new Database(source.path, { readonly: true, fileMustExist: true });
+  const db = new DatabaseSync(source.path, { readOnly: true });
   const label = source.label?.trim() || source.path;
   try {
     const tables = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('owned_records','canonical_records')")
-      .all() as Array<{ name: string }>;
-    const names = new Set(tables.map((row) => row.name));
+      .all() as SqliteRow[];
+    const names = new Set(tables.map((row) => rowString(row, 'name')));
     const records: MigrationRecord[] = [];
 
     if (names.has('owned_records')) {
       const rows = db
         .prepare('SELECT table_name, id, record_json FROM owned_records ORDER BY table_name, id')
-        .all() as Array<{ table_name: string; id: string; record_json: string }>;
+        .all() as SqliteRow[];
       for (const row of rows) {
-        const record = parseJson(row.record_json);
+        const record = parseJson(rowString(row, 'record_json'));
         if (!record) continue;
-        records.push({ table: row.table_name, legacyId: row.id, record, sourceLabel: label });
+        records.push({
+          table: rowString(row, 'table_name'),
+          legacyId: rowString(row, 'id'),
+          record,
+          sourceLabel: label,
+        });
       }
     }
 
     if (names.has('canonical_records')) {
       const rows = db
         .prepare('SELECT table_name, id, payload FROM canonical_records ORDER BY table_name, id')
-        .all() as Array<{ table_name: string; id: string; payload: string }>;
+        .all() as SqliteRow[];
       for (const row of rows) {
-        const record = parseJson(row.payload);
+        const record = parseJson(rowString(row, 'payload'));
         if (!record) continue;
-        records.push({ table: row.table_name, legacyId: row.id, record, sourceLabel: label });
+        records.push({
+          table: rowString(row, 'table_name'),
+          legacyId: rowString(row, 'id'),
+          record,
+          sourceLabel: label,
+        });
       }
     }
 

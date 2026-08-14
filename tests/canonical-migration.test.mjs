@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 
 const tempRoot = mkdtempSync(join(tmpdir(), 'already-here-canonical-migration-'));
 const sourceOne = join(tempRoot, 'revenue-command.sqlite3');
@@ -10,7 +10,7 @@ const sourceTwo = join(tempRoot, 'canonical-old.sqlite3');
 const targetPath = join(tempRoot, 'combined.sqlite3');
 
 function makeOwnedDb(path) {
-  const db = new Database(path);
+  const db = new DatabaseSync(path);
   db.exec(`CREATE TABLE owned_records (
     table_name TEXT NOT NULL,
     id TEXT NOT NULL,
@@ -28,7 +28,7 @@ function makeOwnedDb(path) {
 }
 
 function makeCanonicalDb(path) {
-  const db = new Database(path);
+  const db = new DatabaseSync(path);
   db.exec(`CREATE TABLE canonical_records (
     id TEXT PRIMARY KEY,
     table_name TEXT NOT NULL,
