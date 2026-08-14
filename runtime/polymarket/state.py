@@ -125,6 +125,7 @@ class StateManager:
 
     def set_watched_wallets(self, addresses: List[str]) -> None:
         with self._cursor() as cur:
+            cur.execute("UPDATE wallets SET watched = 0")
             cur.executemany(
                 "INSERT INTO wallets(address, watched) VALUES(?, 1) ON CONFLICT(address) DO UPDATE SET watched=1",
                 [(a.lower(),) for a in addresses],
