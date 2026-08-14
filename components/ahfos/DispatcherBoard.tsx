@@ -123,7 +123,7 @@ export function DispatcherBoard() {
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-navy">{job.priority}</span>
               <span className="text-sm text-slate-400">{new Date(job.createdAt).toLocaleString()}</span>
               {job.qa && (
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-navy">QA {job.qa.score}/100</span>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-900">QA {job.qa.score}/100</span>
               )}
             </div>
             <h2 className="mt-3 text-lg font-semibold text-navy">{job.trade}</h2>
