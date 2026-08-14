@@ -157,12 +157,13 @@ class AdaptiveLearner:
                 + float(self._config.adaptive_wallet_pnl_weight) * norm_pnl
                 + float(self._config.adaptive_wallet_trade_count_weight) * norm_tc
             )
-            # A wallet must be profitable and have a positive edge to pass.
+            # A wallet must be profitable, have a positive edge, and rank in the
+            # top half of the scored cohort to pass the adaptive filter.
             passes = (
                 m["total_pnl"] > 0
-                and m["win_rate"] >= 50.0
                 and m["profit_factor"] >= 1.0
                 and m["trade_count"] >= self._config.adaptive_min_trades
+                and score >= 0.5
             )
             m["score"] = round(score, 6)
             m["passes"] = bool(passes)
@@ -184,7 +185,11 @@ class AdaptiveLearner:
 
     def _retrain_confluence(self, trades: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Learn confluence score/confidence thresholds from realized outcomes."""
-        trades_with_conf = [t for t in trades if t.get("confluence_confidence") is not None]
+        trades_with_conf = [
+            t for t in trades
+            if t.get("confluence_confidence") is not None
+            and float(t.get("confluence_confidence") or 0) > 0
+        ]
         if len(trades_with_conf) < self._config.adaptive_min_trades:
             return {"reason": "not enough confluence-tagged trades"}
 
