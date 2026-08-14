@@ -161,9 +161,9 @@ class PolymarketConfig:
             telegram_timeout_seconds=float(
                 os.environ.get("TELEGRAM_TIMEOUT_SECONDS", "2.0")
             ),
-            alert_start_hour=_env_int("POLYMARKET_ALERT_START_HOUR", 4),
-            alert_end_hour=_env_int("POLYMARKET_ALERT_END_HOUR", 6),
-            alert_timezone=os.environ.get("POLYMARKET_ALERT_TIMEZONE", "America/Phoenix"),
+            alert_start_hour=_env_int("POLYMARKET_ALERT_START_HOUR", 0),
+            alert_end_hour=_env_int("POLYMARKET_ALERT_END_HOUR", 24),
+            alert_timezone=os.environ.get("POLYMARKET_ALERT_TIMEZONE", "UTC"),
             max_slippage_pct=_env_decimal("POLYMARKET_MAX_SLIPPAGE_PCT", "2.0"),
             fixed_order_usd=_env_decimal("POLYMARKET_FIXED_ORDER_USD", "50.00"),
             min_wallet_profit_usd=_env_decimal("POLYMARKET_MIN_PROFIT_USD", "10000.00"),
