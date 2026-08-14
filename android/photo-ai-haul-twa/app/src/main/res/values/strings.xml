@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AVAX-3D Haul Scanner</string>
+    <string name="shortcut_label">Scan Load</string>
+    <string name="asset_statements" translatable="false">[{&quot;include&quot;: &quot;https://REPLACE_WITH_YOUR_DOMAIN/.well-known/assetlinks.json&quot;}]</string>
+</resources>

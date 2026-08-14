@@ -18,9 +18,161 @@ Lean multi-page B2B field-service website for Already Here LLC, built with Next.
 - Who We Serve
 - Contact / Dispatch
 - AI Web Agent
+- Photo AI Haul Scanner
 - Revenue Mesh v1
 - Privacy Policy
 - Thank You
+
+## Photo AI Haul Scanner
+
+A standalone FastAPI microservice (`app.py`) for mobile photo-driven pickup / hauling / junk-removal quotes.
+
+- Snaps a load photo from any smartphone browser.
+- Runs an isolated multi-agent pipeline:
+  1. **Vision Spatial Agent** — YOLOv8 ONNX for trained bounding boxes, TinyCLIP 40M ONNX for zero-shot fine-grained labels (motor scooter, pool table, helmet, etc.), fused with K-means segmentation.
+  2. **Volumetric Agent** — computes true cubic-yard volume with density correction.
+  3. **Asset Recovery Agent** — values scrap metal, resale, and refurb potential.
+- Returns a net customer quote, trailer fill percentage, and a driver recovery manifest.
+
+### Local usage
+
+```bash
+python -m pip install -r requirements.txt
+python app.py
+```
+
+Open `http://localhost:8000` on your phone (same Wi-Fi) and tap **SNAP LOAD PHOTO**.
+
+### Configuration
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `HAUL_SCANNER_HOST` | `0.0.0.0` | Bind host |
+| `HAUL_SCANNER_PORT` | `8000` | Bind port |
+| `HAUL_TRAILER_CAPACITY_CU_YD` | `10.6` | Trailer volume capacity |
+| `HAUL_BASE_DISPATCH_FEE_USD` | `75.0` | Flat dispatch fee |
+| `HAUL_RATE_PER_CU_YD_USD` | `38.0` | Per-cubic-yard hauling rate |
+| `HAUL_RECOVERY_CREDIT_PCT` | `0.25` | Recovery credit applied to net quote |
+| `HAUL_FRAME_WIDTH_METERS` | `2.5` | Assumed real-world frame width for local spatial calibration |
+| `HAUL_MAX_UPLOAD_BYTES` | `26214400` | Max photo upload size (25 MiB) |
+| `HAUL_RATE_LIMIT_PER_MINUTE` | `30` | Per-IP rate limit for `/api/scan` |
+| `HAUL_API_KEY` | *(none)* | Optional API key required by `/api/scan` |
+| `HAUL_CORS_ORIGINS` | `*` | Comma-separated allowed CORS origins |
+| `GMAOS_PAID_ADAPTERS_ENABLED` | `false` | Enable cloud vision (Gemini) |
+| `GEMINI_API_KEY` | *(none)* | Gemini API key for cloud vision |
+| `HAUL_YOLO_ENABLED` | `true` | Run YOLOv8 ONNX local object detection |
+| `HAUL_YOLO_MODEL_PATH` | `models/yolov8n.onnx` | ONNX model path |
+| `HAUL_VISION_SOURCE_ORDER` | `fused,cloud,deterministic` | Vision pipeline priority |
+| `HAUL_YOLO_CONF` | `0.55` | Minimum YOLO class confidence |
+| `HAUL_YOLO_IOU` | `0.3` | YOLO NMS IoU threshold |
+| `HAUL_YOLO_MAX_DETECTIONS` | `8` | Max YOLO detections per image |
+| `HAUL_CLIP_ENABLED` | `true` | Run TinyCLIP zero-shot classification for fine-grained labels |
+| `HAUL_CLIP_MODEL_DIR` | `models/tinyclip40` | TinyCLIP ONNX artifacts directory |
+| `HAUL_CLIP_CONF` | `7.0` | Minimum TinyCLIP logit score for a label to be accepted |
+| `HAUL_CLIP_MAX_CANDIDATES` | `12` | Max crops classified per image (latency control) |
+
+The default vision pipeline is **yolov8_tinyclip_fused** (YOLOv8 ONNX boxes + TinyCLIP labels + deterministic segmentation), then cloud (Gemini), then deterministic fallback. YOLO and TinyCLIP are zero-cost local trained recognition; cloud vision is gated by `GMAOS_PAID_ADAPTERS_ENABLED=true` and `GEMINI_API_KEY`. Download TinyCLIP artifacts with `scripts/download_tinyclip40.sh` or at container build time.
+
+### Endpoints
+
+- `GET /` — Mobile PWA scanner UI
+- `POST /api/scan` — Upload image (`multipart/form-data`) and receive quote JSON
+- `GET /api/usage` — Per-organization rate-limit, scan usage, and billing
+- `GET /api/scans` — Scan history for the authenticated organization
+- `GET /api/billing` — Aggregated billing metrics for the authenticated organization
+- `POST /api/feedback` — Submit corrected labels/ground-truth for a scan
+- `GET /api/feedback` — List labeled feedback for the authenticated organization
+- `GET /api/feedback/export?fmt=yolo|coco&as_zip=true` — Export labeled training dataset
+- `GET /healthz` — Liveness probe
+- `GET /readyz` — Readiness probe
+- `GET /metrics` — Prometheus-compatible metrics
+
+### Enterprise / multi-tenant configuration
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `HAUL_API_KEY` | *(none)* | Legacy single shared API key |
+| `HAUL_API_KEYS` | *(none)* | Multi-tenant keys as JSON: `{key: {org, tier, rpm, daily_quota}}` |
+| `REDIS_URL` | *(none)* | Optional Redis for global per-org rate limits and quotas across pods |
+| `HAUL_SCAN_STORE` | `data/haul_scans.db` | SQLite path or `memory` for scan persistence |
+| `HAUL_REQUEST_SIGNING_SECRET` | *(none)* | Optional HMAC-SHA256 signature secret for `/api/scan` |
+| `HAUL_FEEDBACK_ENABLED` | `true` | Enable labeled feedback collection |
+| `HAUL_SAVE_SCAN_IMAGES` | `true` | Save uploaded scan images for later review/training |
+| `HAUL_FEEDBACK_DIR` | `data/feedback` | Directory for labeled feedback images |
+| `HAUL_SCAN_IMAGES_DIR` | `data/scan_images` | Directory for uploaded scan images |
+| `HAUL_LOG_JSON` | `false` | Emit structured JSON logs |
+| `HAUL_CORS_ORIGINS` | `*` | Comma-separated allowed CORS origins |
+
+`HAUL_API_KEYS` supports a JSON object keyed by key string, or a list of objects with a `key` field. Each entry sets `org`, `tier` (`free`/`pro`/`enterprise`), per-minute request limit (`rpm`), and daily scan quota (`daily_quota`).
+
+Per-organization scan metadata (quotes, recovery values, detected entities) is persisted to `HAUL_SCAN_STORE` and exposed via `/api/scans`, `/api/usage`, and `/api/billing`. Scan images can be saved to `HAUL_SCAN_IMAGES_DIR` when `HAUL_SAVE_SCAN_IMAGES=true` so drivers/reviewers can later submit corrected labels via `POST /api/feedback`; these labeled photos export as YOLO/COCO datasets from `GET /api/feedback/export` for model fine-tuning.
+
+### Training data bootstrap
+
+To build an initial labeled photo database for training a hauling-specific detector, run the public-dataset importer. It downloads the COCO 2017 validation set, maps COCO categories to the hauling catalog (furniture, appliances, electronics, sporting goods, motor vehicles), and stores them as synthetic feedback records:
+
+```bash
+python scripts/build_training_db.py --max-per-class 100 --max-total 2000 --workers 8
+```
+
+- COCO: http://cocodataset.org/#home — 35 relevant categories including motorcycle, bicycle, sofa, chair, bed, dining table, potted plant, tv, laptop, refrigerator, microwave, backpack, suitcase, bottle, cup, vase, umbrella, skateboard, tennis racket, skis, snowboard, surfboard, etc.
+- TACO: http://tacodataset.org/ — trash/waste annotations for debris/scrap/metal classes (can be added to the importer as a future source).
+- Open Images V7: https://storage.googleapis.com/openimages/web/index.html — large-scale detection for 600 classes, useful for expanding coverage (FiftyOne/Voxel51 tooling).
+
+After import, export a YOLO or COCO training set:
+
+```bash
+python scripts/build_training_db.py --export yolo --max-per-class 100 --max-total 2000 --workers 8
+# or use the running API:
+# GET /api/feedback/export?fmt=yolo&as_zip=true
+```
+
+### Verification
+
+```bash
+python -m pytest tests/test_photo_ai_haul.py -v
+curl http://localhost:8000/healthz
+curl http://localhost:8000/metrics
+```
+
+### Global deployment
+
+A stateless container and Kubernetes manifests are provided for horizontal scaling:
+
+- `Dockerfile.photo-ai-haul` — production container
+- `docker-compose.yml` — local stack with Redis-backed rate limits
+- `infra/kubernetes/photo-ai-haul-deployment.yaml` — 2+ replica Deployment
+- `infra/kubernetes/photo-ai-haul-service.yaml` — ClusterIP service
+- `infra/kubernetes/photo-ai-haul-hpa.yaml` — CPU/memory HorizontalPodAutoscaler (2-20 pods)
+- `infra/kubernetes/photo-ai-haul-ingress.yaml` — TLS ingress for `photo-ai.alreadyherellc.com`
+
+Deploy to Kubernetes:
+
+```bash
+kubectl apply -f infra/kubernetes/namespace.yaml
+kubectl apply -f infra/kubernetes/photo-ai-haul-deployment.yaml
+kubectl apply -f infra/kubernetes/photo-ai-haul-service.yaml
+kubectl apply -f infra/kubernetes/photo-ai-haul-hpa.yaml
+kubectl apply -f infra/kubernetes/photo-ai-haul-ingress.yaml
+```
+
+### Google Play app (Trusted Web Activity)
+
+The PWA can be wrapped as an Android app and published on Google Play. A ready-to-build TWA project is in `android/photo-ai-haul-twa/`:
+
+1. Deploy `app.py` to a public HTTPS domain.
+2. Update `android/photo-ai-haul-twa/app/src/main/AndroidManifest.xml` and `res/values/strings.xml` with your domain.
+3. Update `public/assetlinks.json` with your app package name and release keystore SHA-256 fingerprint.
+4. Build the Play Store bundle:
+
+```bash
+cd android/photo-ai-haul-twa
+./gradlew bundleRelease
+```
+
+5. Upload `app/build/outputs/bundle/release/app-release.aab` to Google Play Console.
+
+See `android/photo-ai-haul-twa/README.md` for full instructions.
 
 ## Revenue Mesh v1
 
@@ -157,6 +309,7 @@ npm run typecheck
 npm run build
 npm run test
 python -m pytest tests/test_finnhub_feed.py
+python -m pytest tests/test_photo_ai_haul.py
 ```
 
 Runtime verification endpoints:
@@ -166,6 +319,7 @@ curl http://localhost:3000/api/health
 curl http://localhost:3000/api/runtime/status
 curl http://localhost:3000/api/revenue-mesh
 curl http://localhost:3000/api/polymarket-tracker/status
+curl http://localhost:8000/healthz
 ```
 
 ## Deployment notes
@@ -176,7 +330,7 @@ curl http://localhost:3000/api/polymarket-tracker/status
 2. Import the repository into Vercel.
 3. Add production environment variables in Vercel project settings.
 4. Deploy.
-5. Confirm `/api/health`, `/api/runtime/status`, `/api/revenue-mesh`, and `/api/polymarket-tracker/status` return valid JSON.
+5. Confirm `/api/health`, `/api/runtime/status`, `/api/revenue-mesh`, `/api/polymarket-tracker/status`, and (on the Python runtime) `/healthz` return valid JSON.
 
 ### Vercel CLI deployment
 
@@ -201,6 +355,7 @@ vercel --prod
 - Confirm no live-money trading path is enabled by the Finnhub runtime.
 - Confirm `/api/polymarket-tracker/status` reports alert-only mode, watched wallets, and risk guardrails.
 - Confirm no live-money Polymarket copy-trading path is enabled unless `POLYMARKET_LIVE_EXECUTION=true` and human approval is recorded.
+- Confirm `python -m pytest tests/test_photo_ai_haul.py` passes and `/healthz` and `/api/scan` return valid responses.
 - Confirm no prohibited claims remain in public copy.
 
 ## Form processing
