@@ -8,8 +8,11 @@ const rateLimit = new Map<string, { count: number; resetAt: number }>();
 
 const FIELD_LIMITS: Record<keyof RevenueIntakeInput, number> = {
   source: 120,
+  sourceId: 120,
+  channel: 20,
   fullName: 120,
   company: 160,
+  domain: 160,
   email: 160,
   phone: 40,
   title: 240,
@@ -53,8 +56,11 @@ function asNumber(value: unknown): number {
 function inputFromBody(body: Record<string, unknown>): RevenueIntakeInput {
   return {
     source: asString(body.source, FIELD_LIMITS.source) || 'api_revenue_command_intake',
+    sourceId: asString(body.sourceId, FIELD_LIMITS.sourceId) || undefined,
+    channel: (asString(body.channel, FIELD_LIMITS.channel) as RevenueIntakeInput['channel']) || 'unknown',
     fullName: asString(body.fullName, FIELD_LIMITS.fullName) || 'Unknown Contact',
     company: asString(body.company, FIELD_LIMITS.company) || 'Unknown Organization',
+    domain: asString(body.domain, FIELD_LIMITS.domain) || undefined,
     email: asString(body.email, FIELD_LIMITS.email),
     phone: asString(body.phone, FIELD_LIMITS.phone),
     title: asString(body.title, FIELD_LIMITS.title) || asString(body.serviceType, FIELD_LIMITS.serviceType) || 'Revenue intake',
