@@ -1,0 +1,15 @@
+{
+	email {$ACME_EMAIL:admin@alreadyherellc.com}
+}
+
+{$OCI_CANONICAL_DOMAIN:localhost} {
+	reverse_proxy canonical:8443 {
+		header_up Host {host}
+		header_up X-Real-IP {remote}
+		header_up X-Forwarded-For {remote}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	encode zstd gzip
+	log
+}
