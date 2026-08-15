@@ -10,9 +10,9 @@ const input = {
   channel: 'email',
   fullName: 'Warm Prospect',
   company: 'Prospect Co',
-  email: 'warm@prospect.invalid',
+  email: 'warm@prospect.alreadyherellc.com',
   phone: '(602) 555-0500',
-  domain: 'prospect.invalid',
+  domain: 'prospect.alreadyherellc.com',
   messageType: 'intro_email',
   offer: 'Field Operations Workflow Review',
   messageBody: 'Quick note about operational bottlenecks.',
@@ -35,7 +35,7 @@ const outreachId = writes.find((w) => w.table === 'outreach').id;
 const outreach = await store.getRecord('outreach', outreachId);
 assert.equal(outreach.status, 'sent');
 assert.equal(outreach.company, 'Prospect Co');
-assert.equal(outreach.email, 'warm@prospect.invalid');
+assert.equal(outreach.email, 'warm@prospect.alreadyherellc.com');
 
 const followups = await store.queryTable('followups', 100);
 const matched = followups.find((f) => f.related_record_id === outreachId);
