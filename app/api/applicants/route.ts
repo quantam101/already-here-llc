@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 import { buildTechnicianRecords, type TechnicianInput } from '@/lib/technician';
 import { getCanonicalStore } from '@/lib/canonical-store';
+import { buildFollowUpRecord } from '@/lib/followups';
 
 export const runtime = 'nodejs';
 
@@ -311,6 +312,25 @@ export async function POST(request: Request) {
     const writeResult = await getCanonicalStore().executeWrites(canonicalWrites);
     if (!writeResult.ok) {
       console.error('[applicants] canonical write failed', writeResult.failed);
+    } else {
+      const organizationId = canonicalWrites.find((w) => w.table === 'organizations')?.id;
+      const contactId = canonicalWrites.find((w) => w.table === 'contacts')?.id;
+      const technicianId = canonicalWrites.find((w) => w.table === 'technicians')?.id;
+      if (organizationId) {
+        const followUp = buildFollowUpRecord({
+          source: 'applicant_form',
+          organizationId,
+          contactId,
+          relatedRecordType: 'technician',
+          relatedRecordId: technicianId,
+          lane: 'technician_recruiting',
+          purpose: `Screen applicant ${record.fullName} — ${record.city}, ${record.state}`,
+          channel: 'email',
+          offer: record.workLanes.join(', '),
+          status: 'open'
+        });
+        await getCanonicalStore().executeWrites([followUp]);
+      }
     }
     await deliverApplicant(record, formData);
     return NextResponse.json({ ok: true, applicantId, canonicalRecordCount: canonicalWrites.length });

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { buildRevenueCommandProofDemos, buildRevenueIntakeProof, type RevenueIntakeInput } from '@/lib/revenue-command-intake';
 import { getCanonicalStore } from '@/lib/canonical-store';
+import { buildFollowUpRecord } from '@/lib/followups';
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 10;
@@ -123,5 +124,28 @@ export async function POST(request: Request) {
 
   const proof = buildRevenueIntakeProof(input);
   const writeResult = await getCanonicalStore().executeWrites(proof.databaseReadyWrites);
+
+  if (writeResult.ok) {
+    const organizationId = proof.databaseReadyWrites.find((w) => w.table === 'organizations')?.id;
+    const contactId = proof.databaseReadyWrites.find((w) => w.table === 'contacts')?.id;
+    const opportunityId = proof.databaseReadyWrites.find((w) => w.table === 'opportunities')?.id;
+    if (organizationId) {
+      const followUp = buildFollowUpRecord({
+        source: input.source,
+        sourceId: input.sourceId,
+        organizationId,
+        contactId,
+        relatedRecordType: 'opportunity',
+        relatedRecordId: opportunityId,
+        lane: 'revenue_command',
+        purpose: `Follow up on ${input.title || input.serviceType || 'revenue intake'} from ${input.company}`,
+        channel: input.channel,
+        offer: input.serviceType,
+        status: 'open'
+      });
+      await getCanonicalStore().executeWrites([followUp]);
+    }
+  }
+
   return NextResponse.json({ ...proof, writeResult });
 }

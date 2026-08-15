@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { buildWorkOrderRecords, matchTechniciansForWorkOrder, type WorkOrderInput } from '@/lib/field-operations';
 import { getCanonicalStore } from '@/lib/canonical-store';
+import { buildFollowUpRecord } from '@/lib/followups';
 
 export const runtime = 'nodejs';
 
@@ -98,6 +99,24 @@ export async function POST(request: Request) {
   }
 
   const workOrderId = writes.find((w) => w.table === 'jobs')!.id;
+  const organizationId = writes.find((w) => w.table === 'organizations')!.id;
+  const contactId = writes.find((w) => w.table === 'contacts')!.id;
+
+  const followUp = buildFollowUpRecord({
+    source: input.source,
+    sourceId: input.sourceId,
+    organizationId,
+    contactId,
+    relatedRecordType: 'work_order',
+    relatedRecordId: workOrderId,
+    lane: 'field_operations',
+    purpose: `Follow up on ${input.serviceType} work order for ${input.company}`,
+    channel: 'email',
+    offer: input.serviceType,
+    status: 'open'
+  });
+  await getCanonicalStore().executeWrites([followUp]);
+
   const matches = await matchTechniciansForWorkOrder(workOrderId);
 
   return NextResponse.json({
