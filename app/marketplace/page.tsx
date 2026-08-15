@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { FleetMarketplaceListings } from '@/components/FleetMarketplaceListings';
 import { MobilityMarketplaceForm } from '@/components/MobilityMarketplaceForm';
 import { fleetAvailability, proDeliveryKit, rentalPricing } from '@/lib/scooter-rental';
-import { arrangementTypes, fleetMarketplaceFeatures, howItWorks, marketplaceCategories, marketplaceMission, sampleListings } from '@/lib/fleet-marketplace';
+import { arrangementTypes, fleetMarketplaceFeatures, howItWorks, marketplaceCategories, marketplaceMission, demoListings } from '@/lib/fleet-marketplace';
 
 export const metadata: Metadata = {
   title: 'GINC Marketplace — Vehicles, Work, and People',
@@ -62,7 +62,7 @@ export default function MarketplacePage() {
         </div>
       </section>
 
-      <FleetMarketplaceListings listings={sampleListings} />
+      <FleetMarketplaceListings listings={demoListings} />
 
       <section className="mt-12 card p-8">
         <h2 className="text-2xl font-semibold text-navy">How it works</h2>

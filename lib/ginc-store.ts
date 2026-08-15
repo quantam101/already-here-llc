@@ -25,8 +25,8 @@ function seedNetwork(): GincNetwork {
       {
         id: 'MEM-001',
         type: 'owner',
-        fullName: 'Sample Owner',
-        email: 'owner@example.com',
+        fullName: 'Demo Owner',
+        email: 'owner@alreadyherellc.com',
         phone: '602-000-0001',
         city: 'Phoenix',
         state: 'AZ',
@@ -38,8 +38,8 @@ function seedNetwork(): GincNetwork {
       {
         id: 'MEM-002',
         type: 'business',
-        fullName: 'Sample Roofing Crew',
-        email: 'crew@example.com',
+        fullName: 'Demo Roofing Crew',
+        email: 'crew@alreadyherellc.com',
         phone: '602-000-0002',
         city: 'Tempe',
         state: 'AZ',
