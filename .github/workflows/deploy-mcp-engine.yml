@@ -90,7 +90,7 @@ jobs:
             pm2 save
 
             sleep 3
-            curl -sf http://localhost:8000/healthz | grep '"status":"ok"'
+            curl -sf http://127.0.0.1:8000/healthz | grep '"status":"ok"'
             echo ""
             echo "MCP Trading Engine deployed successfully in PAPER mode"
             echo "Access: http://$(curl -s ifconfig.me):8000"
