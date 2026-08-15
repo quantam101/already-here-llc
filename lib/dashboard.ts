@@ -17,7 +17,8 @@ const TRACKED_TABLES = [
   'affiliate_links',
   'revenue_events',
   'reviews',
-  'proof_of_work'
+  'proof_of_work',
+  'followups'
 ];
 
 export interface DashboardMetrics {
@@ -26,6 +27,8 @@ export interface DashboardMetrics {
   dispatchReadyTechnicians: number;
   totalRevenueCents: number;
   totalRevenueUsd: number;
+  openFollowUps: number;
+  overdueFollowUps: number;
   recentRecords: Array<{
     table: string;
     id: string;
@@ -43,9 +46,10 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     counts[table] = records.length;
   }));
 
-  const [technicians, revenueEvents, recent] = await Promise.all([
+  const [technicians, revenueEvents, followups, recent] = await Promise.all([
     await store.queryTable('technicians', 10000),
     await store.queryTable('revenue_events', 10000),
+    await store.queryTable('followups', 10000),
     await store.queryAll(10)
   ]);
 
@@ -57,6 +61,13 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     const amount = typeof event.amount_cents === 'number' ? event.amount_cents : 0;
     return sum + (amount > 0 ? amount : 0);
   }, 0);
+
+  const now = new Date().toISOString();
+  const openFollowUps = followups.filter((f) => f.status === 'open' || f.status === 'in_progress').length;
+  const overdueFollowUps = followups.filter((f) => {
+    const dueAt = typeof f.due_at === 'string' ? f.due_at : null;
+    return (f.status === 'open' || f.status === 'in_progress') && dueAt && dueAt < now;
+  }).length;
 
   const recentRecords = recent.map((record) => ({
     table: String(record.table_name ?? ''),
@@ -71,6 +82,8 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     dispatchReadyTechnicians,
     totalRevenueCents,
     totalRevenueUsd: totalRevenueCents / 100,
+    openFollowUps,
+    overdueFollowUps,
     recentRecords
   };
 }

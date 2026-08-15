@@ -32,6 +32,8 @@ export default async function DashboardPage() {
     ['Work orders', metrics.counts.jobs + metrics.counts.dispatches + metrics.counts.hauling_jobs + metrics.counts.repair_orders],
     ['Leads', metrics.counts.leads],
     ['Opportunities', metrics.counts.opportunities],
+    ['Open follow-ups', metrics.openFollowUps],
+    ['Overdue follow-ups', metrics.overdueFollowUps],
     ['Collected revenue', formatCurrency(metrics.totalRevenueCents)]
   ];
 
