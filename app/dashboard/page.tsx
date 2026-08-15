@@ -1,29 +1,90 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getDashboardMetrics } from '@/lib/dashboard';
 
 export const metadata: Metadata = {
-  title: 'GINC Dashboard',
-  description: 'Manage your GINC listings, rentals, work matches, referrals, and payments.',
+  title: 'Executive Dashboard',
+  description: 'Live operational metrics for leads, customers, technicians, work orders, and revenue.',
   alternates: { canonical: '/dashboard' }
 };
 
+export const dynamic = 'force-dynamic';
+
 const sections = [
-  { title: 'My listings', description: 'Vehicles, spaces, and equipment you have listed. Update availability, pricing, and photos.', action: 'Manage listings', href: '/ginc/network' },
-  { title: 'My rentals', description: 'Active and upcoming scooter, vehicle, and equipment rentals. View agreements and return dates.', action: 'View rentals', href: '/scooter-rentals' },
-  { title: 'My work & contracts', description: 'Jobs, contract opportunities, and worker matches you have posted or applied to.', action: 'View matches', href: '/connect' },
-  { title: 'Network', description: 'Browse the full GINC network: members, listings, jobs, and matches.', action: 'Browse network', href: '/ginc/network' },
-  { title: 'Referrals', description: 'Your referral code, shareable link, and earned credits.', action: 'View referrals', href: '/dashboard/referrals' },
+  { title: 'Technician network', description: 'Applicants, dispatch-ready technicians, and skill matching.', action: 'View network', href: '/technician-network' },
+  { title: 'Work orders', description: 'Open dispatches, assignments, and closeout queue.', action: 'View work orders', href: '/dispatch' },
+  { title: 'Opportunities', description: 'Qualified leads, proposals, and revenue pipeline.', action: 'View pipeline', href: '/revenue-mesh' },
+  { title: 'GINC marketplace', description: 'Vehicles, spaces, equipment listings, rentals, and matches.', action: 'Browse GINC', href: '/ginc/network' },
+  { title: 'Referrals', description: 'Referral codes, shareable links, and earned credits.', action: 'View referrals', href: '/dashboard/referrals' },
   { title: 'Payments', description: 'Deposit and subscription invoices, payment methods, and payout settings.', action: 'View payments', href: '/dashboard/payments' }
 ];
 
-export default function DashboardPage() {
+function formatCurrency(cents: number) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
+}
+
+export default async function DashboardPage() {
+  const metrics = await getDashboardMetrics();
+
+  const quickStats: Array<[string, string | number]> = [
+    ['Technicians', metrics.counts.technicians],
+    ['Dispatch-ready', metrics.dispatchReadyTechnicians],
+    ['Work orders', metrics.counts.jobs + metrics.counts.dispatches + metrics.counts.hauling_jobs + metrics.counts.repair_orders],
+    ['Leads', metrics.counts.leads],
+    ['Opportunities', metrics.counts.opportunities],
+    ['Open follow-ups', metrics.openFollowUps],
+    ['Overdue follow-ups', metrics.overdueFollowUps],
+    ['Collected revenue', formatCurrency(metrics.totalRevenueCents)]
+  ];
+
   return (
     <div className="container-shell py-16 lg:py-24">
-      <span className="eyebrow">GINC Dashboard</span>
-      <h1 className="section-title mt-5">Dashboard</h1>
+      <span className="eyebrow">Executive dashboard</span>
+      <h1 className="section-title mt-5">Operating metrics</h1>
       <p className="section-copy">
-        Manage your GINC listings, rentals, work matches, referrals, and payments from one place. This is a preview dashboard — authentication and live data integration will be added before launch.
+        Live counts from the canonical operating database. Data refreshes on every request and reflects records written through intake, dispatch, applicant, and revenue flows.
       </p>
+
+      <section className="mt-10 rounded-2xl border border-borderBrand bg-soft p-6">
+        <h2 className="text-lg font-semibold text-navy">Quick stats</h2>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {quickStats.map(([label, value]) => (
+            <div key={label} className="rounded-2xl border border-borderBrand bg-white p-5 text-center">
+              <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
+              <p className="mt-2 text-2xl font-semibold text-action">{value}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-xs text-slate-500">Generated at {metrics.generatedAt}</p>
+      </section>
+
+      {metrics.recentRecords.length > 0 ? (
+        <section className="mt-10 rounded-2xl border border-borderBrand bg-soft p-6">
+          <h2 className="text-lg font-semibold text-navy">Recent canonical records</h2>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-borderBrand text-left text-slate-500">
+                <tr>
+                  <th className="py-2 pr-4">Table</th>
+                  <th className="py-2 pr-4">ID</th>
+                  <th className="py-2 pr-4">Source</th>
+                  <th className="py-2">Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.recentRecords.map((record) => (
+                  <tr key={`${record.table}-${record.id}`} className="border-b border-borderBrand/50">
+                    <td className="py-2 pr-4 font-medium text-navy">{record.table}</td>
+                    <td className="py-2 pr-4 font-mono text-slate-600">{record.id.slice(0, 24)}...</td>
+                    <td className="py-2 pr-4 text-slate-600">{record.source}</td>
+                    <td className="py-2 text-slate-600">{new Date(record.created_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
 
       <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {sections.map((section) => (
@@ -36,24 +97,6 @@ export default function DashboardPage() {
           </section>
         ))}
       </div>
-
-      <section className="mt-12 rounded-2xl border border-borderBrand bg-soft p-6">
-        <h2 className="text-lg font-semibold text-navy">Quick stats</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            ['Active listings', '1'],
-            ['Pending bookings', '0'],
-            ['Open matches', '0'],
-            ['Referral credits', '$0']
-          ].map(([label, value]) => (
-            <div key={label} className="rounded-2xl border border-borderBrand bg-white p-5 text-center">
-              <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
-              <p className="mt-2 text-2xl font-semibold text-action">{value}</p>
-            </div>
-          ))}
-        </div>
-        <p className="mt-4 text-sm text-slate-600">Live statistics will appear once backend data is connected. Until then, all dashboard links lead to the relevant marketplace or intake pages.</p>
-      </section>
     </div>
   );
 }

@@ -225,7 +225,7 @@ export default function HomePage() {
                   <div className="flex items-start justify-between gap-4 border-b border-borderBrand pb-5" data-proof-border="true">
                     <div>
                       <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#475569]">Closeout packet</p>
-                      <h3 className="mt-2 text-xl font-bold leading-snug text-[#071B34]">Redacted field-work sample</h3>
+                      <h3 className="mt-2 text-xl font-bold leading-snug text-[#071B34]">Redacted field-work example</h3>
                     </div>
                     <span className="rounded-full border border-[#CBD5E1] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#475569]" data-proof-surface="true">Completed</span>
                   </div>

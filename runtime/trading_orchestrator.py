@@ -28,8 +28,8 @@ WATCHLIST: Final[List[str]] = [
     if s.strip()
 ]
 SCAN_INTERVAL_SEC: Final[float] = float(_env("MCP_SCAN_INTERVAL", "30"))
-ENGINE_URL: Final[str] = _env("MCP_ENGINE_URL", "http://127.0.0.1:8000")
-RH_MCP_URL: Final[str] = _env("MCP_RH_GATEWAY_URL", "https://agent.robinhood.com/mcp/trading")
+ENGINE_URL: Final[str] = (_env("MCP_ENGINE_URL") or "").strip()
+RH_MCP_URL: Final[str] = (_env("MCP_RH_GATEWAY_URL") or "").strip()
 API_KEY: Final[str] = _env("MCP_API_KEY", "")
 DATA_DIR: Final[str] = _env("MCP_DATA_DIR", "./data")
 MAX_CONCURRENT_SCANS: Final[int] = int(_env("MCP_MAX_CONCURRENT_SCANS", "5"))
@@ -137,6 +137,9 @@ class MarketDataAgent:
         return headers
 
     async def fetch_quote(self, symbol: str) -> Optional[Dict[str, Any]]:
+        if not RH_MCP_URL:
+            logger.warning("MCP_RH_GATEWAY_URL not configured; skipping quote fetch")
+            return None
         payload = {
             "jsonrpc": "2.0",
             "method": "tools/call",
@@ -154,6 +157,9 @@ class MarketDataAgent:
         return None
 
     async def fetch_orderbook(self, symbol: str) -> Optional[Dict[str, Any]]:
+        if not RH_MCP_URL:
+            logger.warning("MCP_RH_GATEWAY_URL not configured; skipping orderbook fetch")
+            return None
         payload = {
             "jsonrpc": "2.0",
             "method": "tools/call",
@@ -176,7 +182,7 @@ class ScannerAgent:
     async def start(self) -> None:
         import httpx
         self._client = httpx.AsyncClient(timeout=5.0)
-        logger.info("ScannerAgent started — engine=%s mode=%s live_allowed=%s", ENGINE_URL, TRADING_MODE, live_trade_allowed())
+        logger.info("ScannerAgent started — engine=%s mode=%s live_allowed=%s", ENGINE_URL or "(not configured)", TRADING_MODE, live_trade_allowed())
 
     async def stop(self) -> None:
         if self._client:
@@ -189,6 +195,9 @@ class ScannerAgent:
         return headers
 
     async def scan(self, symbol: str, rsi: float, imbalance: float, prices: List[float], volumes: List[float], current_price: float, bids: List[List[float]], asks: List[List[float]]) -> Optional[Dict[str, Any]]:
+        if not ENGINE_URL:
+            logger.warning("MCP_ENGINE_URL not configured; skipping scan")
+            return None
         payload = {
             "jsonrpc": "2.0",
             "method": "tools/call",
@@ -216,6 +225,9 @@ class ScannerAgent:
             return None
 
     async def execute_trade(self, symbol: str, rsi: float, bids: List[List[float]], asks: List[List[float]], prices: List[float], volumes: List[float]) -> Optional[Dict[str, Any]]:
+        if not ENGINE_URL:
+            logger.warning("MCP_ENGINE_URL not configured; skipping trade execution")
+            return None
         if not live_trade_allowed():
             return {
                 "status": "PAPER_ONLY",

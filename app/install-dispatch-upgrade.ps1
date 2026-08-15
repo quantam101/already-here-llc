@@ -393,12 +393,13 @@ SMTP_PORT=587
 SMTP_SECURE=false
 
 SMTP_USER=dispatch@alreadyherellc.com
-SMTP_PASS=PUT_SECURE_PASSWORD_OR_APP_PASSWORD_HERE
+SMTP_PASS=
 
 DISPATCH_FROM_EMAIL=dispatch@alreadyherellc.com
 DISPATCH_TO_EMAIL=dispatch@alreadyherellc.com
 
-NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+# Set your Google Analytics 4 measurement ID in .env.local or Vercel
+NEXT_PUBLIC_GA_MEASUREMENT_ID=
 '@ | Set-Content -Encoding UTF8 ".env.dispatch.example"
 
 Write-Host ""

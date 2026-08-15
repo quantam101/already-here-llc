@@ -10,9 +10,9 @@ This is a [Trusted Web Activity](https://developer.chrome.com/docs/android/trust
 
 ## Files to edit after you have a domain
 
-- `app/src/main/AndroidManifest.xml` — replace `https://REPLACE_WITH_YOUR_DOMAIN/` with your real HTTPS URL.
-- `app/src/main/res/values/strings.xml` — replace `https://REPLACE_WITH_YOUR_DOMAIN/.well-known/assetlinks.json` in `asset_statements`.
-- `public/assetlinks.json` in the repo root — update `package_name`, `sha256_cert_fingerprints` with your release keystore SHA-256 fingerprint, and serve it at `https://YOUR_DOMAIN/.well-known/assetlinks.json`.
+- `app/src/main/AndroidManifest.xml` is set to `https://www.alreadyherellc.com/`.
+- `app/src/main/res/values/strings.xml` points to `https://www.alreadyherellc.com/.well-known/assetlinks.json`.
+- `public/assetlinks.json` in the repo root already declares `com.alreadyherellc.photoaihaul`. Add your release keystore SHA-256 fingerprint to `sha256_cert_fingerprints` and serve the file at `https://www.alreadyherellc.com/.well-known/assetlinks.json`.
 - `app/build.gradle` — bump `versionCode` / `versionName` for each Play Console release.
 
 ## Build the release AAB
