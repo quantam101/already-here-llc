@@ -63,7 +63,8 @@ export default function ServiceOfferPage({ offer }: { offer: ServiceOffer }) {
       <section className="border-b border-borderBrand bg-white">
         <div className="container-shell py-16 lg:py-24">
           <span className="eyebrow">{offer.eyebrow}</span>
-          <h1 className="mt-5 max-w-4xl text-4xl font-semibold tracking-tight text-navy sm:text-5xl">
+          <p className="mt-3 text-sm font-semibold text-action">{offer.name}</p>
+          <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-navy sm:text-5xl">
             {offer.title}
           </h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
