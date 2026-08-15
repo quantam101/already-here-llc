@@ -1,5 +1,7 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
+import { buildTechnicianRecords, type TechnicianInput } from '@/lib/technician';
+import { getCanonicalStore } from '@/lib/canonical-store';
 
 export const runtime = 'nodejs';
 
@@ -124,6 +126,33 @@ function validate(formData: FormData): string | null {
   }
 
   return null;
+}
+
+function buildTechnicianInput(applicantId: string, formData: FormData): TechnicianInput {
+  return {
+    fullName: asCleanString(formData, 'fullName'),
+    email: asCleanString(formData, 'email'),
+    phone: asCleanString(formData, 'phone'),
+    city: asCleanString(formData, 'city'),
+    state: asCleanString(formData, 'state'),
+    zipCode: asCleanString(formData, 'zipCode'),
+    workerPath: asCleanString(formData, 'workerPath'),
+    workLanes: formData.getAll('workLanes').filter((value): value is string => typeof value === 'string').map((value) => value.trim()),
+    skills: asCleanString(formData, 'skills'),
+    certifications: asCleanString(formData, 'certifications'),
+    tools: asCleanString(formData, 'tools'),
+    availability: asCleanString(formData, 'availability'),
+    travelRadiusMiles: Number(asCleanString(formData, 'travelRadiusMiles')),
+    transportation: asCleanString(formData, 'transportation'),
+    yearsExperience: asCleanString(formData, 'yearsExperience') ? Number(asCleanString(formData, 'yearsExperience')) : 0,
+    hourlyRate: asCleanString(formData, 'hourlyRate'),
+    source: 'website_applicant_form',
+    sourceId: applicantId,
+    submittedAt: new Date().toISOString(),
+    consentContact: asCleanString(formData, 'consentContact') === 'true',
+    consentData: asCleanString(formData, 'consentData') === 'true',
+    consentTruth: asCleanString(formData, 'consentTruth') === 'true'
+  };
 }
 
 function buildRecord(applicantId: string, formData: FormData) {
@@ -277,8 +306,14 @@ export async function POST(request: Request) {
   const record = buildRecord(applicantId, formData);
 
   try {
+    const technicianInput = buildTechnicianInput(applicantId, formData);
+    const canonicalWrites = buildTechnicianRecords(technicianInput);
+    const writeResult = getCanonicalStore().executeWrites(canonicalWrites);
+    if (!writeResult.ok) {
+      console.error('[applicants] canonical write failed', writeResult.failed);
+    }
     await deliverApplicant(record, formData);
-    return NextResponse.json({ ok: true, applicantId });
+    return NextResponse.json({ ok: true, applicantId, canonicalRecordCount: canonicalWrites.length });
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Application delivery failed.' }, { status: 502 });
   }
