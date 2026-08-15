@@ -14,7 +14,7 @@ export interface FollowUpInput {
   purpose: string;
   assignedTo?: string;
   dueAt?: string;
-  channel?: 'email' | 'phone' | 'sms' | 'web' | 'in_person' | 'voice' | 'photo' | 'unknown';
+  channel?: 'email' | 'phone' | 'sms' | 'web' | 'in_person' | 'voice' | 'photo' | 'social' | 'vendor' | 'other' | 'unknown';
   offer?: string;
   notes?: string;
   status?: FollowUpStatus;

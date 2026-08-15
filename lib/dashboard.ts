@@ -18,7 +18,8 @@ const TRACKED_TABLES = [
   'revenue_events',
   'reviews',
   'proof_of_work',
-  'followups'
+  'followups',
+  'outreach'
 ];
 
 export interface DashboardMetrics {
