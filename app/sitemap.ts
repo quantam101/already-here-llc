@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/services`,                         lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/field-operations-workflow-review`,  lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.92 },
     { url: `${base}/equipment-lifecycle-assessment`,    lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.92 },
+    { url: `${base}/autoworks`,                         lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
     { url: `${base}/who-we-serve`,                      lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/dispatch`,                          lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/rfq`,                     lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
