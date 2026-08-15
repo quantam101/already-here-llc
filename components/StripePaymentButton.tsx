@@ -2,19 +2,31 @@
 
 import { useState } from 'react';
 
+export interface StripePaymentButtonProps {
+  mode?: 'payment' | 'subscription';
+  amount?: number;
+  productName?: string;
+  description?: string;
+  successPath?: string;
+  cancelPath?: string;
+  rentalId?: string;
+  referralCode?: string;
+  metadata?: Record<string, string>;
+  children: React.ReactNode;
+}
+
 export function StripePaymentButton({
   mode = 'payment',
   amount = 30500,
+  productName = 'Already Here service',
+  description = '',
+  successPath = '/dashboard/payments?success=true',
+  cancelPath = '/',
   rentalId,
   referralCode,
+  metadata,
   children
-}: {
-  mode?: 'payment' | 'subscription';
-  amount?: number;
-  rentalId?: string;
-  referralCode?: string;
-  children: React.ReactNode;
-}) {
+}: StripePaymentButtonProps) {
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
@@ -23,7 +35,16 @@ export function StripePaymentButton({
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode, amount, rentalId, referralCode })
+        body: JSON.stringify({
+          mode,
+          amount,
+          productName,
+          description,
+          successPath,
+          cancelPath,
+          referralCode,
+          metadata: { rentalId: rentalId ?? '', ...metadata }
+        })
       });
       const payload = (await response.json().catch(() => null)) as { url?: string; message?: string } | null;
       if (!response.ok || !payload?.url) throw new Error(payload?.message || 'Checkout could not be started.');
