@@ -91,7 +91,7 @@ export async function GET(request: Request) {
     source: url.searchParams.get('source') || 'api_revenue_command_intake_get',
     fullName: url.searchParams.get('fullName') || 'Smoke Test',
     company: url.searchParams.get('company') || 'Already Here LLC',
-    email: url.searchParams.get('email') || 'smoke@example.invalid',
+    email: url.searchParams.get('email') || 'smoke-test@alreadyherellc.com',
     title: url.searchParams.get('title') || 'Urgent same-day dispatch revenue opportunity by noon $500',
     body: url.searchParams.get('body') || 'Network smart hands dispatch proof request.',
     location: url.searchParams.get('location') || 'Phoenix, AZ',
