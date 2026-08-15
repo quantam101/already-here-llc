@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server.js';
 import Stripe from 'stripe';
+import { canonicalId } from '@/lib/canonical-ids';
+import { getCanonicalStore } from '@/lib/canonical-store';
 
 export const runtime = 'nodejs';
 
@@ -24,9 +26,48 @@ export async function POST(request: Request) {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
-    const { rentalId, referralCode } = session.metadata ?? {};
-    console.log('[stripe webhook] Payment completed', { rentalId, referralCode, amount: session.amount_total, sessionId: session.id });
-    // TODO: mark rental as paid, trigger referral credit, send confirmation email/SMS
+    const { referralCode, ...metadata } = session.metadata ?? {};
+    const now = new Date().toISOString();
+
+    const revenueId = canonicalId(
+      'revenue',
+      session.id,
+      String(session.customer_email ?? 'unknown'),
+      now
+    );
+
+    const store = getCanonicalStore();
+    await store.executeWrites([
+      {
+        table: 'revenue_events',
+        id: revenueId,
+        action: 'insert',
+        record: {
+          id: revenueId,
+          source: 'stripe_checkout',
+          channel: 'stripe',
+          event_type: event.type,
+          session_id: session.id,
+          customer_email: session.customer_email ?? null,
+          customer_name: session.customer_details?.name ?? null,
+          amount_cents: session.amount_total ?? 0,
+          currency: session.currency ?? 'usd',
+          payment_status: session.payment_status,
+          status: 'collected',
+          referral_code: referralCode ?? null,
+          metadata: JSON.stringify(metadata),
+          created_at: now,
+          updated_at: now,
+        },
+      },
+    ]);
+
+    console.log('[stripe webhook] Revenue recorded', {
+      revenueId,
+      sessionId: session.id,
+      amountCents: session.amount_total,
+      referralCode
+    });
   }
 
   return NextResponse.json({ received: true });
