@@ -114,4 +114,39 @@ const demos = buildRevenueCommandProofDemos();
 assert.equal(demos.length, 5);
 assert.deepEqual(new Set(demos.map((demo) => demo.lane)), new Set(['Dispatch', 'AutoWorks', 'Hauling', 'Procurement', 'Product / Affiliate']));
 
+const webLead = buildRevenueIntakeProof({
+  source: 'website_intake',
+  sourceId: 'form-123',
+  channel: 'web',
+  fullName: 'Acme Contact',
+  company: 'Acme Inc',
+  domain: 'acme.example.invalid',
+  email: 'buyer@acme.example.invalid',
+  phone: '(602) 555-0100',
+  title: 'Dispatch request from website',
+  body: 'Need same-day dispatch help.',
+  submittedAt: '2026-06-18T12:00:00.000Z'
+});
+const smsLead = buildRevenueIntakeProof({
+  source: 'sms_intake',
+  sourceId: 'sms-456',
+  channel: 'sms',
+  fullName: 'Different Name',
+  company: 'ACME, INC.',
+  email: 'Buyer@ACME.example.invalid',
+  phone: '602-555-0100',
+  title: 'SMS dispatch help',
+  body: 'Same day dispatch from SMS.',
+  submittedAt: '2026-06-18T13:00:00.000Z'
+});
+const webOrg = webLead.databaseReadyWrites.find((write) => write.table === 'organizations');
+const smsOrg = smsLead.databaseReadyWrites.find((write) => write.table === 'organizations');
+const webContact = webLead.databaseReadyWrites.find((write) => write.table === 'contacts');
+const smsContact = smsLead.databaseReadyWrites.find((write) => write.table === 'contacts');
+assert.ok(webOrg && smsOrg, 'organization writes should exist');
+assert.ok(webContact && smsContact, 'contact writes should exist');
+assert.equal(webOrg.id, smsOrg.id, 'same domain should resolve to one canonical organization');
+assert.equal(webContact.id, smsContact.id, 'same normalized email should resolve to one canonical contact');
+assert.notEqual(webLead.intakeId, smsLead.intakeId, 'different source IDs should still produce distinct intake records');
+
 console.log('revenue command intake tests passed');

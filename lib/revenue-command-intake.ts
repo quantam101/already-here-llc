@@ -1,5 +1,5 @@
 import { getRevenueCommandAgents } from './revenue-command-agents';
-import { canonicalId } from './canonical-ids';
+import { canonicalId, canonicalSlug, normalizeDomain, normalizeEmail, normalizePhone } from './canonical-ids';
 import type { DatabaseReadyWrite } from './canonical-store';
 
 export type IntakeLane = 'Dispatch' | 'AutoWorks' | 'Hauling' | 'Procurement' | 'Product / Affiliate' | 'AI lead capture';
@@ -7,8 +7,11 @@ export type IntakePriority = 'P0' | 'P1' | 'P2';
 
 export interface RevenueIntakeInput {
   source: string;
+  sourceId?: string;
+  channel?: 'web' | 'email' | 'sms' | 'voice' | 'photo' | 'unknown';
   fullName: string;
   company: string;
+  domain?: string;
   email: string;
   phone?: string;
   title: string;
@@ -104,9 +107,16 @@ export function buildRevenueIntakeProof(input: RevenueIntakeInput): RevenueIntak
   const submittedAt = input.submittedAt || new Date().toISOString();
   const lane = classifyRevenueIntake(input);
   const { priority, score } = scoreRevenueIntake(input, lane);
-  const intakeId = canonicalId('intake', input.company, input.email, input.title, submittedAt);
-  const organizationId = canonicalId('org', input.company || 'unknown');
-  const contactId = canonicalId('contact', organizationId, input.email || input.fullName);
+  const normalizedEmail = normalizeEmail(input.email);
+  const normalizedPhone = normalizePhone(input.phone);
+  const normalizedDomain = normalizeDomain(input.domain, input.company, input.email);
+  const orgKey = normalizedDomain || canonicalSlug(input.company || 'unknown');
+  const organizationId = canonicalId('org', orgKey);
+  const contactKey = normalizedEmail || normalizedPhone || canonicalSlug(input.fullName || 'unknown');
+  const contactId = canonicalId('contact', organizationId, contactKey);
+
+  const sourceKey = input.sourceId || input.source;
+  const intakeId = canonicalId('intake', sourceKey, input.title, submittedAt);
   const leadId = canonicalId('lead', intakeId, 'lead');
   const opportunityId = canonicalId('opp', leadId, lane);
   const conversationId = canonicalId('conversation', leadId);
@@ -118,8 +128,8 @@ export function buildRevenueIntakeProof(input: RevenueIntakeInput): RevenueIntak
   const auditId = canonicalId('audit', intakeId);
 
   const writes: DatabaseReadyWrite[] = [
-    { table: 'organizations', id: organizationId, action: 'insert', record: { id: organizationId, name: input.company || 'Unknown Organization', organization_type: 'lead_source', source: input.source, service_area: input.location || null, created_at: submittedAt, updated_at: submittedAt } },
-    { table: 'contacts', id: contactId, action: 'insert', record: { id: contactId, organization_id: organizationId, full_name: input.fullName || 'Unknown Contact', email: input.email || null, phone: input.phone || null, source: input.source, consent_status: 'unknown', created_at: submittedAt, updated_at: submittedAt } },
+    { table: 'organizations', id: organizationId, action: 'insert', record: { id: organizationId, name: input.company || 'Unknown Organization', domain: normalizedDomain || null, organization_type: 'lead_source', source: input.source, source_id: input.sourceId || null, aliases: [input.company, normalizedDomain].filter(Boolean), service_area: input.location || null, created_at: submittedAt, updated_at: submittedAt } },
+    { table: 'contacts', id: contactId, action: 'insert', record: { id: contactId, organization_id: organizationId, full_name: input.fullName || 'Unknown Contact', email: normalizedEmail || null, phone: normalizedPhone || null, source: input.source, source_id: input.sourceId || null, channel: input.channel || 'unknown', aliases: [input.fullName, normalizedEmail, normalizedPhone].filter(Boolean), consent_status: 'unknown', created_at: submittedAt, updated_at: submittedAt } },
     { table: 'leads', id: leadId, action: 'insert', record: { id: leadId, contact_id: contactId, organization_id: organizationId, source_channel: input.source, lane, title: input.title, body: input.body, raw_payload_json: JSON.stringify(input), status: 'new', created_at: submittedAt, updated_at: submittedAt } },
     { table: 'opportunities', id: opportunityId, action: 'insert', record: { id: opportunityId, lead_id: leadId, lane, revenue_lane_supported: lane, estimated_value_cents: input.estimatedValueCents || 0, priority, score, blocker: 'Owner review required before external action.', next_action: 'Review, pass, reply draft, quote draft, schedule draft, or prove locally.', status: 'queued_for_review', recommended_follow_up_date: '2026-06-19', created_at: submittedAt, updated_at: submittedAt } },
     { table: 'conversations', id: conversationId, action: 'insert', record: { id: conversationId, lead_id: leadId, contact_id: contactId, channel: input.source, transcript: input.body, summary: input.title, created_at: submittedAt, updated_at: submittedAt } },
