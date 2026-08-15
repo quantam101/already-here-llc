@@ -1,0 +1,2 @@
+ticket_number,source,date_received,customer_name,company,email,phone,service_type,scope,site_address,site_city,site_state,site_zip,requested_date,requested_window,priority,estimated_value_cents,required_skills,required_certifications,required_tools,status,assigned_technician,notes
+WO-001,phone,2026-08-01,Jane Customer,Acme LLC,jane@acme.invalid,6025550100,Network install,Install three APs and run cabling,123 Main St,Phoenix,AZ,85004,2026-08-20,morning,high,120000,"network,cabling","CompTIA A+","cable tester",quoted,,Call customer 30 min before arrival
