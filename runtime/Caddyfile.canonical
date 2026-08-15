@@ -2,7 +2,7 @@
 	email {$ACME_EMAIL:admin@alreadyherellc.com}
 }
 
-{$OCI_CANONICAL_DOMAIN:localhost} {
+{$OCI_CANONICAL_DOMAIN} {
 	reverse_proxy canonical:8443 {
 		header_up Host {host}
 		header_up X-Real-IP {remote}
