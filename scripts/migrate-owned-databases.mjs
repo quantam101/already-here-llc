@@ -42,7 +42,7 @@ const [{ combineOwnedDatabases }, { getCanonicalStore, resetCanonicalStore }] = 
 
 try {
   const store = getCanonicalStore();
-  const report = combineOwnedDatabases(sources, store);
+  const report = await combineOwnedDatabases(sources, store);
   console.log(JSON.stringify({ targetPath, ...report }, null, 2));
   if (!report.ok) process.exitCode = 1;
 } finally {

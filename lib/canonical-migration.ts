@@ -242,7 +242,7 @@ function rewriteReferences(
   return rewritten;
 }
 
-export function combineOwnedDatabases(sources: MigrationSource[], target: CanonicalStore): MigrationReport {
+export async function combineOwnedDatabases(sources: MigrationSource[], target: CanonicalStore): Promise<MigrationReport> {
   if (!sources.length) {
     return {
       ok: true,
@@ -294,7 +294,7 @@ export function combineOwnedDatabases(sources: MigrationSource[], target: Canoni
 
   const writes = [...merged.values()];
   for (const write of writes) tableBreakdown[write.table] = (tableBreakdown[write.table] || 0) + 1;
-  const result = target.executeWrites(writes);
+  const result = await target.executeWrites(writes);
   return {
     ok: result.ok,
     sourceRecords: allRecords.length,

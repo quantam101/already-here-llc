@@ -359,14 +359,14 @@ export function buildCloseoutRecords(input: CloseoutInput): DatabaseReadyWrite[]
   ];
 }
 
-export function matchTechniciansForWorkOrder(workOrderId: string): WorkOrderMatchResult {
+export async function matchTechniciansForWorkOrder(workOrderId: string): Promise<WorkOrderMatchResult> {
   const store = getCanonicalStore();
-  const workOrder = store.getRecord('jobs', workOrderId);
+  const workOrder = await store.getRecord('jobs', workOrderId);
   if (!workOrder) return { workOrderId, matches: [] };
 
   const requiredSkills = ((workOrder.required_skills as string[] | undefined) ?? []).map((s) => s.toLowerCase());
   const state = String(workOrder.site_state ?? '').toUpperCase();
-  const technicians = store.queryTable('technicians', 1000) as unknown as TechnicianProfile[];
+  const technicians = await store.queryTable('technicians', 1000) as unknown as TechnicianProfile[];
 
   const matches = matchTechnicians(technicians, {
     state,

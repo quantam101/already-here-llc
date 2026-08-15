@@ -60,12 +60,12 @@ node --experimental-strip-types --import ./tests/register-next-alias.mjs .tmp/e2
 
 The script should:
 1. `resetCanonicalStore()`.
-2. Call the `GET` handler and assert `getCanonicalStore().queryAll().length === 0`.
-3. Call the intake `POST` handler, capture `databaseReadyWrites`, and assert `getCanonicalStore().getRecord('leads', leadId)` exists.
-4. Call the review `POST` handler and assert `getCanonicalStore().getRecord('reviews', reviewId)` exists.
+2. Call the `GET` handler and assert `(await getCanonicalStore().queryAll()).length === 0`.
+3. Call the intake `POST` handler, capture `databaseReadyWrites`, and assert `await getCanonicalStore().getRecord('leads', leadId)` exists.
+4. Call the review `POST` handler and assert `await getCanonicalStore().getRecord('reviews', reviewId)` exists.
 5. Call the dispatch `POST` handler and assert a `leads` record is stored.
-6. Call `getRevenueCommandAgents({ persist: true })` and assert `ai_runs` table count equals `getDatabaseReadyRecords().length`.
-7. Run `scripts/seed-revenue-os.mjs` and assert `opportunities` count equals the number of records in `data/revenue-pipeline.json`.
+6. Call `await getRevenueCommandAgents({ persist: true })` and assert `(await getCanonicalStore().queryTable('ai_runs')).length` equals `getDatabaseReadyRecords().length`.
+7. Run `node scripts/seed-revenue-os.mjs` and assert `(await getCanonicalStore().queryTable('opportunities')).length` equals the number of records in `data/revenue-pipeline.json`.
 8. Exercise `POST /api/route-stack` with a valid stops/vehicle payload and assert `plan.feasibilityScore > 0`.
 
 ## Photo-to-Quote Hauling closed loop
@@ -94,3 +94,4 @@ A successful booking returns `ok: true`, `booking_id` (starts with `opp_`), `can
 
 - `GITHUB_TOKEN` — to read PR details and Vercel-bot comments.
 - `VERCEL_TOKEN` — only if you need to query deployments directly.
+- `OCI_CANONICAL_URL` / `OCI_CANONICAL_API_KEY` — to exercise the durable OCI canonical store backend.

@@ -40,10 +40,14 @@ const postSchema = z.discriminatedUnion('type', [
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '100', 10) || 100, 1000);
+  const [codexEvents, catchCorrectEvents] = await Promise.all([
+    queryCodexEvents(limit),
+    queryCatchCorrectEvents(limit)
+  ]);
   return NextResponse.json({
     ok: true,
-    codexEvents: queryCodexEvents(limit),
-    catchCorrectEvents: queryCatchCorrectEvents(limit),
+    codexEvents,
+    catchCorrectEvents,
   });
 }
 
@@ -62,9 +66,9 @@ export async function POST(request: Request) {
   const data = parseResult.data;
   let id: string;
   if (data.type === 'codex') {
-    id = recordCodexEvent(data);
+    id = await recordCodexEvent(data);
   } else {
-    id = recordCatchCorrectEvent(data);
+    id = await recordCatchCorrectEvent(data);
   }
 
   return NextResponse.json({ ok: true, id });

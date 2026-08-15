@@ -16,7 +16,7 @@ function isValidRecordId(value: unknown): value is string {
 export async function GET() {
   return NextResponse.json({
     ...getRevenueCommandSpineResponse(),
-    agents: getRevenueCommandAgents({ persist: false }),
+    agents: getRevenueCommandAgents(),
     agentCoverage: validateRevenueAgentCoverage()
   });
 }
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   }
 
   const review = applyReviewAction(recordId, action);
-  const reviewId = getCanonicalStore().recordReviewAction({
+  const reviewId = await getCanonicalStore().recordReviewAction({
     targetTable: 'revenue_command_records',
     targetId: recordId,
     action,

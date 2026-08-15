@@ -24,7 +24,7 @@ function formatCurrency(cents: number) {
 }
 
 export default async function DashboardPage() {
-  const metrics = getDashboardMetrics();
+  const metrics = await getDashboardMetrics();
 
   const quickStats: Array<[string, string | number]> = [
     ['Technicians', metrics.counts.technicians],

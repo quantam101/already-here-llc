@@ -65,11 +65,11 @@ assert.ok(writes.some((w) => w.table === 'availability'), 'availability write');
 
 resetCanonicalStore();
 const store = getCanonicalStore();
-const writeResult = store.executeWrites(writes);
+const writeResult = await store.executeWrites(writes);
 assert.equal(writeResult.ok, true, 'canonical writes succeeded');
 assert.ok(writeResult.insertedIds.length >= 7, 'inserted at least 7 records');
 
-const techRecord = store.getRecord('technicians', writes.find((w) => w.table === 'technicians').id);
+const techRecord = await store.getRecord('technicians', writes.find((w) => w.table === 'technicians').id);
 assert.ok(techRecord, 'technician record retrieved');
 assert.equal(techRecord.full_name, 'Jane Technician');
 assert.equal(techRecord.state, 'AZ');

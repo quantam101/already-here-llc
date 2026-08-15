@@ -91,17 +91,23 @@ export function buildAgentForRecord(record: RevenueCommandRecord): RevenueComman
   };
 }
 
-export function getRevenueCommandAgents(options: { persist?: boolean } = {}): RevenueCommandAgent[] {
-  return getDatabaseReadyRecords().map((record) => {
-    const agent = buildAgentForRecord(record);
-    if (options.persist) {
-      persistAgentForRecord(record, agent);
-    }
-    return agent;
-  });
+export function getRevenueCommandAgents(): RevenueCommandAgent[];
+export function getRevenueCommandAgents(options: { persist: true }): Promise<RevenueCommandAgent[]>;
+export function getRevenueCommandAgents(options: { persist?: boolean } = {}): RevenueCommandAgent[] | Promise<RevenueCommandAgent[]> {
+  const agents = getDatabaseReadyRecords().map((record) => buildAgentForRecord(record));
+  if (options.persist) {
+    return Promise.all(
+      agents.map(async (agent) => {
+        const record = getDatabaseReadyRecords().find((r) => r.id === agent.recordId);
+        if (record) await persistAgentForRecord(record, agent);
+        return agent;
+      })
+    );
+  }
+  return agents;
 }
 
-export function persistAgentForRecord(record: RevenueCommandRecord, agent: RevenueCommandAgent): string {
+export async function persistAgentForRecord(record: RevenueCommandRecord, agent: RevenueCommandAgent): Promise<string> {
   const score = scoreRecord(record);
   const confidence = Math.min(100, Math.max(0, Math.round(score / 5)));
   return getCanonicalStore().recordAiRun({

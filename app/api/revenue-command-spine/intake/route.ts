@@ -122,6 +122,6 @@ export async function POST(request: Request) {
   }
 
   const proof = buildRevenueIntakeProof(input);
-  const writeResult = getCanonicalStore().executeWrites(proof.databaseReadyWrites);
+  const writeResult = await getCanonicalStore().executeWrites(proof.databaseReadyWrites);
   return NextResponse.json({ ...proof, writeResult });
 }

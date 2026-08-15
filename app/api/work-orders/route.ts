@@ -92,13 +92,13 @@ export async function POST(request: Request) {
   }
 
   const writes = buildWorkOrderRecords(input);
-  const writeResult = getCanonicalStore().executeWrites(writes);
+  const writeResult = await getCanonicalStore().executeWrites(writes);
   if (!writeResult.ok) {
     return NextResponse.json({ ok: false, error: 'Canonical write failed.', failed: writeResult.failed }, { status: 500 });
   }
 
   const workOrderId = writes.find((w) => w.table === 'jobs')!.id;
-  const matches = matchTechniciansForWorkOrder(workOrderId);
+  const matches = await matchTechniciansForWorkOrder(workOrderId);
 
   return NextResponse.json({
     ok: true,
@@ -119,12 +119,12 @@ export async function GET(request: Request) {
   const store = getCanonicalStore();
 
   if (workOrderId) {
-    const record = store.getRecord('jobs', workOrderId);
+    const record = await store.getRecord('jobs', workOrderId);
     if (!record) return NextResponse.json({ ok: false, error: 'Work order not found.' }, { status: 404 });
-    const matches = matchTechniciansForWorkOrder(workOrderId);
+    const matches = await matchTechniciansForWorkOrder(workOrderId);
     return NextResponse.json({ ok: true, record, matches });
   }
 
-  const records = store.queryTable('jobs', 1000);
+  const records = await store.queryTable('jobs', 1000);
   return NextResponse.json({ ok: true, count: records.length, records });
 }

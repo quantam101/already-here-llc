@@ -91,14 +91,14 @@ export async function POST(request: Request) {
   }
 
   const store = getCanonicalStore();
-  const workOrder = store.getRecord('jobs', input.workOrderId);
-  const assignment = store.getRecord('assignments', input.assignmentId);
+  const workOrder = await store.getRecord('jobs', input.workOrderId);
+  const assignment = await store.getRecord('assignments', input.assignmentId);
   if (!workOrder || !assignment) {
     return NextResponse.json({ ok: false, error: 'Work order or assignment not found.' }, { status: 404 });
   }
 
   const writes = buildCloseoutRecords(input);
-  const writeResult = store.executeWrites(writes);
+  const writeResult = await store.executeWrites(writes);
   if (!writeResult.ok) {
     return NextResponse.json({ ok: false, error: 'Canonical write failed.', failed: writeResult.failed }, { status: 500 });
   }
@@ -116,7 +116,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const workOrderId = url.searchParams.get('workOrderId');
   const records = workOrderId
-    ? getCanonicalStore().queryTable('closeouts', 1000).filter((r) => r.work_order_id === workOrderId)
-    : getCanonicalStore().queryTable('closeouts', 1000);
+    ? (await getCanonicalStore().queryTable('closeouts', 1000)).filter((r) => r.work_order_id === workOrderId)
+    : await getCanonicalStore().queryTable('closeouts', 1000);
   return NextResponse.json({ ok: true, count: records.length, records });
 }

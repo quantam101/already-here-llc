@@ -49,9 +49,9 @@ export async function GET(request: Request) {
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '100', 10) || 100, 1000);
 
   const oci = await probeOCI();
-  recordSystemHealthSignal({ source: 'oci', component: 'oci_vm', ...oci });
+  await recordSystemHealthSignal({ source: 'oci', component: 'oci_vm', ...oci });
 
-  const signals = querySystemHealthSignals(limit);
+  const signals = await querySystemHealthSignals(limit);
   return NextResponse.json({ ok: true, oci, signals });
 }
 
@@ -67,6 +67,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid input', issues: parseResult.error.issues }, { status: 400 });
   }
 
-  const id = recordSystemHealthSignal(parseResult.data);
+  const id = await recordSystemHealthSignal(parseResult.data);
   return NextResponse.json({ ok: true, id });
 }

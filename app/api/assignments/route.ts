@@ -64,14 +64,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'Missing workOrderId, technicianId, or assignedBy.' }, { status: 400 });
   }
 
-  const workOrder = getCanonicalStore().getRecord('jobs', input.workOrderId);
-  const technician = getCanonicalStore().getRecord('technicians', input.technicianId);
+  const workOrder = await getCanonicalStore().getRecord('jobs', input.workOrderId);
+  const technician = await getCanonicalStore().getRecord('technicians', input.technicianId);
   if (!workOrder || !technician) {
     return NextResponse.json({ ok: false, error: 'Work order or technician not found.' }, { status: 404 });
   }
 
   const writes = buildAssignmentRecords(input);
-  const writeResult = getCanonicalStore().executeWrites(writes);
+  const writeResult = await getCanonicalStore().executeWrites(writes);
   if (!writeResult.ok) {
     return NextResponse.json({ ok: false, error: 'Canonical write failed.', failed: writeResult.failed }, { status: 500 });
   }
@@ -85,6 +85,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: 'Rate limit exceeded.' }, { status: 429 });
   }
 
-  const records = getCanonicalStore().queryTable('assignments', 1000);
+  const records = await getCanonicalStore().queryTable('assignments', 1000);
   return NextResponse.json({ ok: true, count: records.length, records });
 }

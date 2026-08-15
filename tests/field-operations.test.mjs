@@ -54,7 +54,7 @@ resetCanonicalStore();
 const store = getCanonicalStore();
 
 const techWrites = buildTechnicianRecords(technicianInput);
-store.executeWrites(techWrites);
+await store.executeWrites(techWrites);
 
 const workOrderWrites = buildWorkOrderRecords(workOrderInput);
 assert.ok(workOrderWrites.some((w) => w.table === 'organizations'));
@@ -62,11 +62,11 @@ assert.ok(workOrderWrites.some((w) => w.table === 'contacts'));
 assert.ok(workOrderWrites.some((w) => w.table === 'jobs'));
 assert.ok(workOrderWrites.some((w) => w.table === 'opportunities'));
 
-const workOrderResult = store.executeWrites(workOrderWrites);
+const workOrderResult = await store.executeWrites(workOrderWrites);
 assert.equal(workOrderResult.ok, true);
 
 const workOrderId = workOrderWrites.find((w) => w.table === 'jobs').id;
-const matches = matchTechniciansForWorkOrder(workOrderId);
+const matches = await matchTechniciansForWorkOrder(workOrderId);
 assert.equal(matches.workOrderId, workOrderId);
 assert.ok(matches.matches.length >= 1, 'expected at least one technician match');
 assert.ok(matches.matches[0].fitScore > 0, 'match has positive fit score');
@@ -81,7 +81,7 @@ const assignmentInput = {
   scheduledEnd: '2026-08-20T12:00:00Z'
 };
 const assignmentWrites = buildAssignmentRecords(assignmentInput);
-const assignmentResult = store.executeWrites(assignmentWrites);
+const assignmentResult = await store.executeWrites(assignmentWrites);
 assert.equal(assignmentResult.ok, true);
 const assignmentId = assignmentWrites.find((w) => w.table === 'assignments').id;
 
@@ -107,16 +107,16 @@ const closeoutInput = {
 const closeoutWrites = buildCloseoutRecords(closeoutInput);
 assert.ok(closeoutWrites.some((w) => w.table === 'closeouts'));
 assert.ok(closeoutWrites.some((w) => w.table === 'revenue_events'));
-const closeoutResult = store.executeWrites(closeoutWrites);
+const closeoutResult = await store.executeWrites(closeoutWrites);
 assert.equal(closeoutResult.ok, true);
 
 const revenueId = closeoutWrites.find((w) => w.table === 'revenue_events').id;
-const revenue = store.getRecord('revenue_events', revenueId);
+const revenue = await store.getRecord('revenue_events', revenueId);
 assert.equal(revenue.amount_cents, 120000);
 assert.equal(revenue.gross_margin_cents, 120000 - 34000);
 assert.equal(revenue.status, 'booked');
 
-const workOrder = store.getRecord('jobs', workOrderId);
+const workOrder = await store.getRecord('jobs', workOrderId);
 assert.equal(workOrder.status, 'closed');
 assert.equal(workOrder.revenue_cents, 120000);
 

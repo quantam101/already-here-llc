@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'state is required.' }, { status: 400 });
   }
 
-  const technicians = getCanonicalStore().queryTable('technicians', 1000) as unknown as TechnicianProfile[];
+  const technicians = await getCanonicalStore().queryTable('technicians', 1000) as unknown as TechnicianProfile[];
   const matches = matchTechnicians(technicians, requirements);
 
   return NextResponse.json({

@@ -276,12 +276,12 @@ export function buildRevenueOSWrites(record: RevenueOSRecord, now: string) {
   return { opportunityId, writes };
 }
 
-export function seedRevenueOS(options: {
+export async function seedRevenueOS(options: {
   inputPath?: string;
   dbPath?: string;
   dryRun?: boolean;
   store?: CanonicalStore;
-} = {}): RevenueOSSeedSummary {
+} = {}): Promise<RevenueOSSeedSummary> {
   const inputPath = options.inputPath || path.join(process.cwd(), 'data', 'revenue-pipeline.json');
   const now = isoNow();
 
@@ -307,7 +307,7 @@ export function seedRevenueOS(options: {
   for (const record of records) {
     const { opportunityId, writes } = buildRevenueOSWrites(record, now);
     if (!options.dryRun) {
-      const result = store!.executeWrites(writes);
+      const result = await store!.executeWrites(writes);
       if (!result.ok) {
         return { ok: false, inputPath, recordCount: records.length, opportunityIds, counts, error: 'Write failed' };
       }

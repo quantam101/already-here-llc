@@ -308,7 +308,7 @@ export async function POST(request: Request) {
   try {
     const technicianInput = buildTechnicianInput(applicantId, formData);
     const canonicalWrites = buildTechnicianRecords(technicianInput);
-    const writeResult = getCanonicalStore().executeWrites(canonicalWrites);
+    const writeResult = await getCanonicalStore().executeWrites(canonicalWrites);
     if (!writeResult.ok) {
       console.error('[applicants] canonical write failed', writeResult.failed);
     }

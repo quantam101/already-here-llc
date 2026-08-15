@@ -34,26 +34,31 @@ export interface DashboardMetrics {
   }>;
 }
 
-export function getDashboardMetrics(): DashboardMetrics {
+export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const store = getCanonicalStore();
   const counts: Record<string, number> = {};
 
-  for (const table of TRACKED_TABLES) {
-    counts[table] = store.queryTable(table, 10000).length;
-  }
+  await Promise.all(TRACKED_TABLES.map(async (table) => {
+    const records = await store.queryTable(table, 10000);
+    counts[table] = records.length;
+  }));
 
-  const technicians = store.queryTable('technicians', 10000);
+  const [technicians, revenueEvents, recent] = await Promise.all([
+    await store.queryTable('technicians', 10000),
+    await store.queryTable('revenue_events', 10000),
+    await store.queryAll(10)
+  ]);
+
   const dispatchReadyTechnicians = technicians.filter(
     (t) => typeof t.dispatch_readiness_score === 'number' && t.dispatch_readiness_score >= 70
   ).length;
 
-  const revenueEvents = store.queryTable('revenue_events', 10000);
   const totalRevenueCents = revenueEvents.reduce((sum, event) => {
     const amount = typeof event.amount_cents === 'number' ? event.amount_cents : 0;
     return sum + (amount > 0 ? amount : 0);
   }, 0);
 
-  const recent = store.queryAll(10).map((record) => ({
+  const recentRecords = recent.map((record) => ({
     table: String(record.table_name ?? ''),
     id: String(record.id ?? ''),
     source: String(record.source ?? ''),
@@ -66,6 +71,6 @@ export function getDashboardMetrics(): DashboardMetrics {
     dispatchReadyTechnicians,
     totalRevenueCents,
     totalRevenueUsd: totalRevenueCents / 100,
-    recentRecords: recent
+    recentRecords
   };
 }

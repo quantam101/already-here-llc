@@ -19,11 +19,11 @@ export interface CatchCorrectInput {
   relatedCodexId?: string;
 }
 
-export function recordCodexEvent(input: CodexEventInput) {
+export async function recordCodexEvent(input: CodexEventInput): Promise<string> {
   const now = new Date().toISOString();
   const id = canonicalId('codex', input.source, input.module, input.changeType, now);
   const store = getCanonicalStore();
-  store.executeWrites([
+  await store.executeWrites([
     {
       table: 'codex_changelog',
       id,
@@ -44,11 +44,11 @@ export function recordCodexEvent(input: CodexEventInput) {
   return id;
 }
 
-export function recordCatchCorrectEvent(input: CatchCorrectInput) {
+export async function recordCatchCorrectEvent(input: CatchCorrectInput): Promise<string> {
   const now = new Date().toISOString();
   const id = canonicalId('catchcorrect', input.source, input.failureType, now);
   const store = getCanonicalStore();
-  store.executeWrites([
+  await store.executeWrites([
     {
       table: 'catch_correct_events',
       id,
@@ -69,10 +69,10 @@ export function recordCatchCorrectEvent(input: CatchCorrectInput) {
   return id;
 }
 
-export function queryCodexEvents(limit = 100) {
-  return getCanonicalStore().queryTable('codex_changelog', limit);
+export async function queryCodexEvents(limit = 100): Promise<Record<string, unknown>[]> {
+  return await getCanonicalStore().queryTable('codex_changelog', limit);
 }
 
-export function queryCatchCorrectEvents(limit = 100) {
-  return getCanonicalStore().queryTable('catch_correct_events', limit);
+export async function queryCatchCorrectEvents(limit = 100): Promise<Record<string, unknown>[]> {
+  return await getCanonicalStore().queryTable('catch_correct_events', limit);
 }

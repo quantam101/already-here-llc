@@ -50,7 +50,7 @@ export interface QaPacket {
   error?: string;
 }
 
-export function buildQaPacket(input: QaPacketInput): QaPacket {
+export async function buildQaPacket(input: QaPacketInput): Promise<QaPacket> {
   const store = getCanonicalStore();
 
   let opportunity: LooseRecord | undefined;
@@ -59,22 +59,22 @@ export function buildQaPacket(input: QaPacketInput): QaPacket {
   let organization: LooseRecord | undefined;
 
   if (input.opportunityId) {
-    opportunity = store.getRecord('opportunities', input.opportunityId) as LooseRecord | undefined;
+    opportunity = (await store.getRecord('opportunities', input.opportunityId)) as LooseRecord | undefined;
     if (!opportunity) {
       return { ok: false, error: 'Opportunity not found', summary: emptySummary() } as QaPacket;
     }
     const leadId = str(opportunity, 'lead_id');
     if (leadId) {
-      lead = store.getRecord('leads', leadId) as LooseRecord | undefined;
+      lead = (await store.getRecord('leads', leadId)) as LooseRecord | undefined;
     }
   }
 
   if (input.contactId) {
-    contact = store.getRecord('contacts', input.contactId) as LooseRecord | undefined;
+    contact = (await store.getRecord('contacts', input.contactId)) as LooseRecord | undefined;
   } else if (lead) {
     const contactId = str(lead, 'contact_id');
     if (contactId) {
-      contact = store.getRecord('contacts', contactId) as LooseRecord | undefined;
+      contact = (await store.getRecord('contacts', contactId)) as LooseRecord | undefined;
     }
   }
 
@@ -84,45 +84,71 @@ export function buildQaPacket(input: QaPacketInput): QaPacket {
 
   const organizationId = str(contact, 'organization_id') ?? str(lead, 'organization_id') ?? str(opportunity, 'organization_id');
   if (organizationId) {
-    organization = store.getRecord('organizations', organizationId) as LooseRecord | undefined;
+    organization = (await store.getRecord('organizations', organizationId)) as LooseRecord | undefined;
   }
 
-  const sites = store.queryTable('sites').filter((r) => str(r as LooseRecord, 'organization_id') === organizationId);
-  const equipment = store.queryTable('equipment').filter((r) => str(r as LooseRecord, 'organization_id') === organizationId);
-  const leads = store.queryTable('leads').filter(
+  const [
+    sites,
+    equipment,
+    leads,
+    allOpportunities,
+    haulingJobs,
+    dispatches,
+    revenueEvents,
+    qaScores,
+    reviews,
+    aiActions,
+    auditLogs
+  ] = await Promise.all([
+    await store.queryTable('sites'),
+    await store.queryTable('equipment'),
+    await store.queryTable('leads'),
+    await store.queryTable('opportunities'),
+    await store.queryTable('hauling_jobs'),
+    await store.queryTable('dispatches'),
+    await store.queryTable('revenue_events'),
+    await store.queryTable('qa_scores'),
+    await store.queryTable('reviews'),
+    await store.queryTable('ai_actions'),
+    await store.queryTable('audit_logs')
+  ]);
+
+  const filteredSites = sites.filter((r) => str(r as LooseRecord, 'organization_id') === organizationId);
+  const filteredEquipment = equipment.filter((r) => str(r as LooseRecord, 'organization_id') === organizationId);
+  const filteredLeads = leads.filter(
     (r) => str(r as LooseRecord, 'contact_id') === (input.contactId ?? str(lead, 'id'))
   );
-  const leadIds = new Set(leads.map((r) => str(r as LooseRecord, 'id')).filter(Boolean));
+  const leadIds = new Set(filteredLeads.map((r) => str(r as LooseRecord, 'id')).filter(Boolean));
   const opportunities = input.opportunityId
     ? [opportunity as LooseRecord]
-    : store.queryTable('opportunities').filter((r) => leadIds.has(str(r as LooseRecord, 'lead_id') ?? ''));
+    : allOpportunities.filter((r) => leadIds.has(str(r as LooseRecord, 'lead_id') ?? ''));
   const opportunityIds = new Set(opportunities.map((r) => str(r as LooseRecord, 'id')).filter(Boolean));
 
-  const haulingJobs = store.queryTable('hauling_jobs').filter((r) => opportunityIds.has(str(r as LooseRecord, 'opportunity_id') ?? ''));
-  const dispatches = store.queryTable('dispatches').filter((r) => {
+  const filteredHaulingJobs = haulingJobs.filter((r) => opportunityIds.has(str(r as LooseRecord, 'opportunity_id') ?? ''));
+  const filteredDispatches = dispatches.filter((r) => {
     const rec = r as LooseRecord;
     const jobId = str(rec, 'job_id');
     const oppId = str(rec, 'opportunity_id');
-    return (jobId && haulingJobs.some((j) => str(j as LooseRecord, 'id') === jobId)) || (oppId && opportunityIds.has(oppId));
+    return (jobId && filteredHaulingJobs.some((j) => str(j as LooseRecord, 'id') === jobId)) || (oppId && opportunityIds.has(oppId));
   });
-  const revenueEvents = store.queryTable('revenue_events').filter((r) => opportunityIds.has(str(r as LooseRecord, 'opportunity_id') ?? ''));
-  const qaScores = store.queryTable('qa_scores').filter((r) => opportunityIds.has(str(r as LooseRecord, 'opportunity_id') ?? ''));
-  const reviews = store.queryTable('reviews').filter((r) => opportunityIds.has(str(r as LooseRecord, 'target_id') ?? ''));
-  const aiActions = store.queryTable('ai_actions').filter((r) => opportunityIds.has(str(r as LooseRecord, 'target_id') ?? ''));
-  const auditLogs = store.queryTable('audit_logs').filter((r) => opportunityIds.has(str(r as LooseRecord, 'target_id') ?? ''));
+  const filteredRevenueEvents = revenueEvents.filter((r) => opportunityIds.has(str(r as LooseRecord, 'opportunity_id') ?? ''));
+  const filteredQaScores = qaScores.filter((r) => opportunityIds.has(str(r as LooseRecord, 'opportunity_id') ?? ''));
+  const filteredReviews = reviews.filter((r) => opportunityIds.has(str(r as LooseRecord, 'target_id') ?? ''));
+  const filteredAiActions = aiActions.filter((r) => opportunityIds.has(str(r as LooseRecord, 'target_id') ?? ''));
+  const filteredAuditLogs = auditLogs.filter((r) => opportunityIds.has(str(r as LooseRecord, 'target_id') ?? ''));
 
-  const qaScoreValues = qaScores.map((r) => num(r as LooseRecord, 'score')).filter((v): v is number => v !== undefined);
-  let totalRevenueCents = revenueEvents.reduce((sum, r) => sum + (num(r as LooseRecord, 'amount_cents') ?? 0), 0);
+  const qaScoreValues = filteredQaScores.map((r) => num(r as LooseRecord, 'score')).filter((v): v is number => v !== undefined);
+  let totalRevenueCents = filteredRevenueEvents.reduce((sum, r) => sum + (num(r as LooseRecord, 'amount_cents') ?? 0), 0);
   if (totalRevenueCents === 0) {
     totalRevenueCents = opportunities.reduce((sum, r) => sum + (num(r as LooseRecord, 'estimated_value_cents') ?? 0), 0);
   }
-  const haulingActive = haulingJobs.filter((r) => str(r as LooseRecord, 'status') !== 'closed');
-  const dispatchActive = dispatches.filter((r) => {
+  const haulingActive = filteredHaulingJobs.filter((r) => str(r as LooseRecord, 'status') !== 'closed');
+  const dispatchActive = filteredDispatches.filter((r) => {
     const rec = r as LooseRecord;
     return str(rec, 'dispatch_status') !== 'closed' && str(rec, 'status') !== 'closed';
   });
   const activeJobs = new Set([...haulingActive, ...dispatchActive].map((r) => str(r as LooseRecord, 'id')).filter(Boolean)).size;
-  const pendingReviews = reviews.filter((r) => str(r as LooseRecord, 'decision') === 'pending').length;
+  const pendingReviews = filteredReviews.filter((r) => str(r as LooseRecord, 'decision') === 'pending').length;
 
   const summary = {
     totalOpportunities: opportunities.length,
@@ -131,8 +157,8 @@ export function buildQaPacket(input: QaPacketInput): QaPacket {
     averageQaScore: qaScoreValues.length ? qaScoreValues.reduce((a, b) => a + b, 0) / qaScoreValues.length : null,
     latestQaScore: qaScoreValues.length ? qaScoreValues[qaScoreValues.length - 1] : null,
     pendingReviews,
-    equipmentCount: equipment.length,
-    siteCount: sites.length,
+    equipmentCount: filteredEquipment.length,
+    siteCount: filteredSites.length,
   };
 
   return {
@@ -142,17 +168,17 @@ export function buildQaPacket(input: QaPacketInput): QaPacket {
     opportunityId: input.opportunityId ?? str(opportunity, 'id'),
     customer: contact,
     organization,
-    sites,
-    equipment,
-    leads,
+    sites: filteredSites,
+    equipment: filteredEquipment,
+    leads: filteredLeads,
     opportunities,
-    haulingJobs,
-    dispatches,
-    revenueEvents,
-    qaScores,
-    reviews,
-    aiActions,
-    auditLogs,
+    haulingJobs: filteredHaulingJobs,
+    dispatches: filteredDispatches,
+    revenueEvents: filteredRevenueEvents,
+    qaScores: filteredQaScores,
+    reviews: filteredReviews,
+    aiActions: filteredAiActions,
+    auditLogs: filteredAuditLogs,
     summary,
   };
 }

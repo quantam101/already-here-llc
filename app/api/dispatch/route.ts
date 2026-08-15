@@ -317,7 +317,7 @@ export async function POST(request: Request) {
   const hasFormspree = !!process.env.FORMSPREE_ENDPOINT;
   const dispatchId = generateDispatchId();
   const revenueSpine = buildRevenueSpineProof(dispatchId, formData);
-  getCanonicalStore().executeWrites(revenueSpine.databaseReadyWrites);
+  await getCanonicalStore().executeWrites(revenueSpine.databaseReadyWrites);
 
   if (localProofMode || (!hasResend && !hasFormspree)) {
     return NextResponse.json({

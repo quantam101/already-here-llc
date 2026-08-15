@@ -10,11 +10,11 @@ export interface SystemHealthSignalInput {
   metrics?: Record<string, unknown>;
 }
 
-export function recordSystemHealthSignal(input: SystemHealthSignalInput) {
+export async function recordSystemHealthSignal(input: SystemHealthSignalInput): Promise<string> {
   const now = new Date().toISOString();
   const id = canonicalId('health', input.source, input.component, now);
   const store = getCanonicalStore();
-  store.executeWrites([
+  await store.executeWrites([
     {
       table: 'system_health_signals',
       id,
@@ -36,6 +36,6 @@ export function recordSystemHealthSignal(input: SystemHealthSignalInput) {
   return id;
 }
 
-export function querySystemHealthSignals(limit = 100) {
-  return getCanonicalStore().queryTable('system_health_signals', limit);
+export async function querySystemHealthSignals(limit = 100): Promise<Record<string, unknown>[]> {
+  return await getCanonicalStore().queryTable('system_health_signals', limit);
 }

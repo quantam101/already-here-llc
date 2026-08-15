@@ -41,12 +41,12 @@ export interface WriteResult {
 }
 
 export interface CanonicalStore {
-  executeWrites(writes: DatabaseReadyWrite[]): WriteResult;
-  recordAiRun(input: AiRunInput): string;
-  recordReviewAction(input: ReviewActionInput): string;
-  getRecord(table: string, id: string): Record<string, unknown> | undefined;
-  queryTable(table: string, limit?: number): Record<string, unknown>[];
-  queryAll(limit?: number): Record<string, unknown>[];
+  executeWrites(writes: DatabaseReadyWrite[]): Promise<WriteResult>;
+  recordAiRun(input: AiRunInput): Promise<string>;
+  recordReviewAction(input: ReviewActionInput): Promise<string>;
+  getRecord(table: string, id: string): Promise<Record<string, unknown> | undefined>;
+  queryTable(table: string, limit?: number): Promise<Record<string, unknown>[]>;
+  queryAll(limit?: number): Promise<Record<string, unknown>[]>;
   close(): void;
 }
 
@@ -60,6 +60,13 @@ function shouldUseSqlite(): boolean {
   if (process.env.CANONICAL_STORE_TYPE === 'memory') return false;
   if (process.env.CANONICAL_SQLITE_PATH) return true;
   return false;
+}
+
+function shouldUseRemote(): { url: string; apiKey: string } | undefined {
+  const url = process.env.OCI_CANONICAL_URL?.trim();
+  const apiKey = process.env.OCI_CANONICAL_API_KEY?.trim();
+  if (url && apiKey) return { url: url.replace(/\/$/, ''), apiKey };
+  return undefined;
 }
 
 function isoNow(): string {
@@ -132,7 +139,7 @@ class MemoryCanonicalStore implements CanonicalStore {
     }
   }
 
-  executeWrites(writes: DatabaseReadyWrite[]): WriteResult {
+  async executeWrites(writes: DatabaseReadyWrite[]): Promise<WriteResult> {
     const result: WriteResult = { ok: true, insertedIds: [], failed: [] };
     for (const write of writes) {
       try {
@@ -161,67 +168,69 @@ class MemoryCanonicalStore implements CanonicalStore {
     return result;
   }
 
-  recordAiRun(input: AiRunInput): string {
+  async recordAiRun(input: AiRunInput): Promise<string> {
     const now = isoNow();
     const id = canonicalId('airun', input.agentId, input.targetTable, input.targetId, input.action, now);
-    const write: DatabaseReadyWrite = {
-      table: 'ai_runs',
-      id,
-      action: 'insert',
-      record: {
+    await this.executeWrites([
+      {
+        table: 'ai_runs',
         id,
-        agent_id: input.agentId,
-        target_table: input.targetTable,
-        target_id: input.targetId,
-        action: input.action,
-        recommendation: input.recommendation ?? '',
-        confidence: input.confidence ?? 0,
-        approval_required: input.approvalRequired ? 1 : 0,
-        persisted_externally: input.persistedExternally ? 1 : 0,
-        result_json: input.resultJson ?? '{}',
-        evidence_json: input.evidenceJson ?? '{}',
-        outcome_json: input.outcomeJson ?? '{}',
-        feedback_json: input.feedbackJson ?? '{}',
-        source: input.source ?? 'ai_agent',
-        created_at: now,
-        updated_at: now,
+        action: 'insert',
+        record: {
+          id,
+          agent_id: input.agentId,
+          target_table: input.targetTable,
+          target_id: input.targetId,
+          action: input.action,
+          recommendation: input.recommendation ?? '',
+          confidence: input.confidence ?? 0,
+          approval_required: input.approvalRequired ? 1 : 0,
+          persisted_externally: input.persistedExternally ? 1 : 0,
+          result_json: input.resultJson ?? '{}',
+          evidence_json: input.evidenceJson ?? '{}',
+          outcome_json: input.outcomeJson ?? '{}',
+          feedback_json: input.feedbackJson ?? '{}',
+          source: input.source ?? 'ai_agent',
+          created_at: now,
+          updated_at: now,
+        },
       },
-    };
-    this.executeWrites([write]);
+    ]);
     return id;
   }
 
-  recordReviewAction(input: ReviewActionInput): string {
+  async recordReviewAction(input: ReviewActionInput): Promise<string> {
     const now = isoNow();
     const id = canonicalId('review', input.targetTable, input.targetId, input.action, now);
-    const write: DatabaseReadyWrite = {
-      table: 'reviews',
-      id,
-      action: 'insert',
-      record: {
+    await this.executeWrites([
+      {
+        table: 'reviews',
         id,
-        target_table: input.targetTable,
-        target_id: input.targetId,
-        action: input.action,
-        decision: input.decision ?? 'queued',
-        persisted_externally: input.persistedExternally ? 1 : 0,
-        approval_required: input.approvalRequired ? 1 : 0,
-        reviewer_contact_id: input.reviewerContactId ?? null,
-        source: input.source ?? 'review_action',
-        created_at: now,
-        updated_at: now,
+        action: 'insert',
+        record: {
+          id,
+          target_table: input.targetTable,
+          target_id: input.targetId,
+          action: input.action,
+          decision: input.decision ?? 'queued',
+          persisted_externally: input.persistedExternally ? 1 : 0,
+          approval_required: input.approvalRequired ? 1 : 0,
+          reviewer_contact_id: input.reviewerContactId ?? null,
+          source: input.source ?? 'review_action',
+          created_at: now,
+          updated_at: now,
+        },
       },
-    };
-    this.executeWrites([write]);
+    ]);
     return id;
   }
 
-  getRecord(table: string, id: string): Record<string, unknown> | undefined {
+  async getRecord(table: string, id: string): Promise<Record<string, unknown> | undefined> {
     const record = this.records.get(this.key(table, id));
     return record ? clone(record) : undefined;
   }
 
-  queryTable(table: string, limit = 1000): Record<string, unknown>[] {
+  async queryTable(table: string, limit = 1000): Promise<Record<string, unknown>[]> {
     const matched: Record<string, unknown>[] = [];
     for (const [key, record] of this.records.entries()) {
       if (key.startsWith(`${table}:`)) matched.push(record);
@@ -231,7 +240,7 @@ class MemoryCanonicalStore implements CanonicalStore {
     ).slice(0, limit);
   }
 
-  queryAll(limit = 1000): Record<string, unknown>[] {
+  async queryAll(limit = 1000): Promise<Record<string, unknown>[]> {
     return clone([...this.records.values()]).sort(
       (left, right) => String(right.created_at ?? '').localeCompare(String(left.created_at ?? ''))
     ).slice(0, limit);
@@ -271,7 +280,7 @@ class SqliteCanonicalStore implements CanonicalStore {
     `);
   }
 
-  executeWrites(writes: DatabaseReadyWrite[]): WriteResult {
+  async executeWrites(writes: DatabaseReadyWrite[]): Promise<WriteResult> {
     const result: WriteResult = { ok: true, insertedIds: [], failed: [] };
     const insert = this.insertStmt;
     const now = isoNow();
@@ -309,10 +318,10 @@ class SqliteCanonicalStore implements CanonicalStore {
     return result;
   }
 
-  recordAiRun(input: AiRunInput): string {
+  async recordAiRun(input: AiRunInput): Promise<string> {
     const now = isoNow();
     const id = canonicalId('airun', input.agentId, input.targetTable, input.targetId, input.action, now);
-    this.executeWrites([
+    await this.executeWrites([
       {
         table: 'ai_runs',
         id,
@@ -340,10 +349,10 @@ class SqliteCanonicalStore implements CanonicalStore {
     return id;
   }
 
-  recordReviewAction(input: ReviewActionInput): string {
+  async recordReviewAction(input: ReviewActionInput): Promise<string> {
     const now = isoNow();
     const id = canonicalId('review', input.targetTable, input.targetId, input.action, now);
-    this.executeWrites([
+    await this.executeWrites([
       {
         table: 'reviews',
         id,
@@ -366,21 +375,21 @@ class SqliteCanonicalStore implements CanonicalStore {
     return id;
   }
 
-  getRecord(table: string, id: string): Record<string, unknown> | undefined {
+  async getRecord(table: string, id: string): Promise<Record<string, unknown> | undefined> {
     const row = this.db
       .prepare('SELECT payload FROM canonical_records WHERE table_name = ? AND id = ?')
       .get(table, id) as { payload: string } | undefined;
     return row ? (JSON.parse(row.payload) as Record<string, unknown>) : undefined;
   }
 
-  queryTable(table: string, limit = 1000): Record<string, unknown>[] {
+  async queryTable(table: string, limit = 1000): Promise<Record<string, unknown>[]> {
     const rows = this.db
       .prepare('SELECT payload FROM canonical_records WHERE table_name = ? ORDER BY created_at DESC LIMIT ?')
       .all(table, limit) as Array<{ payload: string }>;
     return rows.map((row) => JSON.parse(row.payload) as Record<string, unknown>);
   }
 
-  queryAll(limit = 1000): Record<string, unknown>[] {
+  async queryAll(limit = 1000): Promise<Record<string, unknown>[]> {
     const rows = this.db
       .prepare('SELECT payload FROM canonical_records ORDER BY created_at DESC LIMIT ?')
       .all(limit) as Array<{ payload: string }>;
@@ -392,10 +401,131 @@ class SqliteCanonicalStore implements CanonicalStore {
   }
 }
 
+class RemoteCanonicalStore implements CanonicalStore {
+  private baseUrl: string;
+  private apiKey: string;
+
+  constructor(baseUrl: string, apiKey: string) {
+    this.baseUrl = baseUrl.replace(/\/$/, '');
+    this.apiKey = apiKey;
+  }
+
+  private headers(): Record<string, string> {
+    return {
+      'Content-Type': 'application/json',
+      'X-API-Key': this.apiKey,
+    };
+  }
+
+  private async get<T>(path: string): Promise<T> {
+    const res = await fetch(`${this.baseUrl}${path}`, { headers: this.headers() });
+    if (!res.ok) {
+      const text = await res.text().catch(() => 'unknown error');
+      throw new Error(`Remote canonical store GET ${path} failed: ${res.status} ${text}`);
+    }
+    return (await res.json()) as T;
+  }
+
+  private async post<T>(path: string, body: unknown): Promise<T> {
+    const res = await fetch(`${this.baseUrl}${path}`, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => 'unknown error');
+      throw new Error(`Remote canonical store POST ${path} failed: ${res.status} ${text}`);
+    }
+    return (await res.json()) as T;
+  }
+
+  async executeWrites(writes: DatabaseReadyWrite[]): Promise<WriteResult> {
+    return this.post<WriteResult>('/write-many', { writes });
+  }
+
+  async recordAiRun(input: AiRunInput): Promise<string> {
+    const now = isoNow();
+    const id = canonicalId('airun', input.agentId, input.targetTable, input.targetId, input.action, now);
+    await this.executeWrites([
+      {
+        table: 'ai_runs',
+        id,
+        action: 'insert',
+        record: {
+          id,
+          agent_id: input.agentId,
+          target_table: input.targetTable,
+          target_id: input.targetId,
+          action: input.action,
+          recommendation: input.recommendation ?? '',
+          confidence: input.confidence ?? 0,
+          approval_required: input.approvalRequired ? 1 : 0,
+          persisted_externally: input.persistedExternally ? 1 : 0,
+          result_json: input.resultJson ?? '{}',
+          evidence_json: input.evidenceJson ?? '{}',
+          outcome_json: input.outcomeJson ?? '{}',
+          feedback_json: input.feedbackJson ?? '{}',
+          source: input.source ?? 'ai_agent',
+          created_at: now,
+          updated_at: now,
+        },
+      },
+    ]);
+    return id;
+  }
+
+  async recordReviewAction(input: ReviewActionInput): Promise<string> {
+    const now = isoNow();
+    const id = canonicalId('review', input.targetTable, input.targetId, input.action, now);
+    await this.executeWrites([
+      {
+        table: 'reviews',
+        id,
+        action: 'insert',
+        record: {
+          id,
+          target_table: input.targetTable,
+          target_id: input.targetId,
+          action: input.action,
+          decision: input.decision ?? 'queued',
+          persisted_externally: input.persistedExternally ? 1 : 0,
+          approval_required: input.approvalRequired ? 1 : 0,
+          reviewer_contact_id: input.reviewerContactId ?? null,
+          source: input.source ?? 'review_action',
+          created_at: now,
+          updated_at: now,
+        },
+      },
+    ]);
+    return id;
+  }
+
+  async getRecord(table: string, id: string): Promise<Record<string, unknown> | undefined> {
+    return this.get<Record<string, unknown> | undefined>(`/read/${encodeURIComponent(table)}/${encodeURIComponent(id)}`);
+  }
+
+  async queryTable(table: string, limit = 1000): Promise<Record<string, unknown>[]> {
+    return this.get<Record<string, unknown>[]>(`/query/${encodeURIComponent(table)}?limit=${limit}`);
+  }
+
+  async queryAll(limit = 1000): Promise<Record<string, unknown>[]> {
+    return this.get<Record<string, unknown>[]>(`/query?limit=${limit}`);
+  }
+
+  close(): void {
+    // Remote store has no local resources to release.
+  }
+}
+
 let sharedStore: CanonicalStore | undefined;
 
 export function getCanonicalStore(): CanonicalStore {
   if (sharedStore) return sharedStore;
+  const remoteConfig = shouldUseRemote();
+  if (remoteConfig) {
+    sharedStore = new RemoteCanonicalStore(remoteConfig.url, remoteConfig.apiKey);
+    return sharedStore;
+  }
   if (shouldUseSqlite()) {
     try {
       sharedStore = new SqliteCanonicalStore(defaultSqlitePath());
