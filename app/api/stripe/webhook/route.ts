@@ -1,12 +1,11 @@
-import { NextResponse } from 'next/server.js';
-import Stripe from 'stripe';
+import { NextResponse } from 'next/server';
+import type { Stripe } from 'stripe';
 import { canonicalId } from '@/lib/canonical-ids';
 import { getCanonicalStore } from '@/lib/canonical-store';
+import { stripe, webhookSecret } from '@/lib/stripe';
+import { buildReferralCodeUpdate, buildReferralConversionWrite, getReferralCodeByCode, isValidReferralCode } from '@/lib/referral';
 
 export const runtime = 'nodejs';
-
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-06-24.dahlia' }) : null;
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
 
 export async function POST(request: Request) {
   if (!stripe || !webhookSecret) {
@@ -26,6 +25,32 @@ export async function POST(request: Request) {
 
   const store = getCanonicalStore();
   const now = new Date().toISOString();
+
+  async function recordConversionForCheckout(session: Stripe.Checkout.Session, sourceId: string) {
+    const referralCode = session.metadata?.referralCode ?? '';
+    if (!isValidReferralCode(referralCode)) return;
+
+    const codeRecord = await getReferralCodeByCode(store, referralCode);
+    if (!codeRecord || codeRecord.status !== 'active') return;
+
+    const revenueCents = session.amount_total ?? 0;
+    const rewardCents = codeRecord.reward_cents;
+    const conversionWrite = buildReferralConversionWrite({
+      code: referralCode,
+      referredEmail: session.customer_email ?? undefined,
+      referredName: session.customer_details?.name ?? undefined,
+      eventType: 'checkout',
+      sourceTable: 'revenue_events',
+      sourceId,
+      revenueCents,
+      rewardCents,
+      partnerId: codeRecord.owner_type === 'partner' ? codeRecord.owner_id : null,
+      status: 'pending',
+      createdAt: now
+    }, codeRecord);
+    const codeUpdate = buildReferralCodeUpdate(codeRecord, revenueCents, rewardCents);
+    await store.executeWrites([conversionWrite, codeUpdate]);
+  }
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
@@ -57,6 +82,8 @@ export async function POST(request: Request) {
         }
       }
     ]);
+
+    if (referralCode) await recordConversionForCheckout(session, revenueId);
 
     console.log('[stripe webhook] Revenue recorded', {
       revenueId,
