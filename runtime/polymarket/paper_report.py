@@ -49,13 +49,17 @@ def _load_metrics(db_path: str, starting_bankroll: Decimal) -> Dict[str, Any]:
         else Decimal("0")
     )
     bankroll = starting_bankroll + realized_pnl
+    leverage = Decimal(str(open_row["notional"] or 0)) / bankroll if bankroll else Decimal("0")
 
     conn.close()
     return {
         "starting_bankroll": float(starting_bankroll),
         "bankroll": float(bankroll),
+        "available_cash": float(bankroll - Decimal(str(open_row["notional"] or 0))),
         "open_positions": open_row["c"],
         "open_notional": float(open_row["notional"]),
+        "max_open_by_capital": int(bankroll / Decimal("50")) if Decimal("50") else 0,
+        "leverage": float(leverage.quantize(Decimal("0.01"))),
         "closed_trades": closed_row["c"],
         "realized_pnl": float(realized_pnl),
         "total_roi_pct": float(total_roi),

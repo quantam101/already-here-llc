@@ -176,15 +176,6 @@ class PaperTrader:
             logger.info("Paper training target already reached; skipping new positions")
             return None
 
-        if self._config.paper_max_open_positions > 0:
-            open_count = self._state.paper_position_summary().get("open_count", 0)
-            if open_count >= self._config.paper_max_open_positions:
-                logger.info(
-                    "Paper max open positions reached (%s); skipping new positions",
-                    open_count,
-                )
-                return None
-
         try:
             entry_price = Decimal(str(event.get("price", 0) or 0))
         except Exception:
@@ -195,10 +186,32 @@ class PaperTrader:
 
         amount = Decimal(str(self._config.fixed_order_usd))
         bankroll = self._bankroll()
-        if not self._config.paper_unlimited_training and self._exposure() + amount > bankroll:
+        summary = self._state.paper_position_summary()
+        open_count = int(summary.get("open_count", 0))
+        open_notional = Decimal(str(summary.get("open_notional", 0)))
+
+        # Enforce realistic capital limits: open notional cannot exceed bankroll * max_leverage.
+        max_exposure = (bankroll * self._config.paper_max_leverage).quantize(Decimal("0.01"))
+        max_open_by_capital = int(max_exposure / amount) if amount > 0 else 0
+        max_open = max_open_by_capital
+        if self._config.paper_max_open_positions > 0:
+            max_open = min(max_open, self._config.paper_max_open_positions)
+
+        if open_count >= max_open:
             logger.info(
-                "Paper trade skipped: exposure would exceed $%s bankroll",
-                bankroll,
+                "Paper trade skipped: at capital limit (open=%s, max=%s, leverage=%s)",
+                open_count,
+                max_open,
+                self._config.paper_max_leverage,
+            )
+            return None
+
+        if open_notional + amount > max_exposure:
+            logger.info(
+                "Paper trade skipped: exposure $%s + $%s would exceed $%s limit",
+                open_notional,
+                amount,
+                max_exposure,
             )
             return None
         shares = (amount / entry_price).quantize(Decimal("0.0001"))

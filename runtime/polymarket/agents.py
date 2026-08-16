@@ -218,13 +218,18 @@ class SecurityAgent(BaseAgent):
             dupes = len(ids) - len(set(ids))
             anomalies.append(f"duplicate_closed_trade_ids:{dupes}")
 
-        # Detect impossible binary-market payouts (>100% of notional).
+        # Detect impossible binary-market payouts.
         for t in closed:
             amount = float(t.get("amount", 0) or 0)
+            entry = float(t.get("entry_price", 0) or 0)
             pnl = float(t.get("pnl", 0) or 0)
-            if amount > 0 and abs(pnl) > amount * 25:
-                anomalies.append(f"impossible_payout:{t.get('id','')[:16]}:{pnl}")
-                break  # log one sample per pass
+            if amount > 0 and entry > 0 and entry < 1:
+                max_buy_payout = amount * (1 - entry) / entry
+                max_sell_payout = amount
+                max_loss = max(max_buy_payout, max_sell_payout)
+                if abs(pnl) > max_loss * 1.05:
+                    anomalies.append(f"impossible_payout:{t.get('id','')[:16]}:{pnl:.2f}")
+                    break  # log one sample per pass
 
         # Hash-chain over closed trades.
         prev = self._state.get_latest_audit_hash()

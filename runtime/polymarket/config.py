@@ -101,6 +101,7 @@ class PolymarketConfig:
     paper_starting_bankroll: Decimal = Decimal("1000.00")
     paper_bypass_portfolio_guard: bool = False
     paper_unlimited_training: bool = False
+    paper_max_leverage: Decimal = Decimal("1.0")
     paper_training_target_win_rate: Decimal = Decimal("90.0")
     paper_training_lookback_days: int = 60
     paper_training_min_sample_trades: int = 30
@@ -220,6 +221,7 @@ class PolymarketConfig:
             paper_starting_bankroll=_env_decimal("POLYMARKET_PAPER_STARTING_BANKROLL", "1000.00"),
             paper_bypass_portfolio_guard=(os.environ.get("POLYMARKET_PAPER_BYPASS_PORTFOLIO_GUARD", "false").lower() == "true"),
             paper_unlimited_training=(os.environ.get("POLYMARKET_PAPER_UNLIMITED_TRAINING", "false").lower() == "true"),
+            paper_max_leverage=_env_decimal("POLYMARKET_PAPER_MAX_LEVERAGE", "1.0"),
             paper_training_target_win_rate=_env_decimal("POLYMARKET_PAPER_TRAINING_TARGET_WIN_RATE", "90.0"),
             paper_training_lookback_days=_env_int("POLYMARKET_PAPER_TRAINING_LOOKBACK_DAYS", 60),
             paper_training_min_sample_trades=_env_int("POLYMARKET_PAPER_TRAINING_MIN_SAMPLE_TRADES", 30),
