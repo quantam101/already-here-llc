@@ -19,7 +19,10 @@ const TRACKED_TABLES = [
   'reviews',
   'proof_of_work',
   'followups',
-  'outreach'
+  'outreach',
+  'partners',
+  'referral_codes',
+  'referral_conversions'
 ];
 
 export interface DashboardMetrics {

@@ -5,8 +5,11 @@ import { useState } from 'react';
 export interface StripePaymentButtonProps {
   mode?: 'payment' | 'subscription';
   amount?: number;
+  priceId?: string;
+  quantity?: number;
   productName?: string;
   description?: string;
+  customerEmail?: string;
   successPath?: string;
   cancelPath?: string;
   rentalId?: string;
@@ -18,8 +21,11 @@ export interface StripePaymentButtonProps {
 export function StripePaymentButton({
   mode = 'payment',
   amount = 30500,
+  priceId,
+  quantity = 1,
   productName = 'Already Here service',
   description = '',
+  customerEmail,
   successPath = '/dashboard/payments?success=true',
   cancelPath = '/',
   rentalId,
@@ -38,8 +44,11 @@ export function StripePaymentButton({
         body: JSON.stringify({
           mode,
           amount,
+          priceId,
+          quantity,
           productName,
           description,
+          customerEmail,
           successPath,
           cancelPath,
           referralCode,
