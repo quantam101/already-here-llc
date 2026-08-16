@@ -305,8 +305,9 @@ class WalletStats:
 class BacktestWalletProfiler:
     """Compute per-wallet performance from closed historical trades."""
 
-    def __init__(self, oracle: MarketOracle) -> None:
+    def __init__(self, oracle: MarketOracle, include_sell: bool = False) -> None:
         self._oracle = oracle
+        self._include_sell = include_sell
 
     def profile(self, fills: List[Dict[str, Any]]) -> Dict[str, WalletStats]:
         by_wallet: Dict[str, List[Decimal]] = {}
@@ -314,7 +315,7 @@ class BacktestWalletProfiler:
         by_wallet_wins: Dict[str, int] = {}
         for fill in fills:
             wallet = fill["wallet"]
-            if fill.get("wallet_side") != "BUY":
+            if fill.get("wallet_side") != "BUY" and not self._include_sell:
                 continue
             exit_p = self._oracle.exit_price(fill["token_id"])
             if exit_p is None:
@@ -375,7 +376,7 @@ class WalkForwardBacktest:
         self.include_sell = include_sell
         self.oracle = MarketOracle()
         self.loader = SubgraphLoader()
-        self.profiler = BacktestWalletProfiler(self.oracle)
+        self.profiler = BacktestWalletProfiler(self.oracle, include_sell=self.include_sell)
         self.confluence = SignalConfluence(self.config) if use_confluence else None
         self.trades: List[BacktestTrade] = []
 
@@ -593,6 +594,7 @@ def main() -> None:
     parser.add_argument("--min-win-rate", type=float, default=65.0)
     parser.add_argument("--min-sharpe", type=float, default=1.0)
     parser.add_argument("--confluence", action="store_true")
+    parser.add_argument("--include-sell", action="store_true")
     parser.add_argument("--first", type=int, default=1000)
     parser.add_argument("--bankroll", type=float, default=1000.0)
     parser.add_argument("--position-size-pct", type=float, default=None)
@@ -610,6 +612,7 @@ def main() -> None:
         min_wallet_win_rate=Decimal(str(args.min_win_rate)),
         min_wallet_sharpe=Decimal(str(args.min_sharpe)),
         use_confluence=args.confluence,
+        include_sell=args.include_sell,
     )
     result = bt.run(args.start, args.end, first=args.first)
     print(result)
