@@ -17,6 +17,11 @@ EXCLUDED_DIRS: FrozenSet[str] = frozenset({
     ".git", "node_modules", ".next", "__pycache__", ".pytest_cache",
 })
 
+EXCLUDED_EXTENSIONS: FrozenSet[str] = frozenset({
+    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg",
+    ".docx", ".xlsx", ".pptx", ".pdf",
+})
+
 SELF_FILES: FrozenSet[str] = frozenset({
     "security_scanner.py",
 })
@@ -34,8 +39,11 @@ def scan_text(text: str) -> Tuple[str, ...]:
 
 
 def _is_scannable(path: Path) -> bool:
-    return path.is_file() and path.name not in SELF_FILES and not any(
-        part in EXCLUDED_DIRS for part in path.parts
+    return (
+        path.is_file()
+        and path.name not in SELF_FILES
+        and path.suffix.lower() not in EXCLUDED_EXTENSIONS
+        and not any(part in EXCLUDED_DIRS for part in path.parts)
     )
 
 
