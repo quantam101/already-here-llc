@@ -163,6 +163,32 @@ class StateManager:
                     updated_at REAL
                 );
                 CREATE INDEX IF NOT EXISTS idx_adaptive_confluence_thresholds_updated ON adaptive_confluence_thresholds(updated_at);
+
+                CREATE TABLE IF NOT EXISTS agent_status (
+                    agent TEXT PRIMARY KEY,
+                    status_json TEXT,
+                    updated_at REAL
+                );
+                CREATE INDEX IF NOT EXISTS idx_agent_status_updated ON agent_status(updated_at);
+
+                CREATE TABLE IF NOT EXISTS meta_decisions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    decision_json TEXT,
+                    created_at REAL
+                );
+                CREATE INDEX IF NOT EXISTS idx_meta_decisions_created ON meta_decisions(created_at);
+
+                CREATE TABLE IF NOT EXISTS security_audit (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    record_type TEXT,
+                    record_id TEXT,
+                    record_hash TEXT,
+                    previous_hash TEXT,
+                    anomaly_flags TEXT,
+                    created_at REAL
+                );
+                CREATE INDEX IF NOT EXISTS idx_security_audit_created ON security_audit(created_at);
+                CREATE INDEX IF NOT EXISTS idx_security_audit_type ON security_audit(record_type);
                 """
             )
         self._migrate_columns()
@@ -525,3 +551,58 @@ class StateManager:
                 "SELECT * FROM adaptive_confluence_thresholds ORDER BY updated_at DESC LIMIT 1"
             ).fetchone()
             return dict(row) if row else None
+
+    def set_agent_status(self, agent: str, status: Dict[str, Any]) -> None:
+        with self._cursor() as cur:
+            cur.execute(
+                "INSERT INTO agent_status (agent, status_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(agent) DO UPDATE SET status_json=excluded.status_json, updated_at=excluded.updated_at",
+                (agent, json.dumps(status, sort_keys=True, default=str), time.time()),
+            )
+
+    def get_agent_status(self, agent: str) -> Optional[Dict[str, Any]]:
+        with self._cursor() as cur:
+            row = cur.execute("SELECT status_json FROM agent_status WHERE agent = ?", (agent,)).fetchone()
+            if row and row["status_json"]:
+                return json.loads(row["status_json"])
+            return None
+
+    def get_all_agent_statuses(self) -> Dict[str, Dict[str, Any]]:
+        with self._cursor() as cur:
+            rows = cur.execute("SELECT agent, status_json FROM agent_status").fetchall()
+            return {r["agent"]: json.loads(r["status_json"]) for r in rows if r["status_json"]}
+
+    def record_meta_decision(self, decision: Dict[str, Any]) -> None:
+        with self._cursor() as cur:
+            cur.execute(
+                "INSERT INTO meta_decisions (decision_json, created_at) VALUES (?, ?)",
+                (json.dumps(decision, sort_keys=True, default=str), time.time()),
+            )
+            cur.execute("DELETE FROM meta_decisions WHERE id < ?", (cur.lastrowid - 1000,))
+
+    def get_latest_meta_decision(self) -> Optional[Dict[str, Any]]:
+        with self._cursor() as cur:
+            row = cur.execute("SELECT decision_json FROM meta_decisions ORDER BY created_at DESC LIMIT 1").fetchone()
+            if row and row["decision_json"]:
+                return json.loads(row["decision_json"])
+            return None
+
+    def record_audit_event(self, record_type: str, record_id: str, record_hash: str, previous_hash: str, anomaly_flags: List[str]) -> None:
+        with self._cursor() as cur:
+            cur.execute(
+                "INSERT INTO security_audit (record_type, record_id, record_hash, previous_hash, anomaly_flags, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (record_type, record_id, record_hash, previous_hash, json.dumps(anomaly_flags), time.time()),
+            )
+            cur.execute("DELETE FROM security_audit WHERE id < ?", (cur.lastrowid - 10000,))
+
+    def get_latest_audit_hash(self) -> str:
+        with self._cursor() as cur:
+            row = cur.execute("SELECT record_hash FROM security_audit ORDER BY created_at DESC LIMIT 1").fetchone()
+            return row["record_hash"] if row and row["record_hash"] else ""
+
+    def get_security_audit_summary(self, since: Optional[float] = None) -> Dict[str, Any]:
+        if since is None:
+            since = time.time() - 86400
+        with self._cursor() as cur:
+            total = cur.execute("SELECT COUNT(*) as c FROM security_audit WHERE created_at >= ?", (since,)).fetchone()["c"]
+            anomalies = cur.execute("SELECT COUNT(*) as c FROM security_audit WHERE anomaly_flags != '[]' AND created_at >= ?", (since,)).fetchone()["c"]
+            return {"total_records": total, "anomalies": anomalies}

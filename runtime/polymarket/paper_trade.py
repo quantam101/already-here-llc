@@ -241,44 +241,51 @@ class PaperTrader:
         return pos
 
     def reconcile(self) -> List[Dict[str, Any]]:
-        """Mark any open paper positions to market and close realized trades."""
+        """Mark open paper positions to market and close realized trades."""
+        open_positions = self._state.get_open_paper_positions()
+        # Group by token so each market is resolved once per reconcile pass.
+        by_token: Dict[str, List[Dict[str, Any]]] = {}
+        for pos in open_positions:
+            by_token.setdefault(pos["token_id"], []).append(pos)
+
         closed: List[Dict[str, Any]] = []
-        for pos in self._state.get_open_paper_positions():
+        for token_id, positions in by_token.items():
             try:
-                exit_price = self._resolver.exit_price(pos["token_id"])
+                exit_price = self._resolver.exit_price(token_id)
             except Exception:
-                logger.exception("Resolver failed for %s", pos["token_id"][:16])
+                logger.exception("Resolver failed for %s", token_id[:16])
                 continue
 
             if exit_price is None:
                 continue
 
-            pnl, roi = self._compute_pnl(pos, exit_price)
-            self._state.close_paper_position(
-                pos["id"], float(exit_price), float(pnl), float(roi)
-            )
-            info = self._resolver.resolve(pos["token_id"]) or {}
-            logger.info(
-                "Paper position closed: %s side=%s entry=%s exit=%s pnl=%s",
-                pos["token_id"][:16],
-                pos["side"],
-                pos["entry_price"],
-                exit_price,
-                pnl,
-            )
-            closed.append(
-                {
-                    "id": pos["id"],
-                    "wallet": pos["wallet"],
-                    "token_id": pos["token_id"],
-                    "side": pos["side"],
-                    "entry_price": pos["entry_price"],
-                    "exit_price": float(exit_price),
-                    "pnl": float(pnl),
-                    "roi": float(roi),
-                    "question": info.get("question", ""),
-                }
-            )
+            info = self._resolver.resolve(token_id) or {}
+            for pos in positions:
+                pnl, roi = self._compute_pnl(pos, exit_price)
+                self._state.close_paper_position(
+                    pos["id"], float(exit_price), float(pnl), float(roi)
+                )
+                logger.info(
+                    "Paper position closed: %s side=%s entry=%s exit=%s pnl=%s",
+                    pos["token_id"][:16],
+                    pos["side"],
+                    pos["entry_price"],
+                    exit_price,
+                    pnl,
+                )
+                closed.append(
+                    {
+                        "id": pos["id"],
+                        "wallet": pos["wallet"],
+                        "token_id": pos["token_id"],
+                        "side": pos["side"],
+                        "entry_price": pos["entry_price"],
+                        "exit_price": float(exit_price),
+                        "pnl": float(pnl),
+                        "roi": float(roi),
+                        "question": info.get("question", ""),
+                    }
+                )
         return closed
 
     def _compute_pnl(self, pos: Dict[str, Any], exit_price: Decimal) -> tuple[Decimal, Decimal]:
@@ -294,7 +301,11 @@ class PaperTrader:
         return pnl, roi
 
     def _position_id(self, event: Dict[str, Any]) -> str:
-        return f"{event.get('tx_hash', '')}:{event.get('log_index', 0)}:{event.get('wallet', '')}:{event.get('token_id', '')}"
+        """Dedupe paper positions by order hash when available; fall back to log index."""
+        order_hash = event.get("order_hash") or ""
+        if order_hash:
+            return f"{order_hash}:{event.get('wallet', '')}:{event.get('token_id', '')}:{event.get('side', '')}"
+        return f"{event.get('tx_hash', '')}:{event.get('log_index', 0)}:{event.get('wallet', '')}:{event.get('token_id', '')}:{event.get('side', '')}"
 
     def status(self) -> Dict[str, Any]:
         summary = self._state.paper_position_summary()

@@ -40,6 +40,12 @@ export interface PolymarketStatus {
     maxDrawdown?: number;
     bankroll?: number;
   };
+  agents?: {
+    enabled?: boolean;
+    agents?: Record<string, unknown>;
+    latestDecision?: Record<string, unknown> | null;
+    audit?: { total?: number; anomalies?: number };
+  };
   [key: string]: unknown;
 }
 
@@ -184,16 +190,17 @@ export function PolymarketDashboard({ status, sessionId }: Props) {
 
         <section className="mt-8 grid gap-6 lg:grid-cols-3">
           <div className="rounded-3xl border border-slate-700/50 bg-slate-900/80 p-6 shadow-xl">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">Live Alert Feed</h2>
-            <div className="mt-4 rounded-2xl bg-slate-950/50 p-4 text-center text-sm text-slate-500">
-              No alerts yet. Start the orchestrator with Telegram credentials to populate this feed.
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">Agent Swarm</h2>
+            <div className="mt-4 space-y-2">
+              <RiskPill label="Meta Agent" value={status?.agents?.enabled ? 'enabled' : 'disabled'} />
+              <RiskPill label="System Confidence" value={`${(Number(status?.agents?.latestDecision?.systemConfidence) * 100).toFixed(1)}%`} />
+              <RiskPill label="Kill Switch" value={status?.agents?.latestDecision?.killSwitch ? 'TRIPPED' : 'open'} />
+              <RiskPill label="Training Mode" value={status?.agents?.latestDecision?.trainingMode ? 'active' : 'off'} />
+              <RiskPill label="Audit Records" value={`${status?.agents?.audit?.total ?? 0}`} />
+              <RiskPill label="Anomalies" value={`${status?.agents?.audit?.anomalies ?? 0}`} />
             </div>
             <pre className="mt-4 max-h-48 overflow-auto rounded-xl bg-slate-950 p-4 text-xs text-slate-400">
-{`POLYMARKET_CLAUDE_ENABLED=true \\
-POLYGON_WS_URL=wss://... \\
-TELEGRAM_BOT_TOKEN=... \\
-TELEGRAM_CHAT_IDS=... \\
-python -m runtime.polymarket.orchestrator`}
+              {JSON.stringify(status?.agents?.latestDecision ?? {}, null, 2)}
             </pre>
           </div>
 

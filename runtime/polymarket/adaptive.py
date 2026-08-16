@@ -86,8 +86,8 @@ class AdaptiveLearner:
             )
             return {"enabled": True, "paper_trades": len(paper_trades), "skipped": True}
 
-        wallet_result = self._retrain_wallets(paper_trades)
-        confluence_result = self._retrain_confluence(paper_trades)
+        wallet_result = self.retrain_wallets(paper_trades)
+        confluence_result = self.retrain_confluence(paper_trades)
 
         summary = {
             "enabled": True,
@@ -100,7 +100,7 @@ class AdaptiveLearner:
         logger.info("Adaptive retrain complete: %s", summary)
         return summary
 
-    def _retrain_wallets(self, trades: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def retrain_wallets(self, trades: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Compute per-wallet adaptive scores from realized paper outcomes."""
         by_wallet: Dict[str, List[Dict[str, Any]]] = {}
         for t in trades:
@@ -183,7 +183,7 @@ class AdaptiveLearner:
             "top_score": raw_metrics[0]["score"] if raw_metrics else 0.0,
         }
 
-    def _retrain_confluence(self, trades: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def retrain_confluence(self, trades: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Learn confluence score/confidence thresholds from realized outcomes."""
         trades_with_conf = [
             t for t in trades

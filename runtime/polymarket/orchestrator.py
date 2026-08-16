@@ -30,6 +30,7 @@ from runtime.polymarket.risk import RiskGuard
 from runtime.polymarket.signals import SignalConfluence
 from runtime.polymarket.state import StateManager
 from runtime.polymarket.adaptive import AdaptiveLearner
+from runtime.polymarket.agents import AgentSwarm
 from runtime.polymarket.utils import CircuitBreaker
 
 logger = logging.getLogger("polymarket-tracker")
@@ -78,6 +79,7 @@ class PolymarketOrchestrator:
         self._confluence = SignalConfluence(self._config, state=self._state)
         self._paper = PaperTrader(self._config, self._state) if self._config.paper_trading else None
         self._adaptive = AdaptiveLearner(self._config, self._state)
+        self._swarm = AgentSwarm(self._config, self._state)
 
         self._profile_cb = CircuitBreaker("profiler", failure_threshold=3, reset_timeout_seconds=60.0)
         self._profile_cache: Dict[str, Any] = {}
@@ -194,6 +196,7 @@ class PolymarketOrchestrator:
             "tx_hash": fill.get("transaction_hash", ""),
             "log_index": fill.get("log_index", 0),
             "block_number": fill.get("block_number", 0),
+            "order_hash": fill.get("order_hash", ""),
         }
 
         risk = self._risk.assess_alert(wallet, event["token_id"], amount_usd)
@@ -217,7 +220,14 @@ class PolymarketOrchestrator:
                 event["side"],
             )
             return
-        if self._config.confluence_enabled and confluence.confidence < self._config.confluence_min_confidence:
+
+        # Ask the MetaAgent for a consensus recommendation.
+        rec = self._swarm.recommend(event)
+        if not rec.allow:
+            logger.info("MetaAgent blocked %s: %s", wallet, rec.reasons)
+            return
+
+        if self._config.confluence_enabled and confluence.confidence < rec.min_confidence:
             logger.info(
                 "Confluence confidence too low for %s on %s: %s",
                 wallet,
@@ -226,7 +236,7 @@ class PolymarketOrchestrator:
             )
             return
 
-        event["portfolio_scale"] = str(portfolio.position_scale)
+        event["portfolio_scale"] = str(rec.position_scale)
         event["confluence_score"] = str(confluence.score)
         event["confluence_confidence"] = str(confluence.confidence)
 
@@ -311,8 +321,8 @@ class PolymarketOrchestrator:
             ).start()
         if self._paper:
             self._paper.start()
-        if self._config.adaptive_learning_enabled:
-            self._adaptive.start()
+        if self._config.meta_agent_enabled:
+            self._swarm.start()
         self._listener.start()
         logger.info("Polymarket orchestrator started; watching %d wallets", len(self._config.watched_wallets))
 
@@ -320,7 +330,7 @@ class PolymarketOrchestrator:
         self._running = False
         if self._paper:
             self._paper.stop()
-        self._adaptive.stop()
+        self._swarm.stop()
         self._listener.stop()
 
     def status(self) -> Dict[str, Any]:
@@ -335,6 +345,7 @@ class PolymarketOrchestrator:
             "confluence": self._confluence.status(),
             "profiler": self._profiler.status(),
             "adaptive": self._adaptive.status(),
+            "agents": self._swarm.status() if self._config.meta_agent_enabled else {"enabled": False},
             "paper": self._paper.status() if self._paper else {"enabled": False},
             "profile_cache": {
                 k: v for k, v in self._profile_cache.items() if not k.startswith("_")
@@ -343,18 +354,29 @@ class PolymarketOrchestrator:
 
 
 def main() -> None:
-    """CLI entry point for the fully autonomous tracker."""
+    """CLI entry point for the fully autonomous tracker with crash restart."""
     config = PolymarketConfig.from_env()
-    orchestrator = PolymarketOrchestrator(config)
-    try:
-        orchestrator.start()
-        while True:
+    while True:
+        orchestrator: Optional[PolymarketOrchestrator] = None
+        try:
+            orchestrator = PolymarketOrchestrator(config)
+            orchestrator.start()
+            while True:
+                time.sleep(5)
+                logger.info(json.dumps(orchestrator.status(), default=str))
+        except KeyboardInterrupt:
+            logger.info("Shutting down...")
+            if orchestrator:
+                orchestrator.stop()
+            break
+        except Exception:
+            logger.exception("Orchestrator crashed; restarting in 5s")
+            if orchestrator:
+                try:
+                    orchestrator.stop()
+                except Exception:
+                    pass
             time.sleep(5)
-            logger.info(json.dumps(orchestrator.status(), default=str))
-    except KeyboardInterrupt:
-        logger.info("Shutting down...")
-    finally:
-        orchestrator.stop()
 
 
 if __name__ == "__main__":

@@ -18,6 +18,43 @@ function safeList(raw: string | undefined): string[] {
     .filter(Boolean);
 }
 
+function getAgentSwarm() {
+  try {
+    const dbPath = path.join(process.cwd(), 'data', 'polymarket_tracker.db');
+    const db = new Database(dbPath, { readonly: true, fileMustExist: false });
+    const agents = db
+      .prepare('SELECT agent, status_json FROM agent_status')
+      .all() as Array<{ agent: string; status_json: string }>;
+    const decision = db
+      .prepare('SELECT decision_json FROM meta_decisions ORDER BY created_at DESC LIMIT 1')
+      .get() as { decision_json: string } | undefined;
+    const audit = db
+      .prepare('SELECT COUNT(*) as c FROM security_audit')
+      .get() as { c: number };
+    const dayAgo = (Date.now() / 1000) - 86400;
+    const anomalies = db
+      .prepare("SELECT COUNT(*) as c FROM security_audit WHERE anomaly_flags != '[]' AND created_at >= ?")
+      .get(dayAgo) as { c: number };
+    db.close();
+    const byAgent: Record<string, unknown> = {};
+    for (const row of agents) {
+      try {
+        byAgent[row.agent] = JSON.parse(row.status_json);
+      } catch {
+        byAgent[row.agent] = row.status_json;
+      }
+    }
+    return {
+      enabled: process.env.POLYMARKET_META_AGENT_ENABLED !== 'false',
+      agents: byAgent,
+      latestDecision: decision ? JSON.parse(decision.decision_json) : null,
+      audit: { total: audit?.c || 0, anomalies: anomalies?.c || 0 }
+    };
+  } catch {
+    return { enabled: false, agents: {}, latestDecision: null, audit: { total: 0, anomalies: 0 } };
+  }
+}
+
 function getPaperMetrics() {
   try {
     const dbPath = path.join(process.cwd(), 'data', 'polymarket_tracker.db');
@@ -137,6 +174,7 @@ export async function GET(request: NextRequest) {
       process.env.CLAUDE_API_KEY && process.env.POLYMARKET_CLAUDE_ENABLED === 'true'
     ),
     paper: getPaperMetrics(),
+    agents: getAgentSwarm(),
     gated: false
   });
 }

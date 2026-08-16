@@ -95,6 +95,7 @@ class PolymarketConfig:
     portfolio_consecutive_loss_limit: int = 5
 
     # Paper trading (simulate $50 fixed orders, mark to market on settlement)
+    live_execution_enabled: bool = False
     paper_trading: bool = False
     paper_reconcile_interval_seconds: int = 300
     paper_starting_bankroll: Decimal = Decimal("1000.00")
@@ -115,6 +116,15 @@ class PolymarketConfig:
     adaptive_wallet_profit_factor_weight: Decimal = Decimal("0.20")
     adaptive_wallet_trade_count_weight: Decimal = Decimal("0.10")
     adaptive_confluence_target_win_rate: Decimal = Decimal("60.0")
+
+    # Multi-agent ASI/Meta control layer (enterprise-grade coordination)
+    meta_agent_enabled: bool = True
+    meta_agent_interval_seconds: int = 60
+    security_agent_enabled: bool = True
+    security_audit_enabled: bool = True
+    execution_agent_enabled: bool = True
+    meta_max_position_scale: Decimal = Decimal("1.0")
+    meta_kill_switch_drawdown_pct: Decimal = Decimal("95.0")
 
     # Claude signal summarizer (opt-in; disabled unless API key + env toggle set)
     claude_api_key: str = ""
@@ -204,6 +214,7 @@ class PolymarketConfig:
             portfolio_max_drawdown_pct=_env_decimal("POLYMARKET_PORTFOLIO_MAX_DRAWDOWN_PCT", "30.0"),
             portfolio_min_win_rate_pct=_env_decimal("POLYMARKET_PORTFOLIO_MIN_WIN_RATE_PCT", "50.0"),
             portfolio_consecutive_loss_limit=_env_int("POLYMARKET_PORTFOLIO_CONSECUTIVE_LOSS_LIMIT", 5),
+            live_execution_enabled=(os.environ.get("POLYMARKET_LIVE_EXECUTION", "false").lower() in ("true", "1", "yes")),
             paper_trading=(os.environ.get("POLYMARKET_PAPER_TRADING", "false").lower() == "true"),
             paper_reconcile_interval_seconds=_env_int("POLYMARKET_PAPER_RECONCILE_INTERVAL_SECONDS", 300),
             paper_starting_bankroll=_env_decimal("POLYMARKET_PAPER_STARTING_BANKROLL", "1000.00"),
@@ -222,6 +233,13 @@ class PolymarketConfig:
             adaptive_wallet_profit_factor_weight=_env_decimal("POLYMARKET_ADAPTIVE_WALLET_PROFIT_FACTOR_WEIGHT", "0.20"),
             adaptive_wallet_trade_count_weight=_env_decimal("POLYMARKET_ADAPTIVE_WALLET_TRADE_COUNT_WEIGHT", "0.10"),
             adaptive_confluence_target_win_rate=_env_decimal("POLYMARKET_ADAPTIVE_CONFLUENCE_TARGET_WIN_RATE", "60.0"),
+            meta_agent_enabled=(os.environ.get("POLYMARKET_META_AGENT_ENABLED", "true").lower() == "true"),
+            meta_agent_interval_seconds=_env_int("POLYMARKET_META_AGENT_INTERVAL_SECONDS", 60),
+            security_agent_enabled=(os.environ.get("POLYMARKET_SECURITY_AGENT_ENABLED", "true").lower() == "true"),
+            security_audit_enabled=(os.environ.get("POLYMARKET_SECURITY_AUDIT_ENABLED", "true").lower() == "true"),
+            execution_agent_enabled=(os.environ.get("POLYMARKET_EXECUTION_AGENT_ENABLED", "true").lower() == "true"),
+            meta_max_position_scale=_env_decimal("POLYMARKET_META_MAX_POSITION_SCALE", "1.0"),
+            meta_kill_switch_drawdown_pct=_env_decimal("POLYMARKET_META_KILL_SWITCH_DRAWDOWN_PCT", "95.0"),
             claude_api_key=os.environ.get("CLAUDE_API_KEY", ""),
             claude_enabled=(os.environ.get("POLYMARKET_CLAUDE_ENABLED", "false").lower() == "true"),
             claude_model=os.environ.get("POLYMARKET_CLAUDE_MODEL", "claude-sonnet-5"),

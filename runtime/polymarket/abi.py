@@ -258,6 +258,7 @@ def decode_orders_matched_v2(log: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     side = "BUY" if side_int == 0 else "SELL" if side_int == 1 else str(side_int)
     return {
         "event": "OrdersMatchedV2",
+        "order_hash": "0x" + _to_bytes(topics[1]).hex(),
         "taker_order_hash": "0x" + _to_bytes(topics[1]).hex(),
         "taker_order_maker": _decode_address(topics[2]),
         "side": side,
