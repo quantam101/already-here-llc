@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,6 +23,43 @@ def canonical_id(prefix: str, *components: Any) -> str:
     value = "::".join(str(c) for c in components if c is not None)
     digest = hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
     return f"{prefix}_{digest}"
+
+
+def canonical_slug(value: str) -> str:
+    """Normalize a string to a lowercase, underscore-delimited slug."""
+    return re.sub(r"^_+|_+$", "", re.sub(r"[^a-z0-9]+", "_", value.lower()))[:64]
+
+
+def normalize_email(value: Optional[str]) -> str:
+    return value.strip().lower() if isinstance(value, str) else ""
+
+
+def normalize_phone(value: Optional[str]) -> str:
+    return re.sub(r"[^0-9+]", "", value) if isinstance(value, str) else ""
+
+
+def normalize_domain(value: Optional[str] = None, website: Optional[str] = None, email: Optional[str] = None) -> str:
+    explicit = value.strip().lower().removeprefix("www.") if isinstance(value, str) else ""
+    if explicit and "." in explicit:
+        return explicit
+    urlish = website.strip() if isinstance(website, str) else ""
+    if urlish:
+        try:
+            from urllib.parse import urlparse
+            url = urlish if urlish.startswith("http://") or urlish.startswith("https://") else f"https://{urlish}"
+            host = urlparse(url).hostname or ""
+            host = host.lower().removeprefix("www.")
+            if "." in host:
+                return host
+        except Exception:
+            pass
+    mail = email.strip().lower() if isinstance(email, str) else ""
+    at = mail.find("@")
+    if 0 < at < len(mail) - 1:
+        host = mail[at + 1 :]
+        if "." in host:
+            return host
+    return ""
 
 
 def _now() -> str:

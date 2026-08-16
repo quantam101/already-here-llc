@@ -14,6 +14,8 @@ const sections = [
   { title: 'Technician network', description: 'Applicants, dispatch-ready technicians, and skill matching.', action: 'View network', href: '/technician-network' },
   { title: 'Work orders', description: 'Open dispatches, assignments, and closeout queue.', action: 'View work orders', href: '/dispatch' },
   { title: 'Opportunities', description: 'Qualified leads, proposals, and revenue pipeline.', action: 'View pipeline', href: '/revenue-mesh' },
+  { title: 'Outreach', description: 'Warm customers, prospects, partners, and technician recruiting.', action: 'Manage outreach', href: '/outreach' },
+  { title: 'Follow-ups', description: 'Open, in-progress, and overdue follow-up queue.', action: 'Manage follow-ups', href: '/followups' },
   { title: 'GINC marketplace', description: 'Vehicles, spaces, equipment listings, rentals, and matches.', action: 'Browse GINC', href: '/ginc/network' },
   { title: 'Referrals', description: 'Referral codes, shareable links, and earned credits.', action: 'View referrals', href: '/dashboard/referrals' },
   { title: 'Payments', description: 'Deposit and subscription invoices, payment methods, and payout settings.', action: 'View payments', href: '/dashboard/payments' }
