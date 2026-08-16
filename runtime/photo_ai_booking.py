@@ -14,7 +14,15 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from .canonical_graph import CanonicalGraphStore, canonical_id, get_canonical_graph_store
+from .canonical_graph import (
+    CanonicalGraphStore,
+    canonical_id,
+    canonical_slug,
+    get_canonical_graph_store,
+    normalize_domain,
+    normalize_email,
+    normalize_phone,
+)
 from .photo_ai_feedback import FeedbackStore, get_feedback_store
 
 
@@ -47,13 +55,19 @@ def build_haul_booking_records(
     now = _now()
     company = customer.get("company", "Unknown Organization").strip() or "Unknown Organization"
     full_name = customer.get("full_name", customer.get("fullName", "Unknown Contact")).strip() or "Unknown Contact"
-    email = customer.get("email", "").strip()
-    phone = customer.get("phone", "").strip()
+    raw_email = customer.get("email", "").strip()
+    raw_phone = customer.get("phone", "").strip()
     pickup_address = customer.get("pickup_address", customer.get("pickupAddress", "")).strip() or "needs_review"
     site_city = customer.get("site_city", customer.get("siteCity", "")).strip()
+    site_state = customer.get("site_state", customer.get("siteState", "")).strip()
     site_zip = customer.get("site_zip", customer.get("siteZip", "")).strip()
     vehicle_type = customer.get("vehicle_type", customer.get("vehicleType", "dump_trailer")).strip() or "dump_trailer"
     notes = customer.get("notes", "").strip()
+
+    email = normalize_email(raw_email)
+    phone = normalize_phone(raw_phone)
+    domain = normalize_domain(email=raw_email)
+    org_key = canonical_slug(company)
 
     scan_id = scan.get("scan_id", "")
     volume = float(scan.get("volume_cu_yd", 0) or 0)
@@ -70,9 +84,10 @@ def build_haul_booking_records(
     confidence = _avg_confidence(entities)
     load_type = _primary_load_type(entities)
 
-    organization_id = canonical_id("org", company)
-    contact_id = canonical_id("contact", organization_id, email or full_name)
-    site_id = canonical_id("site", organization_id, pickup_address)
+    contact_key = email or phone or canonical_slug(full_name)
+    organization_id = canonical_id("org", org_key)
+    contact_id = canonical_id("contact", organization_id, contact_key)
+    site_id = canonical_id("site", organization_id, canonical_slug(f"{pickup_address}-{site_city}-{site_state}"))
     equipment_id = canonical_id("equipment", site_id, vehicle_type)
     lead_id = canonical_id("lead", contact_id, scan_id)
     opportunity_id = canonical_id("opp", lead_id, "Hauling")
@@ -86,6 +101,16 @@ def build_haul_booking_records(
     audit_id = canonical_id("audit", scan_id)
     proof_id = canonical_id("proof", opportunity_id)
 
+    org_aliases = [company]
+    if domain:
+        org_aliases.append(domain)
+
+    contact_aliases = [full_name]
+    if email:
+        contact_aliases.append(email)
+    if phone:
+        contact_aliases.append(phone)
+
     return [
         {
             "table": "organizations",
@@ -95,7 +120,9 @@ def build_haul_booking_records(
                 "name": company,
                 "organization_type": "lead_source",
                 "source": source,
-                "service_area": site_city or None,
+                "domain": domain or None,
+                "aliases": org_aliases,
+                "service_area": f"{site_city}, {site_state.upper()}".strip(", ") if site_city or site_state else None,
                 "created_at": now,
                 "updated_at": now,
             },
@@ -110,6 +137,9 @@ def build_haul_booking_records(
                 "email": email or None,
                 "phone": phone or None,
                 "source": source,
+                "channel": "photo",
+                "role": "hauling_customer",
+                "aliases": contact_aliases,
                 "consent_status": "unknown",
                 "created_at": now,
                 "updated_at": now,
