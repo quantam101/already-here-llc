@@ -3,7 +3,7 @@ import type { Stripe } from 'stripe';
 import { canonicalId } from '@/lib/canonical-ids';
 import { getCanonicalStore } from '@/lib/canonical-store';
 import { stripe, webhookSecret } from '@/lib/stripe';
-import { buildReferralCodeUpdate, buildReferralConversionWrite, getReferralCodeByCode, isValidReferralCode } from '@/lib/referral';
+import { buildReferralCodeUpdate, buildReferralConversionWrite, conversionId, getReferralCodeByCode, isValidReferralCode } from '@/lib/referral';
 
 export const runtime = 'nodejs';
 
@@ -32,6 +32,9 @@ export async function POST(request: Request) {
 
     const codeRecord = await getReferralCodeByCode(store, referralCode);
     if (!codeRecord || codeRecord.status !== 'active') return;
+
+    const existingId = conversionId(referralCode, sourceId);
+    if (await store.getRecord('referral_conversions', existingId)) return;
 
     const revenueCents = session.amount_total ?? 0;
     const rewardCents = codeRecord.reward_cents;
@@ -83,7 +86,7 @@ export async function POST(request: Request) {
       }
     ]);
 
-    if (referralCode) await recordConversionForCheckout(session, revenueId);
+    if (referralCode) await recordConversionForCheckout(session, session.id);
 
     console.log('[stripe webhook] Revenue recorded', {
       revenueId,

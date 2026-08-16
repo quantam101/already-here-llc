@@ -115,6 +115,38 @@ export function generateReferralCode(): string {
   return result;
 }
 
+export class ReferralCodeConflictError extends Error {
+  constructor(message = 'Referral code is already in use by another account.') {
+    super(message);
+    this.name = 'ReferralCodeConflictError';
+  }
+}
+
+export async function generateUniqueReferralCode(
+  store: { getRecord: (table: string, id: string) => Promise<Record<string, unknown> | undefined> },
+  maxAttempts = 10
+): Promise<string> {
+  for (let i = 0; i < maxAttempts; i++) {
+    const code = generateReferralCode();
+    const existing = await store.getRecord('referral_codes', referralCodeId(code));
+    if (!existing) return code;
+  }
+  throw new Error('Unable to generate a unique referral code');
+}
+
+export async function isReferralCodeAvailable(
+  store: { getRecord: (table: string, id: string) => Promise<Record<string, unknown> | undefined> },
+  code: string,
+  ownerId?: string
+): Promise<{ available: boolean; existing?: ReferralCodeRecord }> {
+  const existing = await getReferralCodeByCode(store, code);
+  if (!existing) return { available: true };
+  if (ownerId && existing.owner_id === ownerId && existing.owner_type === 'user') {
+    return { available: true, existing };
+  }
+  return { available: false, existing };
+}
+
 export function buildReferralLink(code: string, baseUrl = 'https://www.alreadyherellc.com'): string {
   const url = new URL(baseUrl);
   url.searchParams.set('ref', code);
@@ -123,11 +155,12 @@ export function buildReferralLink(code: string, baseUrl = 'https://www.alreadyhe
 
 export function normalizePartnerType(value: string): PartnerType {
   const t = (value || 'other').toLowerCase().replace(/[-\s]+/g, '_');
-  if (t.includes('1099') || t.includes('contractor')) return 'other';
+  if (t.includes('1099')) return 'other';
+  if (t.includes('prime')) return 'prime_contractor';
   if (t.includes('msp')) return 'msp';
   if (t.includes('vendor')) return 'vendor';
   if (t.includes('integrator')) return 'integrator';
-  if (t.includes('prime') || t.includes('contractor')) return 'prime_contractor';
+  if (t.includes('contractor')) return 'other';
   if (t.includes('retail') || t.includes('restaurant')) return 'retail';
   if (t.includes('referrer') || t.includes('referral') || t.includes('affiliate')) return 'referrer';
   return 'other';
@@ -146,8 +179,8 @@ export function partnerId(email: string): string {
   return canonicalId('partner', normalizeEmail(email));
 }
 
-export function conversionId(code: string, sourceId: string, timestamp: string): string {
-  return canonicalId('conversion', code.toUpperCase(), sourceId, timestamp);
+export function conversionId(code: string, sourceId: string): string {
+  return canonicalId('conversion', code.toUpperCase(), sourceId);
 }
 
 export function buildReferralCodeWrite(input: {
@@ -233,7 +266,7 @@ export function buildReferralConversionRecord(input: ReferralConversionInput, co
   const revenue = Math.max(0, input.revenueCents ?? 0);
   const reward = input.rewardCents ?? (codeRecord?.reward_cents ?? REFERRAL_REWARD_CENTS);
   return {
-    id: conversionId(input.code, input.sourceId, now),
+    id: conversionId(input.code, input.sourceId),
     referral_code: input.code.toUpperCase(),
     partner_id: input.partnerId ?? (codeRecord?.owner_type === 'partner' ? codeRecord.owner_id : null),
     referred_email: input.referredEmail ? normalizeEmail(input.referredEmail) : null,
@@ -278,12 +311,14 @@ export async function getReferralCodeByCode(
   return record ? (record as unknown as ReferralCodeRecord) : undefined;
 }
 
+const REFERRAL_QUERY_LIMIT = 100_000;
+
 export async function getReferralCodesForOwner(
   store: { queryTable: (table: string, limit?: number) => Promise<Record<string, unknown>[]> },
   ownerType: ReferralOwnerType,
   ownerId: string
 ): Promise<ReferralCodeRecord[]> {
-  const records = await store.queryTable('referral_codes', 1000);
+  const records = await store.queryTable('referral_codes', REFERRAL_QUERY_LIMIT);
   return records
     .filter((r) => r.owner_type === ownerType && r.owner_id === ownerId)
     .map((r) => r as unknown as ReferralCodeRecord);
@@ -299,32 +334,39 @@ export async function getOrCreateUserReferralCode(
 ): Promise<{ code: ReferralCodeRecord; created: boolean }> {
   const normalizedEmail = normalizeEmail(input.email);
   const ownerId = canonicalId('user', normalizedEmail);
-  const existing = await getReferralCodesForOwner(store, 'user', ownerId);
-  if (existing.length > 0) {
-    return { code: existing[0], created: false };
+
+  const byOwner = await getReferralCodesForOwner(store, 'user', ownerId);
+  if (byOwner.length > 0) {
+    return { code: byOwner[0], created: false };
   }
-  const writes = buildUserReferralWrites(input);
+
+  const code = input.code ? input.code.toUpperCase() : await generateUniqueReferralCode(store);
+  const availability = await isReferralCodeAvailable(store, code, ownerId);
+  if (!availability.available) {
+    if (input.code && availability.existing?.owner_id === ownerId) {
+      return { code: availability.existing, created: false };
+    }
+    throw new ReferralCodeConflictError();
+  }
+
+  const writes = buildUserReferralWrites({ ...input, code });
   await store.executeWrites(writes);
-  const code = await getReferralCodeByCode(store, writes[0].record.code as string);
-  return { code: code!, created: true };
+  const record = await getReferralCodeByCode(store, code);
+  return { code: record!, created: true };
 }
 
 export async function getReferralStats(
-  store: { queryTable: (table: string, limit?: number) => Promise<Record<string, unknown>[]> },
+  store: { getRecord: (table: string, id: string) => Promise<Record<string, unknown> | undefined> },
   code: string,
   baseUrl?: string
 ): Promise<ReferralStats> {
-  const conversions = (await store.queryTable('referral_conversions', 1000))
-    .filter((r) => r.referral_code === code.toUpperCase())
-    .map((r) => r as unknown as ReferralConversionRecord);
-  const totalRevenueCents = conversions.reduce((sum, c) => sum + (typeof c.revenue_cents === 'number' ? c.revenue_cents : 0), 0);
-  const totalRewardsCents = conversions.reduce((sum, c) => sum + (typeof c.reward_cents === 'number' ? c.reward_cents : 0), 0);
+  const record = await getReferralCodeByCode(store, code);
   return {
     code: code.toUpperCase(),
     link: buildReferralLink(code, baseUrl),
-    conversions: conversions.length,
-    totalRevenueCents,
-    totalRewardsCents
+    conversions: typeof record?.conversions_count === 'number' ? record.conversions_count : 0,
+    totalRevenueCents: typeof record?.total_revenue_cents === 'number' ? record.total_revenue_cents : 0,
+    totalRewardsCents: typeof record?.total_rewards_cents === 'number' ? record.total_rewards_cents : 0
   };
 }
 

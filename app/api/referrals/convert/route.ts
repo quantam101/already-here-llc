@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCanonicalStore } from '@/lib/canonical-store';
-import { buildReferralCodeUpdate, buildReferralConversionWrite, getReferralCodeByCode, isValidReferralCode } from '@/lib/referral';
+import { buildReferralCodeUpdate, buildReferralConversionWrite, conversionId, getReferralCodeByCode, isValidReferralCode } from '@/lib/referral';
 
 export const runtime = 'nodejs';
 
@@ -39,9 +39,21 @@ function asNumber(value: unknown): number {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
 }
 
+function verifyReferralConvertSecret(request: Request): boolean {
+  const secret = process.env.REFERRAL_CONVERT_SECRET;
+  if (!secret) return false;
+  const header = request.headers.get('x-referral-secret')?.trim() ?? '';
+  const query = new URL(request.url).searchParams.get('secret')?.trim() ?? '';
+  return header === secret || query === secret;
+}
+
 export async function POST(request: Request) {
   if (isRateLimited(getClientKey(request))) {
     return NextResponse.json({ ok: false, error: 'Rate limit exceeded. Try again later.' }, { status: 429 });
+  }
+
+  if (!verifyReferralConvertSecret(request)) {
+    return NextResponse.json({ ok: false, error: 'Unauthorized.' }, { status: 401 });
   }
 
   const body = await request.json().catch(() => ({})) as Record<string, unknown>;
@@ -68,6 +80,20 @@ export async function POST(request: Request) {
   }
   if (codeRecord.status !== 'active') {
     return NextResponse.json({ ok: false, error: 'Referral code is not active.' }, { status: 403 });
+  }
+
+  const existingConversionId = conversionId(code, sourceId);
+  const existingConversion = await store.getRecord('referral_conversions', existingConversionId);
+  if (existingConversion) {
+    const existing = existingConversion as unknown as { id: string; referral_code: string; revenue_cents: number; reward_cents: number };
+    return NextResponse.json({
+      ok: true,
+      conversionId: existing.id,
+      referralCode: existing.referral_code,
+      revenueCents: existing.revenue_cents,
+      rewardCents: existing.reward_cents,
+      duplicated: true
+    });
   }
 
   const conversion = buildReferralConversionWrite({
