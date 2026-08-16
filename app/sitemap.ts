@@ -17,6 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/equipment-lifecycle-assessment`,    lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.92 },
     { url: `${base}/autoworks`,                         lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
     { url: `${base}/field-operations-template-library`,  lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
+    { url: `${base}/outreach`,                           lastModified: new Date(), changeFrequency: 'daily',   priority: 0.7 },
     { url: `${base}/who-we-serve`,                      lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/dispatch`,                          lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/rfq`,                     lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
