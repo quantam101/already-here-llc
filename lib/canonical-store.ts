@@ -3,7 +3,7 @@ import { canonicalId } from './canonical-ids';
 export interface DatabaseReadyWrite {
   table: string;
   id: string;
-  action: 'insert';
+  action: 'insert' | 'upsert';
   record: Record<string, unknown>;
 }
 
@@ -144,14 +144,16 @@ class MemoryCanonicalStore implements CanonicalStore {
     for (const write of writes) {
       try {
         const now = isoNow();
+        const existing = write.action === 'upsert' ? this.records.get(this.key(write.table, write.id)) : undefined;
         const record: Record<string, unknown> = {
+          ...existing,
           ...write.record,
           id: write.id,
           _table: write.table,
           _canonical_id: write.id,
-          created_at: write.record['created_at'] ?? now,
+          created_at: existing?.created_at ?? write.record['created_at'] ?? now,
           updated_at: now,
-          source: write.record['source'] ?? write.table,
+          source: write.record['source'] ?? existing?.source ?? write.table,
         };
         this.records.set(this.key(write.table, write.id), record);
         this.trimRecords();
@@ -286,14 +288,16 @@ class SqliteCanonicalStore implements CanonicalStore {
     const now = isoNow();
     for (const write of writes) {
       try {
+        const existing = write.action === 'upsert' ? await this.getRecord(write.table, write.id) : undefined;
         const record: Record<string, unknown> = {
+          ...existing,
           ...write.record,
           id: write.id,
           _table: write.table,
           _canonical_id: write.id,
-          created_at: write.record['created_at'] ?? now,
+          created_at: existing?.created_at ?? write.record['created_at'] ?? now,
           updated_at: now,
-          source: write.record['source'] ?? write.table,
+          source: write.record['source'] ?? existing?.source ?? write.table,
         };
         const createdAt = String(record['created_at'] ?? now);
         const updatedAt = String(record['updated_at'] ?? now);

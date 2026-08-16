@@ -36,6 +36,7 @@ class CanonicalWrite(BaseModel):
     id: str
     record: Dict[str, Any] = Field(default_factory=dict)
     source: Optional[str] = None
+    action: Optional[str] = "insert"
 
 
 class BatchWriteRequest(BaseModel):
@@ -135,7 +136,8 @@ async def write_one(
     auth: str = Depends(_require_api_key),
 ) -> Dict[str, Any]:
     source = payload.source or payload.table
-    state.store.write(payload.table, payload.id, payload.record, source)
+    action = payload.action or "insert"
+    state.store.write(payload.table, payload.id, payload.record, source, action)
     return {"ok": True, "id": payload.id, "table": payload.table}
 
 
@@ -148,7 +150,7 @@ async def write_many(
     for w in body.writes:
         record = w.record or {}
         record["source"] = record.get("source") or w.source or w.table
-        writes.append({"table": w.table, "id": w.id, "record": record})
+        writes.append({"table": w.table, "id": w.id, "record": record, "action": w.action or "insert"})
     inserted = state.store.write_many(writes)
     return {"ok": True, "insertedIds": inserted, "failed": []}
 

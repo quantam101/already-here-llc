@@ -94,16 +94,18 @@ class CanonicalGraphStore:
         )
         self._conn.commit()
 
-    def write(self, table: str, id: str, record: Dict[str, Any], source: str = "") -> None:
+    def write(self, table: str, id: str, record: Dict[str, Any], source: str = "", action: str = "insert") -> None:
         now = _now()
+        existing = self.read(table, id) if action == "upsert" else None
         merged = {
+            **(existing or {}),
             **record,
             "id": id,
             "_table": table,
             "_canonical_id": id,
-            "created_at": record.get("created_at") or now,
+            "created_at": (existing or {}).get("created_at") or record.get("created_at") or now,
             "updated_at": now,
-            "source": record.get("source") or source or table,
+            "source": record.get("source") or (existing or {}).get("source") or source or table,
         }
         payload = json.dumps(merged, default=str)
         with self._conn:
@@ -116,13 +118,13 @@ class CanonicalGraphStore:
             )
 
     def write_many(self, writes: List[Dict[str, Any]], source: str = "") -> List[str]:
-        """Writes is a list of {"table": str, "id": str, "record": dict}."""
+        """Writes is a list of {"table": str, "id": str, "record": dict, "action": str}."""
         ids: List[str] = []
         for write in writes:
             table = write["table"]
             id = write["id"]
             record = write.get("record", {})
-            self.write(table, id, record, write.get("source") or source)
+            self.write(table, id, record, write.get("source") or source, write.get("action", "insert"))
             ids.append(id)
         return ids
 

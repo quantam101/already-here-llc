@@ -90,7 +90,7 @@ function equipmentKey(input: AssetIntakeInput, orgId: string): string {
   const serial = input.serialNumber?.trim().toUpperCase() || '';
   const tag = input.assetTag?.trim().toUpperCase() || '';
   const name = canonicalSlug(input.assetName);
-  return canonicalSlug(`${orgId}-${name}-${serial}-${tag}`);
+  return [orgId, canonicalSlug(serial), canonicalSlug(tag), name].join('::');
 }
 
 export function buildAssetIntakeRecords(input: AssetIntakeInput): DatabaseReadyWrite[] {
@@ -185,7 +185,7 @@ export function buildAssetIntakeRecords(input: AssetIntakeInput): DatabaseReadyW
   const writes: DatabaseReadyWrite[] = [
     { table: 'organizations', id: orgId, action: 'insert', record: orgRecord },
     { table: 'contacts', id: contactId, action: 'insert', record: contactRecord },
-    { table: 'assets', id: assetId, action: 'insert', record: asset as unknown as Record<string, unknown> }
+    { table: 'assets', id: assetId, action: 'upsert', record: asset as unknown as Record<string, unknown> }
   ];
 
   if (siteRecord && siteId) {
