@@ -11,8 +11,11 @@ const {
   buildReferralCodeUpdate,
   getOrCreateUserReferralCode,
   getReferralStats,
-  isValidReferralCode
+  isValidReferralCode,
+  normalizePartnerType
 } = await import('../lib/referral.ts');
+
+process.env.REFERRAL_CONVERT_SECRET = 'test-convert-secret';
 
 resetCanonicalStore();
 const store = getCanonicalStore();
@@ -40,6 +43,8 @@ assert.strictEqual(partner.name, 'Partner Co');
 assert.strictEqual(partner.type, 'msp');
 assert.strictEqual(partner.status, 'pending');
 assert.ok(isValidReferralCode(partner.referral_code));
+assert.strictEqual(normalizePartnerType('prime contractor'), 'prime_contractor');
+assert.strictEqual(normalizePartnerType('MSP'), 'msp');
 
 const partnerCode = await store.getRecord('referral_codes', partnerWrites[1].id);
 assert.ok(partnerCode);
@@ -124,11 +129,24 @@ const referralJson = await referralResponse.json();
 assert.strictEqual(referralJson.ok, true);
 assert.ok(isValidReferralCode(referralJson.stats.code));
 
-// Test 8: conversion API records a conversion for the referral code
+// Test 8: conversion API rejects unauthenticated requests
 const { POST: convertPost } = await import('../app/api/referrals/convert/route.ts');
-const convertResponse = await convertPost(new Request('http://localhost:3000/api/referrals/convert', {
+const convertUnauthorized = await convertPost(new Request('http://localhost:3000/api/referrals/convert', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    code: referralJson.stats.code,
+    sourceId: 'rev_post_123',
+    revenueCents: 30500,
+    rewardCents: 2500
+  })
+}));
+assert.strictEqual(convertUnauthorized.status, 401);
+
+// Test 9: conversion API records a conversion for the referral code with the secret
+const convertResponse = await convertPost(new Request('http://localhost:3000/api/referrals/convert', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-referral-secret': 'test-convert-secret' },
   body: JSON.stringify({
     code: referralJson.stats.code,
     sourceId: 'rev_post_123',
@@ -140,5 +158,25 @@ assert.strictEqual(convertResponse.status, 200);
 const convertJson = await convertResponse.json();
 assert.strictEqual(convertJson.ok, true);
 assert.strictEqual(convertJson.revenueCents, 30500);
+
+// Test 10: repeating the same conversion is idempotent
+const convertDupResponse = await convertPost(new Request('http://localhost:3000/api/referrals/convert', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-referral-secret': 'test-convert-secret' },
+  body: JSON.stringify({
+    code: referralJson.stats.code,
+    sourceId: 'rev_post_123',
+    revenueCents: 30500,
+    rewardCents: 2500
+  })
+}));
+assert.strictEqual(convertDupResponse.status, 200);
+const convertDupJson = await convertDupResponse.json();
+assert.strictEqual(convertDupJson.duplicated, true);
+
+const finalStats = await getReferralStats(store, referralJson.stats.code, process.env.NEXT_PUBLIC_SITE_URL);
+assert.strictEqual(finalStats.conversions, 1);
+assert.strictEqual(finalStats.totalRevenueCents, 30500);
+assert.strictEqual(finalStats.totalRewardsCents, 2500);
 
 console.log('referral-partner tests passed');

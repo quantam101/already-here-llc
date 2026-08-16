@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCanonicalStore } from '@/lib/canonical-store';
-import { getOrCreateUserReferralCode, getReferralCodeByCode, getReferralStats, isValidReferralCode, referralBaseUrl } from '@/lib/referral';
+import { getOrCreateUserReferralCode, getReferralCodeByCode, getReferralStats, isValidReferralCode, referralBaseUrl, ReferralCodeConflictError } from '@/lib/referral';
 
 export const runtime = 'nodejs';
 
@@ -59,9 +59,16 @@ export async function GET(request: Request) {
   }
 
   if (email) {
-    const { code: record } = await getOrCreateUserReferralCode(store, { email });
-    const stats = await getReferralStats(store, record.code, referralBaseUrl());
-    return NextResponse.json({ ok: true, code: record, stats, created: false });
+    try {
+      const { code: record } = await getOrCreateUserReferralCode(store, { email });
+      const stats = await getReferralStats(store, record.code, referralBaseUrl());
+      return NextResponse.json({ ok: true, code: record, stats, created: false });
+    } catch (err) {
+      if (err instanceof ReferralCodeConflictError) {
+        return NextResponse.json({ ok: false, error: err.message }, { status: 409 });
+      }
+      throw err;
+    }
   }
 
   return NextResponse.json({ ok: false, error: 'Provide a code or email query parameter.' }, { status: 400 });
@@ -86,7 +93,14 @@ export async function POST(request: Request) {
   }
 
   const store = getCanonicalStore();
-  const { code: record, created } = await getOrCreateUserReferralCode(store, { email, name, code: code || undefined });
-  const stats = await getReferralStats(store, record.code, referralBaseUrl());
-  return NextResponse.json({ ok: true, code: record, stats, created });
+  try {
+    const { code: record, created } = await getOrCreateUserReferralCode(store, { email, name, code: code || undefined });
+    const stats = await getReferralStats(store, record.code, referralBaseUrl());
+    return NextResponse.json({ ok: true, code: record, stats, created });
+  } catch (err) {
+    if (err instanceof ReferralCodeConflictError) {
+      return NextResponse.json({ ok: false, error: err.message }, { status: 409 });
+    }
+    throw err;
+  }
 }
