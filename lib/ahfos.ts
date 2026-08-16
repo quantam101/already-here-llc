@@ -135,7 +135,7 @@ function equipmentKey(equipment: AhfosEquipment, orgId: string): string {
   const serial = equipment.serialNumber?.trim().toUpperCase() || '';
   const tag = equipment.assetTag?.trim().toUpperCase() || '';
   const name = canonicalSlug(equipment.name);
-  return canonicalSlug(`${orgId}-${name}-${serial}-${tag}`);
+  return [orgId, canonicalSlug(serial), canonicalSlug(tag), name].join('::');
 }
 
 export function buildAhfosCloseoutRecords(input: AhfosCloseoutInput): DatabaseReadyWrite[] {
@@ -331,7 +331,7 @@ export function buildAhfosCloseoutRecords(input: AhfosCloseoutInput): DatabaseRe
   return [
     { table: 'organizations', id: orgId, action: 'insert', record: orgRecord },
     { table: 'contacts', id: contactId, action: 'insert', record: contactRecord },
-    { table: 'assets', id: assetId, action: 'insert', record: assetRecord as unknown as Record<string, unknown> },
+    { table: 'assets', id: assetId, action: 'upsert', record: assetRecord as unknown as Record<string, unknown> },
     { table: 'sites', id: siteId, action: 'insert', record: siteRecord },
     { table: 'jobs', id: jobId, action: 'insert', record: job as unknown as Record<string, unknown> },
     { table: 'assignments', id: assignmentId, action: 'insert', record: assignment },

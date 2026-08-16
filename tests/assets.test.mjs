@@ -1,5 +1,6 @@
 import assert from 'assert';
 import { buildAssetIntakeRecords, buildAssetIntakeWithFollowUp, buildMaintenanceRecord } from '../lib/assets.ts';
+import { buildAhfosCloseoutRecords } from '../lib/ahfos.ts';
 import { getCanonicalStore, resetCanonicalStore } from '../lib/canonical-store.ts';
 
 resetCanonicalStore();
@@ -67,5 +68,59 @@ const maintenance = await store.getRecord('maintenance', maintenanceWrite.id);
 assert.equal(maintenance.maintenance_type, 'inspection');
 assert.equal(maintenance.result, 'pass');
 assert.equal(maintenance.cost_cents, 5000);
+
+const longNameInput = {
+  ...input,
+  assetName: 'A very long asset name that would previously have truncated the serial number away'
+};
+const longNameWrites = buildAssetIntakeRecords(longNameInput);
+const longNameAssetId = longNameWrites.find((w) => w.table === 'assets').id;
+assert.notEqual(longNameAssetId, assetId, 'assets with different serials must not collapse');
+
+const ahfosInput = {
+  source: 'test_ahfos_upsert',
+  customerName: 'Site Manager',
+  company: 'AssetCo',
+  email: 'owner@assetco.com',
+  phone: '(480) 555-0100',
+  site: {
+    name: 'Main warehouse',
+    address: '789 Pine St',
+    city: 'Tempe',
+    state: 'AZ',
+    zip: '85281'
+  },
+  equipment: {
+    name: 'Company Trailer',
+    category: 'trailer',
+    make: 'PJ',
+    model: '2022',
+    serialNumber: 'SN12345',
+    assetTag: 'TAG-001'
+  },
+  problemDescription: 'Tire flat',
+  resolutionDescription: 'Replaced tire',
+  technicianId: 'tech_1234567890abcdef',
+  qaStatus: 'pass',
+  testResults: 'OK',
+  customerSignatureReceived: true,
+  revenueCents: 12000,
+  technicianPayoutCents: 4000,
+  partsUsed: ['Tire'],
+  paymentStatus: 'collected'
+};
+const ahfosWrites = buildAhfosCloseoutRecords(ahfosInput);
+const ahfosAssetId = ahfosWrites.find((w) => w.table === 'assets').id;
+assert.equal(ahfosAssetId, assetId, 'AHFOS closeout should resolve to the same asset id as asset intake');
+
+const ahfosResult = await store.executeWrites(ahfosWrites);
+assert.equal(ahfosResult.ok, true);
+
+const mergedAsset = await store.getRecord('assets', assetId);
+assert.equal(mergedAsset.status, 'active', 'asset lifecycle status should be preserved after closeout');
+assert.equal(mergedAsset.serial_number, 'SN12345', 'serial number should be preserved');
+assert.equal(mergedAsset.purchase_date, asset.purchase_date, 'purchase_date should be preserved');
+assert.equal(mergedAsset.warranty_expiry_date, asset.warranty_expiry_date, 'warranty expiry should be preserved');
+assert.equal(mergedAsset.category, 'trailer', 'category should be preserved');
 
 console.log('assets tests passed');
