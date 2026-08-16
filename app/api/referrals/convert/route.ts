@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { getCanonicalStore } from '@/lib/canonical-store';
 import { buildReferralCodeUpdate, buildReferralConversionWrite, conversionId, getReferralCodeByCode, isValidReferralCode } from '@/lib/referral';
@@ -39,12 +40,19 @@ function asNumber(value: unknown): number {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
 }
 
+function constantTimeEq(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  const aBuf = Buffer.from(a, 'utf8');
+  const bBuf = Buffer.from(b, 'utf8');
+  if (aBuf.length !== bBuf.length) return false;
+  return timingSafeEqual(aBuf, bBuf);
+}
+
 function verifyReferralConvertSecret(request: Request): boolean {
   const secret = process.env.REFERRAL_CONVERT_SECRET;
   if (!secret) return false;
   const header = request.headers.get('x-referral-secret')?.trim() ?? '';
-  const query = new URL(request.url).searchParams.get('secret')?.trim() ?? '';
-  return header === secret || query === secret;
+  return constantTimeEq(header, secret);
 }
 
 export async function POST(request: Request) {

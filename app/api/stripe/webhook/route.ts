@@ -26,14 +26,14 @@ export async function POST(request: Request) {
   const store = getCanonicalStore();
   const now = new Date().toISOString();
 
-  async function recordConversionForCheckout(session: Stripe.Checkout.Session, sourceId: string) {
+  async function recordConversionForCheckout(session: Stripe.Checkout.Session, sourceId: string, dedupeKey: string) {
     const referralCode = session.metadata?.referralCode ?? '';
     if (!isValidReferralCode(referralCode)) return;
 
     const codeRecord = await getReferralCodeByCode(store, referralCode);
     if (!codeRecord || codeRecord.status !== 'active') return;
 
-    const existingId = conversionId(referralCode, sourceId);
+    const existingId = conversionId(referralCode, dedupeKey);
     if (await store.getRecord('referral_conversions', existingId)) return;
 
     const revenueCents = session.amount_total ?? 0;
@@ -45,6 +45,7 @@ export async function POST(request: Request) {
       eventType: 'checkout',
       sourceTable: 'revenue_events',
       sourceId,
+      dedupeKey,
       revenueCents,
       rewardCents,
       partnerId: codeRecord.owner_type === 'partner' ? codeRecord.owner_id : null,
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
     const session = event.data.object as Stripe.Checkout.Session;
     const { referralCode, ...metadata } = session.metadata ?? {};
 
-    const revenueId = canonicalId('revenue', session.id, String(session.customer_email ?? 'unknown'), now);
+    const revenueId = canonicalId('revenue', session.id);
 
     await store.executeWrites([
       {
@@ -86,7 +87,7 @@ export async function POST(request: Request) {
       }
     ]);
 
-    if (referralCode) await recordConversionForCheckout(session, session.id);
+    if (referralCode) await recordConversionForCheckout(session, revenueId, session.id);
 
     console.log('[stripe webhook] Revenue recorded', {
       revenueId,
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
 
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object as Stripe.Invoice;
-    const revenueId = canonicalId('revenue', 'invoice', invoice.id, now);
+    const revenueId = canonicalId('revenue', 'invoice', invoice.id);
 
     await store.executeWrites([
       {
@@ -130,7 +131,7 @@ export async function POST(request: Request) {
 
   if (event.type === 'invoice.payment_failed') {
     const invoice = event.data.object as Stripe.Invoice;
-    const revenueId = canonicalId('revenue', 'invoice_failed', invoice.id, now);
+    const revenueId = canonicalId('revenue', 'invoice_failed', invoice.id);
 
     await store.executeWrites([
       {
@@ -160,7 +161,7 @@ export async function POST(request: Request) {
 
   if (event.type === 'payout.paid') {
     const payout = event.data.object as Stripe.Payout;
-    const payoutId = canonicalId('payout', payout.id, now);
+    const payoutId = canonicalId('payout', payout.id);
 
     await store.executeWrites([
       {
@@ -192,7 +193,7 @@ export async function POST(request: Request) {
     const charge = event.data.object as Stripe.Charge;
     const refund = charge.refunds?.data?.[0];
     if (refund) {
-      const refundId = canonicalId('refund', refund.id, now);
+      const refundId = canonicalId('refund', refund.id);
       await store.executeWrites([
         {
           table: 'refunds',

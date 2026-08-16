@@ -87,6 +87,7 @@ export interface ReferralConversionInput {
   eventType: ReferralEventType | string;
   sourceTable: string;
   sourceId: string;
+  dedupeKey?: string;
   revenueCents?: number;
   rewardCents?: number;
   partnerId?: string | null;
@@ -266,7 +267,7 @@ export function buildReferralConversionRecord(input: ReferralConversionInput, co
   const revenue = Math.max(0, input.revenueCents ?? 0);
   const reward = input.rewardCents ?? (codeRecord?.reward_cents ?? REFERRAL_REWARD_CENTS);
   return {
-    id: conversionId(input.code, input.sourceId),
+    id: conversionId(input.code, input.dedupeKey ?? input.sourceId),
     referral_code: input.code.toUpperCase(),
     partner_id: input.partnerId ?? (codeRecord?.owner_type === 'partner' ? codeRecord.owner_id : null),
     referred_email: input.referredEmail ? normalizeEmail(input.referredEmail) : null,

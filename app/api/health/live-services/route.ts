@@ -103,7 +103,7 @@ export async function GET() {
     ok: allOk,
     timestamp: now,
     services,
-    stripe: { mode: isLiveMode() ? ('live' as const) : ('test' as const) },
+    stripe: { mode: stripe ? (isLiveMode() ? ('live' as const) : ('test' as const)) : ('unknown' as const) },
     publishableKeySet: !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     ociConfigured: !!process.env.OCI_CANONICAL_URL && !!process.env.OCI_CANONICAL_API_KEY
   };
