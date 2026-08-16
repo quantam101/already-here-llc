@@ -19,6 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/field-operations-template-library`,  lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
     { url: `${base}/outreach`,                           lastModified: new Date(), changeFrequency: 'daily',   priority: 0.7 },
     { url: `${base}/followups`,                          lastModified: new Date(), changeFrequency: 'daily',   priority: 0.7 },
+    { url: `${base}/dashboard/assets`,                   lastModified: new Date(), changeFrequency: 'daily',   priority: 0.6 },
     { url: `${base}/who-we-serve`,                      lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/dispatch`,                          lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/rfq`,                     lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
