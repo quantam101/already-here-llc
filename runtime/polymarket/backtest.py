@@ -363,6 +363,7 @@ class WalkForwardBacktest:
         min_wallet_sharpe: Decimal = Decimal("1"),
         use_confluence: bool = False,
         include_sell: bool = False,
+        contrarian: bool = False,
     ) -> None:
         self.wallets = [w.lower() for w in wallets if w]
         self.config = config or PolymarketConfig.from_env()
@@ -374,6 +375,7 @@ class WalkForwardBacktest:
         self.min_wallet_sharpe = min_wallet_sharpe
         self.use_confluence = use_confluence
         self.include_sell = include_sell
+        self.contrarian = contrarian
         self.oracle = MarketOracle()
         self.loader = SubgraphLoader()
         self.profiler = BacktestWalletProfiler(self.oracle, include_sell=self.include_sell)
@@ -424,8 +426,11 @@ class WalkForwardBacktest:
         for fill in normalized:
             if fill["wallet"] not in qualified:
                 continue
-            if fill["wallet_side"] != "BUY" and not self.include_sell:
+            trade_side = fill["wallet_side"]
+            if trade_side != "BUY" and not self.include_sell:
                 continue
+            if self.contrarian:
+                trade_side = "SELL" if trade_side == "BUY" else "BUY"
             token_id = fill["token_id"]
             exit_p = self.oracle.exit_price(token_id)
             if exit_p is None:
@@ -437,7 +442,7 @@ class WalkForwardBacktest:
             confluence_score = Decimal("0")
             confluence_confidence = Decimal("0")
             if self.confluence:
-                assessment = self.confluence.assess(token_id, "BUY", entry_p)
+                assessment = self.confluence.assess(token_id, trade_side, entry_p)
                 confluence_score = assessment.score
                 confluence_confidence = assessment.confidence
                 if self.use_confluence and not assessment.agree:
@@ -457,8 +462,12 @@ class WalkForwardBacktest:
                 continue
 
             shares = notional / entry_p
-            pnl = (exit_p - entry_p) * shares
-            roi = ((exit_p / entry_p) - 1) * 100 if entry_p else Decimal("0")
+            if trade_side == "BUY":
+                pnl = (exit_p - entry_p) * shares
+                roi = ((exit_p / entry_p) - 1) * 100 if entry_p else Decimal("0")
+            else:
+                pnl = (entry_p - exit_p) * shares
+                roi = ((entry_p / exit_p) - 1) * 100 if exit_p else Decimal("0")
             info = self.oracle.resolve(token_id) or {}
 
             self.trades.append(
@@ -595,6 +604,7 @@ def main() -> None:
     parser.add_argument("--min-sharpe", type=float, default=1.0)
     parser.add_argument("--confluence", action="store_true")
     parser.add_argument("--include-sell", action="store_true")
+    parser.add_argument("--contrarian", action="store_true")
     parser.add_argument("--first", type=int, default=1000)
     parser.add_argument("--bankroll", type=float, default=1000.0)
     parser.add_argument("--position-size-pct", type=float, default=None)
@@ -613,6 +623,7 @@ def main() -> None:
         min_wallet_sharpe=Decimal(str(args.min_sharpe)),
         use_confluence=args.confluence,
         include_sell=args.include_sell,
+        contrarian=args.contrarian,
     )
     result = bt.run(args.start, args.end, first=args.first)
     print(result)
