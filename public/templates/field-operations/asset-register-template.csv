@@ -1,0 +1,2 @@
+asset_id,name,category,make,model,serial_number,qr_tag,location,assigned_to,purchase_date,purchase_cost_cents,inspection_due,maintenance_due,calibration_due,status,notes
+AST-001,Cable tester,Test equipment,Fluke,DSX-5000,SN12345,QR-001,Main warehouse,Technician A,2025-01-15,1500000,2026-09-01,2026-10-01,2026-12-01,active,Annual calibration required

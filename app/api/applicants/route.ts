@@ -1,5 +1,8 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
+import { buildTechnicianRecords, type TechnicianInput } from '@/lib/technician';
+import { getCanonicalStore } from '@/lib/canonical-store';
+import { buildFollowUpRecord } from '@/lib/followups';
 
 export const runtime = 'nodejs';
 
@@ -124,6 +127,33 @@ function validate(formData: FormData): string | null {
   }
 
   return null;
+}
+
+function buildTechnicianInput(applicantId: string, formData: FormData): TechnicianInput {
+  return {
+    fullName: asCleanString(formData, 'fullName'),
+    email: asCleanString(formData, 'email'),
+    phone: asCleanString(formData, 'phone'),
+    city: asCleanString(formData, 'city'),
+    state: asCleanString(formData, 'state'),
+    zipCode: asCleanString(formData, 'zipCode'),
+    workerPath: asCleanString(formData, 'workerPath'),
+    workLanes: formData.getAll('workLanes').filter((value): value is string => typeof value === 'string').map((value) => value.trim()),
+    skills: asCleanString(formData, 'skills'),
+    certifications: asCleanString(formData, 'certifications'),
+    tools: asCleanString(formData, 'tools'),
+    availability: asCleanString(formData, 'availability'),
+    travelRadiusMiles: Number(asCleanString(formData, 'travelRadiusMiles')),
+    transportation: asCleanString(formData, 'transportation'),
+    yearsExperience: asCleanString(formData, 'yearsExperience') ? Number(asCleanString(formData, 'yearsExperience')) : 0,
+    hourlyRate: asCleanString(formData, 'hourlyRate'),
+    source: 'website_applicant_form',
+    sourceId: applicantId,
+    submittedAt: new Date().toISOString(),
+    consentContact: asCleanString(formData, 'consentContact') === 'true',
+    consentData: asCleanString(formData, 'consentData') === 'true',
+    consentTruth: asCleanString(formData, 'consentTruth') === 'true'
+  };
 }
 
 function buildRecord(applicantId: string, formData: FormData) {
@@ -277,8 +307,33 @@ export async function POST(request: Request) {
   const record = buildRecord(applicantId, formData);
 
   try {
+    const technicianInput = buildTechnicianInput(applicantId, formData);
+    const canonicalWrites = buildTechnicianRecords(technicianInput);
+    const writeResult = await getCanonicalStore().executeWrites(canonicalWrites);
+    if (!writeResult.ok) {
+      console.error('[applicants] canonical write failed', writeResult.failed);
+    } else {
+      const organizationId = canonicalWrites.find((w) => w.table === 'organizations')?.id;
+      const contactId = canonicalWrites.find((w) => w.table === 'contacts')?.id;
+      const technicianId = canonicalWrites.find((w) => w.table === 'technicians')?.id;
+      if (organizationId) {
+        const followUp = buildFollowUpRecord({
+          source: 'applicant_form',
+          organizationId,
+          contactId,
+          relatedRecordType: 'technician',
+          relatedRecordId: technicianId,
+          lane: 'technician_recruiting',
+          purpose: `Screen applicant ${record.fullName} — ${record.city}, ${record.state}`,
+          channel: 'email',
+          offer: record.workLanes.join(', '),
+          status: 'open'
+        });
+        await getCanonicalStore().executeWrites([followUp]);
+      }
+    }
     await deliverApplicant(record, formData);
-    return NextResponse.json({ ok: true, applicantId });
+    return NextResponse.json({ ok: true, applicantId, canonicalRecordCount: canonicalWrites.length });
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Application delivery failed.' }, { status: 502 });
   }

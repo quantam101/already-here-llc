@@ -54,7 +54,7 @@ ZERO: Final[Decimal] = Decimal("0.00")
 PRECISION: Final[Decimal] = Decimal("0.01")
 PRECISION_4: Final[Decimal] = Decimal("0.0001")
 
-RH_MCP_URL: Final[str] = _env("MCP_RH_GATEWAY_URL", "https://agent.robinhood.com/mcp/trading")
+RH_MCP_URL: Final[str] = (_env("MCP_RH_GATEWAY_URL") or "").strip()
 RH_PROTOCOL_VERSION: Final[str] = _env("MCP_RH_PROTOCOL_VERSION", "2026-04-27")
 MCP_API_KEY: Final[str] = _env("MCP_API_KEY", "")
 MCP_ENGINE_PORT: Final[int] = int(_env("MCP_ENGINE_PORT", "8000"))
@@ -939,6 +939,8 @@ if _HAS_FASTAPI:
             },
         }
 
+        if not RH_MCP_URL:
+            return JSONResponse({"status": "PAPER_ONLY", "reason": "MCP_RH_GATEWAY_URL not configured"})
         try:
             res = await _state.rh_client.post(RH_MCP_URL, json=rh_payload, headers=RH_HEADERS)
             broker_response = res.json()
@@ -1067,7 +1069,7 @@ if _HAS_FASTAPI:
         })
 
 
-def serve(host: str = "127.0.0.1", port: int = MCP_ENGINE_PORT) -> None:
+def serve(host: str = "0.0.0.0", port: int = MCP_ENGINE_PORT) -> None:
     """Run the engine as a standalone process."""
     if not _HAS_FASTAPI:
         raise RuntimeError("FastAPI/httpx/uvicorn not installed — pip install fastapi httpx uvicorn[standard]")

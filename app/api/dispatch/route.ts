@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { after, NextResponse } from 'next/server.js';
 import { buildRevenueIntakeProof } from '@/lib/revenue-command-intake';
+import { getCanonicalStore } from '@/lib/canonical-store';
 
 export const runtime = 'nodejs';
 
@@ -316,6 +317,7 @@ export async function POST(request: Request) {
   const hasFormspree = !!process.env.FORMSPREE_ENDPOINT;
   const dispatchId = generateDispatchId();
   const revenueSpine = buildRevenueSpineProof(dispatchId, formData);
+  await getCanonicalStore().executeWrites(revenueSpine.databaseReadyWrites);
 
   if (localProofMode || (!hasResend && !hasFormspree)) {
     return NextResponse.json({
@@ -361,7 +363,14 @@ export async function POST(request: Request) {
       ).catch(() => {});
     }
 
-    return NextResponse.json({ ok: true, dispatchId, recordLocation: hasResend ? 'dispatch_email_json_attachment' : 'formspree_payload', revenueSpine });
+    return NextResponse.json({
+      ok: true,
+      dispatchId,
+      recordLocation: hasResend ? 'dispatch_email_json_attachment' : 'formspree_payload',
+      delivery: hasResend ? 'resend' : 'formspree',
+      persistedExternally: true,
+      revenueSpine
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Dispatch submission failed.';
     return NextResponse.json({ message, dispatchId, revenueSpine }, { status: 502 });

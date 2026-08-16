@@ -13,7 +13,7 @@ function buildDispatchForm() {
   const form = new FormData();
   form.set('fullName', 'Hermes Smoke Test');
   form.set('company', 'Already Here LLC');
-  form.set('email', process.env.INTAKE_TEST_EMAIL || 'smoke@example.invalid');
+  form.set('email', process.env.INTAKE_TEST_EMAIL || 'smoke-test@alreadyherellc.com');
   form.set('phone', '(602) 882-2920');
   form.set('siteCity', 'Phoenix');
   form.set('siteZip', '85007');
