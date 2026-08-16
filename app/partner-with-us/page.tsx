@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { PartnerSignup } from '@/components/PartnerSignup';
 
 export const metadata: Metadata = {
   title: 'Partner With Already Here LLC',
@@ -72,6 +73,14 @@ export default function PartnerWithUsPage() {
         <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-navy">Send a Dispatch</Link>
         <Link href="/rfq" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action">Request Project Quote</Link>
       </div>
+
+      <section className="mt-16">
+        <h2 className="section-title">Apply to the partner program</h2>
+        <p className="section-copy">
+          Submit your details. Approved partners receive a tracked referral code and can earn commissions on qualifying dispatches and rentals they send our way.
+        </p>
+        <PartnerSignup />
+      </section>
     </section>
   );
 }

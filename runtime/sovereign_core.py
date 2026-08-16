@@ -153,7 +153,7 @@ class SovereignAutomationCore:
         if route.decision.tier == "DETERMINISTIC_LOCAL":
             output = self._deterministic_execute(clean_system, clean_context, ctx.objective)
         elif route.decision.tier == "LOCAL_MODEL":
-            output = self._local_model_placeholder(clean_system, clean_context, ctx.objective)
+            output = self._local_model_adapter_stub(clean_system, clean_context, ctx.objective)
         else:
             output = "Execution queued. No unsafe route executed."
         self.telemetry.info(exec_span, "execution_complete", {"tier": route.decision.tier, "output_len": len(output)})
@@ -186,7 +186,7 @@ class SovereignAutomationCore:
             "Status: draft_created_no_external_execution"
         )
 
-    def _local_model_placeholder(self, clean_system: str, clean_context: str, objective: str) -> str:
+    def _local_model_adapter_stub(self, clean_system: str, clean_context: str, objective: str) -> str:
         return (
             "LOCAL_MODEL_ROUTE_SELECTED\n"
             f"Objective: {objective}\n"

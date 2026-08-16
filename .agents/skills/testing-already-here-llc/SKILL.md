@@ -87,3 +87,12 @@ Key pages to verify:
 
 - Node.js packages: `npm install` (includes zod, remark, remark-html, @upstash/redis)
 - Python packages: `pip install pyyaml pytest`
+
+## Commercial Offer Pages
+
+- Routes to verify: `/field-operations-workflow-review` ($149, `startingPriceCents: 14900`) and `/equipment-lifecycle-assessment` ($199, `startingPriceCents: 19900`).
+- Components: `components/ServiceOfferPage.tsx` renders the JSON-LD `Product` schema, CTA buttons, scope/exclusions, and FAQ; `components/StripePaymentButton.tsx` fetches `/api/stripe/checkout`.
+- On Vercel previews without `STRIPE_SECRET_KEY`, clicking the primary "Book ..." button must result in a browser alert: `Stripe is not configured. Add STRIPE_SECRET_KEY to process payments.` The network POST returns HTTP `503`.
+- The secondary CTA is a Next.js `Link` to `/rfq` with text `Request a custom quote`.
+- Use `document.querySelectorAll('script[type="application/ld+json"]')` and filter `@type === 'Product'` to verify schema `offers.price` ("149.00" / "199.00`), `offers.priceCurrency` ("USD"), and `offers.url`.
+- Verify `/api/health/oci` returns `{ ok: false, status: "not_configured" }` when `OCI_CANONICAL_URL` / `OCI_CANONICAL_API_KEY` are unset.

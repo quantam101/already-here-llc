@@ -1,25 +1,23 @@
 import { NextResponse } from 'next/server.js';
+import { logAudit } from '@/lib/audit';
 import { GincListing } from '@/lib/ginc';
-import { buildGincMember, generateGincId, loadNetwork, saveNetwork } from '@/lib/ginc-store';
+import { gincListingSchema } from '@/lib/ginc-schemas';
+import { addListing, addMember, buildGincMember, generateGincId, isRateLimited, loadNetwork } from '@/lib/ginc-store';
 
 export const runtime = 'nodejs';
 
 const allowedStatuses = new Set(['available', 'rented', 'sold', 'unavailable']);
-const rateLimit = new Map<string, { count: number; resetAt: number }>();
 
 function clientKey(request: Request): string {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
-}
-
-function limited(key: string): boolean {
-  const now = Date.now();
-  const current = rateLimit.get(key);
-  if (!current || current.resetAt <= now) {
-    rateLimit.set(key, { count: 1, resetAt: now + 60_000 });
-    return false;
+  const realIp = request.headers.get('x-real-ip')?.trim();
+  if (realIp) return realIp;
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) {
+    const parts = forwarded.split(',').map((s) => s.trim()).filter(Boolean);
+    const last = parts[parts.length - 1];
+    if (last) return last;
   }
-  current.count += 1;
-  return current.count > 5;
+  return 'unknown';
 }
 
 function clean(value: unknown, max = 3000): string {
@@ -40,7 +38,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (limited(clientKey(request))) {
+  if (await isRateLimited(clientKey(request))) {
     return NextResponse.json({ message: 'Too many submissions. Try again shortly.' }, { status: 429 });
   }
 
@@ -49,6 +47,11 @@ export async function POST(request: Request) {
     body = (await request.json()) as Record<string, unknown>;
   } catch {
     return NextResponse.json({ message: 'Invalid JSON body.' }, { status: 400 });
+  }
+
+  const parsed = gincListingSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ message: parsed.error.issues[0]?.message || 'Invalid input.' }, { status: 400 });
   }
 
   const memberId = clean(body.memberId, 40);
@@ -69,7 +72,7 @@ export async function POST(request: Request) {
   if (!member) {
     try {
       member = buildGincMember(body);
-      network.members.push(member);
+      await addMember(member);
     } catch (error) {
       return NextResponse.json({ message: error instanceof Error ? error.message : 'Invalid member data.' }, { status: 400 });
     }
@@ -90,8 +93,15 @@ export async function POST(request: Request) {
     createdAt: new Date().toISOString()
   };
 
-  network.listings.push(listing);
-  await saveNetwork(network);
+  await addListing(listing);
+  await logAudit({
+    action: 'listing.create',
+    actor: listing.memberId,
+    resource: `listing:${listing.id}`,
+    ip: clientKey(request),
+    userAgent: request.headers.get('user-agent') || undefined,
+    metadata: { category: listing.category, assetType: listing.assetType, state: listing.state }
+  });
 
   return NextResponse.json({ message: 'Listing created.', listing }, { status: 201 });
 }

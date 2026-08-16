@@ -32,8 +32,12 @@ services:
       NODE_ENV: production
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://www.alreadyherellc.com}
       NEXT_PUBLIC_COMMAND_CENTER_URL: ${NEXT_PUBLIC_COMMAND_CENTER_URL:-https://app.alreadyherellc.com}
+      ENTERPRISE_STORE_TYPE: sqlite
+      ENTERPRISE_SQLITE_PATH: data/enterprise-asios.db
     expose:
       - "3000"
+    volumes:
+      - enterprise_data:/app/data
     depends_on:
       - runtime
 
@@ -136,12 +140,70 @@ services:
               count: all
               capabilities: [gpu, video]
 
+  # ── Photo AI Haul Scanner ────────────────────────────────────────────────────
+  photo-ai-haul:
+    build:
+      context: .
+      dockerfile: Dockerfile.photo-ai-haul
+    restart: unless-stopped
+    env_file: .env
+    expose:
+      - "8000"
+    environment:
+      HAUL_SCANNER_HOST: 0.0.0.0
+      HAUL_SCANNER_PORT: 8000
+      GMAOS_MODE: ${GMAOS_MODE:-strict_zero_spend}
+      GMAOS_PAID_ADAPTERS_ENABLED: ${GMAOS_PAID_ADAPTERS_ENABLED:-false}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  canonical:
+    build:
+      context: .
+      dockerfile: Dockerfile.canonical
+    restart: unless-stopped
+    expose:
+      - "8443"
+    environment:
+      CANONICAL_API_KEY: ${CANONICAL_API_KEY:?CANONICAL_API_KEY is required}
+      CANONICAL_SQLITE_PATH: /data/oci-canonical-graph.db
+      CANONICAL_BACKUP_DIR: /backups
+      CANONICAL_HOST: 0.0.0.0
+      CANONICAL_PORT: 8443
+    volumes:
+      - canonical_data:/data
+      - canonical_backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; req=urllib.request.Request('http://127.0.0.1:8443/health', headers={'X-API-Key':'${CANONICAL_API_KEY:-}'}); urllib.request.urlopen(req)\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    expose:
+      - "6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - photo_ai_redis_data:/data
+
 volumes:
+  photo_ai_redis_data:
   video_input:
   video_output:
   caddy_data:
   caddy_config:
   gmaos_data:
+  enterprise_data:
   postgres_data:
   n8n_data:
   uptime_data:
+  canonical_data:
+  canonical_backups:
