@@ -78,6 +78,18 @@ function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
+function mergeRecords(existing: Record<string, unknown> | undefined, incoming: Record<string, unknown>): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...existing };
+  for (const [key, value] of Object.entries(incoming)) {
+    if (value !== undefined && value !== null) {
+      merged[key] = value;
+    } else if (!(key in merged)) {
+      merged[key] = value;
+    }
+  }
+  return merged;
+}
+
 interface SqliteStatement {
   run(...args: unknown[]): unknown;
   get(...args: unknown[]): unknown;
@@ -145,9 +157,9 @@ class MemoryCanonicalStore implements CanonicalStore {
       try {
         const now = isoNow();
         const existing = write.action === 'upsert' ? this.records.get(this.key(write.table, write.id)) : undefined;
+        const merged = mergeRecords(existing, write.record);
         const record: Record<string, unknown> = {
-          ...existing,
-          ...write.record,
+          ...merged,
           id: write.id,
           _table: write.table,
           _canonical_id: write.id,
@@ -289,9 +301,9 @@ class SqliteCanonicalStore implements CanonicalStore {
     for (const write of writes) {
       try {
         const existing = write.action === 'upsert' ? await this.getRecord(write.table, write.id) : undefined;
+        const merged = mergeRecords(existing, write.record);
         const record: Record<string, unknown> = {
-          ...existing,
-          ...write.record,
+          ...merged,
           id: write.id,
           _table: write.table,
           _canonical_id: write.id,

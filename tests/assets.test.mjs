@@ -92,9 +92,6 @@ const ahfosInput = {
   },
   equipment: {
     name: 'Company Trailer',
-    category: 'trailer',
-    make: 'PJ',
-    model: '2022',
     serialNumber: 'SN12345',
     assetTag: 'TAG-001'
   },
@@ -121,6 +118,13 @@ assert.equal(mergedAsset.status, 'active', 'asset lifecycle status should be pre
 assert.equal(mergedAsset.serial_number, 'SN12345', 'serial number should be preserved');
 assert.equal(mergedAsset.purchase_date, asset.purchase_date, 'purchase_date should be preserved');
 assert.equal(mergedAsset.warranty_expiry_date, asset.warranty_expiry_date, 'warranty expiry should be preserved');
-assert.equal(mergedAsset.category, 'trailer', 'category should be preserved');
+assert.equal(mergedAsset.category, 'trailer', 'category should be preserved when closeout omits it');
+assert.equal(mergedAsset.make, 'PJ', 'make should be preserved when closeout omits it');
+assert.equal(mergedAsset.model, '2022', 'model should be preserved when closeout omits it');
+
+const mergedOrg = await store.getRecord('organizations', ahfosWrites.find((w) => w.table === 'organizations').id);
+const expectedDomain = input.email.split('@')[1].toLowerCase();
+assert.equal(mergedOrg.domain, expectedDomain, 'organization domain should be preserved after closeout');
+assert.ok(Array.isArray(mergedOrg.aliases) && mergedOrg.aliases.includes(expectedDomain), 'organization aliases should be preserved after closeout');
 
 console.log('assets tests passed');

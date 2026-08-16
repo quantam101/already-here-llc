@@ -183,13 +183,13 @@ export function buildAssetIntakeRecords(input: AssetIntakeInput): DatabaseReadyW
     : null;
 
   const writes: DatabaseReadyWrite[] = [
-    { table: 'organizations', id: orgId, action: 'insert', record: orgRecord },
-    { table: 'contacts', id: contactId, action: 'insert', record: contactRecord },
+    { table: 'organizations', id: orgId, action: 'upsert', record: orgRecord },
+    { table: 'contacts', id: contactId, action: 'upsert', record: contactRecord },
     { table: 'assets', id: assetId, action: 'upsert', record: asset as unknown as Record<string, unknown> }
   ];
 
   if (siteRecord && siteId) {
-    writes.push({ table: 'sites', id: siteId, action: 'insert', record: siteRecord });
+    writes.push({ table: 'sites', id: siteId, action: 'upsert', record: siteRecord });
   }
 
   return writes;

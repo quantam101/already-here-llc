@@ -66,6 +66,16 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _merge_records(existing: Optional[Dict[str, Any]], incoming: Dict[str, Any]) -> Dict[str, Any]:
+    merged = dict(existing or {})
+    for key, value in incoming.items():
+        if value is not None:
+            merged[key] = value
+        elif key not in merged:
+            merged[key] = value
+    return merged
+
+
 class CanonicalGraphStore:
     """Write/read generic canonical graph records to a SQLite `canonical_records` table."""
 
@@ -98,8 +108,7 @@ class CanonicalGraphStore:
         now = _now()
         existing = self.read(table, id) if action == "upsert" else None
         merged = {
-            **(existing or {}),
-            **record,
+            **_merge_records(existing, record),
             "id": id,
             "_table": table,
             "_canonical_id": id,
