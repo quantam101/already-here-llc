@@ -127,6 +127,14 @@ class PolymarketConfig:
     meta_max_position_scale: Decimal = Decimal("1.0")
     meta_kill_switch_drawdown_pct: Decimal = Decimal("95.0")
 
+    # FINRA dark-pool macro overlay (delayed institutional sentiment)
+    dark_pool_macro_enabled: bool = False
+    dark_pool_macro_tickers: List[str] = field(default_factory=lambda: ["SPY", "QQQ", "IWM", "TLT", "GLD", "VIXY", "XLK", "XLF", "XLE", "XLI"])
+    dark_pool_db_path: str = "./data/dark_pool.db"
+    dark_pool_min_shares: int = 10_000
+    dark_pool_min_notional: int = 100_000
+    dark_pool_min_prev_shares: int = 1_000
+
     # Claude signal summarizer (opt-in; disabled unless API key + env toggle set)
     claude_api_key: str = ""
     claude_enabled: bool = False
@@ -242,6 +250,15 @@ class PolymarketConfig:
             execution_agent_enabled=(os.environ.get("POLYMARKET_EXECUTION_AGENT_ENABLED", "true").lower() == "true"),
             meta_max_position_scale=_env_decimal("POLYMARKET_META_MAX_POSITION_SCALE", "1.0"),
             meta_kill_switch_drawdown_pct=_env_decimal("POLYMARKET_META_KILL_SWITCH_DRAWDOWN_PCT", "95.0"),
+            dark_pool_macro_enabled=(os.environ.get("POLYMARKET_DARK_POOL_MACRO_ENABLED", "false").lower() == "true"),
+            dark_pool_macro_tickers=_env_list(
+                "POLYMARKET_DARK_POOL_MACRO_TICKERS",
+                ["SPY", "QQQ", "IWM", "TLT", "GLD", "VIXY", "XLK", "XLF", "XLE", "XLI"],
+            ),
+            dark_pool_db_path=os.environ.get("DARK_POOL_DB_PATH", "./data/dark_pool.db"),
+            dark_pool_min_shares=_env_int("DARK_POOL_MIN_SHARES", 10_000),
+            dark_pool_min_notional=_env_int("DARK_POOL_MIN_NOTIONAL", 100_000),
+            dark_pool_min_prev_shares=_env_int("DARK_POOL_MIN_PREV_SHARES", 1_000),
             claude_api_key=os.environ.get("CLAUDE_API_KEY", ""),
             claude_enabled=(os.environ.get("POLYMARKET_CLAUDE_ENABLED", "false").lower() == "true"),
             claude_model=os.environ.get("POLYMARKET_CLAUDE_MODEL", "claude-sonnet-5"),

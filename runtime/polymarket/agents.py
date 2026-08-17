@@ -22,6 +22,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from .adaptive import AdaptiveLearner
 from .config import PolymarketConfig
+from .dark_pool_macro import DarkPoolMacroOverlay
 from .portfolio import PortfolioRiskGuard
 from .risk import RiskGuard
 from .state import StateManager
@@ -177,6 +178,40 @@ class ConfluenceAgent(BaseAgent):
             "trade_count": result.get("trade_count"),
             "latest_threshold": latest.get("threshold") if latest else None,
         }
+
+
+class DarkPoolMacroAgent(BaseAgent):
+    """Macro overlay using delayed FINRA dark-pool institutional sentiment."""
+
+    def __init__(self, config: PolymarketConfig, state: StateManager, bus: AgentBus) -> None:
+        super().__init__("dark-pool-macro", config, state, bus)
+        self._overlay = DarkPoolMacroOverlay(
+            tickers=config.dark_pool_macro_tickers,
+            db_path=config.dark_pool_db_path,
+            min_shares=config.dark_pool_min_shares,
+            min_notional=config.dark_pool_min_notional,
+            min_prev_shares=config.dark_pool_min_prev_shares,
+        )
+
+    def tick(self) -> Dict[str, Any]:
+        if not self._config.dark_pool_macro_enabled:
+            return {"enabled": False}
+        try:
+            self._overlay.refresh(weeks_back=2)
+            signal = self._overlay.signal()
+            return {
+                "enabled": True,
+                "bias": signal["bias"],
+                "exposure_multiplier": signal["exposure_multiplier"],
+                "score": signal["score"],
+                "macro_tickers": signal["macro_tickers"],
+                "accumulation_count": signal["accumulation_count"],
+                "distribution_count": signal["distribution_count"],
+                "details": signal["details"][:5],
+            }
+        except Exception:
+            logger.exception("DarkPoolMacroAgent tick failed")
+            return {"enabled": True, "error": True}
 
 
 class RiskAgent(BaseAgent):
@@ -335,6 +370,7 @@ class MetaAgent(BaseAgent):
         wallet = statuses.get("wallet-scorer", {})
         confluence = statuses.get("confluence-learner", {})
         execution = statuses.get("execution", {})
+        macro = statuses.get("dark-pool-macro", {})
 
         reasons: List[str] = []
 
@@ -367,6 +403,19 @@ class MetaAgent(BaseAgent):
         meta_scale = self._config.meta_max_position_scale
         position_scale = min(risk_scale, meta_scale) if not kill_switch else Decimal("0")
 
+        # Apply FINRA dark-pool macro overlay: risk-off reduces exposure, risk-on allows up to 1.5x.
+        macro_multiplier = Decimal("1")
+        if self._config.dark_pool_macro_enabled and macro.get("enabled"):
+            try:
+                macro_multiplier = Decimal(str(macro.get("exposure_multiplier") or "1"))
+            except Exception:
+                macro_multiplier = Decimal("1")
+            if macro_multiplier < Decimal("1"):
+                reasons.append(f"dark-pool macro risk-off: multiplier {macro_multiplier}")
+            elif macro_multiplier > Decimal("1"):
+                reasons.append(f"dark-pool macro risk-on: multiplier {macro_multiplier}")
+            position_scale = position_scale * macro_multiplier
+
         # Confidence threshold: prefer learned confluence; fall back to config.
         learned_conf = confluence.get("min_confidence")
         if learned_conf is not None:
@@ -382,11 +431,14 @@ class MetaAgent(BaseAgent):
         confluence_wr = float(confluence.get("win_rate", 0.0) or 0.0) / 100.0
         risk_health = 1.0 if risk.get("can_trade", True) else 0.0
         security_health = 0.0 if security.get("anomalies") else 1.0
+        macro_health = float(macro.get("exposure_multiplier", 1.0) or 1.0) if macro.get("enabled") else 1.0
+        macro_health = max(0.0, min(1.0, macro_health))
         system_confidence = (
-            0.35 * wallet_score
-            + 0.25 * confluence_wr
-            + 0.25 * risk_health
+            0.30 * wallet_score
+            + 0.20 * confluence_wr
+            + 0.20 * risk_health
             + 0.15 * security_health
+            + 0.15 * macro_health
         )
 
         decision = {
@@ -397,6 +449,12 @@ class MetaAgent(BaseAgent):
             "training_mode": training_mode,
             "live_mode": live_mode,
             "system_confidence": round(system_confidence, 4),
+            "macro": {
+                "enabled": bool(macro.get("enabled")),
+                "bias": macro.get("bias"),
+                "exposure_multiplier": str(macro_multiplier),
+                "score": macro.get("score"),
+            },
             "reasons": reasons,
             "agent_statuses": {k: v for k, v in statuses.items() if isinstance(v, dict)},
         }
@@ -441,12 +499,14 @@ class AgentSwarm:
         self.risk = RiskAgent(config, state, self.bus)
         self.security = SecurityAgent(config, state, self.bus)
         self.execution = ExecutionAgent(config, state, self.bus)
+        self.dark_pool_macro = DarkPoolMacroAgent(config, state, self.bus)
 
         self.meta.register(self.wallet)
         self.meta.register(self.confluence)
         self.meta.register(self.risk)
         self.meta.register(self.security)
         self.meta.register(self.execution)
+        self.meta.register(self.dark_pool_macro)
 
     def start(self) -> None:
         if not self.config.meta_agent_enabled:
@@ -456,6 +516,7 @@ class AgentSwarm:
         self.confluence.start(float(self.config.adaptive_retrain_interval_seconds) + 5)
         self.risk.start(30.0)
         self.security.start(60.0)
+        self.dark_pool_macro.start(300.0)
         self.execution.start(30.0)
         self.meta.start(float(self.config.meta_agent_interval_seconds))
         logger.info("Agent swarm started; meta interval=%ss", self.config.meta_agent_interval_seconds)
@@ -463,6 +524,7 @@ class AgentSwarm:
     def stop(self) -> None:
         self.meta.stop()
         self.execution.stop()
+        self.dark_pool_macro.stop()
         self.security.stop()
         self.risk.stop()
         self.confluence.stop()
