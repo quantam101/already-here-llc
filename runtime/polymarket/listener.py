@@ -287,6 +287,8 @@ class PolymarketListener:
                         logger.info("HTTP poll fetched %d logs up to block %d", total, latest)
             except Exception as exc:
                 logger.warning("HTTP poll loop error: %s", exc)
+                # Rotate to the next HTTP endpoint for the next poll.
+                self._http_index += 1
 
             time.sleep(self._config.http_poll_interval_seconds)
 

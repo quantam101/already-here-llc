@@ -154,7 +154,6 @@ class PolymarketConfig:
             polygon_http_urls=_env_list(
                 "POLYGON_HTTP_URLS",
                 [
-                    "https://polygon-rpc.com",
                     "https://polygon.drpc.org",
                     "https://polygon-bor-rpc.publicnode.com",
                 ],
