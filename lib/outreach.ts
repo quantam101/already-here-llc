@@ -2,7 +2,7 @@ import { canonicalId, canonicalSlug, normalizeEmail, normalizePhone } from './ca
 import { buildFollowUpRecord } from './followups';
 import type { DatabaseReadyWrite } from './canonical-store';
 
-export type OutreachStatus = 'draft' | 'ready' | 'sent' | 'responded' | 'meeting' | 'proposal' | 'won' | 'lost' | 'no_response' | 'do_not_contact';
+export type OutreachStatus = 'draft' | 'ready' | 'sent' | 'responded' | 'meeting' | 'proposal' | 'won' | 'lost' | 'no_response' | 'do_not_contact' | 'bounced';
 export type OutreachChannel = 'email' | 'phone' | 'social' | 'sms' | 'in_person' | 'vendor' | 'other';
 
 export interface OutreachInput {
@@ -83,6 +83,9 @@ export function buildOutreachRecords(input: OutreachInput): DatabaseReadyWrite[]
     channel: input.channel,
     role: 'outreach_target',
     aliases: [input.fullName, normalizedEmail, normalizedPhone].filter(Boolean),
+    email_status: 'unverified',
+    suppressed: false,
+    bounce_count: 0,
     created_at: now,
     updated_at: now
   };

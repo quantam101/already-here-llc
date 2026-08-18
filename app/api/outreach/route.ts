@@ -30,7 +30,7 @@ function asString(value: unknown): string {
 }
 
 const validChannels = ['email', 'phone', 'social', 'sms', 'in_person', 'vendor', 'other'];
-const validStatuses = ['draft', 'ready', 'sent', 'responded', 'meeting', 'proposal', 'won', 'lost', 'no_response', 'do_not_contact'];
+const validStatuses = ['draft', 'ready', 'sent', 'responded', 'meeting', 'proposal', 'won', 'lost', 'no_response', 'do_not_contact', 'bounced'];
 
 function inputFromBody(body: Record<string, unknown>): OutreachInput | null {
   const fullName = asString(body.fullName);
