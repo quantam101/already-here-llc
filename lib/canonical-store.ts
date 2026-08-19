@@ -81,11 +81,21 @@ function clone<T>(value: T): T {
 function mergeRecords(existing: Record<string, unknown> | undefined, incoming: Record<string, unknown>): Record<string, unknown> {
   const merged: Record<string, unknown> = { ...existing };
   for (const [key, value] of Object.entries(incoming)) {
-    if (value !== undefined && value !== null) {
-      merged[key] = value;
-    } else if (!(key in merged)) {
-      merged[key] = value;
+    if (value === undefined || value === null) {
+      if (!(key in merged)) merged[key] = value;
+      continue;
     }
+    // Preserve existing data when an optional field is submitted as an empty string.
+    if (value === '') {
+      if (!(key in merged)) merged[key] = value;
+      continue;
+    }
+    // Union alias arrays across submissions instead of replacing them.
+    if (key === 'aliases' && Array.isArray(merged[key]) && Array.isArray(value)) {
+      merged[key] = Array.from(new Set([...(merged[key] as unknown[]), ...value]));
+      continue;
+    }
+    merged[key] = value;
   }
   return merged;
 }

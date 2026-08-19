@@ -127,4 +127,14 @@ const expectedDomain = input.email.split('@')[1].toLowerCase();
 assert.equal(mergedOrg.domain, expectedDomain, 'organization domain should be preserved after closeout');
 assert.ok(Array.isArray(mergedOrg.aliases) && mergedOrg.aliases.includes(expectedDomain), 'organization aliases should be preserved after closeout');
 
+// An AHFOS closeout that omits the phone should not erase the phone/aliases captured at intake.
+const ahfosInputNoPhone = { ...ahfosInput, source: 'test_ahfos_upsert_no_phone', phone: undefined };
+const ahfosNoPhoneWrites = buildAhfosCloseoutRecords(ahfosInputNoPhone);
+const ahfosNoPhoneResult = await store.executeWrites(ahfosNoPhoneWrites);
+assert.equal(ahfosNoPhoneResult.ok, true);
+const contactAfterNoPhone = await store.getRecord('contacts', contact.id);
+assert.equal(contactAfterNoPhone.phone, '4805550100', 'phone should be preserved when closeout omits it');
+assert.ok(Array.isArray(contactAfterNoPhone.aliases), 'aliases should be an array');
+assert.ok(contactAfterNoPhone.aliases.includes('4805550100'), 'aliases should keep phone alias after closeout');
+
 console.log('assets tests passed');
