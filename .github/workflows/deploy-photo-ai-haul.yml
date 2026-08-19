@@ -77,7 +77,7 @@ jobs:
             pm2 save
 
             sleep 5
-            curl -sf http://localhost:8000/healthz | grep '"status":"ok"'
+            curl -sf http://127.0.0.1:8000/healthz | grep '"status":"ok"'
             echo ""
             echo "Photo AI Haul Scanner deployed successfully"
             echo "Access: http://$(curl -s ifconfig.me):8000"

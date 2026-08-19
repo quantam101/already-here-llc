@@ -71,5 +71,5 @@ jobs:
 
             # Verify health
             sleep 3
-            curl -sf http://localhost:3000/api/health | grep '"status":"healthy"'
+            curl -sf http://127.0.0.1:3000/api/health | grep '"status":"healthy"'
             echo "Deploy complete"
