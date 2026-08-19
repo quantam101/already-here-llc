@@ -1,0 +1,8 @@
+# Runtime downloads and operator-provided payload files
+vendor/
+iso-sources/
+portable-apps/
+field-docs/
+downloads/
+*.tmp
+*.MISSING

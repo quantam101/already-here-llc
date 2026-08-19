@@ -30,7 +30,8 @@ const eslintConfig = [
       "posts/**",
       "docs/**",
       "public/**",
-      "content/**"
+      "content/**",
+      "scripts/build-recovery-usb/vendor/**"
     ]
   },
   ...coreWebVitals,
