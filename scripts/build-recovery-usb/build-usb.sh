@@ -77,7 +77,8 @@ elif [[ ! -b "${TARGET_DEVICE}" ]]; then
     error "${TARGET_DEVICE} is not a block device"
 else
     DEVICE_SIZE=$(lsblk -bndo SIZE "${TARGET_DEVICE}" 2>/dev/null || echo 0)
-    if [[ "${DEVICE_SIZE}" -lt 549755813888 ]]; then
+    MIN_SIZE_BYTES=$((64 * 1024 * 1024 * 1024))
+    if [[ "${DEVICE_SIZE}" -lt "${MIN_SIZE_BYTES}" ]]; then
         echo "WARNING: ${TARGET_DEVICE} is smaller than 64 GiB (${DEVICE_SIZE} bytes)." >&2
         echo "The spec recommends 64 GB minimum; 128 GB+ is preferred." >&2
     fi
@@ -136,10 +137,11 @@ if [[ "${DRY_RUN}" == true ]]; then
     echo "Dry-run: skipping Ventoy installation."
 fi
 
-if [[ "${DRY_RUN}" == true && "${TARGET_DEVICE}" == "dry-run" ]]; then
+MOUNT_POINT=""
+if [[ "${DRY_RUN}" == true ]]; then
     MOUNT_POINT=$(mktemp -d /tmp/ahrecovery-usb-dryrun.XXXXXX)
     FIRST_PART="dry-run"
-elif [[ "${DRY_RUN}" != true ]]; then
+else
     # Feed enough 'y' confirmations to satisfy Ventoy's prompts (non-interactive).
     printf 'y\n%.0s' {1..20} | "${VENTOY_CMD[@]}"
     partprobe "${TARGET_DEVICE}" 2>/dev/null || true

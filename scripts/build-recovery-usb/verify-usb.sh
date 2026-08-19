@@ -32,7 +32,7 @@ if ! echo "${PARTS}" | grep -qi "exfat"; then
     exit 1
 fi
 
-if ! echo "${PARTS}" | grep -qi "fat"; then
+if ! echo "${PARTS}" | grep -qiE '(^| )(vfat|fat16|fat32)( |$)'; then
     echo "ERROR: No FAT EFI/VTOYEFI partition found" >&2
     exit 1
 fi
