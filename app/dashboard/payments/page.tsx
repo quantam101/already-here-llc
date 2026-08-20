@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { siteConfig } from '@/lib/site';
 import { getCanonicalStore } from '@/lib/canonical-store';
 
 export const metadata: Metadata = {
@@ -110,6 +111,14 @@ export default async function PaymentsPage() {
             </table>
           </div>
         )}
+      </section>
+
+      <section className="mt-10 rounded-2xl border border-borderBrand bg-soft p-5 text-sm leading-6 text-slate-700">
+        <strong>Billing support:</strong> For invoices, payment questions, W-9 requests, and vendor setup, contact{' '}
+        <a href={`mailto:${siteConfig.billingEmail}`} className="text-action underline">
+          {siteConfig.billingEmail}
+        </a>
+        . Include invoice number, work-order number, client name, and service location when applicable.
       </section>
 
       <div className="mt-10">

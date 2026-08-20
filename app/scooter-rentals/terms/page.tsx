@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { siteConfig } from '@/lib/site';
 import { addOnItems, baseInclusions, ownerResponsibilities, proDeliveryKit, rentalPricing, renterResponsibilities, replacementFees } from '@/lib/scooter-rental';
 
 export const metadata: Metadata = {
@@ -159,6 +160,14 @@ export default function ScooterRentalTermsPage() {
           Submit a rental request
         </Link>{' '}
         and we will contact you.
+      </section>
+
+      <section className="mt-8 rounded-2xl border border-borderBrand bg-soft p-6 text-sm leading-6 text-slate-700">
+        <strong>Billing and payment questions:</strong> Contact{' '}
+        <a href={`mailto:${siteConfig.billingEmail}`} className="text-action underline">
+          {siteConfig.billingEmail}
+        </a>{' '}
+        for invoices, deposits, W-9 requests, and vendor setup.
       </section>
     </div>
   );

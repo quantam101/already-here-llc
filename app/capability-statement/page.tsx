@@ -86,6 +86,9 @@ export default function CapabilityStatementPage() {
             <a href={`mailto:${siteConfig.email}`} className="block text-sm text-slate-600 hover:text-action transition-colors">
               {siteConfig.email}
             </a>
+            <a href={`mailto:${siteConfig.billingEmail}`} className="block text-sm text-slate-600 hover:text-action transition-colors">
+              {siteConfig.billingEmail} — {siteConfig.billingEmailNote}
+            </a>
             <a href={siteConfig.url} className="block text-sm text-slate-500 hover:text-action transition-colors">
               {siteConfig.url.replace('https://', '')}
             </a>
