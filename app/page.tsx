@@ -126,7 +126,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="card overflow-hidden">
+          <div className="card hidden overflow-hidden lg:block">
             <div className="bg-navy p-8 sm:p-10">
               <div className="flex items-center gap-3 text-white">
                 <AlreadyHereLogo className="h-16 w-16 shrink-0" />

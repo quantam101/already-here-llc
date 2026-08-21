@@ -5,7 +5,8 @@ import OutreachClient from './OutreachClient';
 export const metadata: Metadata = {
   title: 'Outreach Pipeline',
   description: 'Warm customers, prospects, partners, and technician recruiting for Already Here LLC.',
-  alternates: { canonical: '/outreach' }
+  alternates: { canonical: '/outreach' },
+  robots: { index: false, follow: false },
 };
 
 export const dynamic = 'force-dynamic';
