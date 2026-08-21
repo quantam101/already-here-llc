@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: profitengine/package-lock.json
 
@@ -48,9 +48,12 @@ jobs:
         working-directory: profitengine
 
       - name: Commit new content
+        env:
+          GH_PAT_WRITE: ${{ secrets.GH_PAT_WRITE }}
         run: |
           git config user.email "profitengine@alreadyherellc.com"
           git config user.name "ProfitEngine"
+          git remote set-url origin https://x-access-token:${GH_PAT_WRITE}@github.com/quantam101/already-here-llc.git
           git add content/blog/
           git diff --staged --quiet && echo "No new content" || (
             git commit -m "content: auto-generate blog post $(date -u +%Y-%m-%d-%H%M)" &&
