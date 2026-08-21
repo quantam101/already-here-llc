@@ -34,9 +34,6 @@ jobs:
           CONTENT_OUTPUT_DIR: ${{ github.workspace }}/content/blog
           POSTS_PER_RUN: '1'
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPO_OWNER: quantam101
-          GITHUB_REPO_NAME: already-here-llc
         run: |
           node -e "
           const { runContentPipeline } = require('./pipeline.js');
@@ -55,5 +52,6 @@ jobs:
           git add content/blog/
           git diff --staged --quiet && echo "No new content" || (
             git commit -m "content: auto-generate blog post $(date -u +%Y-%m-%d-%H%M)" &&
-            git push
+            git pull --rebase origin main &&
+            git push origin main
           )
