@@ -1,0 +1,58 @@
+name: ProfitEngine Content Generation
+
+on:
+  schedule:
+    - cron: '0 7 * * *'   # 7AM UTC daily
+    - cron: '0 19 * * *'  # 7PM UTC daily
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT_WRITE }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: profitengine/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --omit=dev
+        working-directory: profitengine
+
+      - name: Generate content
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CONTENT_OUTPUT_DIR: ${{ github.workspace }}/content/blog
+          POSTS_PER_RUN: '1'
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT_WRITE }}
+          GITHUB_REPO_OWNER: quantam101
+          GITHUB_REPO_NAME: already-here-llc
+        run: |
+          node -e "
+          const { runContentPipeline } = require('./pipeline.js');
+          runContentPipeline().then(results => {
+            const ok = results.filter(r => r.success).length;
+            console.log('[done]', ok, '/', results.length, 'succeeded');
+            process.exit(ok > 0 ? 0 : 1);
+          }).catch(e => { console.error(e); process.exit(1); });
+          "
+        working-directory: profitengine
+
+      - name: Commit new content
+        run: |
+          git config user.email "profitengine@alreadyherellc.com"
+          git config user.name "ProfitEngine"
+          git add content/blog/
+          git diff --staged --quiet && echo "No new content" || (
+            git commit -m "content: auto-generate blog post $(date -u +%Y-%m-%d-%H%M)" &&
+            git push
+          )
