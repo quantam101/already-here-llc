@@ -219,8 +219,8 @@ export function buildWorkOrderRecords(input: WorkOrderInput): DatabaseReadyWrite
   };
 
   return [
-    { table: 'organizations', id: orgId, action: 'insert', record: orgRecord },
-    { table: 'contacts', id: contactId, action: 'insert', record: contactRecord },
+    { table: 'organizations', id: orgId, action: 'upsert', record: orgRecord },
+    { table: 'contacts', id: contactId, action: 'upsert', record: contactRecord },
     { table: 'jobs', id: workOrderId, action: 'insert', record: workOrder as unknown as Record<string, unknown> },
     {
       table: 'opportunities',
@@ -267,7 +267,7 @@ export function buildAssignmentRecords(input: AssignmentInput): DatabaseReadyWri
     {
       table: 'jobs',
       id: input.workOrderId,
-      action: 'insert',
+      action: 'upsert',
       record: {
         id: input.workOrderId,
         status: 'assigned',
@@ -335,7 +335,7 @@ export function buildCloseoutRecords(input: CloseoutInput): DatabaseReadyWrite[]
     {
       table: 'jobs',
       id: input.workOrderId,
-      action: 'insert',
+      action: 'upsert',
       record: {
         id: input.workOrderId,
         status: 'closed',
@@ -348,7 +348,7 @@ export function buildCloseoutRecords(input: CloseoutInput): DatabaseReadyWrite[]
     {
       table: 'assignments',
       id: input.assignmentId,
-      action: 'insert',
+      action: 'upsert',
       record: {
         id: input.assignmentId,
         status: 'completed',

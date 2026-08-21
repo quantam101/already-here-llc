@@ -1,19 +1,9 @@
 import { NextResponse } from 'next/server';
-import { timingSafeEqual } from 'crypto';
+import { isInternalApiKeyValid } from '@/lib/internal-auth';
 import { z } from 'zod';
 import { recordSystemHealthSignal, querySystemHealthSignals } from '@/lib/system-health';
 
-const INTERNAL_API_KEY = process.env.AHFOS_INTERNAL_API_KEY;
 const OCI_HEALTH_URL = process.env.OCI_HEALTH_URL;
-
-function isValidKey(provided: string | null): boolean {
-  if (!INTERNAL_API_KEY) return true;
-  if (!provided) return false;
-  const expected = Buffer.from(INTERNAL_API_KEY);
-  const actual = Buffer.from(provided);
-  if (expected.length !== actual.length) return false;
-  return timingSafeEqual(expected, actual);
-}
 
 const signalSchema = z.object({
   source: z.string().min(1).max(200),
@@ -57,7 +47,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const provided = request.headers.get('x-internal-api-key');
-  if (!isValidKey(provided)) {
+  if (!isInternalApiKeyValid(provided)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

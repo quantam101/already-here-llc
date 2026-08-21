@@ -1,20 +1,10 @@
 import { NextResponse } from 'next/server';
-import { timingSafeEqual } from 'crypto';
+import { isInternalApiKeyValid } from '@/lib/internal-auth';
 import { getCanonicalStore } from '@/lib/canonical-store';
 import { buildMaintenanceRecord, type MaintenanceInput, type AssetRecord } from '@/lib/assets';
 
 export const runtime = 'nodejs';
 
-const INTERNAL_API_KEY = process.env.AHFOS_INTERNAL_API_KEY;
-
-function isValidKey(provided: string | null): boolean {
-  if (!INTERNAL_API_KEY) return true;
-  if (!provided) return false;
-  const expected = Buffer.from(INTERNAL_API_KEY);
-  const actual = Buffer.from(provided);
-  if (expected.length !== actual.length) return false;
-  return timingSafeEqual(expected, actual);
-}
 
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -66,7 +56,7 @@ export async function POST(request: Request) {
   if (isRateLimited(getClientKey(request))) {
     return NextResponse.json({ ok: false, error: 'Rate limit exceeded.' }, { status: 429 });
   }
-  if (!isValidKey(request.headers.get('x-internal-api-key'))) {
+  if (!isInternalApiKeyValid(request.headers.get('x-internal-api-key'))) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -203,9 +203,9 @@ export function buildAutoworksIntakeRecords(input: AutoworksIntakeInput): Databa
   };
 
   return [
-    { table: 'organizations', id: orgId, action: 'insert', record: orgRecord },
-    { table: 'contacts', id: contactId, action: 'insert', record: contactRecord },
-    { table: 'vehicles', id: vehicleId, action: 'insert', record: vehicleRecord },
+    { table: 'organizations', id: orgId, action: 'upsert', record: orgRecord },
+    { table: 'contacts', id: contactId, action: 'upsert', record: contactRecord },
+    { table: 'vehicles', id: vehicleId, action: 'upsert', record: vehicleRecord },
     { table: 'jobs', id: jobId, action: 'insert', record: job as unknown as Record<string, unknown> },
     {
       table: 'opportunities',
@@ -284,7 +284,7 @@ export function buildAutoworksCloseoutRecords(input: AutoworksCloseoutInput): Da
     {
       table: 'jobs',
       id: input.jobId,
-      action: 'insert',
+      action: 'upsert',
       record: {
         id: input.jobId,
         status: 'closed',
@@ -297,7 +297,7 @@ export function buildAutoworksCloseoutRecords(input: AutoworksCloseoutInput): Da
     {
       table: 'opportunities',
       id: canonicalId('opp', input.jobId),
-      action: 'insert',
+      action: 'upsert',
       record: {
         id: canonicalId('opp', input.jobId),
         status: input.paymentStatus === 'collected' ? 'won' : 'open',

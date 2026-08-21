@@ -329,10 +329,10 @@ export function buildAhfosCloseoutRecords(input: AhfosCloseoutInput): DatabaseRe
   };
 
   return [
-    { table: 'organizations', id: orgId, action: 'insert', record: orgRecord },
-    { table: 'contacts', id: contactId, action: 'insert', record: contactRecord },
+    { table: 'organizations', id: orgId, action: 'upsert', record: orgRecord },
+    { table: 'contacts', id: contactId, action: 'upsert', record: contactRecord },
     { table: 'assets', id: assetId, action: 'upsert', record: assetRecord as unknown as Record<string, unknown> },
-    { table: 'sites', id: siteId, action: 'insert', record: siteRecord },
+    { table: 'sites', id: siteId, action: 'upsert', record: siteRecord },
     { table: 'jobs', id: jobId, action: 'insert', record: job as unknown as Record<string, unknown> },
     { table: 'assignments', id: assignmentId, action: 'insert', record: assignment },
     { table: 'closeouts', id: closeoutId, action: 'insert', record: closeout as unknown as Record<string, unknown> },
