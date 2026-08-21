@@ -5,7 +5,8 @@ import FollowupsClient from './FollowupsClient';
 export const metadata: Metadata = {
   title: 'Follow-ups',
   description: 'Open, in-progress, and overdue follow-ups from canonical intake and outreach.',
-  alternates: { canonical: '/followups' }
+  alternates: { canonical: '/followups' },
+  robots: { index: false, follow: false },
 };
 
 export const dynamic = 'force-dynamic';
