@@ -128,8 +128,8 @@ export function buildOutreachRecords(input: OutreachInput): DatabaseReadyWrite[]
   });
 
   return [
-    { table: 'organizations', id: orgId, action: 'insert', record: orgRecord },
-    { table: 'contacts', id: contactId, action: 'insert', record: contactRecord },
+    { table: 'organizations', id: orgId, action: 'upsert', record: orgRecord },
+    { table: 'contacts', id: contactId, action: 'upsert', record: contactRecord },
     { table: 'outreach', id: outreachId, action: 'insert', record: outreach as unknown as Record<string, unknown> },
     followUp
   ];
