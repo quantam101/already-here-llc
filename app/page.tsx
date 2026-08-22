@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AlreadyHereLogo } from '@/components/logo';
+import { SiteFaq } from '@/components/SiteFaq';
 import {
   buyerReasons,
   documentedWorkTypes,
@@ -11,7 +12,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations',
+  title: 'Phoenix Onsite IT Field Services | Already Here LLC',
   description: siteConfig.description,
   applicationName: siteConfig.name,
   keywords: [
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: 'https://www.alreadyherellc.com' },
   openGraph: {
-    title: 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations',
+    title: 'Phoenix Onsite IT Field Services | Already Here LLC',
     description: siteConfig.description,
     url: 'https://www.alreadyherellc.com',
     siteName: siteConfig.name,
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations',
+    title: 'Phoenix Onsite IT Field Services | Already Here LLC',
     description: siteConfig.description
   }
 };
@@ -352,6 +353,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      <SiteFaq />
     </>
   );
 }
