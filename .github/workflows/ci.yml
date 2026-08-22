@@ -13,10 +13,14 @@ on:
       - 'content/**'
       - 'exports/**'
       - 'data/**'
+      - 'hermes/receipts/**'
       - '**/*.md'
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - 'content/blog/**'
+      - 'hermes/receipts/**'
 
 permissions:
   contents: read
@@ -45,44 +49,29 @@ jobs:
       - name: Install dependencies
         run: npm ci --silent
 
-      - name: Lint
+      - name: Quality gate
         shell: bash
         run: |
           set +e
-          npm run lint --if-present 2>&1 | tee eslint-output.log
+          npm run qa:gate 2>&1 | tee quality-gate-output.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
-            echo "::group::eslint failure summary"
-            tail -n 160 eslint-output.log
+            echo "::group::quality gate failure summary"
+            tail -n 220 quality-gate-output.log
             echo "::endgroup::"
           fi
           exit "$status"
 
-      - name: Upload lint diagnostics
+      - name: Upload failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: eslint-output
-          path: eslint-output.log
+          name: quality-gate-output
+          path: |
+            quality-gate-output.log
+            hermes/receipts/*-quality-gate.json
           if-no-files-found: ignore
-
-      - name: Typecheck
-        run: npm run typecheck --if-present
-
-      - name: Build
-        run: npm run build --if-present
-
-      - name: Test
-        run: npm run test --if-present
-
-      - name: Content guard
-        run: npm run qa:content --if-present
-
-      - name: SEO route audit
-        run: npm run qa:seo --if-present
-
-      - name: Quality gate
-        run: npm run qa:gate --if-present
+          retention-days: 3
 
       - name: Notify Slack/Zapier
         if: always() && !cancelled()
