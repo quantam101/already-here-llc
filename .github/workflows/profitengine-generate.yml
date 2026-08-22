@@ -1,11 +1,6 @@
 name: ProfitEngine Content Generation
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'profitengine/agents/content-generator.js'
-      - '.github/workflows/profitengine-generate.yml'
   schedule:
     - cron: '0 7 * * *'   # 7AM UTC daily
     - cron: '0 19 * * *'  # 7PM UTC daily
