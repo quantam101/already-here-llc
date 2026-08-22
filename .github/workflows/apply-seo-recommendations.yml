@@ -1,0 +1,106 @@
+name: Apply SEO Recommendations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-seo-recommendations.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Apply title, description, FAQ, and schema recommendations
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          title = 'Phoenix Onsite IT Field Services | Already Here LLC'
+          description = 'Phoenix onsite IT field services for MSPs, vendors, retail and infrastructure teams, including smart hands, network troubleshooting and rollout support.'
+          assert 30 <= len(title) <= 60, len(title)
+          assert 120 <= len(description) <= 160, len(description)
+
+          site = Path('lib/site.ts')
+          s = site.read_text(encoding='utf-8')
+          old_desc = "    'Phoenix-based onsite infrastructure execution and technical field operations partner for MSPs, vendors, commercial sites, retail environments, and critical systems, including RFID, barcode, asset tracking, IT asset recovery, store decommissioning, inventory capture, and return logistics support by scope.',"
+          new_desc = f"    '{description}',"
+          if old_desc not in s:
+              raise SystemExit('site description source text not found')
+          site.write_text(s.replace(old_desc, new_desc, 1), encoding='utf-8')
+
+          layout = Path('app/layout.tsx')
+          s = layout.read_text(encoding='utf-8')
+          old_title = "    default: 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations',"
+          new_title = f"    default: '{title}',"
+          if old_title not in s:
+              raise SystemExit('layout title source text not found')
+          layout.write_text(s.replace(old_title, new_title, 1), encoding='utf-8')
+
+          page = Path('app/page.tsx')
+          s = page.read_text(encoding='utf-8')
+          old_full_title = 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations'
+          if old_full_title not in s:
+              raise SystemExit('homepage metadata title source text not found')
+          s = s.replace(old_full_title, title)
+
+          import_anchor = "import { AlreadyHereLogo } from '@/components/logo';\n"
+          import_line = "import { SiteFaq } from '@/components/SiteFaq';\n"
+          if import_line not in s:
+              if import_anchor not in s:
+                  raise SystemExit('homepage import anchor not found')
+              s = s.replace(import_anchor, import_anchor + import_line, 1)
+
+          if '<SiteFaq />' not in s:
+              marker = '    </>\n  );\n}\n'
+              if marker not in s:
+                  raise SystemExit('homepage closing fragment marker not found')
+              s = s.replace(marker, '      <SiteFaq />\n' + marker, 1)
+          page.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Validate SEO implementation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          title = 'Phoenix Onsite IT Field Services | Already Here LLC'
+          description = 'Phoenix onsite IT field services for MSPs, vendors, retail and infrastructure teams, including smart hands, network troubleshooting and rollout support.'
+          page = Path('app/page.tsx').read_text(encoding='utf-8')
+          layout = Path('app/layout.tsx').read_text(encoding='utf-8')
+          site = Path('lib/site.ts').read_text(encoding='utf-8')
+          faq = Path('components/SiteFaq.tsx').read_text(encoding='utf-8')
+
+          assert title in page and title in layout
+          assert description in site
+          assert '<SiteFaq />' in page
+          assert "'@type': 'FAQPage'" in faq
+          assert faq.count("question:") >= 4
+          assert 30 <= len(title) <= 60
+          assert 120 <= len(description) <= 160
+          print(f'Title length: {len(title)}')
+          print(f'Description length: {len(description)}')
+          print('FAQ questions:', faq.count('question:'))
+          PY
+
+      - name: Commit changes and remove one-time workflow
+        run: |
+          rm .github/workflows/apply-seo-recommendations.yml
+          git config user.email "seo@alreadyherellc.com"
+          git config user.name "Already Here SEO"
+          git add app/page.tsx app/layout.tsx lib/site.ts components/SiteFaq.tsx .github/workflows/apply-seo-recommendations.yml
+          git commit -m "feat(seo): implement homepage title description FAQ and schema"
+          git pull --rebase origin main
+          git push origin main
