@@ -16,5 +16,14 @@ jobs:
     steps:
       - name: Trigger daily enterprise scan
         run: |
-          curl -fsS -H "x-cron-secret: ${{ secrets.AHFOS_CRON_SECRET }}" \
-            "https://www.alreadyherellc.com/api/enterprise/cron" || true
+          set -euo pipefail
+          code=$(curl -sS -o /tmp/cron_resp.txt -w '%{http_code}' \
+            -H "x-cron-secret: ${{ secrets.AHFOS_CRON_SECRET }}" \
+            "https://www.alreadyherellc.com/api/enterprise/cron")
+          echo "HTTP $code"
+          cat /tmp/cron_resp.txt || true
+          echo
+          if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
+            echo "::error::enterprise cron returned HTTP $code (auth or endpoint failure)"
+            exit 1
+          fi
