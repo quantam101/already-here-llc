@@ -85,7 +85,7 @@ jobs:
         run: npm run qa:gate --if-present
 
       - name: Notify Slack/Zapier
-        if: always()
+        if: always() && !cancelled()
         env:
           ALERT_TITLE: Already Here LLC CI ${{ job.status }}
           ALERT_STATUS: ${{ job.status }}
