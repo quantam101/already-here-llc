@@ -17,7 +17,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: 'Already Here LLC | Onsite Infrastructure Execution & Technical Field Operations',
+    default: 'Phoenix Onsite IT Field Services | Already Here LLC',
     template: '%s | Already Here LLC'
   },
   description: siteConfig.description,

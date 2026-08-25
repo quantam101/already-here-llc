@@ -1,5 +1,9 @@
 name: Enterprise ASIOS Cron
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   schedule:
     - cron: '0 9 * * *'
@@ -8,6 +12,7 @@ on:
 jobs:
   scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Trigger daily enterprise scan
         run: |

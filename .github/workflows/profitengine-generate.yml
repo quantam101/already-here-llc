@@ -1,0 +1,62 @@
+name: ProfitEngine Content Generation
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  schedule:
+    - cron: '0 7 * * *'   # 7AM UTC daily
+    - cron: '0 19 * * *'  # 7PM UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: profitengine/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --omit=dev
+        working-directory: profitengine
+
+      - name: Generate content
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CONTENT_OUTPUT_DIR: ${{ github.workspace }}/content/blog
+          POSTS_PER_RUN: '1'
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+        run: |
+          node -e "
+          const { runContentPipeline } = require('./pipeline.js');
+          runContentPipeline().then(results => {
+            const ok = results.filter(r => r.success).length;
+            console.log('[done]', ok, '/', results.length, 'succeeded');
+            process.exit(ok > 0 ? 0 : 1);
+          }).catch(e => { console.error(e); process.exit(1); });
+          "
+        working-directory: profitengine
+
+      - name: Commit new content
+        run: |
+          git config user.email "profitengine@alreadyherellc.com"
+          git config user.name "ProfitEngine"
+          git add content/blog/
+          git diff --staged --quiet && echo "No new content" || (
+            git commit -m "content: auto-generate blog post $(date -u +%Y-%m-%d-%H%M)" &&
+            git pull --rebase origin main &&
+            git push origin main
+          )

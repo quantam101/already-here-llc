@@ -35,6 +35,36 @@ The post should:
 Write only the body content starting from the first ## heading.`;
 }
 
+async function resolveGroqModel(groq) {
+  const configured = process.env.GROQ_MODEL || process.env.GMAOS_GROQ_MODEL || '';
+  const candidates = [
+    configured,
+    'openai/gpt-oss-20b',
+    'openai/gpt-oss-120b',
+    'groq/compound-mini',
+    'groq/compound',
+    'llama-3.1-8b-instant'
+  ].filter(Boolean);
+
+  try {
+    const models = await groq.models.list();
+    const available = new Set((models.data || []).map(model => model.id));
+    const selected = candidates.find(model => available.has(model));
+    if (selected) {
+      console.log(`[generator] Selected Groq model: ${selected}`);
+      return selected;
+    }
+    throw new Error(`No supported text model available. Account models: ${[...available].join(', ')}`);
+  } catch (error) {
+    if (configured) {
+      console.warn(`[generator] Could not enumerate Groq models; using configured model ${configured}: ${error.message}`);
+      return configured;
+    }
+    console.warn(`[generator] Could not enumerate Groq models; falling back to openai/gpt-oss-20b: ${error.message}`);
+    return 'openai/gpt-oss-20b';
+  }
+}
+
 async function generatePost(overrideTopic) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
@@ -42,6 +72,7 @@ async function generatePost(overrideTopic) {
   }
 
   const groq = new Groq({ apiKey });
+  const model = await resolveGroqModel(groq);
   const now = new Date();
   const year = now.getFullYear();
   const topic = overrideTopic || getTodayTopic(now);
@@ -53,7 +84,7 @@ async function generatePost(overrideTopic) {
   console.log(`[generator] Generating post: ${titleText}`);
 
   const completion = await groq.chat.completions.create({
-    model: 'llama-3.1-8b-instant',
+    model,
     messages: [
       { role: 'system', content: buildSystemPrompt() },
       { role: 'user', content: buildUserPrompt(topic, year) }
@@ -87,7 +118,7 @@ niche: ${topic.niche}
   };
 }
 
-module.exports = { generatePost };
+module.exports = { generatePost, resolveGroqModel };
 
 // Direct execution for testing: node agents/content-generator.js
 if (require.main === module) {
