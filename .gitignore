@@ -40,3 +40,4 @@ video_output/
 *.avi
 *.mkv
 *.mov
+nginx/certs/privkey.pem
