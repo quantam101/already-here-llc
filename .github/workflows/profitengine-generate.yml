@@ -1,5 +1,9 @@
 name: ProfitEngine Content Generation
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   schedule:
     - cron: '0 7 * * *'   # 7AM UTC daily
@@ -12,6 +16,7 @@ permissions:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout

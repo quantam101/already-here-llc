@@ -1,18 +1,16 @@
 name: Deploy MCP Trading Engine to Oracle VM
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'runtime/mcp_trading_engine.py'
-      - 'runtime/trading_orchestrator.py'
-      - '.github/workflows/deploy-mcp-engine.yml'
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -30,6 +28,8 @@ jobs:
           username: opc
           key: ${{ secrets.ORACLE_SSH_KEY }}
           port: 22
+          timeout: 1m
+          command_timeout: 5m
           debug: true
           script: |
             set -e
@@ -90,7 +90,7 @@ jobs:
             pm2 save
 
             sleep 3
-            curl -sf http://127.0.0.1:8000/healthz | grep '"status":"ok"'
+            curl -sf --max-time 10 http://127.0.0.1:8000/healthz | grep '"status":"ok"'
             echo ""
             echo "MCP Trading Engine deployed successfully in PAPER mode"
             echo "Access: http://$(curl -s ifconfig.me):8000"
