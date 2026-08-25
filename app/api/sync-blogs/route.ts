@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { getAllPosts } from '@/lib/blog';
 import { notifyBlogPost } from '@/lib/profitengine';
 
 const SYNC_SECRET = process.env.SYNC_BLOGS_SECRET ?? '';
 
-export async function POST(req: NextRequest) {
+function isAuthorized(req: NextRequest): boolean {
+  if (!SYNC_SECRET) return false;
   const auth = req.headers.get('authorization') ?? '';
-  if (!SYNC_SECRET || auth !== `Bearer ${SYNC_SECRET}`) {
+  const expected = Buffer.from(`Bearer ${SYNC_SECRET}`);
+  const actual = Buffer.from(auth);
+  if (expected.length !== actual.length) return false;
+  return timingSafeEqual(expected, actual);
+}
+
+export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
   const posts = getAllPosts();
