@@ -42,6 +42,7 @@ const navGroups = [
       { href: '/dashboard', label: 'Dashboard' },
       { href: '/ai-agent', label: 'AI Lead Capture' },
       { href: '/capability-statement', label: 'Capability Statement' },
+      { href: '/self-hosted-solutions', label: 'Self-Hosted Stack' },
     ],
   },
 ];

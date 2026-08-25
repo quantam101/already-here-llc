@@ -44,6 +44,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/ginc`,                                lastModified: new Date(), changeFrequency: 'monthly', priority: 0.75 },
     { url: `${base}/connect`,                             lastModified: new Date(), changeFrequency: 'monthly', priority: 0.75 },
 
+    { url: `${base}/self-hosted-solutions`,              lastModified: new Date(), changeFrequency: 'monthly', priority: 0.85 },
+
+
     // AI / lead capture
     { url: `${base}/ai-agent`,                            lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
     { url: `${base}/ai-agent-demo`,                       lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
