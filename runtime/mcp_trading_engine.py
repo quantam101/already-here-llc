@@ -793,6 +793,34 @@ if _HAS_FASTAPI:
                     "required": ["symbol", "rsi_14", "orderbook_imbalance"],
                 },
             },
+            {
+                "name": "llm_analyze",
+                "description": (
+                    "Full LLM-powered analysis: technical scan + Finnhub news sentiment + "
+                    "yfinance fundamentals + bull/bear debate (TradingAgents-inspired) → "
+                    "five-tier rating (Buy/Overweight/Hold/Underweight/Sell). "
+                    "Requires ANTHROPIC_API_KEY. Slower than scan_signal (~3-8s); "
+                    "use for research-grade decisions, not latency-sensitive execution."
+                ),
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbol": {"type": "string", "description": "Ticker symbol (e.g. AAPL)"},
+                        "rsi_14": {"type": "number", "description": "Current 14-period RSI"},
+                        "orderbook_imbalance": {"type": "number", "description": "Orderbook bid/ask imbalance"},
+                        "price_history": {
+                            "type": "array", "items": {"type": "number"},
+                            "description": "Recent closing prices (35+ recommended for full scanner suite)",
+                        },
+                        "volume_history": {
+                            "type": "array", "items": {"type": "number"},
+                            "description": "Recent volume bars matching price_history length",
+                        },
+                        "current_price": {"type": "number", "description": "Current market price"},
+                    },
+                    "required": ["symbol", "rsi_14", "orderbook_imbalance"],
+                },
+            },
         ],
     }
 
@@ -829,6 +857,9 @@ if _HAS_FASTAPI:
 
         if tool_name == "scan_signal":
             return _handle_scan_signal(req_id, arguments)
+
+        if tool_name == "llm_analyze":
+            return await _handle_llm_analyze(req_id, arguments)
 
         # --- input validation ---
         symbol = arguments.get("symbol")
@@ -1067,6 +1098,114 @@ if _HAS_FASTAPI:
                 **proven_layer,
             },
         })
+
+
+    async def _handle_llm_analyze(req_id: Any, arguments: Dict[str, Any]) -> JSONResponse:
+        """
+        LLM-powered analysis: technical scan + sentiment + fundamentals + bull/bear debate.
+        TradingAgents-inspired five-tier rating (Buy/Overweight/Hold/Underweight/Sell).
+        """
+        symbol = arguments.get("symbol", "")
+        if not symbol or not isinstance(symbol, str):
+            return JSONResponse(
+                {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "Missing 'symbol'"}},
+                status_code=400,
+            )
+        symbol = symbol.strip().upper()
+
+        try:
+            rsi_14 = float(arguments.get("rsi_14", 50))
+            imbalance = float(arguments.get("orderbook_imbalance", 0))
+            current_price = float(arguments.get("current_price", 0))
+        except (TypeError, ValueError):
+            return JSONResponse(
+                {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "Invalid numeric field"}},
+                status_code=400,
+            )
+
+        prices = arguments.get("price_history")
+        volumes = arguments.get("volume_history")
+        prices_f = [float(p) for p in prices] if isinstance(prices, list) else None
+        volumes_f = [float(v) for v in volumes] if isinstance(volumes, list) else None
+
+        # Step 1: Run existing technical scan for composite score
+        score, breakdown = TechnicalScanners.composite_signal(
+            rsi_14=rsi_14,
+            imbalance=imbalance,
+            prices=prices_f,
+            volumes=volumes_f,
+            current_price=current_price,
+        )
+        verdict = "STRONG_BUY" if score >= 0.8 else "BUY" if score >= MIN_SIGNAL_SCORE else "HOLD"
+
+        # Step 2: LLM analysis layer (non-blocking via asyncio executor)
+        try:
+            from runtime.llm_analyst import LLMTradingAnalyst
+            import asyncio
+            analyst = LLMTradingAnalyst()
+            loop = asyncio.get_event_loop()
+            decision = await loop.run_in_executor(
+                None,
+                analyst.analyze,
+                symbol, score, breakdown, current_price, rsi_14, verdict,
+            )
+
+            # Serialize debate rounds
+            debate_serialized = [
+                {
+                    "round": dr.round_number,
+                    "bull": dr.bull_argument,
+                    "bear": dr.bear_argument,
+                }
+                for dr in decision.debate_rounds
+            ]
+
+            return JSONResponse({
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "result": {
+                    "symbol": symbol,
+                    # Five-tier rating (TradingAgents scale)
+                    "rating": decision.rating.value,
+                    "executive_summary": decision.executive_summary,
+                    # LLM debate output
+                    "conviction": round(decision.conviction, 4),
+                    "conviction_direction": decision.conviction_direction,
+                    "bull_thesis": decision.bull_thesis,
+                    "bear_thesis": decision.bear_thesis,
+                    "debate_rounds": debate_serialized,
+                    # Sentiment
+                    "sentiment": {
+                        "band": decision.sentiment.overall_band,
+                        "score": decision.sentiment.overall_score,
+                        "confidence": decision.sentiment.confidence,
+                        "narrative": decision.sentiment.narrative,
+                        "news_count": decision.sentiment.news_count,
+                    },
+                    # Fundamentals snapshot
+                    "fundamentals": decision.fundamentals,
+                    # Underlying technical scan (unchanged)
+                    "technical": {
+                        "composite_score": round(score, 4),
+                        "verdict": verdict,
+                        "scanner_breakdown": {k: round(v, 4) for k, v in breakdown.items()},
+                        "rsi": rsi_14,
+                        "current_price": current_price,
+                    },
+                },
+            })
+
+        except ImportError:
+            return JSONResponse(
+                {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32603, "message": "anthropic package not installed"}},
+                status_code=503,
+            )
+        except Exception as exc:
+            logger.error("llm_analyze failed for %s: %s", symbol, exc)
+            return JSONResponse(
+                {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32603, "message": f"LLM analysis error: {exc}"}},
+                status_code=500,
+            )
 
 
 def serve(host: str = "0.0.0.0", port: int = MCP_ENGINE_PORT) -> None:
