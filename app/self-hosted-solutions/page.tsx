@@ -398,7 +398,7 @@ export default function SelfHostedSolutionsPage() {
           <div className="mx-auto max-w-2xl text-center">
             <span className="eyebrow">Get started</span>
             <h2 className="section-title mt-5">Ready to own your stack?</h2>
-            <p className="section-copy mx-auto">Tell us which tools you want to replace and what infrastructure you have (or need). We&apos;ll scope the engagement and deliver a fixed-cost proposal.</p>
+            <p className="section-copy mx-auto">Tell us which tools you want to replace and what infrastructure you have (or need). We'll scope the engagement and deliver a fixed-cost proposal.</p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link href="/rfq" className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-navy">
                 Request a Quote
