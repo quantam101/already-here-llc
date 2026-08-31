@@ -1,9 +1,17 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
+import socket
+import urllib.error
+import urllib.request
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional
+
+
+class LocalModelError(RuntimeError):
+    """Raised when a local model inference call fails or returns unusable output."""
 
 from .approval_gate import ApprovalGate, ApprovalRequired
 from .audit_log import AuditLog
@@ -153,7 +161,20 @@ class SovereignAutomationCore:
         if route.decision.tier == "DETERMINISTIC_LOCAL":
             output = self._deterministic_execute(clean_system, clean_context, ctx.objective)
         elif route.decision.tier == "LOCAL_MODEL":
-            output = self._local_model_adapter_stub(clean_system, clean_context, ctx.objective)
+            try:
+                output = self._local_model_execute(
+                    clean_system, clean_context, ctx.objective, route.decision.endpoint
+                )
+            except LocalModelError as exc:
+                self.telemetry.error(exec_span, "local_model_failed", {"error": str(exc)})
+                self.audit.blocked(ctx.actor, "local_model_failed", {"error": str(exc)}, ctx.correlation_id)
+                return ExecutionResult(
+                    status="blocked",
+                    route_tier="LOCAL_MODEL",
+                    output=str(exc),
+                    cached=False,
+                    details={"reason": "local_model_failed", "error": str(exc)},
+                )
         else:
             output = "Execution queued. No unsafe route executed."
         self.telemetry.info(exec_span, "execution_complete", {"tier": route.decision.tier, "output_len": len(output)})
@@ -186,12 +207,58 @@ class SovereignAutomationCore:
             "Status: draft_created_no_external_execution"
         )
 
-    def _local_model_adapter_stub(self, clean_system: str, clean_context: str, objective: str) -> str:
-        return (
-            "LOCAL_MODEL_ROUTE_SELECTED\n"
-            f"Objective: {objective}\n"
-            "Status: local_model_adapter_required"
+    @staticmethod
+    def _extract_local_model_content(data: dict) -> str:
+        if isinstance(data.get("choices"), list) and data["choices"]:
+            return data["choices"][0].get("message", {}).get("content", "")
+        if isinstance(data.get("message"), dict):
+            return data["message"].get("content", "")
+        return ""
+
+    def _local_model_execute(
+        self,
+        clean_system: str,
+        clean_context: str,
+        objective: str,
+        endpoint: str | None,
+    ) -> str:
+        if not endpoint:
+            raise LocalModelError("LOCAL_MODEL route selected with no endpoint")
+
+        model = os.getenv("GMAOS_LOCAL_MODEL", "llama3.2")
+        timeout = float(os.getenv("GMAOS_LOCAL_MODEL_TIMEOUT", "30"))
+
+        messages = [
+            {"role": "system", "content": clean_system},
+            {"role": "user", "content": f"{clean_context}\n\nObjective: {objective}"},
+        ]
+        payload = {
+            "model": model,
+            "messages": messages,
+            "stream": False,
+        }
+
+        req = urllib.request.Request(
+            endpoint,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
         )
+
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+        except (urllib.error.HTTPError, urllib.error.URLError) as exc:
+            raise LocalModelError(f"local model request failed: {exc}") from exc
+        except json.JSONDecodeError as exc:
+            raise LocalModelError(f"local model returned invalid json: {exc}") from exc
+        except socket.timeout as exc:
+            raise LocalModelError(f"local model request timed out: {exc}") from exc
+
+        content = self._extract_local_model_content(data)
+        if not content:
+            raise LocalModelError("local model returned empty content")
+        return content
 
 
 if __name__ == "__main__":
