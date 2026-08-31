@@ -28,10 +28,10 @@ type EndpointCheck = {
   error: string | null;
 };
 
-// v5 backend — FastAPI on backend.alreadyherellc.com (OCI 129.146.167.73)
+// v5 backend — FastAPI on the Render runtime.
 // Override with PROFITENGINE_ORACLE_BASE_URL env var if needed.
 const runtimeBaseUrl = (
-  process.env.PROFITENGINE_ORACLE_BASE_URL || 'https://backend.alreadyherellc.com'
+  process.env.PROFITENGINE_ORACLE_BASE_URL || 'https://profitengine-runtime.onrender.com'
 ).replace(/\/$/, '');
 
 const endpointTargets = [
@@ -90,7 +90,7 @@ async function getProfitEngineStatus() {
       ? 'ProfitEngine v5 runtime is reachable from the Vercel status surface.'
       : onlineCount > 0
         ? 'ProfitEngine v5 is partially reachable. Do not trust automation, posting, or revenue data until all checks pass.'
-        : 'ProfitEngine v5 runtime is not reachable from the Vercel status surface. Check backend.alreadyherellc.com and the OCI server (129.146.167.73).';
+        : 'ProfitEngine v5 runtime is not reachable from the Vercel status surface. Check PROFITENGINE_ORACLE_BASE_URL and the Render runtime.';
 
   return {
     checkedAt: new Date().toISOString(),
@@ -177,7 +177,7 @@ export default async function ProfitEngineStatusPage() {
       <section className="mt-8 grid gap-4 md:grid-cols-3">
         <div className="rounded-3xl border border-borderBrand bg-white p-5 text-sm leading-7 text-slate-700">
           Status page availability is separate from runtime availability. Vercel can be healthy
-          while the OCI host runtime is offline.
+          while the Render runtime is offline.
         </div>
         <div className="rounded-3xl border border-borderBrand bg-white p-5 text-sm leading-7 text-slate-700">
           Revenue is not inferred. Real earnings require live Stripe, PayPal, affiliate, or
