@@ -15,6 +15,7 @@ data/
 backups/
 .env
 hermes/receipts/
+nginx/certs/*.pem
 
 # Photo AI Haul Scanner
 models/*.onnx
