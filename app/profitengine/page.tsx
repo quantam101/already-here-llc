@@ -28,10 +28,10 @@ type EndpointCheck = {
   error: string | null;
 };
 
-// v5 backend — FastAPI on backend.alreadyherellc.com (OCI 129.146.167.73)
+// v5 backend — FastAPI on api.alreadyherellc.com (Render + Vercel; OCI is decommissioned)
 // Override with PROFITENGINE_ORACLE_BASE_URL env var if needed.
 const runtimeBaseUrl = (
-  process.env.PROFITENGINE_ORACLE_BASE_URL || 'https://backend.alreadyherellc.com'
+  process.env.PROFITENGINE_ORACLE_BASE_URL || 'https://api.alreadyherellc.com'
 ).replace(/\/$/, '');
 
 const endpointTargets = [
@@ -90,7 +90,7 @@ async function getProfitEngineStatus() {
       ? 'ProfitEngine v5 runtime is reachable from the Vercel status surface.'
       : onlineCount > 0
         ? 'ProfitEngine v5 is partially reachable. Do not trust automation, posting, or revenue data until all checks pass.'
-        : 'ProfitEngine v5 runtime is not reachable from the Vercel status surface. Check backend.alreadyherellc.com and the OCI server (129.146.167.73).';
+        : 'ProfitEngine v5 runtime is not reachable from the Vercel status surface. Check api.alreadyherellc.com and the Render runtime.';
 
   return {
     checkedAt: new Date().toISOString(),
