@@ -12,11 +12,22 @@ export function canonicalId(prefix: string, ...components: (string | number | un
 }
 
 export function canonicalSlug(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, 64);
+  let out = '';
+  let lastUnderscore = false;
+  for (const ch of value.toLowerCase()) {
+    if ((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9')) {
+      out += ch;
+      lastUnderscore = false;
+    } else if (!lastUnderscore) {
+      out += '_';
+      lastUnderscore = true;
+    }
+  }
+  let start = 0;
+  while (start < out.length && out[start] === '_') start++;
+  let end = out.length;
+  while (end > start && out[end - 1] === '_') end--;
+  return out.slice(start, end).slice(0, 64);
 }
 
 export function normalizeEmail(value: unknown): string {
