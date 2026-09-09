@@ -5,6 +5,7 @@ import { Footer } from '@/components/Footer';
 import { HomeAiAgentAwareness } from '@/components/HomeAiAgentAwareness';
 import { TrafficTracker } from '@/components/TrafficTracker';
 import { FloatingRevenueCtas } from '@/components/FloatingRevenueCtas';
+import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { siteConfig } from '@/lib/site';
 
 export const viewport: Viewport = {
@@ -131,6 +132,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         )}
       </head>
       <body>
+        <GoogleAnalytics />
         <script
           type="application/ld+json"
           suppressHydrationWarning
