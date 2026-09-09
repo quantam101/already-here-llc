@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Jekyll content canonical URLs use trailing slashes. Prevent Next.js from
+  // normalizing those proxied paths with a 308 before Vercel rewrites them.
+  skipTrailingSlashRedirect: true,
   async redirects() {
     return [
       {
