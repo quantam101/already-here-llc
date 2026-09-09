@@ -4,13 +4,16 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
+  // Keep the default policy restrictive while explicitly allowing the two
+  // analytics providers used by the production site. GA4 remains inert unless
+  // NEXT_PUBLIC_GA4_MEASUREMENT_ID contains an authorized G-... stream ID.
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cloud.umami.is https://www.googletagmanager.com",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    "img-src 'self' data: blob: https://www.google-analytics.com https://*.google-analytics.com",
     "font-src 'self'",
-    "connect-src 'self'",
+    "connect-src 'self' https://cloud.umami.is https://www.google-analytics.com https://*.google-analytics.com https://region1.google-analytics.com",
     "media-src 'self'",
     "object-src 'none'",
     "frame-ancestors 'none'",
