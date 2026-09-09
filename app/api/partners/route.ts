@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCanonicalStore } from '@/lib/canonical-store';
-import { buildPartnerWrites, isValidReferralCode, normalizePartnerType, type PartnerRecord } from '@/lib/referral';
+import { buildPartnerWrites, generateUniqueReferralCode, getReferralCodeByCode, isValidReferralCode, normalizePartnerType, type PartnerRecord } from '@/lib/referral';
 
 export const runtime = 'nodejs';
 
@@ -71,12 +71,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: validated.error }, { status: 400 });
   }
 
-  if (validated.input!.code && !isValidReferralCode(validated.input!.code)) {
-    return NextResponse.json({ ok: false, error: 'Referral code must match AH-XXXXXX format.' }, { status: 400 });
+  const store = getCanonicalStore();
+
+  if (validated.input!.code) {
+    if (!isValidReferralCode(validated.input!.code)) {
+      return NextResponse.json({ ok: false, error: 'Referral code must match AH-XXXXXX format.' }, { status: 400 });
+    }
+    const taken = await getReferralCodeByCode(store, validated.input!.code);
+    if (taken) {
+      return NextResponse.json({ ok: false, error: 'Referral code is already in use.' }, { status: 409 });
+    }
+  } else {
+    validated.input!.code = await generateUniqueReferralCode(store);
   }
 
   const writes = buildPartnerWrites(validated.input!);
-  const writeResult = await getCanonicalStore().executeWrites(writes);
+  const writeResult = await store.executeWrites(writes);
   if (!writeResult.ok) {
     return NextResponse.json({ ok: false, error: 'Failed to store partner record.', failed: writeResult.failed }, { status: 500 });
   }
@@ -95,11 +105,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: 'Rate limit exceeded. Try again later.' }, { status: 429 });
   }
 
-  const url = new URL(request.url);
-  const status = asString(url.searchParams.get('status') ?? '', 20) || 'approved';
   const records = await getCanonicalStore().queryTable('partners', 1000);
   const partners = records
-    .filter((r) => !status || r.status === status)
+    .filter((r) => r.status === 'approved')
     .map((r) => {
       const p = r as unknown as PartnerRecord;
       return {

@@ -28,9 +28,13 @@ function headers(apiKey: string): Record<string, string> {
 export async function ociHealthCheck(): Promise<Record<string, unknown> | undefined> {
   const config = getConfig();
   if (!config) return undefined;
-  const res = await fetch(`${config.baseUrl}/health`, { headers: headers(config.apiKey) });
-  if (!res.ok) return undefined;
-  return (await res.json()) as Record<string, unknown>;
+  try {
+    const res = await fetch(`${config.baseUrl}/health`, { headers: headers(config.apiKey) });
+    if (!res.ok) return { ok: false };
+    return (await res.json()) as Record<string, unknown>;
+  } catch {
+    return { ok: false };
+  }
 }
 
 export async function ociWriteMany(writes: DatabaseReadyWrite[]): Promise<OciWriteResult> {
