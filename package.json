@@ -37,6 +37,7 @@
     "revenue:export:json": "node scripts/revenue-pipeline-export.mjs --input data/revenue-pipeline.json --out exports --format json",
     "db:migrate": "node --experimental-sqlite --experimental-strip-types --import ./tests/register-next-alias.mjs scripts/migrate-owned-databases.mjs",
     "db:durability": "node scripts/canonical-durability-check.mjs",
+    "backfill:seven-sends": "node --experimental-strip-types --import ./tests/register-next-alias.mjs data/seven-send-backfill.mjs",
     "qa:content": "node scripts/a-plus-content-guard.mjs",
     "qa:live": "node scripts/live-smoke-test.mjs",
     "qa:intake": "node scripts/intake-contract-smoke.mjs",
