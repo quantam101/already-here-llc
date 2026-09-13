@@ -29,6 +29,24 @@ function normalizeEmail(value) {
   return String(value ?? '').trim().toLowerCase();
 }
 
+function sendDay(value) {
+  const ms = Date.parse(String(value ?? ''));
+  return Number.isFinite(ms) ? new Date(ms).toISOString().slice(0, 10) : '';
+}
+
+function seedSourceId(send) {
+  return `partner_pipeline:row:${send.sheetRow}`;
+}
+
+// A recipient can legitimately have several outreach rows; only the row for *this* send may
+// receive its Gmail attribution.
+function isSameSend(row, send) {
+  if (String(row.provider_message_id ?? '').trim() === send.providerMessageId) return true;
+  if (String(row.source_id ?? '').trim() === seedSourceId(send)) return true;
+  const day = sendDay(send.sentAt);
+  return [row.sent_at, row.created_at].some((stamp) => stamp && sendDay(stamp) === day);
+}
+
 function configureStoreAliases() {
   const remoteUrl = process.env.CANONICAL_REMOTE_URL?.trim();
   const remoteApiKey = process.env.CANONICAL_REMOTE_API_KEY?.trim();
@@ -85,11 +103,11 @@ function sheetRow(send) {
   return sheet;
 }
 
-function buildSeedWrites(send, buildOutreachRecords, verifiedAt) {
+async function buildSeedWrites(send, buildOutreachRecords, verifiedAt, store) {
   const sheet = sheetRow(send);
   const writes = buildOutreachRecords({
     source: SOURCE,
-    sourceId: `partner_pipeline:row:${send.sheetRow}`,
+    sourceId: seedSourceId(send),
     channel: 'email',
     fullName: send.company,
     company: send.company,
@@ -105,9 +123,10 @@ function buildSeedWrites(send, buildOutreachRecords, verifiedAt) {
     submittedAt: send.sentAt,
   });
 
-  return writes.map((write) => {
+  const kept = [];
+  for (const write of writes) {
     if (write.table === 'outreach') {
-      return {
+      kept.push({
         ...write,
         record: {
           ...write.record,
@@ -116,13 +135,16 @@ function buildSeedWrites(send, buildOutreachRecords, verifiedAt) {
           sheet: send.sheet,
           ...attributionRecord(send, verifiedAt),
         },
-      };
+      });
+      continue;
     }
-    if (write.table === 'organizations' || write.table === 'contacts') {
-      return { ...write, action: 'upsert' };
+    // Existing organizations/contacts keep their established data; seeding only fills gaps.
+    if ((write.table === 'organizations' || write.table === 'contacts') && (await store.getRecord(write.table, write.id))) {
+      continue;
     }
-    return write;
-  });
+    kept.push(write);
+  }
+  return kept;
 }
 
 function printRow(result) {
@@ -144,7 +166,18 @@ try {
 
   for (const send of SENDS) {
     const recipient = normalizeEmail(send.recipient);
-    const matches = outreachRows.filter((row) => normalizeEmail(row.email) === recipient);
+    const recipientRows = outreachRows.filter((row) => normalizeEmail(row.email) === recipient);
+    const matches = recipientRows.filter((row) => isSameSend(row, send));
+
+    if (matches.length === 0 && recipientRows.length > 0) {
+      results.push({
+        ...send,
+        recipient,
+        status: 'SKIP',
+        reason: `${recipientRows.length} outreach row(s) for recipient but none from the ${sendDay(send.sentAt)} send; resolve manually`,
+      });
+      continue;
+    }
 
     if (matches.length === 0) {
       if (SEED) {
@@ -157,7 +190,7 @@ try {
     }
 
     if (matches.length > 1) {
-      results.push({ ...send, recipient, status: 'SKIP', reason: `ambiguous recipient: ${matches.length} outreach rows` });
+      results.push({ ...send, recipient, status: 'SKIP', reason: `ambiguous recipient: ${matches.length} outreach rows for the ${sendDay(send.sentAt)} send` });
       continue;
     }
 
@@ -213,7 +246,7 @@ try {
     }));
 
     for (const result of seeded) {
-      const seedWrites = buildSeedWrites(result, buildOutreachRecords, verifiedAt);
+      const seedWrites = await buildSeedWrites(result, buildOutreachRecords, verifiedAt, store);
       result.outreachId = seedWrites.find((write) => write.table === 'outreach').id;
       writes.push(...seedWrites);
     }

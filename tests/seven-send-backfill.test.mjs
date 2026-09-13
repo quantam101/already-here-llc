@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { normalizePhone } from '../lib/canonical-ids.ts';
+import { canonicalId, canonicalSlug, normalizePhone } from '../lib/canonical-ids.ts';
 import { getCanonicalStore, resetCanonicalStore } from '../lib/canonical-store.ts';
 
 const fixture = JSON.parse(readFileSync(new URL('../data/seven-send-attribution.json', import.meta.url), 'utf8'));
@@ -88,12 +88,64 @@ try {
   assert.match(seedDry.stdout, /No writes performed/);
   await withStore(async (store) => assert.equal((await store.queryAll()).length, 0, 'seed dry-run performs no writes'));
 
+  // A recipient with an outreach row from a different send is never matched nor seeded over.
+  const otherSend = fixture.sends[2];
+  await withStore(async (store) => {
+    await store.executeWrites([
+      {
+        table: 'outreach',
+        id: 'outreach_other_campaign',
+        action: 'insert',
+        record: { id: 'outreach_other_campaign', email: otherSend.recipient, status: 'sent', sent_at: '2026-09-20T15:00:00.000Z', created_at: '2026-09-20T15:00:00.000Z' },
+      },
+    ]);
+  });
+  const otherCampaign = runBackfill(['--seed', '--commit']);
+  assert.equal(otherCampaign.code, 2, 'a recipient-only match from another send fails closed');
+  assert.match(otherCampaign.stdout, /SKIP .*1 outreach row\(s\) for recipient but none from the 2026-09-12 send/);
+  assert.match(otherCampaign.stdout, /summary matched=0 seeded=6 skipped=1/);
+  await withStore(async (store) => {
+    const rows = await store.queryTable('outreach');
+    assert.equal(rows.length, 1, 'skip aborts every write');
+    assert.equal(rows[0].provider_message_id, undefined, 'unrelated row receives no attribution');
+    await store.executeWrites([
+      { table: 'outreach', id: 'outreach_other_campaign', action: 'upsert', record: { sent_at: otherSend.sentAt } },
+    ]);
+  });
+  const otherResolved = runBackfill(['--seed']);
+  assert.match(otherResolved.stdout, /summary matched=1 seeded=6 skipped=0/, 'same-day row is the send');
+  await withStore(async (store) => {
+    await store.executeWrites([
+      { table: 'outreach', id: 'outreach_other_campaign', action: 'insert', record: { id: 'outreach_other_campaign', email: 'nobody@example.invalid', created_at: '2026-09-20T15:00:00.000Z' } },
+    ]);
+  });
+
+  // Pre-existing organizations/contacts keep their established data when the outreach is seeded.
+  const existingSend = fixture.sends[3];
+  const existingOrgId = canonicalId('org', canonicalSlug(existingSend.company));
+  await withStore(async (store) => {
+    await store.executeWrites([
+      {
+        table: 'organizations',
+        id: existingOrgId,
+        action: 'insert',
+        record: { id: existingOrgId, name: existingSend.company, organization_type: 'customer', aliases: ['Legacy Alias'], source: 'crm', created_at: '2026-01-01T00:00:00.000Z' },
+      },
+    ]);
+  });
+
   const seedCommit = runBackfill(['--seed', '--commit']);
   assert.equal(seedCommit.code, 0, seedCommit.stdout + seedCommit.stderr);
   assert.match(seedCommit.stdout, /COMMIT PASS: updated 0 and seeded 7 outreach rows/);
 
   await withStore(async (store) => {
-    const outreach = await store.queryTable('outreach');
+    const existingOrg = await store.getRecord('organizations', existingOrgId);
+    assert.equal(existingOrg.organization_type, 'customer', 'existing org classification untouched');
+    assert.deepEqual(existingOrg.aliases, ['Legacy Alias']);
+    assert.equal(existingOrg.source, 'crm');
+    assert.equal(existingOrg.created_at, '2026-01-01T00:00:00.000Z');
+
+    const outreach = (await store.queryTable('outreach')).filter((row) => row.id !== 'outreach_other_campaign');
     assert.equal(outreach.length, 7);
     assert.equal((await store.queryTable('organizations')).length, 7);
     assert.equal((await store.queryTable('contacts')).length, 7);
@@ -139,7 +191,7 @@ try {
   const seedAgain = runBackfill(['--seed', '--commit']);
   assert.equal(seedAgain.code, 0, 'seed is idempotent once rows exist');
   assert.match(seedAgain.stdout, /summary matched=7 seeded=0 skipped=0/);
-  await withStore(async (store) => assert.equal((await store.queryTable('outreach')).length, 7, 'no duplicate rows'));
+  await withStore(async (store) => assert.equal((await store.queryTable('outreach')).length, 8, 'no duplicate rows'));
 
   const target = fixture.sends[0];
   await withStore(async (store) => {
@@ -160,12 +212,12 @@ try {
   const duplicateEmail = fixture.sends[1];
   await withStore(async (store) => {
     await store.executeWrites([
-      { table: 'outreach', id: 'outreach_duplicate', action: 'insert', record: { id: 'outreach_duplicate', email: duplicateEmail.recipient.toUpperCase() } },
+      { table: 'outreach', id: 'outreach_duplicate', action: 'insert', record: { id: 'outreach_duplicate', email: duplicateEmail.recipient.toUpperCase(), sent_at: duplicateEmail.sentAt } },
     ]);
   });
   const ambiguous = runBackfill(['--seed']);
   assert.equal(ambiguous.code, 2);
-  assert.match(ambiguous.stdout, /ambiguous recipient: 2 outreach rows/);
+  assert.match(ambiguous.stdout, /ambiguous recipient: 2 outreach rows for the 2026-09-12 send/);
 } finally {
   rmSync(workDir, { recursive: true, force: true });
 }

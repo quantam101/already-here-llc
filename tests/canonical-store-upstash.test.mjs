@@ -5,25 +5,27 @@ import {
   resetCanonicalStore,
 } from '../lib/canonical-store.ts';
 
+// Mimics @upstash/redis: hash field values are JSON text on the wire and auto-deserialized on read.
 function createFakeRedis() {
-  const strings = new Map();
+  const hashes = new Map();
   const sortedSets = new Map();
   const calls = [];
+  const decode = (key) => {
+    const hash = hashes.get(key);
+    if (!hash || hash.size === 0) return null;
+    return Object.fromEntries([...hash.entries()].map(([field, value]) => [field, JSON.parse(value)]));
+  };
   return {
-    strings,
+    hashes,
     sortedSets,
     calls,
-    async get(key) {
-      calls.push(['get', key]);
-      const value = strings.get(key);
-      return value === undefined ? null : JSON.parse(value);
+    async hgetall(key) {
+      calls.push(['hgetall', key]);
+      return decode(key);
     },
-    async mget(keys) {
-      calls.push(['mget', keys.length]);
-      return keys.map((key) => {
-        const value = strings.get(key);
-        return value === undefined ? null : JSON.parse(value);
-      });
+    async hgetallMany(keys) {
+      calls.push(['hgetallMany', keys.length]);
+      return keys.map(decode);
     },
     async zrangeRev(key, start, stop) {
       calls.push(['zrangeRev', key, start, stop]);
@@ -32,11 +34,22 @@ function createFakeRedis() {
       return entries.slice(start, stop + 1).map(([member]) => member);
     },
     async write(entry) {
-      calls.push(['write', entry.key]);
-      strings.set(entry.key, entry.value);
+      calls.push(['write', entry.key, entry.replace ? 'replace' : 'merge']);
+      if (entry.replace) hashes.delete(entry.key);
+      if (!hashes.has(entry.key)) hashes.set(entry.key, new Map());
+      const hash = hashes.get(entry.key);
+      for (const [field, value] of Object.entries(entry.fieldsIfAbsent)) {
+        if (value === undefined) throw new Error(`undefined field ${field}`);
+        if (!hash.has(field)) hash.set(field, JSON.stringify(value));
+      }
+      for (const [field, value] of Object.entries(entry.fields)) {
+        if (value === undefined) throw new Error(`undefined field ${field}`);
+        hash.set(field, JSON.stringify(value));
+      }
       for (const { set, member } of entry.members) {
         if (!sortedSets.has(set)) sortedSets.set(set, new Map());
-        sortedSets.get(set).set(member, entry.score);
+        const members = sortedSets.get(set);
+        if (entry.replace || !members.has(member)) members.set(member, entry.score);
       }
     },
   };
@@ -67,8 +80,8 @@ const insert = await store.executeWrites([
 ]);
 assert.equal(insert.ok, true);
 assert.deepEqual(insert.insertedIds, ['outreach_a', 'outreach_b', 'org_a']);
-assert.ok(redis.strings.has('canon_test:record:outreach:outreach_a'), 'records live under the configured prefix');
-assert.ok(![...redis.strings.keys()].some((key) => key.startsWith('ginc:')), 'must not touch GINC keys');
+assert.ok(redis.hashes.has('canon_test:record:outreach:outreach_a'), 'records live under the configured prefix');
+assert.ok(![...redis.hashes.keys()].some((key) => key.startsWith('ginc:')), 'must not touch GINC keys');
 
 const stored = await store.getRecord('outreach', 'outreach_a');
 assert.equal(stored?.email, 'a@example.invalid');
@@ -99,6 +112,30 @@ assert.equal(merged?.created_at, '2026-09-12T13:02:00.000Z', 'upsert keeps origi
 assert.equal(merged?.source, 'test');
 assert.ok(String(merged?.updated_at) > String(merged?.created_at));
 
+// Upserts are field-level merges inside Redis, so two partial upserts based on the same stale
+// snapshot cannot clobber each other (no client-side read-modify-write).
+redis.calls.length = 0;
+await store.executeWrites([{ table: 'outreach', id: 'outreach_b', action: 'upsert', record: { status: 'bounced' } }]);
+assert.deepEqual(redis.calls, [['write', 'canon_test:record:outreach:outreach_b', 'merge']], 'upsert is a single merge write with no preceding read');
+await Promise.all([
+  store.executeWrites([{ table: 'outreach', id: 'outreach_a', action: 'upsert', record: { status: 'replied' } }]),
+  store.executeWrites([{ table: 'outreach', id: 'outreach_a', action: 'upsert', record: { provider_thread_id: 'thread_a', sheet: { company: 'A', n: 1 } } }]),
+]);
+const concurrent = await store.getRecord('outreach', 'outreach_a');
+assert.equal(concurrent?.status, 'replied');
+assert.equal(concurrent?.provider_thread_id, 'thread_a');
+assert.equal(concurrent?.provider_message_id, '1a095b6af83e7fdb', 'concurrent partial upserts keep every field');
+assert.deepEqual(concurrent?.sheet, { company: 'A', n: 1 }, 'nested values round-trip');
+assert.equal(concurrent?.created_at, '2026-09-12T13:02:00.000Z');
+
+const replaced = await store.executeWrites([
+  { table: 'outreach', id: 'outreach_a', action: 'insert', record: { id: 'outreach_a', email: 'a@example.invalid', created_at: '2026-09-12T13:02:00.000Z' } },
+]);
+assert.equal(replaced.ok, true);
+const afterReplace = await store.getRecord('outreach', 'outreach_a');
+assert.equal(afterReplace?.provider_message_id, undefined, 'insert replaces the whole record');
+assert.equal(afterReplace?.source, 'outreach', 'insert without source defaults to the table');
+
 const outreachRows = await store.queryTable('outreach');
 assert.deepEqual(outreachRows.map((row) => row.id), ['outreach_b', 'outreach_a'], 'queryTable orders by created_at desc');
 assert.equal((await store.queryTable('outreach', 1)).length, 1);
@@ -124,6 +161,15 @@ const failed = await failing.executeWrites([
 ]);
 assert.equal(failed.ok, false);
 assert.equal(failed.failed[0].error, 'boom');
+await assert.rejects(
+  () => failing.recordAiRun({ agentId: 'agent', targetTable: 'outreach', targetId: 'x', action: 'score' }),
+  /Upstash canonical write failed for ai_runs:.*boom/,
+  'audit writes surface failures instead of returning an id'
+);
+await assert.rejects(
+  () => failing.recordReviewAction({ targetTable: 'outreach', targetId: 'x', action: 'pass' }),
+  /Upstash canonical write failed for reviews:.*boom/
+);
 
 // Store selection: upstash is opt-in and fails closed (never memory) when credentials are absent.
 const previousEnv = {
