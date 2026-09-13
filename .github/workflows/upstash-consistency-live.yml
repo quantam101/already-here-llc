@@ -1,0 +1,46 @@
+name: Live Upstash Consistency
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'scripts/upstash-consistency-live.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/upstash-consistency-live.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  consistency-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+      UPSTASH_CONSISTENCY_ITERATIONS: '50'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --silent
+
+      - name: Verify credential presence
+        shell: bash
+        run: |
+          test -n "$UPSTASH_REDIS_REST_URL" || { echo "::error::UPSTASH_REDIS_REST_URL is not configured for GitHub Actions"; exit 2; }
+          test -n "$UPSTASH_REDIS_REST_TOKEN" || { echo "::error::UPSTASH_REDIS_REST_TOKEN is not configured for GitHub Actions"; exit 2; }
+
+      - name: Run live read-your-writes test
+        run: npm run test:consistency-live

@@ -33,6 +33,7 @@
     "test:enterprise": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/enterprise-orchestrator.test.mjs",
     "test:referral-partner": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/referral-partner.test.mjs",
     "test:agent-fleet": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/agent-fleet.test.mjs",
+    "test:consistency-live": "node scripts/upstash-consistency-live.mjs",
     "revenue:export": "node scripts/revenue-pipeline-export.mjs --input data/revenue-pipeline.json --out exports --format csv",
     "revenue:export:json": "node scripts/revenue-pipeline-export.mjs --input data/revenue-pipeline.json --out exports --format json",
     "db:migrate": "node --experimental-sqlite --experimental-strip-types --import ./tests/register-next-alias.mjs scripts/migrate-owned-databases.mjs",
