@@ -102,18 +102,30 @@ try {
   });
   const otherCampaign = runBackfill(['--seed', '--commit']);
   assert.equal(otherCampaign.code, 2, 'a recipient-only match from another send fails closed');
-  assert.match(otherCampaign.stdout, /SKIP .*1 outreach row\(s\) for recipient but none from the 2026-09-12 send/);
+  assert.match(otherCampaign.stdout, /SKIP .*1 outreach row\(s\) for recipient but none with the exact .* send identity/);
   assert.match(otherCampaign.stdout, /summary matched=0 seeded=6 skipped=1/);
   await withStore(async (store) => {
     const rows = await store.queryTable('outreach');
     assert.equal(rows.length, 1, 'skip aborts every write');
     assert.equal(rows[0].provider_message_id, undefined, 'unrelated row receives no attribution');
     await store.executeWrites([
+      { table: 'outreach', id: 'outreach_other_campaign', action: 'upsert', record: { sent_at: '2026-09-12T23:59:59.000Z' } },
+    ]);
+  });
+
+  const sameDayOther = runBackfill(['--seed', '--commit']);
+  assert.equal(sameDayOther.code, 2, 'same-day recipient-only outreach still fails closed');
+  assert.match(sameDayOther.stdout, /summary matched=0 seeded=6 skipped=1/);
+  await withStore(async (store) => {
+    const row = await store.getRecord('outreach', 'outreach_other_campaign');
+    assert.equal(row.provider_message_id, undefined, 'same-day unrelated row receives no attribution');
+    await store.executeWrites([
       { table: 'outreach', id: 'outreach_other_campaign', action: 'upsert', record: { sent_at: otherSend.sentAt } },
     ]);
   });
+
   const otherResolved = runBackfill(['--seed']);
-  assert.match(otherResolved.stdout, /summary matched=1 seeded=6 skipped=0/, 'same-day row is the send');
+  assert.match(otherResolved.stdout, /summary matched=1 seeded=6 skipped=0/, 'exact timestamp identifies the send');
   await withStore(async (store) => {
     await store.executeWrites([
       { table: 'outreach', id: 'outreach_other_campaign', action: 'insert', record: { id: 'outreach_other_campaign', email: 'nobody@example.invalid', created_at: '2026-09-20T15:00:00.000Z' } },
@@ -217,7 +229,7 @@ try {
   });
   const ambiguous = runBackfill(['--seed']);
   assert.equal(ambiguous.code, 2);
-  assert.match(ambiguous.stdout, /ambiguous recipient: 2 outreach rows for the 2026-09-12 send/);
+  assert.match(ambiguous.stdout, /ambiguous recipient: 2 outreach rows match the exact send identity/);
 } finally {
   rmSync(workDir, { recursive: true, force: true });
 }
