@@ -34,17 +34,23 @@ function sendDay(value) {
   return Number.isFinite(ms) ? new Date(ms).toISOString().slice(0, 10) : '';
 }
 
+function sameInstant(value, expected) {
+  const actualMs = Date.parse(String(value ?? ''));
+  const expectedMs = Date.parse(String(expected ?? ''));
+  return Number.isFinite(actualMs) && Number.isFinite(expectedMs) && actualMs === expectedMs;
+}
+
 function seedSourceId(send) {
   return `partner_pipeline:row:${send.sheetRow}`;
 }
 
-// A recipient can legitimately have several outreach rows; only the row for *this* send may
-// receive its Gmail attribution.
+// A recipient can legitimately have several outreach rows. Attribution is writable only when
+// the row carries an exact send identity: the Gmail message id, the fixture source id, or the
+// exact send timestamp. Date-only / same-day matches intentionally fail closed.
 function isSameSend(row, send) {
   if (String(row.provider_message_id ?? '').trim() === send.providerMessageId) return true;
   if (String(row.source_id ?? '').trim() === seedSourceId(send)) return true;
-  const day = sendDay(send.sentAt);
-  return [row.sent_at, row.created_at].some((stamp) => stamp && sendDay(stamp) === day);
+  return [row.sent_at, row.created_at].some((stamp) => sameInstant(stamp, send.sentAt));
 }
 
 function configureStoreAliases() {
@@ -174,7 +180,7 @@ try {
         ...send,
         recipient,
         status: 'SKIP',
-        reason: `${recipientRows.length} outreach row(s) for recipient but none from the ${sendDay(send.sentAt)} send; resolve manually`,
+        reason: `${recipientRows.length} outreach row(s) for recipient but none with the exact ${send.sentAt} send identity; resolve manually`,
       });
       continue;
     }
@@ -190,7 +196,7 @@ try {
     }
 
     if (matches.length > 1) {
-      results.push({ ...send, recipient, status: 'SKIP', reason: `ambiguous recipient: ${matches.length} outreach rows for the ${sendDay(send.sentAt)} send` });
+      results.push({ ...send, recipient, status: 'SKIP', reason: `ambiguous recipient: ${matches.length} outreach rows match the exact send identity` });
       continue;
     }
 
