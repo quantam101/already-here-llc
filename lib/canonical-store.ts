@@ -1,4 +1,6 @@
 import { canonicalId } from './canonical-ids';
+import { getRedis } from './redis';
+import type { Redis } from '@upstash/redis';
 
 export interface DatabaseReadyWrite {
   table: string;
@@ -60,6 +62,14 @@ function shouldUseSqlite(): boolean {
   if (process.env.CANONICAL_STORE_TYPE === 'memory') return false;
   if (process.env.CANONICAL_SQLITE_PATH) return true;
   return false;
+}
+
+function shouldUseUpstash(): boolean {
+  return process.env.CANONICAL_STORE_TYPE === 'upstash';
+}
+
+function upstashKeyPrefix(): string {
+  return process.env.CANONICAL_REDIS_PREFIX?.trim() || 'canonical';
 }
 
 function shouldUseRemote(): { url: string; apiKey: string } | undefined {
@@ -521,6 +531,234 @@ class RemoteCanonicalStore implements CanonicalStore {
   }
 }
 
+export interface CanonicalRedisWrite {
+  key: string;
+  replace: boolean;
+  fields: Record<string, unknown>;
+  fieldsIfAbsent: Record<string, unknown>;
+  score: number;
+  members: Array<{ set: string; member: string }>;
+}
+
+export interface CanonicalRedisClient {
+  hgetall(key: string): Promise<Record<string, unknown> | null>;
+  hgetallMany(keys: string[]): Promise<Array<Record<string, unknown> | null>>;
+  zrangeRev(key: string, start: number, stop: number): Promise<string[]>;
+  write(entry: CanonicalRedisWrite): Promise<void>;
+}
+
+function encodeRedisFields(fields: Record<string, unknown>): Record<string, string> {
+  const encoded: Record<string, string> = {};
+  for (const [field, value] of Object.entries(fields)) {
+    if (value === undefined) continue;
+    encoded[field] = JSON.stringify(value);
+  }
+  return encoded;
+}
+
+/**
+ * Adapter over @upstash/redis. Records are hashes so that concurrent partial upserts merge
+ * field-by-field inside Redis (HSET/HSETNX) instead of racing through a client-side
+ * read-modify-write. Relies on the SDK's default automatic JSON deserialization for reads.
+ */
+export function createUpstashCanonicalClient(redis: Redis): CanonicalRedisClient {
+  return {
+    hgetall: (key) => redis.hgetall<Record<string, unknown>>(key),
+    hgetallMany: async (keys) => {
+      if (keys.length === 0) return [];
+      const pipeline = redis.pipeline();
+      for (const key of keys) pipeline.hgetall<Record<string, unknown>>(key);
+      return pipeline.exec<Array<Record<string, unknown> | null>>();
+    },
+    zrangeRev: (key, start, stop) => redis.zrange<string[]>(key, start, stop, { rev: true }),
+    write: async (entry) => {
+      const pipeline = redis.multi();
+      if (entry.replace) pipeline.del(entry.key);
+      for (const [field, value] of Object.entries(encodeRedisFields(entry.fieldsIfAbsent))) {
+        pipeline.hsetnx(entry.key, field, value);
+      }
+      const fields = encodeRedisFields(entry.fields);
+      if (Object.keys(fields).length > 0) pipeline.hset(entry.key, fields);
+      for (const { set, member } of entry.members) {
+        if (entry.replace) pipeline.zadd(set, { score: entry.score, member });
+        else pipeline.zadd(set, { nx: true }, { score: entry.score, member });
+      }
+      await pipeline.exec();
+    },
+  };
+}
+
+function asRedisRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  return Object.keys(value).length > 0 ? (value as Record<string, unknown>) : undefined;
+}
+
+export class UpstashCanonicalStore implements CanonicalStore {
+  private client: CanonicalRedisClient;
+  private prefix: string;
+
+  constructor(client: CanonicalRedisClient, prefix = upstashKeyPrefix()) {
+    this.client = client;
+    this.prefix = prefix;
+  }
+
+  private recordKey(table: string, id: string): string {
+    return `${this.prefix}:record:${table}:${id}`;
+  }
+
+  private tableKey(table: string): string {
+    return `${this.prefix}:table:${table}`;
+  }
+
+  private allKey(): string {
+    return `${this.prefix}:all`;
+  }
+
+  async executeWrites(writes: DatabaseReadyWrite[]): Promise<WriteResult> {
+    const result: WriteResult = { ok: true, insertedIds: [], failed: [] };
+    for (const write of writes) {
+      try {
+        const now = isoNow();
+        const { created_at: incomingCreatedAt, source: incomingSource, ...incoming } = write.record;
+        const createdAt = incomingCreatedAt ?? now;
+        const fields: Record<string, unknown> = {
+          ...incoming,
+          id: write.id,
+          _table: write.table,
+          _canonical_id: write.id,
+          updated_at: now,
+        };
+        const fieldsIfAbsent: Record<string, unknown> = { created_at: createdAt };
+        if (incomingSource !== undefined && incomingSource !== null) fields.source = incomingSource;
+        else fieldsIfAbsent.source = write.table;
+        const createdMs = Date.parse(String(createdAt));
+        await this.client.write({
+          key: this.recordKey(write.table, write.id),
+          replace: write.action !== 'upsert',
+          fields,
+          fieldsIfAbsent,
+          score: Number.isFinite(createdMs) ? createdMs : Date.now(),
+          members: [
+            { set: this.tableKey(write.table), member: write.id },
+            { set: this.allKey(), member: `${write.table}:${write.id}` },
+          ],
+        });
+        result.insertedIds.push(write.id);
+      } catch (error) {
+        result.failed.push({
+          table: write.table,
+          id: write.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+    result.ok = result.failed.length === 0;
+    return result;
+  }
+
+  private async writeOrThrow(write: DatabaseReadyWrite): Promise<void> {
+    const result = await this.executeWrites([write]);
+    if (!result.ok) {
+      throw new Error(
+        `Upstash canonical write failed for ${write.table}:${write.id}: ${result.failed.map((item) => item.error).join('; ')}`,
+      );
+    }
+  }
+
+  async recordAiRun(input: AiRunInput): Promise<string> {
+    const now = isoNow();
+    const id = canonicalId('airun', input.agentId, input.targetTable, input.targetId, input.action, now);
+    await this.writeOrThrow(
+      {
+        table: 'ai_runs',
+        id,
+        action: 'insert',
+        record: {
+          id,
+          agent_id: input.agentId,
+          target_table: input.targetTable,
+          target_id: input.targetId,
+          action: input.action,
+          recommendation: input.recommendation ?? '',
+          confidence: input.confidence ?? 0,
+          approval_required: input.approvalRequired ? 1 : 0,
+          persisted_externally: input.persistedExternally ? 1 : 0,
+          result_json: input.resultJson ?? '{}',
+          evidence_json: input.evidenceJson ?? '{}',
+          outcome_json: input.outcomeJson ?? '{}',
+          feedback_json: input.feedbackJson ?? '{}',
+          source: input.source ?? 'ai_agent',
+          created_at: now,
+          updated_at: now,
+        },
+      },
+    );
+    return id;
+  }
+
+  async recordReviewAction(input: ReviewActionInput): Promise<string> {
+    const now = isoNow();
+    const id = canonicalId('review', input.targetTable, input.targetId, input.action, now);
+    await this.writeOrThrow(
+      {
+        table: 'reviews',
+        id,
+        action: 'insert',
+        record: {
+          id,
+          target_table: input.targetTable,
+          target_id: input.targetId,
+          action: input.action,
+          decision: input.decision ?? 'queued',
+          persisted_externally: input.persistedExternally ? 1 : 0,
+          approval_required: input.approvalRequired ? 1 : 0,
+          reviewer_contact_id: input.reviewerContactId ?? null,
+          source: input.source ?? 'review_action',
+          created_at: now,
+          updated_at: now,
+        },
+      },
+    );
+    return id;
+  }
+
+  private async readMany(keys: string[]): Promise<Record<string, unknown>[]> {
+    if (keys.length === 0) return [];
+    const values = await this.client.hgetallMany(keys);
+    const records: Record<string, unknown>[] = [];
+    for (const value of values) {
+      const record = asRedisRecord(value);
+      if (record) records.push(record);
+    }
+    return records;
+  }
+
+  async getRecord(table: string, id: string): Promise<Record<string, unknown> | undefined> {
+    return asRedisRecord(await this.client.hgetall(this.recordKey(table, id)));
+  }
+
+  async queryTable(table: string, limit = 1000): Promise<Record<string, unknown>[]> {
+    if (limit <= 0) return [];
+    const ids = await this.client.zrangeRev(this.tableKey(table), 0, limit - 1);
+    return this.readMany(ids.map((id) => this.recordKey(table, id)));
+  }
+
+  async queryAll(limit = 1000): Promise<Record<string, unknown>[]> {
+    if (limit <= 0) return [];
+    const members = await this.client.zrangeRev(this.allKey(), 0, limit - 1);
+    return this.readMany(
+      members.map((member) => {
+        const separator = member.indexOf(':');
+        return this.recordKey(member.slice(0, separator), member.slice(separator + 1));
+      })
+    );
+  }
+
+  close(): void {
+    // Upstash REST client holds no local resources.
+  }
+}
+
 let sharedStore: CanonicalStore | undefined;
 
 export function getCanonicalStore(): CanonicalStore {
@@ -528,6 +766,14 @@ export function getCanonicalStore(): CanonicalStore {
   const remoteConfig = shouldUseRemote();
   if (remoteConfig) {
     sharedStore = new RemoteCanonicalStore(remoteConfig.url, remoteConfig.apiKey);
+    return sharedStore;
+  }
+  if (shouldUseUpstash()) {
+    const redis = getRedis();
+    if (!redis) {
+      throw new Error('CANONICAL_STORE_TYPE=upstash requires UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.');
+    }
+    sharedStore = new UpstashCanonicalStore(createUpstashCanonicalClient(redis));
     return sharedStore;
   }
   if (shouldUseSqlite()) {
