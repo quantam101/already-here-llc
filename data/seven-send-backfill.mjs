@@ -1,58 +1,28 @@
 #!/usr/bin/env node
 
-const COMMIT = process.argv.includes('--commit');
-const EXPECTED_MATCHES = 7;
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
-const SENDS = [
-  {
-    company: 'Westech Recyclers',
-    recipient: 'info@westechrecyclers.com',
-    providerMessageId: '1a095b6af83e7fdb',
-    providerThreadId: '1a095b6af83e7fdb',
-    rfcMessageId: '<CAHMgaD4Yq2TTehJBu68ZXuprKKn3zAdGuG8nZrh9HMAU1dA7Cw@mail.gmail.com>',
-  },
-  {
-    company: 'Southwest Access & Video',
-    recipient: 'service@swaccess.com',
-    providerMessageId: '1a095b69eec6fb8d',
-    providerThreadId: '1a095b69eec6fb8d',
-    rfcMessageId: '<CAHMgaD7rVTYjKapc5db6bcFpc8OjJQhOp+y4qXipCdUDt5qcmw@mail.gmail.com>',
-  },
-  {
-    company: 'Phoenix Techforce',
-    recipient: 'support@phoenixtechforce.com',
-    providerMessageId: '1a095b686f858d66',
-    providerThreadId: '1a095b686f858d66',
-    rfcMessageId: '<CAHMgaD5EsJ5quB1JEY9zyF4HhRXLfygKFZTH0iFjdd6aPpaeGA@mail.gmail.com>',
-  },
-  {
-    company: 'Iron Mountain Data Centers',
-    recipient: 'datacenters@ironmountain.com',
-    providerMessageId: '1a095b66f78732bc',
-    providerThreadId: '1a095b66f78732bc',
-    rfcMessageId: '<CAHMgaD7HBVG27qvC0OqgbaCOK66ct+n_=TAJWtAhoFq=qT9qxQ@mail.gmail.com>',
-  },
-  {
-    company: 'PayCompass',
-    recipient: 'info@paycompass.com',
-    providerMessageId: '1a095b66283995a7',
-    providerThreadId: '1a095b66283995a7',
-    rfcMessageId: '<CAHMgaD7oBq685bq2ddz9WO60rxzVy3=BWm6FcyJM81JHWXE-TQ@mail.gmail.com>',
-  },
-  {
-    company: 'ENTECH Biomedical',
-    recipient: 'info@entechbiomedical.com',
-    providerMessageId: '1a095b6517f2dc8c',
-    providerThreadId: '1a095b6517f2dc8c',
-    rfcMessageId: '<CAHMgaD59SUegZ3hC9ThbbHsY_J5QZpBd3Dcwr8HxmmhyV04EaQ@mail.gmail.com>',
-  },
-  {
-    company: 'US Card Solutions',
-    recipient: 'partnersupport@uscardsolutions.com',
-    providerMessageId: '1a095b64bf945370',
-    providerThreadId: '1a095b64bf945370',
-    rfcMessageId: '<CAHMgaD7PS+Qi=QGma77xdCvOS740MfQGhen7gHJmXR8hjZnYYA@mail.gmail.com>',
-  },
+const COMMIT = process.argv.includes('--commit');
+const SEED = process.argv.includes('--seed');
+const FIXTURE_PATH = fileURLToPath(new URL('./seven-send-attribution.json', import.meta.url));
+
+const fixture = JSON.parse(readFileSync(FIXTURE_PATH, 'utf8'));
+const EXPECTED_MATCHES = Number(fixture.expectedMatches);
+const SOURCE = String(fixture.source ?? '').trim();
+const SENDS = Array.isArray(fixture.sends) ? fixture.sends : [];
+
+if (!Number.isInteger(EXPECTED_MATCHES) || SENDS.length !== EXPECTED_MATCHES) {
+  throw new Error(`Fixture ${FIXTURE_PATH} must contain exactly ${EXPECTED_MATCHES} sends (found ${SENDS.length}).`);
+}
+if (!SOURCE) {
+  throw new Error(`Fixture ${FIXTURE_PATH} must declare a non-empty source.`);
+}
+
+const ATTRIBUTION_FIELDS = [
+  ['provider_message_id', 'providerMessageId'],
+  ['provider_thread_id', 'providerThreadId'],
+  ['rfc_message_id', 'rfcMessageId'],
 ];
 
 function normalizeEmail(value) {
@@ -76,12 +46,83 @@ function assertRealStoreConfigured() {
   const hasSqlite = Boolean(
     process.env.CANONICAL_STORE_TYPE === 'sqlite' && process.env.CANONICAL_SQLITE_PATH
   );
+  const hasUpstash = Boolean(
+    process.env.CANONICAL_STORE_TYPE === 'upstash' &&
+    process.env.UPSTASH_REDIS_REST_URL &&
+    process.env.UPSTASH_REDIS_REST_TOKEN
+  );
 
-  if (!hasRemote && !hasSqlite) {
+  if (!hasRemote && !hasSqlite && !hasUpstash) {
     throw new Error(
-      'Refusing to run seven-send backfill without a real canonical store. Configure CANONICAL_REMOTE_URL + CANONICAL_REMOTE_API_KEY (preferred), legacy OCI_CANONICAL_URL + OCI_CANONICAL_API_KEY, or CANONICAL_STORE_TYPE=sqlite + CANONICAL_SQLITE_PATH.'
+      'Refusing to run seven-send backfill without a real canonical store. Configure CANONICAL_REMOTE_URL + CANONICAL_REMOTE_API_KEY (preferred), legacy OCI_CANONICAL_URL + OCI_CANONICAL_API_KEY, CANONICAL_STORE_TYPE=upstash + UPSTASH_REDIS_REST_URL/TOKEN, or CANONICAL_STORE_TYPE=sqlite + CANONICAL_SQLITE_PATH.'
     );
   }
+}
+
+function attributionRecord(send, verifiedAt) {
+  return {
+    provider: 'gmail',
+    provider_message_id: send.providerMessageId,
+    provider_thread_id: send.providerThreadId,
+    rfc_message_id: send.rfcMessageId,
+    attribution_status: 'backfilled_verified',
+    attribution_verified_at: verifiedAt,
+    source_event_key: `gmail:${send.providerMessageId}`,
+  };
+}
+
+const REQUIRED_SHEET_FIELDS = ['outreach_status', 'retainer_path', 'next_action', 'follow_up_due', 'contact_owner'];
+
+function sheetRow(send) {
+  const sheet = send.sheet ?? {};
+  const missing = REQUIRED_SHEET_FIELDS.filter((field) => !String(sheet[field] ?? '').trim());
+  if (missing.length > 0 || !Number.isInteger(send.sheetRow)) {
+    throw new Error(`Fixture row for ${send.company} is missing sheet data (${[...missing, ...(Number.isInteger(send.sheetRow) ? [] : ['sheetRow'])].join(', ')}); refusing to seed.`);
+  }
+  if (!/^Sent\b/.test(sheet.outreach_status)) {
+    throw new Error(`Fixture row for ${send.company} has outreach_status "${sheet.outreach_status}", not a sent outreach; refusing to seed.`);
+  }
+  return sheet;
+}
+
+function buildSeedWrites(send, buildOutreachRecords, verifiedAt) {
+  const sheet = sheetRow(send);
+  const writes = buildOutreachRecords({
+    source: SOURCE,
+    sourceId: `partner_pipeline:row:${send.sheetRow}`,
+    channel: 'email',
+    fullName: send.company,
+    company: send.company,
+    email: send.recipient,
+    phone: send.phone,
+    domain: send.domain,
+    messageType: sheet.outreach_status.replace(/^Sent\s*-\s*/, ''),
+    offer: sheet.retainer_path,
+    status: 'sent',
+    nextAction: sheet.next_action,
+    nextFollowUpDate: sheet.follow_up_due,
+    assignedTo: sheet.contact_owner,
+    submittedAt: send.sentAt,
+  });
+
+  return writes.map((write) => {
+    if (write.table === 'outreach') {
+      return {
+        ...write,
+        record: {
+          ...write.record,
+          sent_at: send.sentAt,
+          sheet_row: send.sheetRow,
+          sheet: send.sheet,
+          ...attributionRecord(send, verifiedAt),
+        },
+      };
+    }
+    if (write.table === 'organizations' || write.table === 'contacts') {
+      return { ...write, action: 'upsert' };
+    }
+    return write;
+  });
 }
 
 function printRow(result) {
@@ -94,6 +135,7 @@ configureStoreAliases();
 assertRealStoreConfigured();
 
 const { getCanonicalStore } = await import('../lib/canonical-store.ts');
+const { buildOutreachRecords } = await import('../lib/outreach.ts');
 const store = getCanonicalStore();
 
 try {
@@ -105,7 +147,12 @@ try {
     const matches = outreachRows.filter((row) => normalizeEmail(row.email) === recipient);
 
     if (matches.length === 0) {
-      results.push({ ...send, recipient, status: 'SKIP', reason: 'no outreach row with exact normalized recipient' });
+      if (SEED) {
+        sheetRow(send);
+        results.push({ ...send, recipient, status: 'SEED', reason: `no outreach row; will create org/contact/outreach/followup from sheet row ${send.sheetRow}` });
+      } else {
+        results.push({ ...send, recipient, status: 'SKIP', reason: 'no outreach row with exact normalized recipient (use --seed to create)' });
+      }
       continue;
     }
 
@@ -121,13 +168,9 @@ try {
       continue;
     }
 
-    const conflicting = [
-      ['provider_message_id', send.providerMessageId],
-      ['provider_thread_id', send.providerThreadId],
-      ['rfc_message_id', send.rfcMessageId],
-    ].find(([field, expected]) => {
+    const conflicting = ATTRIBUTION_FIELDS.find(([field, fixtureKey]) => {
       const current = String(row[field] ?? '').trim();
-      return current && current !== expected;
+      return current && current !== send[fixtureKey];
     });
 
     if (conflicting) {
@@ -147,29 +190,33 @@ try {
   for (const result of results) printRow(result);
 
   const matched = results.filter((result) => result.status === 'MATCH');
+  const seeded = results.filter((result) => result.status === 'SEED');
   const skipped = results.filter((result) => result.status === 'SKIP');
-  console.log(`\nsummary matched=${matched.length} skipped=${skipped.length} expected=${EXPECTED_MATCHES} mode=${COMMIT ? 'commit' : 'dry-run'}`);
+  const mode = `${COMMIT ? 'commit' : 'dry-run'}${SEED ? '+seed' : ''}`;
+  console.log(`\nsummary matched=${matched.length} seeded=${seeded.length} skipped=${skipped.length} expected=${EXPECTED_MATCHES} mode=${mode}`);
 
-  if (matched.length !== EXPECTED_MATCHES || skipped.length > 0) {
+  if (matched.length + seeded.length !== EXPECTED_MATCHES || skipped.length > 0) {
     process.exitCode = 2;
   } else if (!COMMIT) {
-    console.log('DRY-RUN PASS: all seven production recipients matched exactly one existing outreach row. No writes performed.');
+    console.log(
+      seeded.length > 0
+        ? `DRY-RUN PASS: ${matched.length} recipients matched, ${seeded.length} would be seeded. No writes performed.`
+        : 'DRY-RUN PASS: all seven production recipients matched exactly one existing outreach row. No writes performed.'
+    );
   } else {
     const verifiedAt = new Date().toISOString();
     const writes = matched.map((result) => ({
       table: 'outreach',
       id: result.outreachId,
       action: 'upsert',
-      record: {
-        provider: 'gmail',
-        provider_message_id: result.providerMessageId,
-        provider_thread_id: result.providerThreadId,
-        rfc_message_id: result.rfcMessageId,
-        attribution_status: 'backfilled_verified',
-        attribution_verified_at: verifiedAt,
-        source_event_key: `gmail:${result.providerMessageId}`,
-      },
+      record: attributionRecord(result, verifiedAt),
     }));
+
+    for (const result of seeded) {
+      const seedWrites = buildSeedWrites(result, buildOutreachRecords, verifiedAt);
+      result.outreachId = seedWrites.find((write) => write.table === 'outreach').id;
+      writes.push(...seedWrites);
+    }
 
     const writeResult = await store.executeWrites(writes);
     if (!writeResult.ok || writeResult.failed.length > 0) {
@@ -177,20 +224,19 @@ try {
     }
 
     const verificationFailures = [];
-    for (const result of matched) {
+    for (const result of [...matched, ...seeded]) {
       const observed = await store.getRecord('outreach', result.outreachId);
       if (!observed) {
         verificationFailures.push(`${result.outreachId}: missing after write`);
         continue;
       }
-      if (String(observed.provider_message_id ?? '') !== result.providerMessageId) {
-        verificationFailures.push(`${result.outreachId}: provider_message_id not immediately observable`);
+      if (normalizeEmail(observed.email) !== result.recipient) {
+        verificationFailures.push(`${result.outreachId}: recipient not immediately observable`);
       }
-      if (String(observed.provider_thread_id ?? '') !== result.providerThreadId) {
-        verificationFailures.push(`${result.outreachId}: provider_thread_id not immediately observable`);
-      }
-      if (String(observed.rfc_message_id ?? '') !== result.rfcMessageId) {
-        verificationFailures.push(`${result.outreachId}: rfc_message_id not immediately observable`);
+      for (const [field, fixtureKey] of ATTRIBUTION_FIELDS) {
+        if (String(observed[field] ?? '') !== result[fixtureKey]) {
+          verificationFailures.push(`${result.outreachId}: ${field} not immediately observable`);
+        }
       }
     }
 
@@ -198,7 +244,7 @@ try {
       throw new Error(`Post-write causal verification failed: ${verificationFailures.join('; ')}`);
     }
 
-    console.log(`COMMIT PASS: updated and immediately verified ${matched.length} existing outreach rows.`);
+    console.log(`COMMIT PASS: updated ${matched.length} and seeded ${seeded.length} outreach rows; all immediately verified.`);
   }
 } finally {
   store.close();

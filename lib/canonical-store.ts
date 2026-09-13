@@ -1,4 +1,6 @@
 import { canonicalId } from './canonical-ids';
+import { getRedis } from './redis';
+import type { Redis } from '@upstash/redis';
 
 export interface DatabaseReadyWrite {
   table: string;
@@ -60,6 +62,14 @@ function shouldUseSqlite(): boolean {
   if (process.env.CANONICAL_STORE_TYPE === 'memory') return false;
   if (process.env.CANONICAL_SQLITE_PATH) return true;
   return false;
+}
+
+function shouldUseUpstash(): boolean {
+  return process.env.CANONICAL_STORE_TYPE === 'upstash';
+}
+
+function upstashKeyPrefix(): string {
+  return process.env.CANONICAL_REDIS_PREFIX?.trim() || 'canonical';
 }
 
 function shouldUseRemote(): { url: string; apiKey: string } | undefined {
@@ -521,6 +531,205 @@ class RemoteCanonicalStore implements CanonicalStore {
   }
 }
 
+export interface CanonicalRedisEntry {
+  key: string;
+  value: string;
+  score: number;
+  members: Array<{ set: string; member: string }>;
+}
+
+export interface CanonicalRedisClient {
+  get(key: string): Promise<unknown>;
+  mget(keys: string[]): Promise<unknown[]>;
+  zrangeRev(key: string, start: number, stop: number): Promise<string[]>;
+  write(entry: CanonicalRedisEntry): Promise<void>;
+}
+
+export function createUpstashCanonicalClient(redis: Redis): CanonicalRedisClient {
+  return {
+    get: (key) => redis.get<unknown>(key),
+    mget: async (keys) => (keys.length === 0 ? [] : redis.mget<unknown[]>(keys)),
+    zrangeRev: (key, start, stop) => redis.zrange<string[]>(key, start, stop, { rev: true }),
+    write: async (entry) => {
+      const pipeline = redis.multi();
+      pipeline.set(entry.key, entry.value);
+      for (const { set, member } of entry.members) {
+        pipeline.zadd(set, { score: entry.score, member });
+      }
+      await pipeline.exec();
+    },
+  };
+}
+
+function parseRedisRecord(value: unknown): Record<string, unknown> | undefined {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value === 'string') {
+    try {
+      const parsed: unknown = JSON.parse(value);
+      return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+  return typeof value === 'object' ? (value as Record<string, unknown>) : undefined;
+}
+
+export class UpstashCanonicalStore implements CanonicalStore {
+  private client: CanonicalRedisClient;
+  private prefix: string;
+
+  constructor(client: CanonicalRedisClient, prefix = upstashKeyPrefix()) {
+    this.client = client;
+    this.prefix = prefix;
+  }
+
+  private recordKey(table: string, id: string): string {
+    return `${this.prefix}:record:${table}:${id}`;
+  }
+
+  private tableKey(table: string): string {
+    return `${this.prefix}:table:${table}`;
+  }
+
+  private allKey(): string {
+    return `${this.prefix}:all`;
+  }
+
+  async executeWrites(writes: DatabaseReadyWrite[]): Promise<WriteResult> {
+    const result: WriteResult = { ok: true, insertedIds: [], failed: [] };
+    for (const write of writes) {
+      try {
+        const now = isoNow();
+        const existing = write.action === 'upsert'
+          ? parseRedisRecord(await this.client.get(this.recordKey(write.table, write.id)))
+          : undefined;
+        const record: Record<string, unknown> = {
+          ...existing,
+          ...write.record,
+          id: write.id,
+          _table: write.table,
+          _canonical_id: write.id,
+          created_at: existing?.created_at ?? write.record['created_at'] ?? now,
+          updated_at: now,
+          source: write.record['source'] ?? existing?.source ?? write.table,
+        };
+        const createdMs = Date.parse(String(record.created_at));
+        await this.client.write({
+          key: this.recordKey(write.table, write.id),
+          value: JSON.stringify(record),
+          score: Number.isFinite(createdMs) ? createdMs : Date.now(),
+          members: [
+            { set: this.tableKey(write.table), member: write.id },
+            { set: this.allKey(), member: `${write.table}:${write.id}` },
+          ],
+        });
+        result.insertedIds.push(write.id);
+      } catch (error) {
+        result.failed.push({
+          table: write.table,
+          id: write.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+    result.ok = result.failed.length === 0;
+    return result;
+  }
+
+  async recordAiRun(input: AiRunInput): Promise<string> {
+    const now = isoNow();
+    const id = canonicalId('airun', input.agentId, input.targetTable, input.targetId, input.action, now);
+    await this.executeWrites([
+      {
+        table: 'ai_runs',
+        id,
+        action: 'insert',
+        record: {
+          id,
+          agent_id: input.agentId,
+          target_table: input.targetTable,
+          target_id: input.targetId,
+          action: input.action,
+          recommendation: input.recommendation ?? '',
+          confidence: input.confidence ?? 0,
+          approval_required: input.approvalRequired ? 1 : 0,
+          persisted_externally: input.persistedExternally ? 1 : 0,
+          result_json: input.resultJson ?? '{}',
+          evidence_json: input.evidenceJson ?? '{}',
+          outcome_json: input.outcomeJson ?? '{}',
+          feedback_json: input.feedbackJson ?? '{}',
+          source: input.source ?? 'ai_agent',
+          created_at: now,
+          updated_at: now,
+        },
+      },
+    ]);
+    return id;
+  }
+
+  async recordReviewAction(input: ReviewActionInput): Promise<string> {
+    const now = isoNow();
+    const id = canonicalId('review', input.targetTable, input.targetId, input.action, now);
+    await this.executeWrites([
+      {
+        table: 'reviews',
+        id,
+        action: 'insert',
+        record: {
+          id,
+          target_table: input.targetTable,
+          target_id: input.targetId,
+          action: input.action,
+          decision: input.decision ?? 'queued',
+          persisted_externally: input.persistedExternally ? 1 : 0,
+          approval_required: input.approvalRequired ? 1 : 0,
+          reviewer_contact_id: input.reviewerContactId ?? null,
+          source: input.source ?? 'review_action',
+          created_at: now,
+          updated_at: now,
+        },
+      },
+    ]);
+    return id;
+  }
+
+  private async readMany(keys: string[]): Promise<Record<string, unknown>[]> {
+    if (keys.length === 0) return [];
+    const values = await this.client.mget(keys);
+    const records: Record<string, unknown>[] = [];
+    for (const value of values) {
+      const record = parseRedisRecord(value);
+      if (record) records.push(record);
+    }
+    return records;
+  }
+
+  async getRecord(table: string, id: string): Promise<Record<string, unknown> | undefined> {
+    return parseRedisRecord(await this.client.get(this.recordKey(table, id)));
+  }
+
+  async queryTable(table: string, limit = 1000): Promise<Record<string, unknown>[]> {
+    if (limit <= 0) return [];
+    const ids = await this.client.zrangeRev(this.tableKey(table), 0, limit - 1);
+    return this.readMany(ids.map((id) => this.recordKey(table, id)));
+  }
+
+  async queryAll(limit = 1000): Promise<Record<string, unknown>[]> {
+    if (limit <= 0) return [];
+    const members = await this.client.zrangeRev(this.allKey(), 0, limit - 1);
+    return this.readMany(
+      members.map((member) => {
+        const separator = member.indexOf(':');
+        return this.recordKey(member.slice(0, separator), member.slice(separator + 1));
+      })
+    );
+  }
+
+  close(): void {
+    // Upstash REST client holds no local resources.
+  }
+}
+
 let sharedStore: CanonicalStore | undefined;
 
 export function getCanonicalStore(): CanonicalStore {
@@ -528,6 +737,14 @@ export function getCanonicalStore(): CanonicalStore {
   const remoteConfig = shouldUseRemote();
   if (remoteConfig) {
     sharedStore = new RemoteCanonicalStore(remoteConfig.url, remoteConfig.apiKey);
+    return sharedStore;
+  }
+  if (shouldUseUpstash()) {
+    const redis = getRedis();
+    if (!redis) {
+      throw new Error('CANONICAL_STORE_TYPE=upstash requires UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.');
+    }
+    sharedStore = new UpstashCanonicalStore(createUpstashCanonicalClient(redis));
     return sharedStore;
   }
   if (shouldUseSqlite()) {
