@@ -22,7 +22,7 @@ export const siteConfig = {
     zip: '85007',
     full: '429 N 18th Dr, Phoenix, AZ 85007'
   },
-  certifications: ['Commercially Insured', 'SAM.gov Registered', 'Veteran-Owned Small Business'],
+  certifications: ['Commercially Insured', 'SAM.gov Registered', 'Veteran-Owned'],
   trustBar: ['A+ BBB Rating', 'Operating Since 2013', 'Phoenix-Based', 'Commercial & Multi-Site Support', 'Rapid Onsite Dispatch']
 };
 
@@ -97,7 +97,7 @@ export const buyerReasons = [
   'Technical field operations for MSPs, vendors, commercial sites, retail environments, and critical systems.',
   'Structured closeout documentation with photos, field notes, equipment observations, inventory detail, and next-step escalation when required.',
   'Established direct, subcontracted, and marketplace-routed enterprise field-service history with relationship status stated accurately.',
-  'Procurement-ready profile with SAM.gov registration, commercial insurance, and veteran-owned small-business positioning.'
+  'Procurement-ready profile with SAM.gov registration, commercial insurance, and veteran-owned positioning; formal certification status is supplied separately when applicable.'
 ] as const;
 
 export const documentedWorkTypes = [
@@ -202,7 +202,7 @@ export const audience = [
   {
     title: 'Procurement teams',
     description:
-      'SAM.gov registered, commercially insured, and veteran-owned, with engagement history and current partner status described separately and accurately.'
+      'SAM.gov registered, commercially insured, and veteran-owned. Formal certification status and engagement/partner status are supplied separately for procurement review.'
   }
 ] as const;
 
@@ -294,7 +294,7 @@ export const representativeWork = [
 ] as const;
 
 export const engagementStatusNote =
-  'Representative engagements include direct client assignments, subcontracted/service-channel programs, and managed marketplace-routed work. Project references describe verified execution history and do not imply current preferred-vendor, authorized-service-provider, or channel-partner status unless explicitly stated.';
+  'Representative engagements include direct client assignments, subcontracted/service-channel programs, and managed marketplace-routed work. Project references describe verified execution history and do not imply current preferred-vendor, authorized-service-provider, channel-partner, or formal certification status unless explicitly stated.';
 
 export const naicsCodes = [
   { code: '541512', desc: 'Computer Systems Design Services' },
