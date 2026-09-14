@@ -1,38 +1,38 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { naicsCodes, representativeWork, siteConfig } from '@/lib/site';
+import { engagementStatusNote, naicsCodes, representativeWork, siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Capability Statement | Field Execution Partner',
   description:
-    'Already Here LLC capability statement - Phoenix field execution partner for MSPs, government primes, healthcare-adjacent operators, and rollout programs. SAM.gov registered.',
+    'Already Here LLC capability statement - Phoenix field execution partner for MSPs, OEMs, service partners, government primes, healthcare-adjacent operators, and rollout programs. SAM.gov registered.',
   alternates: { canonical: '/capability-statement' }
 };
 
 const coreCompetencies = [
   'MSP smart-hands and remote team onsite follow-through',
+  'Server, storage, warranty, and RMA component replacement',
   'Infrastructure field work - rack/stack, patching, cabling, port verification',
   'POS, kiosk, and payment device installation and support',
   'Healthcare-adjacent and controlled environment field execution',
   'Medical device calibration and NICU equipment support',
   'RFID reader surveys and multi-AP documentation runs',
+  'IoT, sensor, controller, and edge-device field installation',
   'Rollout, modernization, and multi-site program execution',
   'Documentation-driven closeout and photo verification per ticket',
-  'AV/media troubleshooting and digital signage support',
   'Site surveys, store-level audits, and ground-truth verification',
-  'Managed router installs - Cradlepoint, SD-WAN, Starlink',
-  'Government-adjacent field engagements'
+  'Managed router installs - Cradlepoint, SD-WAN, Starlink'
 ];
 
 const differentiators = [
-  'SAM.gov registered with certification pursuit handled separately from public buyer claims',
+  'Veteran-owned business with Phoenix-based field leadership; formal certification status is supplied separately when applicable',
   'SAM.gov registered',
   'Commercially insured - General Liability and Professional Liability',
-  '26+ years IT field experience: healthcare, enterprise, government-adjacent, retail, QSR, data center',
-  'Phoenix metro primary coverage - qualified Arizona statewide and Western US travel for project-based engagements',
-  'Documented execution history: H&M RFID, HPE Alletra, GE Healthcare, NCR/Starbucks, GoDaddy, Wipro, Ingram Micro',
-  'Structured closeout with photo documentation delivered per ticket - not vague "work completed" notes',
-  'Field Nation and WorkMarket dispatch history - qualified buyer verification available on request'
+  '30+ years of IT experience across healthcare, enterprise, government-adjacent, retail, QSR, data center, networking, and field operations',
+  'Phoenix metro primary coverage with qualified Arizona statewide and nationwide project coverage by scope',
+  'Verified execution history across NCR Voyix, HPE / Source Support service channels, Volanté, PIVITAL, ASD programs, Barrister / Unisys programs, Retail Tech, ITI / Indusys, GE Healthcare, and other enterprise environments',
+  'Structured closeout with photo documentation, serial/asset data, field notes, parts disposition, and escalation detail when required',
+  'Direct, subcontracted, and Field Nation / WorkMarket history kept clearly separated so procurement teams can evaluate relationship status accurately'
 ];
 
 export default function CapabilityStatementPage() {
@@ -48,13 +48,16 @@ export default function CapabilityStatementPage() {
               Already Here LLC
             </h1>
             <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-600">
-              Phoenix-based field execution partner for MSPs, government primes, vendors,
-              healthcare-adjacent operators, and rollout programs.
+              Phoenix-based field execution partner for MSPs, OEMs, service partners, government primes,
+              vendors, healthcare-adjacent operators, and rollout programs.
             </p>
           </div>
           <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end lg:gap-3 shrink-0">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
-              Certification Pursuit In Progress
+              Open for Supplier / Subcontractor Onboarding
+            </span>
+            <span className="rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-slate-600">
+              Veteran-Owned
             </span>
             <span className="rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-slate-600">
               SAM.gov Registered
@@ -121,7 +124,7 @@ export default function CapabilityStatementPage() {
         <h2 className="grid-label mb-6">Past performance (representative)</h2>
         <div className="grid gap-4">
           {representativeWork.map((item) => (
-            <div key={item.scope} className="grid grid-cols-1 gap-2 rounded-2xl border border-borderBrand bg-soft p-5 sm:grid-cols-[160px_1fr]">
+            <div key={item.scope} className="grid grid-cols-1 gap-2 rounded-2xl border border-borderBrand bg-soft p-5 sm:grid-cols-[190px_1fr]">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-action mb-1">{item.tag}</p>
                 <p className="text-sm font-medium text-navy">{item.client}</p>
@@ -130,8 +133,11 @@ export default function CapabilityStatementPage() {
             </div>
           ))}
         </div>
-        <p className="mt-4 text-xs text-slate-400">
-          WO numbers, Field Nation / WorkMarket records, and buyer references available upon request for qualified procurement opportunities.
+        <p className="mt-5 rounded-2xl border border-borderBrand bg-soft p-4 text-xs leading-5 text-slate-500">
+          {engagementStatusNote}
+        </p>
+        <p className="mt-3 text-xs text-slate-400">
+          Supporting work-order records, direct-company correspondence, Field Nation / WorkMarket records, training records, and qualified buyer references are available for procurement review when appropriate.
         </p>
       </section>
 
@@ -161,18 +167,19 @@ export default function CapabilityStatementPage() {
         <h2 className="grid-label mb-4">Service area</h2>
         <p className="text-sm leading-7 text-slate-600 max-w-3xl">
           Primary coverage: Phoenix metropolitan area including Tempe, Mesa, Chandler, Scottsdale, Glendale,
-          Peoria, Surprise, Goodyear, Avondale, and Gilbert. Qualified statewide Arizona travel available
-          for the right scope. Western US project travel available for enterprise and government-adjacent engagements.
+          Peoria, Surprise, Goodyear, Avondale, and Gilbert. Qualified statewide Arizona travel is available
+          with appropriate zone/travel economics. Nationwide project coverage is available by scope for enterprise,
+          multi-site, service-partner, and government-adjacent engagements.
         </p>
       </section>
 
       <div className="card bg-navy p-8 text-white sm:p-10">
         <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
-            <h2 className="text-2xl font-semibold">Ready to engage?</h2>
+            <h2 className="text-2xl font-semibold">Need Arizona field coverage?</h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-white/80">
-              Send scope, site, and timeline through dispatch intake. Procurement inquiries are reviewed against current verified registrations and certifications.
-              Capability statement PDF available on request.
+              Send scope, site, SLA, parts requirements, travel expectations, and closeout requirements through dispatch intake.
+              Supplier, subcontractor, service-partner, and recurring program inquiries are welcome.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
@@ -183,10 +190,10 @@ export default function CapabilityStatementPage() {
               Open Dispatch
             </Link>
             <a
-              href={siteConfig.phoneHref}
+              href={`mailto:${siteConfig.email}`}
               className="link-ring inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
             >
-              {siteConfig.phoneDisplay}
+              Email Dispatch
             </a>
           </div>
         </div>

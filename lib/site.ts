@@ -22,7 +22,7 @@ export const siteConfig = {
     zip: '85007',
     full: '429 N 18th Dr, Phoenix, AZ 85007'
   },
-  certifications: ['Commercially Insured', 'SAM.gov Registered', 'Certification Pursuit'],
+  certifications: ['Commercially Insured', 'SAM.gov Registered', 'Veteran-Owned'],
   trustBar: ['A+ BBB Rating', 'Operating Since 2013', 'Phoenix-Based', 'Commercial & Multi-Site Support', 'Rapid Onsite Dispatch']
 };
 
@@ -47,6 +47,13 @@ export const serviceGroups = [
       'Field support for POS, payment devices, printers, endpoints, kiosks, store systems, and commercial technology environments.',
     items: ['POS / payment device swaps', 'Endpoint refresh work', 'Printer replacement', 'Kiosk and store technology support'],
     bestFit: 'Retail, QSR, hospitality, and multi-site commercial operators in qualified regional and project markets.'
+  },
+  {
+    title: 'Server, Storage & Hardware Break/Fix',
+    description:
+      'Enterprise field support for server, storage, endpoint, and component-level replacement work with remote-engineer coordination and documented closeout.',
+    items: ['HDD / SSD / RAM replacement', 'Server and storage smart hands', 'Component and peripheral swaps', 'Parts receiving and return logistics'],
+    bestFit: 'OEMs, service partners, MSPs, and infrastructure teams needing trained onsite hands for warranty, RMA, and break/fix activity.'
   },
   {
     title: 'RFID, Barcode & Asset Tracking Field Support',
@@ -89,7 +96,8 @@ export const buyerReasons = [
   'Reliable onsite execution for defined technical dispatches without consumer repair-shop positioning.',
   'Technical field operations for MSPs, vendors, commercial sites, retail environments, and critical systems.',
   'Structured closeout documentation with photos, field notes, equipment observations, inventory detail, and next-step escalation when required.',
-  'Procurement-ready profile with SAM.gov registration, commercial insurance, and certification claims kept separate from public marketing copy.'
+  'Established direct, subcontracted, and marketplace-routed enterprise field-service history with relationship status stated accurately.',
+  'Procurement-ready profile with SAM.gov registration, commercial insurance, and veteran-owned positioning; formal certification status is supplied separately when applicable.'
 ] as const;
 
 export const documentedWorkTypes = [
@@ -102,6 +110,7 @@ export const documentedWorkTypes = [
   'Payment device replacement',
   'Thin-client replacement',
   'HDD / SSD replacement',
+  'Server / storage component replacement',
   'Desktop / laptop refresh work',
   'LAN migration support',
   'DMB / site surveys',
@@ -114,10 +123,12 @@ export const documentedWorkTypes = [
   'Rack / stack / iDRAC work',
   'Printer replacement / configuration',
   'AV / media troubleshooting',
+  'TV and display parts replacement',
   'TV signal restoration',
   'Managed router installs',
   'Wi-Fi troubleshooting',
   'Low-voltage testing',
+  'IoT / sensor field installation',
   'Site verification',
   'Exterior router mounting',
   'Automated locker system installs',
@@ -179,6 +190,11 @@ export const audience = [
       'Use Already Here LLC as the onsite execution layer when the scope, parts, and ticket flow are defined and the missing piece is reliable field completion.'
   },
   {
+    title: 'OEMs and service partners',
+    description:
+      'Add Arizona field capacity for warranty, RMA, server/storage, component replacement, POS, endpoint, and parts-logistics work with disciplined remote-engineer coordination.'
+  },
+  {
     title: 'Retail and commercial operators',
     description:
       'Support multi-site technology programs, POS work, endpoint refreshes, store modernization, rollout recovery, RFID, asset tracking, decommissioning, and commercial infrastructure tasks.'
@@ -186,7 +202,7 @@ export const audience = [
   {
     title: 'Procurement teams',
     description:
-      'SAM.gov registered and commercially insured, with certification pursuit handled separately from public buyer claims.'
+      'SAM.gov registered, commercially insured, and veteran-owned. Formal certification status and engagement/partner status are supplied separately for procurement review.'
   }
 ] as const;
 
@@ -206,6 +222,8 @@ export const dispatchTypes = [
   'Smart hands support',
   'Onsite infrastructure execution',
   'Network troubleshooting',
+  'Server / storage break-fix',
+  'Warranty / RMA part replacement',
   'Rollout recovery',
   'Remediation / revisit',
   'POS / store tech',
@@ -219,24 +237,49 @@ export const dispatchTypes = [
 
 export const representativeWork = [
   {
-    client: 'National QSR chain',
-    tag: 'POS / Retail',
-    scope: 'POS hardware installation across 4 locations, Mesa AZ metro. NCR Voyix-issued scope. Confirmed closeout with photo documentation delivered same day.'
+    client: 'NCR Voyix / national QSR program',
+    tag: 'Direct POS / Deployment',
+    scope: 'Direct Arizona NCR Voyix-assigned POS and OSB deployment activity, remote-service coordination, sign-off, closeout, and site deliverables across Starbucks program work.'
   },
   {
-    client: 'Enterprise infrastructure vendor',
-    tag: 'Infrastructure',
-    scope: 'HPE Alletra MP deployment - Chandler, AZ data center. Rack, cable, and verification. Multi-day engagement with structured closeout.'
+    client: 'HPE / Source Support service channel',
+    tag: 'Server / Storage',
+    scope: 'HPE enterprise infrastructure field support including Alletra and Nimble-related installation, disk/component replacement, RMA activity, remote-engineer coordination, and structured closeout.'
+  },
+  {
+    client: 'Volanté Systems',
+    tag: 'POS / Network',
+    scope: 'Multi-year Arizona POS and network field-service history, including Tier-2 training/certification pathway, terminal installations, network investigation, direct coordination, and documented completion.'
+  },
+  {
+    client: 'PIVITAL',
+    tag: 'Infrastructure / Field Service',
+    scope: 'Arizona server and infrastructure replacement activity plus direct field coordination for enterprise retail/telecom programs.'
+  },
+  {
+    client: 'ASD / The Detection Group program',
+    tag: 'IoT / Field Installation',
+    scope: 'Phoenix field-installation work following Trident installation training/certification, including sensor/controller-related deployment support and direct project-team coordination.'
+  },
+  {
+    client: 'Barrister / Unisys program',
+    tag: 'Service-Channel Break/Fix',
+    scope: 'Unisys-related project support through Barrister, including Phoenix field-service rotation and enterprise hardware parts-installation activity. Service-channel project history; not represented as current direct Unisys vendor status.'
+  },
+  {
+    client: 'Retail Tech',
+    tag: 'Retail Infrastructure',
+    scope: 'Arizona retail-technology field assignments through direct and managed marketplace coordination, including networking, firewall, rollout, and onsite support scopes.'
+  },
+  {
+    client: 'ITI / Indusys Technology',
+    tag: 'Warranty / Parts Swap',
+    scope: 'Multi-year Arizona parts-swap and field-service history through Field Nation plus direct ITI parts-return/logistics coordination. Includes shipped-parts handling, appointment coordination, onsite replacement, and closeout.'
   },
   {
     client: 'National retail brand',
     tag: 'Rollout / Survey',
     scope: 'RFID reader survey - 55 readers, 4 APs, 61 data runs, HP Aruba switches. Chandler Fashion Center US0275. Full structured field execution with documentation.'
-  },
-  {
-    client: 'Retail technology program',
-    tag: 'Asset Recovery',
-    scope: 'Store technology recovery and closeout support, including device identification, inventory capture, packing, labeling, and return-logistics handoff by scope.'
   },
   {
     client: 'Medical device OEM',
@@ -247,13 +290,11 @@ export const representativeWork = [
     client: 'National MSP',
     tag: 'Smart Hands',
     scope: 'GoDaddy Phoenix campus block storage installs - multi-site smart-hands coordination with structured closeout per ticket.'
-  },
-  {
-    client: 'National QSR chain (NCR)',
-    tag: 'POS / Retail',
-    scope: 'Starbucks POS upgrade execution - NCR Voyix WO. Mesa AZ. Pre-flight, install, and documented closeout.'
   }
 ] as const;
+
+export const engagementStatusNote =
+  'Representative engagements include direct client assignments, subcontracted/service-channel programs, and managed marketplace-routed work. Project references describe verified execution history and do not imply current preferred-vendor, authorized-service-provider, channel-partner, or formal certification status unless explicitly stated.';
 
 export const naicsCodes = [
   { code: '541512', desc: 'Computer Systems Design Services' },
@@ -264,7 +305,8 @@ export const naicsCodes = [
 ] as const;
 
 export const pricingTiers = [
-  { label: 'Standard dispatch', value: 'Quote on submission', note: 'Scope, travel, and closeout requirements determine rate' },
+  { label: 'Standard dispatch', value: '$65/hr minimum', note: 'Two-hour minimum; scope, travel, and closeout requirements may increase rate' },
+  { label: 'Advanced infrastructure', value: '$200 minimum', note: 'Server, data-center, and advanced smart-hands scopes' },
   { label: 'Urgent / same-day', value: 'Premium rate applies', note: 'Same-day requests carry a priority surcharge' },
-  { label: 'Bundled / recurring', value: 'Volume pricing available', note: 'Multi-site and recurring programs qualify for negotiated rates' }
+  { label: 'Bundled / recurring', value: 'Volume pricing available', note: 'Multi-site and recurring programs qualify for negotiated rates when economics support the route' }
 ] as const;
