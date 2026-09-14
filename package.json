@@ -2,6 +2,11 @@
   "name": "already-here-llc",
   "version": "1.1.0-ai-agent-revenue",
   "private": true,
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true,
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.12.2": true
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
