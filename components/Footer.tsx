@@ -17,9 +17,7 @@ export function Footer() {
           <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
             <span className="rounded-full border border-borderBrand px-3 py-1">Phoenix-based</span>
             <span className="rounded-full border border-borderBrand px-3 py-1">Commercially Insured</span>
-            <span className="rounded-full border border-amber-300/60 bg-amber-50 px-3 py-1 text-amber-700">
-              Certification Pursuit
-            </span>
+            <span className="rounded-full border border-borderBrand px-3 py-1">Veteran-Owned</span>
             <span className="rounded-full border border-borderBrand px-3 py-1">SAM.gov Registered</span>
           </div>
           <div className="mt-6">

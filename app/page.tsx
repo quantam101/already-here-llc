@@ -204,7 +204,7 @@ export default function HomePage() {
           <div className="mb-10">
             <span className="eyebrow">Representative work</span>
             <h2 className="section-title mt-5">Field execution across environments that matter</h2>
-            <p className="section-copy">Clients include national retail technology vendors, enterprise infrastructure teams, healthcare-adjacent operators, and MSPs across the Phoenix metro and Western US. Client names available for qualified buyers upon request.</p>
+            <p className="section-copy">Representative names are shown where the relationship is supported by verified records, with direct, service-channel, and marketplace-routed status kept distinct.</p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {representativeWork.map(({ tag, client, scope }) => (
@@ -283,7 +283,7 @@ export default function HomePage() {
                 { title: 'MSPs and network operators', body: 'Extend field coverage for smart hands, network troubleshooting, router work, site visits, documentation collection, and remediation without carrying local headcount for every project market.' },
                 { title: 'Vendors and prime contractors', body: 'Use Already Here LLC as the onsite execution layer when the scope, parts, and ticket flow are defined and the missing piece is reliable field completion.' },
                 { title: 'Retail and commercial operators', body: 'Support multi-site technology programs, POS work, endpoint refreshes, store modernization, rollout recovery, RFID, asset tracking, IT asset recovery, return logistics, and commercial infrastructure tasks.' },
-                { title: 'Procurement teams', body: 'SAM.gov registered and commercially insured, with certification pursuit handled separately from public buyer claims.' }
+                { title: 'Procurement teams', body: 'SAM.gov registered, commercially insured, and veteran-owned; formal certification status is supplied separately when applicable.' }
               ].map(({ title, body }) => (
                 <div key={title} className="card p-6">
                   <h3 className="text-xl font-semibold text-navy">{title}</h3>
@@ -343,7 +343,7 @@ export default function HomePage() {
               <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/80">Ready to engage</span>
               <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">Need onsite infrastructure execution for a project site?</h2>
               <p className="mt-4 max-w-3xl text-base leading-7 text-white/80">Send the scope, target city, schedule window, and any files that matter. Already Here LLC will assess coverage fit and execute the site work cleanly when the dispatch is confirmed.</p>
-              <p className="mt-3 text-sm text-white/60">SAM.gov registered · Actively pursuing SDVOSB certification</p>
+              <p className="mt-3 text-sm text-white/60">SAM.gov registered · Veteran-owned · Formal certification status supplied separately when applicable</p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
               <Link href="/rfq" className="link-ring inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-navy transition hover:bg-slate-100">Request Project Quote</Link>
