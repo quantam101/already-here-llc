@@ -25,7 +25,7 @@ const coreCompetencies = [
 ];
 
 const differentiators = [
-  'Veteran-owned small business with Phoenix-based field leadership',
+  'Veteran-owned business with Phoenix-based field leadership; formal certification status is supplied separately when applicable',
   'SAM.gov registered',
   'Commercially insured - General Liability and Professional Liability',
   '30+ years of IT experience across healthcare, enterprise, government-adjacent, retail, QSR, data center, networking, and field operations',
@@ -57,7 +57,7 @@ export default function CapabilityStatementPage() {
               Open for Supplier / Subcontractor Onboarding
             </span>
             <span className="rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-slate-600">
-              Veteran-Owned Small Business
+              Veteran-Owned
             </span>
             <span className="rounded-full border border-borderBrand px-4 py-2 text-sm font-medium text-slate-600">
               SAM.gov Registered
