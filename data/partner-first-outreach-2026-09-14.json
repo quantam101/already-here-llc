@@ -16,12 +16,13 @@
       "automation_expansion": "dispatch intake, technician closeout, customer-update and follow-up automation after workflow evidence is collected",
       "priority": "P0",
       "grade": "A+",
-      "outreach_status": "approved_to_send",
-      "outreach_date": null,
+      "outreach_status": "sent",
+      "outreach_date": "2026-09-14",
+      "sent_message_id": "1a0a01c40c2773ad",
       "response": null,
-      "follow_up": "3 business days after send",
+      "follow_up": "2026-09-17 if no reply",
       "quoted_rate": "$65/hr two-hour minimum; project/flat-rate pricing available",
-      "outcome": "pending",
+      "outcome": "awaiting_response",
       "revenue_won": 0
     },
     {
@@ -37,12 +38,13 @@
       "automation_expansion": "job intake, dispatch routing, technician closeout and customer follow-up automation after paid work establishes workflow evidence",
       "priority": "P0",
       "grade": "A+",
-      "outreach_status": "approved_to_send",
-      "outreach_date": null,
+      "outreach_status": "sent",
+      "outreach_date": "2026-09-14",
+      "sent_message_id": "1a0a01c63edd3cc8",
       "response": null,
-      "follow_up": "3 business days after send",
+      "follow_up": "2026-09-17 if no reply",
       "quoted_rate": "$65/hr two-hour minimum; project/flat-rate pricing available",
-      "outcome": "pending",
+      "outcome": "awaiting_response",
       "revenue_won": 0
     },
     {
@@ -58,12 +60,13 @@
       "automation_expansion": "service intake, RFQ qualification, dispatch and closeout automation only after operational needs are observed",
       "priority": "P1",
       "grade": "A",
-      "outreach_status": "approved_to_send",
-      "outreach_date": null,
+      "outreach_status": "sent",
+      "outreach_date": "2026-09-14",
+      "sent_message_id": "1a0a01c82b53afc4",
       "response": null,
-      "follow_up": "3 business days after send",
+      "follow_up": "2026-09-17 if no reply",
       "quoted_rate": "$65/hr two-hour minimum; project/flat-rate pricing available",
-      "outcome": "pending",
+      "outcome": "awaiting_response",
       "revenue_won": 0
     }
   ]
