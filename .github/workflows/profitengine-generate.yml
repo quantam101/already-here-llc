@@ -33,19 +33,30 @@ jobs:
         run: npm install --omit=dev
         working-directory: profitengine
 
+      - name: Validate content quality gate
+        run: npm test
+        working-directory: profitengine
+
       - name: Generate content
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           CONTENT_OUTPUT_DIR: ${{ github.workspace }}/content/blog
           POSTS_PER_RUN: '1'
+          CONTENT_MAX_ATTEMPTS: '3'
+          CONTENT_MIN_WORDS: '850'
+          CONTENT_MAX_WORDS: '1600'
+          CONTENT_SIMILARITY_THRESHOLD: '0.42'
+          PUBLISH_REQUIRED_PLATFORMS: 'filesystem'
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
         run: |
           node -e "
           const { runContentPipeline } = require('./pipeline.js');
           runContentPipeline().then(results => {
             const ok = results.filter(r => r.success).length;
+            const failed = results.filter(r => !r.success);
             console.log('[done]', ok, '/', results.length, 'succeeded');
-            process.exit(ok > 0 ? 0 : 1);
+            if (failed.length) console.error('[failed]', JSON.stringify(failed, null, 2));
+            process.exit(ok === results.length && results.length > 0 ? 0 : 1);
           }).catch(e => { console.error(e); process.exit(1); });
           "
         working-directory: profitengine
