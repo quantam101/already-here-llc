@@ -1,0 +1,87 @@
+name: Passive Income Engine
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      system:
+        description: 'technical-ebook | stock-asset-factory | industry-newsletter'
+        required: true
+        default: 'technical-ebook'
+      topic:
+        description: 'eBook topic (technical-ebook only)'
+        required: false
+        default: 'FastAPI + Docker Production Patterns'
+      niche:
+        description: 'Stock niche or newsletter niche'
+        required: false
+        default: 'seamless-tech-backgrounds'
+  schedule:
+    # Weekly newsletter draft (Monday 13:00 UTC) — draft only, approval required before send.
+    - cron: '0 13 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  run-agents:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Verify engine contracts
+        run: npm run test:passive-income
+
+      - name: Run income system agents (scheduled = newsletter draft)
+        if: github.event_name == 'schedule'
+        env:
+          GATEWAY_URL: ${{ secrets.GATEWAY_URL }}
+          LITELLM_MASTER_KEY: ${{ secrets.LITELLM_MASTER_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: npm run income:newsletter -- --out exports/passive-income
+
+      - name: Run income system agents (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GATEWAY_URL: ${{ secrets.GATEWAY_URL }}
+          LITELLM_MASTER_KEY: ${{ secrets.LITELLM_MASTER_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SYSTEM: ${{ github.event.inputs.system }}
+          TOPIC: ${{ github.event.inputs.topic }}
+          NICHE: ${{ github.event.inputs.niche }}
+        run: |
+          case "$SYSTEM" in
+            technical-ebook) npm run income:ebook -- --topic "$TOPIC" --out exports/passive-income ;;
+            stock-asset-factory) npm run income:stock -- --niche "$NICHE" --out exports/passive-income ;;
+            industry-newsletter) npm run income:newsletter -- --niche "$NICHE" --out exports/passive-income ;;
+            *) echo "unknown system: $SYSTEM" && exit 1 ;;
+          esac
+
+      - name: Upload graded artifacts for human approval
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: passive-income-${{ github.run_number }}
+          path: exports/passive-income/
+          if-no-files-found: warn
+          retention-days: 30
