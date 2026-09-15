@@ -15,6 +15,7 @@
  * reviewable output offline.
  */
 
+import { randomUUID } from 'node:crypto';
 import { llmComplete, type LLMMessage } from './llm-gateway';
 
 export type IncomeSystemId = 'technical-ebook' | 'stock-asset-factory' | 'industry-newsletter';
@@ -162,16 +163,28 @@ export interface EngineContext {
   complete: (messages: LLMMessage[], maxTokens: number) => Promise<string | null>;
   now: () => Date;
   random: () => number;
+  /** Run-wide wall-clock budget; once exhausted every remaining stage completes deterministically. */
+  budgetMs?: number;
 }
 
 const FALLBACK_MARKER = 'Level-4 deterministic fallback is active';
 
 export function createEngineContext(overrides: Partial<EngineContext> = {}): EngineContext {
-  return {
-    complete: overrides.complete ?? ((messages, maxTokens) => llmComplete(messages, maxTokens)),
-    now: overrides.now ?? (() => new Date()),
-    random: overrides.random ?? Math.random
+  const complete = overrides.complete ?? ((messages, maxTokens) => llmComplete(messages, maxTokens));
+  const budgetMs = overrides.budgetMs;
+  if (budgetMs === undefined) {
+    return { complete, now: overrides.now ?? (() => new Date()), random: overrides.random ?? Math.random };
+  }
+  const deadline = Date.now() + budgetMs;
+  const budgeted: EngineContext['complete'] = (messages, maxTokens) => {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) return Promise.resolve(null);
+    return Promise.race([
+      complete(messages, maxTokens),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), remaining).unref?.())
+    ]);
   };
+  return { complete: budgeted, now: overrides.now ?? (() => new Date()), random: overrides.random ?? Math.random, budgetMs };
 }
 
 // ---------------------------------------------------------------------------
@@ -252,6 +265,21 @@ export function scoreChecks(checks: QualityCheck[]): number {
   if (total === 0) return 0;
   const earned = checks.filter((item) => item.ok).reduce((sum, item) => sum + item.weight, 0);
   return Math.round((earned / total) * 1000) / 10;
+}
+
+/** Checks that must pass regardless of weighted score: policy, disclosure, and approval gates. */
+const HARD_GATE_PATTERN = /(no-forbidden-claims|no-banned-terms|disclosure|generative-ai-flag|generative-flag|template-filled|colophon|draft-status|approval-gate)$/;
+
+export function isHardGate(checkId: string): boolean {
+  return HARD_GATE_PATTERN.test(checkId);
+}
+
+export function hardGatesPass(checks: QualityCheck[]): boolean {
+  return checks.every((check) => check.ok || !isHardGate(check.id));
+}
+
+export function stagePasses(agent: Pick<ProcessAgent, 'passThreshold'>, checks: QualityCheck[]): boolean {
+  return scoreChecks(checks) >= agent.passThreshold && hardGatesPass(checks);
 }
 
 function qc(id: string, ok: boolean, weight: number, detail: string): QualityCheck {
@@ -540,7 +568,7 @@ function checkOutline(chapters: OutlineChapter[] | null, input: EbookInput): Qua
   const target = Math.min(8, Math.max(5, input.chapterCount ?? 5));
   return [
     qc('outline-parsed', list.length > 0, 25, `${list.length} chapters parsed`),
-    qc('outline-chapter-count', list.length >= 5 && list.length <= 8 && list.length >= Math.min(target, 5), 20, `target ${target}, got ${list.length}`),
+    qc('outline-chapter-count', list.length === target, 20, `target ${target}, got ${list.length}`),
     qc('outline-points', list.every((chapter) => Array.isArray(chapter.points) && chapter.points.length >= 3), 20, 'every chapter has >=3 points'),
     qc('outline-unique-titles', new Set(titles).size === titles.length, 15, 'chapter titles unique'),
     qc('outline-concrete-titles', list.every((chapter) => !/^(chapter \d+:?\s*)?(intro|introduction|conclusion|summary)$/i.test(chapter.title.trim())), 10, 'no generic titles'),
@@ -564,7 +592,11 @@ async function runOutlineAgent(input: EbookInput, ctx: EngineContext, feedback: 
 
   let chapters = isUsableCompletion(raw) ? extractJson<OutlineChapter[]>(raw) : null;
   let provenance: Provenance = 'llm';
-  if (!Array.isArray(chapters) || chapters.some((chapter) => typeof chapter?.title !== 'string' || !Array.isArray(chapter?.points))) {
+  if (
+    !Array.isArray(chapters) ||
+    chapters.some((chapter) => typeof chapter?.title !== 'string' || !Array.isArray(chapter?.points) || chapter.points.some((point) => typeof point !== 'string')) ||
+    !stagePasses(agent, checkOutline(chapters, input))
+  ) {
     chapters = fallbackOutline(input);
     provenance = 'deterministic-template';
   }
@@ -664,7 +696,7 @@ async function runChapterAgent(input: EbookInput, prior: StageResult[], ctx: Eng
     let content = isUsableCompletion(raw) ? raw.replace(/^```(?:typst)?\s*\n([\s\S]*)\n```\s*$/i, '$1').trim() : '';
     let provenance: Provenance = 'llm';
     let checks = content ? checkChapter(content) : [];
-    if (!content || scoreChecks(checks) < agent.passThreshold) {
+    if (!content || !stagePasses(agent, checks)) {
       content = fallbackChapter(input.topic, index, chapter);
       provenance = 'deterministic-template';
       checks = checkChapter(content);
@@ -831,7 +863,7 @@ async function runListingAgent(input: EbookInput, prior: StageResult[], ctx: Eng
       ...parsed,
       priceUsd: typeof parsed.priceUsd === 'number' ? parsed.priceUsd : Math.min(19.99, Math.max(9.99, input.priceUsd ?? 14.99))
     } as ListingPacket;
-    if (scoreChecks(checkListing(listing)) < agent.passThreshold) {
+    if (!stagePasses(agent, checkListing(listing))) {
       listing = fallbackListing(input, outline);
       provenance = 'deterministic-template';
     }
@@ -909,12 +941,12 @@ function fallbackPromptBatch(input: StockInput): StockPrompt[] {
   });
 }
 
-function checkPromptBatch(batch: StockPrompt[] | null): QualityCheck[] {
+function checkPromptBatch(batch: StockPrompt[] | null, expected: number): QualityCheck[] {
   const list = batch ?? [];
   const filenames = list.map((item) => item.filename);
   return [
     qc('prompts-parsed', list.length > 0, 20, `${list.length} prompts`),
-    qc('prompts-batch-size', list.length >= 10 && list.length <= 20, 20, `${list.length} prompts (10-20)`),
+    qc('prompts-batch-size', list.length === expected, 20, `${list.length}/${expected} prompts`),
     qc('prompts-unique-filenames', new Set(filenames).size === filenames.length, 10, 'filenames unique'),
     qc('prompts-negative', list.every((item) => item.negativePrompt && item.negativePrompt.length > 10), 15, 'negative prompts present'),
     qc('prompts-no-banned-terms', list.every((item) => !STOCK_BANNED_TERMS.test(item.prompt)), 20, 'no people/brands/photorealism'),
@@ -936,11 +968,11 @@ async function runStockPromptAgent(input: StockInput, ctx: EngineContext, feedba
 
   let batch = isUsableCompletion(raw) ? extractJson<StockPrompt[]>(raw) : null;
   let provenance: Provenance = 'llm';
-  if (!Array.isArray(batch) || batch.some((item) => typeof item?.prompt !== 'string' || typeof item?.filename !== 'string') || scoreChecks(checkPromptBatch(batch)) < agent.passThreshold) {
+  if (!Array.isArray(batch) || batch.some((item) => typeof item?.prompt !== 'string' || typeof item?.filename !== 'string' || typeof item?.description !== 'string') || !stagePasses(agent, checkPromptBatch(batch, size))) {
     batch = fallbackPromptBatch(input);
     provenance = 'deterministic-template';
   }
-  const checks = checkPromptBatch(batch);
+  const checks = checkPromptBatch(batch, size);
   const score = scoreChecks(checks);
   return {
     agentId: agent.id,
@@ -973,11 +1005,26 @@ function fallbackMetadata(batch: StockPrompt[], niche: StockInput['niche']): Sto
   });
 }
 
-function checkMetadata(list: StockMetadata[] | null, expected: number): QualityCheck[] {
+function isStockMetadata(value: unknown): value is StockMetadata {
+  if (!value || typeof value !== 'object') return false;
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.filename === 'string' &&
+    typeof item.title === 'string' &&
+    Array.isArray(item.keywords) &&
+    item.keywords.every((keyword) => typeof keyword === 'string') &&
+    typeof item.category === 'string'
+  );
+}
+
+function checkMetadata(list: StockMetadata[] | null, expectedFilenames: string[]): QualityCheck[] {
   const items = list ?? [];
+  const filenames = items.map((item) => item.filename);
+  const expected = new Set(expectedFilenames);
+  const oneToOne = expected.size > 0 && filenames.length === expected.size && new Set(filenames).size === filenames.length && filenames.every((name) => expected.has(name));
   return [
     qc('metadata-parsed', items.length > 0, 15, `${items.length} records`),
-    qc('metadata-covers-batch', items.length === expected && expected > 0, 20, `${items.length}/${expected} assets`),
+    qc('metadata-covers-batch', oneToOne, 20, `${filenames.filter((name) => expected.has(name)).length}/${expected.size} assets mapped 1:1`),
     qc('metadata-title-length', items.every((item) => item.title.length > 0 && item.title.length <= 70), 15, 'titles <=70 chars'),
     qc('metadata-30-keywords', items.every((item) => Array.isArray(item.keywords) && item.keywords.length === 30), 20, 'exactly 30 keywords each'),
     qc('metadata-unique-keywords', items.every((item) => new Set(item.keywords.map((keyword) => keyword.toLowerCase())).size === item.keywords.length), 10, 'keywords unique per asset'),
@@ -999,14 +1046,20 @@ async function runStockMetadataAgent(input: StockInput, prior: StageResult[], ct
 
   let list = isUsableCompletion(raw) ? extractJson<StockMetadata[]>(raw) : null;
   let provenance: Provenance = 'llm';
+  const expectedFilenames = batch.map((item) => item.filename);
   if (Array.isArray(list)) {
-    list = list.map((item) => ({ ...item, generativeAi: true as const, keywords: Array.isArray(item.keywords) ? item.keywords : typeof item.keywords === 'string' ? String(item.keywords).split(',').map((k) => k.trim()) : [] }));
+    list = list.map((item: unknown) => {
+      if (!item || typeof item !== 'object') return item as StockMetadata;
+      const record = item as Record<string, unknown>;
+      const keywords = Array.isArray(record.keywords) ? record.keywords : typeof record.keywords === 'string' ? record.keywords.split(',').map((k) => k.trim()) : [];
+      return { ...record, generativeAi: true as const, keywords } as StockMetadata;
+    });
   }
-  if (!Array.isArray(list) || scoreChecks(checkMetadata(list, batch.length)) < agent.passThreshold) {
+  if (!Array.isArray(list) || !list.every(isStockMetadata) || !stagePasses(agent, checkMetadata(list, expectedFilenames))) {
     list = fallbackMetadata(batch, input.niche);
     provenance = 'deterministic-template';
   }
-  const checks = checkMetadata(list, batch.length);
+  const checks = checkMetadata(list, expectedFilenames);
   const score = scoreChecks(checks);
   return {
     agentId: agent.id,
@@ -1192,7 +1245,7 @@ async function runSynthesisAgent(input: NewsletterInput, prior: StageResult[], c
 
   let content = isUsableCompletion(raw) ? raw.trim() : '';
   let provenance: Provenance = 'llm';
-  if (!content || scoreChecks(checkNewsletter(content, ranked)) < agent.passThreshold) {
+  if (!content || !stagePasses(agent, checkNewsletter(content, ranked))) {
     content = fallbackNewsletter(input, ranked, issueDate);
     provenance = 'deterministic-template';
   }
@@ -1305,11 +1358,11 @@ async function runStage(agent: ProcessAgent, input: SystemInput, prior: StageRes
   while (attempts < agent.maxAttempts) {
     attempts += 1;
     last = await STAGE_RUNNERS[agent.id](input, prior, ctx, feedback);
-    if (last.score >= agent.passThreshold) break;
+    if (stagePasses(agent, last.checks)) break;
     feedback = last.checks.filter((check) => !check.ok).map((check) => `${check.id}: ${check.detail}`);
   }
   if (!last) throw new Error(`Stage ${agent.id} produced no result`);
-  const passed = last.score >= agent.passThreshold;
+  const passed = stagePasses(agent, last.checks);
   return {
     ...last,
     attempts,
@@ -1394,7 +1447,7 @@ export async function runIncomeSystem(input: SystemInput, context: Partial<Engin
   const ctx = createEngineContext(context);
   const system = getIncomeSystem(input.systemId);
   const startedAt = ctx.now();
-  const runId = `pie-${input.systemId}-${startedAt.toISOString().replace(/\D/g, '').slice(0, 14)}-${hashString(JSON.stringify(input)).slice(0, 6)}`;
+  const runId = `pie-${input.systemId}-${startedAt.toISOString().replace(/\D/g, '').slice(0, 14)}-${hashString(JSON.stringify(input)).slice(0, 6)}-${randomUUID().slice(0, 8)}`;
   const stages: StageResult[] = [];
   let halted = false;
 

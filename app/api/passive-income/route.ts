@@ -5,6 +5,7 @@ import {
   getIncomeSystem,
   getIncomeSystems,
   getProcessAgents,
+  createEngineContext,
   getRoadmap,
   isIncomeSystemId,
   runIncomeSystem,
@@ -14,6 +15,8 @@ import {
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
+/** Provider calls stop once this budget is spent so deterministic fallback always finishes inside maxDuration. */
+const PROVIDER_BUDGET_MS = 40_000;
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -71,7 +74,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: input.error }, { status: 400 });
   }
 
-  const run = await runIncomeSystem(input);
+  const run = await runIncomeSystem(input, createEngineContext({ budgetMs: PROVIDER_BUDGET_MS }));
   return NextResponse.json(
     { ok: run.ok, service: 'passive-income-engine', run, timestamp: new Date().toISOString() },
     { status: run.ok ? 200 : 422 }

@@ -9,7 +9,7 @@
  *   ... --system industry-newsletter --niche "Cloud Architecture" --feeds data/passive-income-feeds.json [--fetch]
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { runIncomeSystem, verifyPassiveIncomeEngine } from '../lib/passive-income-engine.ts';
@@ -30,18 +30,58 @@ function parseArgs(argv) {
   return args;
 }
 
+export const MAX_FEED_BYTES = 2 * 1024 * 1024;
+
+/** Read a response body up to MAX_FEED_BYTES; throws if the feed is larger so a hostile server cannot exhaust memory. */
+export async function readBounded(res, limit = MAX_FEED_BYTES) {
+  if (!res.body) return '';
+  const declared = Number(res.headers?.get?.('content-length'));
+  if (Number.isFinite(declared) && declared > limit) throw new Error(`feed exceeds ${limit} bytes`);
+  const reader = res.body.getReader();
+  const chunks = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > limit) {
+      await reader.cancel();
+      throw new Error(`feed exceeds ${limit} bytes`);
+    }
+    chunks.push(value);
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks));
+}
+
+/** Resolve an artifact key inside runDir; rejects traversal, absolute paths, and NUL bytes. */
+export function safeArtifactPath(runDir, key) {
+  if (typeof key !== 'string' || key.length === 0 || key.includes('\0')) throw new Error(`Invalid artifact key: ${JSON.stringify(key)}`);
+  const root = resolve(runDir);
+  const target = resolve(root, key);
+  const rel = relative(root, target);
+  if (rel === '' || rel.startsWith('..') || rel.split(sep).includes('..') || resolve(root, rel) !== target) {
+    throw new Error(`Artifact key escapes run directory: ${key}`);
+  }
+  return target;
+}
+
+const ENTITY_MAP = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", '#39': "'" };
+
+function stripTags(value) {
+  let previous;
+  let current = value;
+  do {
+    previous = current;
+    current = current.replace(/<[^>]*>?/g, '');
+  } while (current !== previous);
+  return current;
+}
+
+/** Plain-text extraction from feed markup: unwrap CDATA, drop tags, single-pass entity decode, drop tags again. */
 function decodeEntities(value) {
-  return value
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/<[^>]+>/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const unwrapped = value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
+  const decoded = stripTags(unwrapped).replace(/&(amp|lt|gt|quot|apos|#39);/g, (_, name) => ENTITY_MAP[name]);
+  return stripTags(decoded).replace(/\s+/g, ' ').trim();
 }
 
 function tag(block, name) {
@@ -73,7 +113,7 @@ async function fetchFeeds(urls) {
       const res = await fetch(url, { signal: AbortSignal.timeout(15_000), headers: { 'user-agent': 'already-here-passive-income-engine/1.0' } });
       if (!res.ok) continue;
       const source = new URL(url).hostname.replace(/^www\./, '');
-      items.push(...parseFeed(await res.text(), source).slice(0, 25));
+      items.push(...parseFeed(await readBounded(res), source).slice(0, 25));
     } catch {
       // skip unreachable feed; ingest agent enforces minimum item/source counts
     }
@@ -124,7 +164,7 @@ async function main() {
 
   for (const stage of run.stages) {
     for (const item of stage.artifacts) {
-      const target = join(runDir, item.key);
+      const target = safeArtifactPath(runDir, item.key);
       mkdirSync(dirname(target), { recursive: true });
       writeFileSync(target, item.content);
     }

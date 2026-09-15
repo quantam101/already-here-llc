@@ -1,19 +1,24 @@
 import assert from 'node:assert/strict';
 import { GET as engineGet, POST as enginePost } from '../app/api/passive-income/route.ts';
+import { resolve } from 'node:path';
 import {
   SUPERVISOR,
   buildStockCsv,
   canonicalizeUrl,
+  createEngineContext,
   extractJson,
   getIncomeSystems,
   getProcessAgents,
+  hardGatesPass,
+  isHardGate,
   rankFeedItems,
   runIncomeSystem,
   scoreToGrade,
+  stagePasses,
   validateSystemInput,
   verifyPassiveIncomeEngine
 } from '../lib/passive-income-engine.ts';
-import { parseFeed } from '../scripts/passive-income-agent.mjs';
+import { parseFeed, readBounded, safeArtifactPath } from '../scripts/passive-income-agent.mjs';
 
 const offline = { complete: async () => null, now: () => new Date('2026-09-15T00:00:00Z') };
 const fallbackLlm = { complete: async () => 'AI providers are currently unavailable. Level-4 deterministic fallback is active.' };
@@ -177,6 +182,119 @@ const fallbackLlm = { complete: async () => 'AI providers are currently unavaila
   assert.deepEqual(rssItem, { title: 'Hello & welcome', url: 'https://example.com/a', source: 'example.com', publishedAt: 'Mon, 14 Sep 2026 10:00:00 GMT', snippet: 'Snippet' });
   assert.equal(parseFeed(atom, 'example.com')[0].url, 'https://example.com/b');
   assert.equal(parseFeed('<html></html>', 'x').length, 0);
+}
+
+// Review hardening: run IDs are collision-resistant even for identical inputs in the same second.
+{
+  const input = { systemId: 'stock-asset-factory', niche: 'ui-icon-collections' };
+  const [a, b] = await Promise.all([runIncomeSystem(input, offline), runIncomeSystem(input, offline)]);
+  assert.notEqual(a.runId, b.runId);
+}
+
+// Hard gates: forbidden claims fail a stage even when the weighted score clears the threshold.
+{
+  assert.ok(isHardGate('listing-no-forbidden-claims'));
+  assert.ok(isHardGate('issue-affiliate-disclosure'));
+  assert.ok(isHardGate('csv-generative-flag'));
+  assert.ok(!isHardGate('listing-title-length'));
+  const checks = [
+    { id: 'listing-no-forbidden-claims', ok: false, weight: 10, detail: '' },
+    { id: 'listing-title-length', ok: true, weight: 90, detail: '' }
+  ];
+  assert.equal(hardGatesPass(checks), false);
+  assert.equal(stagePasses({ passThreshold: 90 }, checks), false);
+
+  const dirtyListing = JSON.stringify({
+    title: 'FastAPI Deploy Guide',
+    subtitle: 'Guaranteed income from day one',
+    description: 'x'.repeat(400),
+    bullets: ['a', 'b', 'c', 'd', 'e'],
+    tags: ['fastapi', 'docker', 'devops', 'python', 'deploy'],
+    priceUsd: 12,
+    disclosure: 'AI-assisted; reviewed by a human before sale.'
+  });
+  const run = await runIncomeSystem(
+    { systemId: 'technical-ebook', topic: 'FastAPI Deploys' },
+    { complete: async (messages) => (messages[0].content.includes('listing') || messages[0].content.includes('Listing') ? dirtyListing : null) }
+  );
+  const listing = JSON.parse(run.stages.at(-1).artifacts[0].content);
+  assert.ok(!JSON.stringify(listing).toLowerCase().includes('guaranteed income'));
+  assert.ok(run.stages.at(-1).checks.find((c) => c.id === 'listing-no-forbidden-claims').ok);
+}
+
+// Requested chapter count is enforced exactly (LLM outline with too few chapters falls back).
+{
+  const shortOutline = JSON.stringify(Array.from({ length: 5 }, (_, i) => ({ title: `Chapter Topic ${i} Deep Dive`, points: ['a', 'b', 'c'] })));
+  const run = await runIncomeSystem(
+    { systemId: 'technical-ebook', topic: 'Kubernetes Ops', chapterCount: 8 },
+    { complete: async (messages) => (messages[1].content.includes('Chapters:') ? shortOutline : null) }
+  );
+  assert.equal(run.stages[0].artifacts[0].provenance, 'deterministic-template');
+  assert.equal(JSON.parse(run.stages[0].artifacts[0].content).length, 8);
+  assert.equal(run.stages[1].artifacts.length, 8);
+}
+
+// Requested stock batch size is enforced exactly; malformed metadata triggers deterministic fallback instead of throwing.
+{
+  const tenPrompts = JSON.stringify(Array.from({ length: 10 }, (_, i) => ({
+    filename: `asset-${i}.png`,
+    prompt: `abstract vector background ${i}, 4000x4000`,
+    negativePrompt: 'people, faces, logos, photorealism',
+    description: `pattern ${i}`
+  })));
+  const run = await runIncomeSystem(
+    { systemId: 'stock-asset-factory', niche: 'seamless-tech-backgrounds', batchSize: 20 },
+    { complete: async (messages) => (messages[1].content.includes('Batch size') ? tenPrompts : '[{"filename":"asset.png","keywords":[]}]') }
+  );
+  assert.equal(run.ok, true, run.nextAction);
+  assert.equal(run.stages[0].artifacts[0].provenance, 'deterministic-template');
+  assert.equal(JSON.parse(run.stages[0].artifacts[0].content).length, 20);
+  assert.equal(run.stages[1].artifacts[0].provenance, 'deterministic-template');
+  assert.equal(JSON.parse(run.stages[1].artifacts[0].content).length, 20);
+
+  // Metadata with duplicate / invented filenames is rejected even when the row count matches.
+  const batch = 10;
+  const promptsOk = JSON.stringify(Array.from({ length: batch }, (_, i) => ({
+    filename: `asset-${i}.png`,
+    prompt: `abstract vector background ${i}, 4000x4000`,
+    negativePrompt: 'people, faces, logos, photorealism',
+    description: `pattern ${i}`
+  })));
+  const keywords = Array.from({ length: 30 }, (_, i) => `kw${i}`);
+  const badMetadata = JSON.stringify(Array.from({ length: batch }, () => ({ filename: 'invented.png', title: 'T', keywords, category: 'c', generativeAi: true })));
+  const run2 = await runIncomeSystem(
+    { systemId: 'stock-asset-factory', niche: 'seamless-tech-backgrounds', batchSize: batch },
+    { complete: async (messages) => (messages[1].content.includes('Batch size') ? promptsOk : badMetadata) }
+  );
+  assert.equal(run2.stages[0].artifacts[0].provenance, 'llm');
+  assert.equal(run2.stages[1].artifacts[0].provenance, 'deterministic-template');
+  assert.deepEqual(JSON.parse(run2.stages[1].artifacts[0].content).map((m) => m.filename).sort(), Array.from({ length: batch }, (_, i) => `asset-${i}.png`).sort());
+}
+
+// Run-wide budget: once exhausted, provider calls are skipped and deterministic templates finish the run.
+{
+  let providerCalls = 0;
+  const ctx = createEngineContext({
+    budgetMs: 1,
+    complete: async () => { providerCalls += 1; await new Promise((r) => setTimeout(r, 50)); return 'never used'; }
+  });
+  const run = await runIncomeSystem({ systemId: 'technical-ebook', topic: 'Budgeted Run' }, ctx);
+  assert.equal(run.ok, true, run.nextAction);
+  assert.ok(providerCalls <= 1);
+  assert.ok(run.stages.every((s) => s.artifacts.every((a) => a.provenance === 'deterministic-template')));
+}
+
+// CLI hardening: artifact keys cannot escape the run directory; feed bodies are size-capped.
+{
+  const runDir = '/tmp/pie-run';
+  assert.equal(safeArtifactPath(runDir, 'chapters/01-intro.typ'), resolve(runDir, 'chapters/01-intro.typ'));
+  for (const key of ['../escape.txt', 'chapters/../../escape.txt', '/etc/passwd', 'a\0b', '', '.']) {
+    assert.throws(() => safeArtifactPath(runDir, key), key || '(empty)');
+  }
+  const bigBody = new Response(new Uint8Array(1024).fill(65));
+  await assert.rejects(readBounded(bigBody, 512), /exceeds/);
+  assert.equal(await readBounded(new Response('<rss/>'), 512), '<rss/>');
+  await assert.rejects(readBounded(new Response('x', { headers: { 'content-length': '999999' } }), 512), /exceeds/);
 }
 
 console.log('passive-income-engine tests passed');
