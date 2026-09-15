@@ -1,0 +1,23 @@
+{
+  "niche": "Cloud Architecture",
+  "affiliateTools": [
+    {
+      "name": "DigitalOcean",
+      "url": "https://www.digitalocean.com/?refcode=REPLACE_ME",
+      "pitch": "Predictable cloud compute for small teams"
+    },
+    {
+      "name": "Notion",
+      "url": "https://affiliate.notion.so/REPLACE_ME",
+      "pitch": "Executive briefing workspace and knowledge base"
+    }
+  ],
+  "feeds": [
+    "https://aws.amazon.com/blogs/architecture/feed/",
+    "https://feed.infoq.com/architecture-design/",
+    "https://www.cncf.io/feed/",
+    "https://blog.cloudflare.com/rss/",
+    "https://news.ycombinator.com/rss"
+  ],
+  "items": []
+}
