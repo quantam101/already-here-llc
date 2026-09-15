@@ -66,10 +66,10 @@ function getOutputDir() {
   return path.resolve(__dirname, configured);
 }
 
-function loadExistingArticles(outputDir = getOutputDir(), excludeFilename = '') {
+function loadExistingArticles(outputDir = getOutputDir()) {
   if (!fs.existsSync(outputDir)) return [];
   return fs.readdirSync(outputDir)
-    .filter(name => name.endsWith('.md') && name !== excludeFilename)
+    .filter(name => name.endsWith('.md'))
     .map(filename => {
       const fullPath = path.join(outputDir, filename);
       const content = fs.readFileSync(fullPath, 'utf8');
@@ -118,7 +118,7 @@ function validatePost(post, options = {}) {
     errors.push(`Remove or verify forecast/research claims before publication: ${unsupportedClaims[0]}`);
   }
 
-  const existing = options.existingArticles || loadExistingArticles(options.outputDir || getOutputDir(), post?.filename || '');
+  const existing = options.existingArticles || loadExistingArticles(options.outputDir || getOutputDir());
   const candidateTitle = normalizeTitle(post?.title || extractTitle(post?.content || ''));
   let highestSimilarity = 0;
   let closestFile = '';
