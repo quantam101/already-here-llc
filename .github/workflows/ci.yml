@@ -49,6 +49,9 @@ jobs:
       - name: Install dependencies
         run: npm ci --silent
 
+      - name: ProfitEngine content quality tests
+        run: node --test profitengine/tests/quality-gate.test.js
+
       - name: Quality gate
         shell: bash
         run: |
