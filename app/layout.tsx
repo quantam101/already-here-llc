@@ -15,7 +15,7 @@ export const viewport: Viewport = {
   viewportFit: 'cover'
 };
 
-const mspDescription = 'Already Here LLC is a Phoenix-based managed service provider (MSP) delivering managed IT support, help desk services, network and systems administration, security, cloud and endpoint support, plus onsite technical field operations, rollouts, break/fix, remediation, and multi-site project execution.';
+const mspDescription = 'Already Here LLC is a Phoenix-based managed service provider (MSP) with 30+ years of IT experience delivering managed IT support, help desk services, network and systems administration, Microsoft 365 and cloud support, identity and access support, security hardening, infrastructure services, projects, and onsite technical field operations.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -29,39 +29,36 @@ export const metadata: Metadata = {
     'managed IT services Phoenix',
     'managed service provider Phoenix',
     'Phoenix MSP',
-    'business IT support',
+    'business IT support Phoenix',
     'IT help desk services',
     'remote IT support',
+    'co-managed IT services',
     'network administration',
     'systems administration',
+    'managed network services',
     'Microsoft 365 support',
     'cloud infrastructure support',
+    'identity and access support',
     'endpoint management',
-    'IT security services',
-    'firewall management',
-    'onsite IT field execution',
+    'IT security services Phoenix',
+    'cybersecurity support Phoenix',
+    'firewall support',
+    'IT strategy and planning',
+    'IT vendor management',
+    'onsite IT support Phoenix',
     'technical field operations',
-    'onsite infrastructure execution',
-    'MSP smart hands support',
+    'smart hands support',
     'network troubleshooting',
-    'rollout recovery',
-    'commercial IT field support',
-    'retail infrastructure support',
+    'rollout and remediation support',
+    'commercial IT support',
+    'retail technology support',
+    'data center support',
     'government contractor IT services',
     'SAM.gov registered IT contractor',
-    'field support for critical systems',
-    'vendor field execution',
-    'Arizona onsite IT field execution',
-    'Phoenix technical field operations',
     'RFID field support',
-    'barcode scanner support',
     'asset tracking field support',
     'IT asset recovery',
-    'store decommissioning support',
-    'return logistics support',
-    'AI website chatbox setup',
-    'AI lead capture agent',
-    'small business AI agent setup'
+    'store decommissioning support'
   ]
 };
 
@@ -101,12 +98,15 @@ const localBusinessSchema = {
   },
   knowsAbout: [
     'Managed IT Services',
+    'Co-Managed IT Services',
     'IT Help Desk and Remote Support',
     'Network Administration',
     'Systems Administration',
     'Endpoint Management',
     'Microsoft 365 and Cloud Support',
+    'Identity and Access Support',
     'IT Security and Firewall Support',
+    'IT Strategy and Vendor Coordination',
     'Onsite Infrastructure Execution',
     'Technical Field Operations',
     'Smart Hands',
@@ -114,34 +114,29 @@ const localBusinessSchema = {
     'Rollout Recovery',
     'Retail Technology Support',
     'RFID Field Support',
-    'Barcode Scanner Support',
     'Asset Tracking Field Support',
     'IT Asset Recovery',
     'Store Decommissioning Support',
-    'Return Logistics Support',
     'Critical Systems Field Support',
-    'AI Website Chatbox Setup',
-    'AI Lead Capture Agent',
     'SAM.gov Registered Contractor'
   ],
   hasOfferCatalog: {
     '@type': 'OfferCatalog',
-    name: 'Managed IT Services, Technical Field Operations, Infrastructure, Security, and Business Technology Services',
+    name: 'Managed IT Services, Security, Cloud, Infrastructure, Projects, and Technical Field Operations',
     itemListElement: [
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Managed IT Services' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Co-Managed IT Services' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Help Desk and Remote IT Support' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Network and Systems Administration' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Cloud, Identity, and Endpoint Support' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'IT Security and Firewall Support' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Technical Field Operations' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Onsite Infrastructure Execution' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Smart Hands Support' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Network Troubleshooting' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Rollout Recovery and Remediation' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Microsoft 365, Cloud, Identity, and Endpoint Support' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'IT Security, Firewall, and Security Hardening Support' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'IT Strategy, Projects, and Vendor Coordination' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Onsite IT and Technical Field Operations' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Smart Hands and Infrastructure Support' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Network Troubleshooting and Remediation' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Rollout, Refresh, and Multi-Site Project Support' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'RFID, Barcode, and Asset Tracking Field Support' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Store Decommissioning, IT Asset Recovery, and Return Logistics' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Infrastructure Assessment' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'AI Website Chatbox and Lead Capture Agent Setup' } }
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Store Decommissioning, IT Asset Recovery, and Return Logistics' } }
     ]
   }
 };
