@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { closeoutItems, serviceGroups } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Managed IT Services & Technical Field Operations | Already Here LLC',
+  title: 'Managed IT Services & Technical Field Operations',
   description:
     'Already Here LLC is a Phoenix-based managed service provider (MSP) delivering managed IT support, network and systems administration, security, cloud and infrastructure support, help desk services, onsite technical field services, rollouts, break/fix, remediation, retail technology, data center support, and multi-site project execution.',
   alternates: { canonical: '/services' }
