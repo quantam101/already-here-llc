@@ -22,14 +22,14 @@ export function FloatingRevenueCtas() {
       </button>
       <div className="grid gap-2 md:grid-cols-[1.15fr_0.85fr_0.85fr] md:items-center">
         <div className="hidden text-sm leading-6 text-white/85 md:block">
-          <span className="font-semibold text-white">Need a Phoenix technician today?</span>{' '}
-          Same-day smart hands, POS, network, camera/cabling, AV, printer, access-control, and closeout-heavy dispatch support.
+          <span className="font-semibold text-white">Need managed IT support or onsite technical help?</span>{' '}
+          Start with one intake for recurring IT, remote support, projects, or field service.
         </div>
-        <Link href="/emergency-dispatch" className="link-ring inline-flex items-center justify-center rounded-2xl bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white hover:bg-white hover:text-[#071B34]">
-          Request Same-Day Dispatch
+        <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-2xl bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white hover:bg-white hover:text-[#071B34]">
+          Request IT Support
         </Link>
-        <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-2xl border border-white/35 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-white/10">
-          Standard Dispatch Intake
+        <Link href="/emergency-dispatch" className="link-ring inline-flex items-center justify-center rounded-2xl border border-white/35 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-white/10">
+          Same-Day Onsite Help
         </Link>
       </div>
     </div>
