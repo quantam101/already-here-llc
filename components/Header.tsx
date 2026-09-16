@@ -114,7 +114,7 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#071B34]">
       <div className="container-shell flex items-center justify-between gap-4 py-4">
         <Link href="/" className="link-ring flex min-w-0 items-center rounded-2xl" aria-label="Already Here LLC home">
-          <BrandMark className="min-w-0" tagline="ONSITE INFRASTRUCTURE EXECUTION" textColorClassName="text-white" />
+          <BrandMark className="min-w-0" tagline="MANAGED IT + FIELD OPERATIONS" textColorClassName="text-white" />
         </Link>
 
         {/* Desktop nav — dropdown groups */}
