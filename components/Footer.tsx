@@ -11,10 +11,12 @@ export function Footer() {
         <div>
           <div className="text-lg font-semibold text-navy">{siteConfig.name}</div>
           <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600">
-            Phoenix-based field execution partner for vendors, MSPs, and multi-site operators
-            needing onsite support, documented closeout, and dependable Arizona project coverage.
+            Phoenix-based managed service provider delivering remote and onsite IT support,
+            network and systems administration, security, cloud and endpoint support, plus
+            technical field operations for commercial and multi-site environments.
           </p>
           <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+            <span className="rounded-full border border-borderBrand px-3 py-1">Managed IT Services</span>
             <span className="rounded-full border border-borderBrand px-3 py-1">Phoenix-based</span>
             <span className="rounded-full border border-borderBrand px-3 py-1">Commercially Insured</span>
             <span className="rounded-full border border-borderBrand px-3 py-1">Veteran-Owned</span>
@@ -22,10 +24,10 @@ export function Footer() {
           </div>
           <div className="mt-6">
             <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Field operations newsletter
+              IT & field operations newsletter
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Arizona coverage updates, rate benchmarks, and field playbooks.
+              Managed IT, infrastructure, security, field operations, and technology playbooks.
             </p>
             <div className="mt-3 max-w-md">
               <NewsletterSignup />
@@ -47,7 +49,7 @@ export function Footer() {
             <li><Link href="/services-catalog" className="hover:text-action">Service Catalog</Link></li>
             <li><Link href="/project-gallery" className="hover:text-action">Project Gallery</Link></li>
             <li><Link href="/capability-statement" className="hover:text-action">Capability Statement</Link></li>
-            <li><Link href="/blog" className="hover:text-action">Field Insights</Link></li>
+            <li><Link href="/blog" className="hover:text-action">IT & Field Insights</Link></li>
             <li><Link href="/privacy" className="hover:text-action">Privacy Policy</Link></li>
             <li><Link href="/legal/terms" className="hover:text-action">Terms of Service</Link></li>
             <li><Link href="/legal/gdpr" className="hover:text-action">GDPR & Data Rights</Link></li>
@@ -74,7 +76,7 @@ export function Footer() {
               <a href={siteConfig.phoneHref} className="hover:text-action transition-colors">
                 {siteConfig.phoneDisplay}
               </a>
-              <span className="ml-2 text-xs text-slate-400">- {siteConfig.phoneNote}</span>
+              <span className="ml-2 text-xs text-slate-400">- Managed IT and dispatch intake</span>
             </p>
             <p>
               <a href={`mailto:${siteConfig.email}`} className="hover:text-action transition-colors">
@@ -86,7 +88,7 @@ export function Footer() {
             href="/dispatch"
             className="link-ring mt-6 inline-flex items-center justify-center rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy"
           >
-            Open Dispatch
+            Request IT Support
           </Link>
         </div>
       </div>
@@ -94,7 +96,7 @@ export function Footer() {
       <div className="border-t border-borderBrand py-6">
         <div className="container-shell flex flex-col gap-3 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
           <p>&copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.</p>
-          <p className="text-xs"> Use the dispatch form to submit scope, schedule, and site details.</p>
+          <p className="text-xs"> Use the support intake to submit IT, project, or onsite service requirements.</p>
         </div>
       </div>
     </footer>
