@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
-const title = 'Managed IT Services & Technical Field Operations | Already Here LLC';
-const description = 'Phoenix-based managed service provider (MSP) delivering managed IT support, help desk services, network and systems administration, security, cloud and endpoint support, plus onsite technical field operations, rollouts, break/fix, and remediation.';
+const title = 'Managed IT Services, Security, Cloud & Field Support | Already Here LLC';
+const description = 'Phoenix managed IT services backed by 30+ years of hands-on IT experience, including help desk, networks, systems, Microsoft 365, cloud, identity, security, projects, and onsite technical support.';
 
 export const metadata: Metadata = {
   openGraph: {
