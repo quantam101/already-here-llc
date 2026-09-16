@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { BrandMark } from '@/components/BrandMark';
 import { siteConfig } from '@/lib/site';
 
@@ -10,59 +10,58 @@ const navGroups = [
   {
     label: 'Services',
     items: [
-      { href: '/services', label: 'All Services' },
-      { href: '/operations-products', label: 'Products' },
-      { href: '/mobility', label: 'Mobility' },
-      { href: '/scooter-rentals', label: 'Scooter Rentals' },
+      { href: '/services#managed-it', label: 'Managed IT Services' },
+      { href: '/services#security', label: 'Cybersecurity & Security' },
+      { href: '/services#cloud', label: 'Microsoft 365 & Cloud' },
+      { href: '/services#infrastructure', label: 'Network & Infrastructure' },
+      { href: '/services#field-operations', label: 'Onsite Field Operations' },
+    ],
+  },
+  {
+    label: 'Who We Serve',
+    items: [
+      { href: '/who-we-serve', label: 'Businesses & IT Teams' },
       { href: '/industries', label: 'Industries' },
+      { href: '/government-contracting', label: 'Government & Primes' },
+      { href: '/rollout-support', label: 'Multi-Site Projects' },
     ],
   },
   {
-    label: 'Field Ops',
+    label: 'Proof',
     items: [
-      { href: '/emergency-dispatch', label: 'Same-Day Dispatch' },
-      { href: '/dispatch', label: 'Standard Dispatch' },
-      { href: '/ginc', label: 'GINC' },
-      { href: '/connect', label: 'GINC Work' },
-    ],
-  },
-  {
-    label: 'Enterprise',
-    items: [
-      { href: '/enterprise', label: 'Enterprise Solutions' },
-      { href: '/government-contracting', label: 'Government' },
-      { href: '/partner-with-us', label: 'Partners' },
-      { href: '/technician-network', label: 'Tech Network' },
-      { href: '/rfq', label: 'RFQ' },
-    ],
-  },
-  {
-    label: 'Tools',
-    items: [
-      { href: '/dashboard', label: 'Dashboard' },
-      { href: '/ai-agent', label: 'AI Lead Capture' },
       { href: '/capability-statement', label: 'Capability Statement' },
-      { href: '/self-hosted-solutions', label: 'Self-Hosted Stack' },
+      { href: '/project-gallery', label: 'Project Gallery' },
+      { href: '/coverage', label: 'Coverage Area' },
+      { href: '/blog', label: 'IT & Field Insights' },
+    ],
+  },
+  {
+    label: 'Support',
+    items: [
+      { href: '/dispatch', label: 'Request IT Support' },
+      { href: '/emergency-dispatch', label: 'Same-Day Onsite Support' },
+      { href: '/rfq', label: 'Project RFQ' },
+      { href: '/dashboard', label: 'Operations Portal' },
     ],
   },
 ];
 
-const mobileNavGroups = [
-  { heading: 'Services', items: navGroups[0].items },
-  { heading: 'Field Ops', items: navGroups[1].items },
-  { heading: 'Enterprise', items: navGroups[2].items },
-  { heading: 'Tools', items: navGroups[3].items },
-];
+const mobileNavGroups = navGroups.map((group) => ({ heading: group.label, items: group.items }));
 
-function DropdownGroup({ group, pathname }: { group: typeof navGroups[0]; pathname: string }) {
+function pathFor(href: string) {
+  return href.split('#')[0];
+}
+
+function DropdownGroup({ group, pathname }: { group: typeof navGroups[number]; pathname: string }) {
   const [open, setOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isActive = group.items.some((item) => pathname === item.href);
+  const isActive = group.items.some((item) => pathname === pathFor(item.href));
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setOpen(true);
   };
+
   const handleMouseLeave = () => {
     timeoutRef.current = setTimeout(() => setOpen(false), 120);
   };
@@ -83,9 +82,9 @@ function DropdownGroup({ group, pathname }: { group: typeof navGroups[0]; pathna
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] rounded-2xl border border-white/15 bg-[#071B34] py-2 shadow-2xl">
+        <div className="absolute left-0 top-full z-50 mt-1 min-w-[230px] rounded-2xl border border-white/15 bg-[#071B34] py-2 shadow-2xl">
           {group.items.map((item) => {
-            const active = pathname === item.href;
+            const active = pathname === pathFor(item.href);
             return (
               <Link
                 key={item.href}
@@ -117,7 +116,6 @@ export function Header() {
           <BrandMark className="min-w-0" tagline="MANAGED IT + FIELD OPERATIONS" textColorClassName="text-white" />
         </Link>
 
-        {/* Desktop nav — dropdown groups */}
         <nav className="hidden items-center gap-1 xl:flex" aria-label="Primary navigation">
           {navGroups.map((group) => (
             <DropdownGroup key={group.label} group={group} pathname={pathname} />
@@ -128,15 +126,15 @@ export function Header() {
           <a href={siteConfig.phoneHref} className="link-ring rounded-full border border-white/35 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">
             {siteConfig.phoneDisplay}
           </a>
-          <Link href="/emergency-dispatch" className="link-ring rounded-full bg-[#1B66FF] px-5 py-2.5 text-sm font-semibold text-white hover:bg-white hover:text-[#071B34]">
-            Same-Day Dispatch
+          <Link href="/dispatch" className="link-ring rounded-full bg-[#1B66FF] px-5 py-2.5 text-sm font-semibold text-white hover:bg-white hover:text-[#071B34]">
+            Request IT Support
           </Link>
         </div>
 
         <button
           type="button"
           className="link-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/45 text-white xl:hidden"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
           aria-controls="mobile-nav"
           aria-label="Toggle navigation"
@@ -145,7 +143,6 @@ export function Header() {
         </button>
       </div>
 
-      {/* Mobile nav — grouped sections */}
       {open && (
         <div id="mobile-nav" className="border-t border-white/10 bg-[#071B34] xl:hidden">
           <div className="container-shell flex flex-col gap-5 py-5">
@@ -154,16 +151,14 @@ export function Header() {
                 <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">{group.heading}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {group.items.map((item) => {
-                    const active = pathname === item.href;
+                    const active = pathname === pathFor(item.href);
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
                         aria-current={active ? 'page' : undefined}
                         className={`link-ring rounded-2xl border px-4 py-3 text-sm font-semibold text-white ${
-                          active
-                            ? 'border-[#1B66FF]/70 bg-[#020B15]'
-                            : 'border-white/20 bg-white/5 hover:border-[#1B66FF] hover:bg-white/10'
+                          active ? 'border-[#1B66FF]/70 bg-[#020B15]' : 'border-white/20 bg-white/5 hover:border-[#1B66FF] hover:bg-white/10'
                         }`}
                         onClick={() => setOpen(false)}
                       >
@@ -184,11 +179,11 @@ export function Header() {
                 {siteConfig.phoneDisplay}
               </a>
               <Link
-                href="/emergency-dispatch"
+                href="/dispatch"
                 className="link-ring rounded-2xl border border-[#1B66FF] bg-[#1B66FF] px-4 py-3 text-center text-sm font-semibold text-white"
                 onClick={() => setOpen(false)}
               >
-                Same-Day Dispatch
+                Request IT Support
               </Link>
             </div>
           </div>
