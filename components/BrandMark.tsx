@@ -29,7 +29,7 @@ export function BrandIcon({ className = 'h-12 w-12' }: { className?: string }) {
 export function BrandMark({
   variant = 'horizontal',
   className = '',
-  tagline = 'ONSITE INFRASTRUCTURE EXECUTION',
+  tagline = 'MANAGED IT + FIELD OPERATIONS',
   textColorClassName = 'text-navy'
 }: BrandMarkProps) {
   if (variant === 'icon') {
