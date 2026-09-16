@@ -15,15 +15,30 @@ export const viewport: Viewport = {
   viewportFit: 'cover'
 };
 
+const mspDescription = 'Already Here LLC is a Phoenix-based managed service provider (MSP) delivering managed IT support, help desk services, network and systems administration, security, cloud and endpoint support, plus onsite technical field operations, rollouts, break/fix, remediation, and multi-site project execution.';
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: 'Phoenix Onsite IT Field Services | Already Here LLC',
+    default: 'Managed IT Services & Technical Field Operations | Already Here LLC',
     template: '%s | Already Here LLC'
   },
-  description: siteConfig.description,
+  description: mspDescription,
   applicationName: siteConfig.name,
   keywords: [
+    'managed IT services Phoenix',
+    'managed service provider Phoenix',
+    'Phoenix MSP',
+    'business IT support',
+    'IT help desk services',
+    'remote IT support',
+    'network administration',
+    'systems administration',
+    'Microsoft 365 support',
+    'cloud infrastructure support',
+    'endpoint management',
+    'IT security services',
+    'firewall management',
     'onsite IT field execution',
     'technical field operations',
     'onsite infrastructure execution',
@@ -52,13 +67,13 @@ export const metadata: Metadata = {
 
 const localBusinessSchema = {
   '@context': 'https://schema.org',
-  '@type': 'LocalBusiness',
+  '@type': ['ProfessionalService', 'LocalBusiness'],
   name: 'Already Here LLC',
-  description: siteConfig.description,
+  description: mspDescription,
   url: siteConfig.url,
   telephone: siteConfig.phoneHref.replace('tel:', ''),
   email: siteConfig.email,
-  slogan: siteConfig.tagline,
+  slogan: 'Managed IT Services + Technical Field Operations',
   address: {
     '@type': 'PostalAddress',
     streetAddress: '429 N 18th Dr',
@@ -76,7 +91,7 @@ const localBusinessSchema = {
     'Phoenix, AZ', 'Tempe, AZ', 'Mesa, AZ', 'Chandler, AZ',
     'Scottsdale, AZ', 'Glendale, AZ', 'Peoria, AZ', 'Surprise, AZ',
     'Goodyear, AZ', 'Avondale, AZ', 'Gilbert, AZ', 'Arizona',
-    'United States project-based field engagements'
+    'United States project-based engagements'
   ],
   openingHoursSpecification: {
     '@type': 'OpeningHoursSpecification',
@@ -85,9 +100,16 @@ const localBusinessSchema = {
     closes: '20:00'
   },
   knowsAbout: [
+    'Managed IT Services',
+    'IT Help Desk and Remote Support',
+    'Network Administration',
+    'Systems Administration',
+    'Endpoint Management',
+    'Microsoft 365 and Cloud Support',
+    'IT Security and Firewall Support',
     'Onsite Infrastructure Execution',
     'Technical Field Operations',
-    'MSP Smart Hands',
+    'Smart Hands',
     'Network Troubleshooting',
     'Rollout Recovery',
     'Retail Technology Support',
@@ -104,11 +126,16 @@ const localBusinessSchema = {
   ],
   hasOfferCatalog: {
     '@type': 'OfferCatalog',
-    name: 'Technical Field Operations, Infrastructure Execution, Retail Technology, Asset Recovery, and AI Lead Capture Services',
+    name: 'Managed IT Services, Technical Field Operations, Infrastructure, Security, and Business Technology Services',
     itemListElement: [
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Managed IT Services' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Help Desk and Remote IT Support' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Network and Systems Administration' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Cloud, Identity, and Endpoint Support' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'IT Security and Firewall Support' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Technical Field Operations' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Onsite Infrastructure Execution' } },
-      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'MSP Smart Hands Support' } },
+      { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Smart Hands Support' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Network Troubleshooting' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Rollout Recovery and Remediation' } },
       { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'RFID, Barcode, and Asset Tracking Field Support' } },
