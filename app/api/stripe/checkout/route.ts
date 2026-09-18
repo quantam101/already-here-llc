@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { Stripe } from 'stripe';
 import { liveStripeClient } from '@/lib/stripe';
+import { siteConfig } from '@/lib/site';
 
 export const runtime = 'nodejs';
 
@@ -73,17 +74,27 @@ export async function POST(request: Request) {
       };
 
   try {
+    const canonicalMetadata: Record<string, string> = {
+      ...metadata,
+      referralCode,
+      businessName: siteConfig.name,
+      stripeProfileHandle: siteConfig.stripeProfileHandle
+    };
+
     const sessionCreateParams: Stripe.Checkout.SessionCreateParams = {
       mode,
       payment_method_types: ['card'],
       line_items: [lineItem],
-      metadata: {
-        referralCode,
-        ...metadata
-      },
+      metadata: canonicalMetadata,
       success_url,
       cancel_url
     };
+
+    if (mode === 'payment') {
+      sessionCreateParams.payment_intent_data = { metadata: canonicalMetadata };
+    } else {
+      sessionCreateParams.subscription_data = { metadata: canonicalMetadata };
+    }
 
     if (customerEmail) sessionCreateParams.customer_email = customerEmail;
 

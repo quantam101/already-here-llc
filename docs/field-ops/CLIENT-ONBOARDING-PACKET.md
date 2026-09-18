@@ -37,6 +37,18 @@ performance, and flagged risks.
 2. **Email:** dispatch@alreadyherellc.com
 Include: site, contact, severity (S1/S2/S3 per SLA), and scope notes.
 
+## Payment & Remittance
+- **Stripe business profile:** `@alreadyherellc`
+- Pay from the Stripe invoice or payment link issued by Already Here LLC so the
+  invoice number, service description, tax treatment, and accounting record stay linked.
+- Include the invoice number on remittance and send payment questions or remittance
+  confirmation to dispatch@alreadyherellc.com.
+- Bank or payout-account details are never published on the public website, in generic
+  proposals, capability statements, or this onboarding packet. If a client requires ACH
+  vendor setup, remittance instructions are provided only through a verified private AP
+  channel. Any requested change to remittance details must be independently verified
+  using a known Already Here LLC contact before funds are sent.
+
 ## Key Documents
 Retainer Agreement (your tier + hours) · SLA (response targets) ·
 Rate Card (overage + project pricing) · Service Catalog
