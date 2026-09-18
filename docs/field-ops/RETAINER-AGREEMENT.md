@@ -51,6 +51,14 @@ Monthly fee invoiced in advance on the [1st] of each month, net 15. Overage
 hours invoiced monthly in arrears with the visit log. A monthly utilization
 report accompanies each invoice.
 
+Electronic payments use Provider-issued Stripe invoices or payment links. Provider's
+Stripe business profile is **@alreadyherellc**. Client should pay from the issued
+invoice or payment link so the invoice number, service description, tax treatment, and
+accounting record remain linked. Bank or payout-account details are not published in
+public materials. If ACH vendor setup is required, remittance instructions are supplied
+only through a verified private AP channel; any change must be independently verified
+through dispatch@alreadyherellc.com or another previously known Provider contact.
+
 ## 6. Changes and Termination
 6.1 Client may change tiers effective the next monthly cycle with 15 days'
 notice.
