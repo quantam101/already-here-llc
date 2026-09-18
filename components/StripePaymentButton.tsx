@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { siteConfig } from '@/lib/site';
 
 export interface StripePaymentButtonProps {
   mode?: 'payment' | 'subscription';
@@ -68,6 +69,9 @@ export function StripePaymentButton({
   return (
     <button type="button" onClick={handleClick} disabled={loading} className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-70">
       {loading ? 'Redirecting...' : children}
+      {!loading && (
+        <span className="ml-2 text-xs font-medium opacity-80">· {siteConfig.stripeProfileHandle}</span>
+      )}
     </button>
   );
 }
