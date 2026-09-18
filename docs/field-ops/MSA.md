@@ -34,6 +34,16 @@ Provider may suspend services on accounts more than fifteen (15) days past due
 after written notice.
 3.4 Fees exclude applicable taxes, which are Client's responsibility (excluding
 taxes on Provider's income).
+3.5 Provider-issued Stripe invoices and payment links are the standard electronic
+payment workflow. Provider's Stripe business profile is **@alreadyherellc**. Client
+should pay from the issued invoice or payment link so the invoice number, service
+description, tax treatment, and accounting record remain linked.
+3.6 Provider does not publish payout-bank details on public pages, generic proposals,
+capability statements, or onboarding materials. If ACH or other bank-remittance
+instructions are required for vendor setup, Provider will supply them only through a
+verified private channel. Any change to remittance instructions must be independently
+verified through dispatch@alreadyherellc.com or another previously known Provider
+contact before payment is sent.
 
 ## 4. Scheduling, Access, and Client Responsibilities
 4.1 Client will provide safe site access, badging/escort where required, a
