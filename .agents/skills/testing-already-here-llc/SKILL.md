@@ -64,11 +64,22 @@ Key pages to verify:
 - `next-env.d.ts` is auto-generated — exclude it from ESLint via `eslint.config.mjs`
 - K8s manifests reference images that don't exist yet (`ghcr.io/quantam101/already-here-llc-web:latest`) — these are scaffolds
 
+## Marketplace / Scooter / Connect / Dashboard Testing
+
+- New pages added by recent PRs: `/marketplace`, `/fleet-marketplace`, `/connect`, `/dashboard`, `/scooter-rentals`, `/scooter-rentals/terms`.
+- `/fleet-marketplace` server-redirects to `/marketplace` via `redirect('/marketplace')`.
+- `/marketplace` uses `<FleetMarketplaceListings>` for keyword/category/status filtering and `<MobilityMarketplaceForm>` for intake; the form POSTs to `/api/mobility` and returns `mobilityId` like `MOB-...`.
+- `/scooter-rentals` form reads `?ref=AH-XXXXXX` from `useSearchParams`, validates against `/^AH-[A-Z0-9]{6}$/`, and pre-fills `referralCode`. Invalid refs are ignored.
+- `/connect` uses `<ConnectMatchForm>` and POSTs to `/api/connect`.
+- `/dashboard` is a static preview with links to `/marketplace`, `/scooter-rentals`, `/connect`, `/dashboard/referrals`, `/dashboard/payments`.
+- A fixed bottom "Need a Phoenix technician today?" CTA can obscure form fields on long pages; hide it for testing with a one-time `display: none` via the browser console.
+- The automation keyboard/mouse sometimes cannot reliably fill long forms or hit small targets; falling back to `browser_console` to set `.value`/`.checked` and trigger `.click()` is acceptable for proving end-to-end behavior.
+
 ## GINC Network Testing
 
 - GINC pages: `/ginc` (hub), `/ginc/join`, `/ginc/list`, `/ginc/work`, `/ginc/network`, plus `/connect` (GINC Work) and `/dashboard`.
 - Default seed data lives in `lib/ginc-store.ts` and persists to `data/ginc-network.json` in local dev (Redis only when `UPSTASH_REDIS_*` env vars are set). Delete `data/ginc-network.json` before starting `npm run dev` if you need a clean seed.
-- Form submissions return `MEM-${ts}-${uuid}`, `LST-${ts}-${uuid}`, and `JOB-${ts}-${uuid}` references. The per-route in-memory rate limit resets after 60 seconds of inactivity.
+- Form submissions return `MEM-${ts}-${uuid}`, `LST-${ts}-${uuid}`, and `JOB-${ts}-${uuid}` references. Redis-backed rate limiting is used when `UPSTASH_REDIS_*` is configured; otherwise a per-instance in-memory limit applies.
 - The `/ginc/network` filter inputs are **controlled React components**. If you must set them via `browser_console`, use the native input value setter to update React state:
   ```js
   const setNativeValue = (el, value) => Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(el, value);
@@ -82,6 +93,20 @@ Key pages to verify:
 - `npm run lint` uses `--max-warnings=0`, so any unused-import warnings in GINC files will fail the gate.
 - `npm run typecheck` / `npm run build` are strict; missing imports (`GincListing`, `GincJob`) or importing non-exported names (`PublicMember` from `lib/ginc-store`) will fail the build.
 - `npm run test` and `node scripts/a-plus-content-guard.mjs` usually pass if the above issues are clean.
+
+## Vercel Preview URL
+
+- Vercel bot comments are base64-encoded payloads. Extract the preview URL with:
+  ```bash
+  gh api repos/quantam101/already-here-llc/issues/<PR>/comments \
+    --jq '.[] | select(.user.login == "vercel[bot]") | .body' | \
+    sed 's/.*#\(.*\)=:.*/\1/' | base64 -d | python3 -m json.tool
+  ```
+- Alternatively, the comment body also contains a markdown `[Preview](...)` link.
+
+## Devin Secrets Needed
+
+- No secrets are required for UI testing; `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, and `TWILIO_*` keys are not needed for form success responses.
 
 ## Dependencies
 
