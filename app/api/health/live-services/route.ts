@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCanonicalStore } from '@/lib/canonical-store';
 import { ociHealthCheck } from '@/lib/oci-canonical-client';
-import { isLiveMode, sanitizeStripeKey, stripe } from '@/lib/stripe';
+import { isLiveMode, stripe } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,27 +41,34 @@ export async function GET() {
 
   // OCI canonical persistence
   const ociStart = performance.now();
-  const ociHealth = await ociHealthCheck();
-  if (ociHealth === undefined) {
+  try {
+    const ociHealth = await ociHealthCheck();
+    if (ociHealth === undefined) {
+      services.push({
+        name: 'oci_canonical',
+        ok: false,
+        status: 'not_configured',
+        message: 'Set OCI_CANONICAL_URL and OCI_CANONICAL_API_KEY to enable OCI persistence.'
+      });
+    } else {
+      services.push({
+        name: 'oci_canonical',
+        ok: ociHealth.ok === true,
+        status: ociHealth.ok === true ? 'healthy' : 'degraded',
+        latencyMs: Math.round(performance.now() - ociStart)
+      });
+    }
+  } catch {
     services.push({
       name: 'oci_canonical',
       ok: false,
-      status: 'not_configured',
-      message: 'Set OCI_CANONICAL_URL and OCI_CANONICAL_API_KEY to enable OCI persistence.'
-    });
-  } else {
-    services.push({
-      name: 'oci_canonical',
-      ok: ociHealth.ok === true,
-      status: ociHealth.ok === true ? 'healthy' : 'degraded',
-      latencyMs: Math.round(performance.now() - ociStart)
+      status: 'degraded',
+      message: 'OCI health check failed'
     });
   }
 
   // Stripe
   const stripeStart = performance.now();
-  const keyHint = process.env.STRIPE_SECRET_KEY;
-  const { mode, last4 } = sanitizeStripeKey(keyHint);
   if (!stripe) {
     services.push({
       name: 'stripe',
@@ -80,13 +87,13 @@ export async function GET() {
         status: 'healthy',
         latencyMs: Math.round(performance.now() - stripeStart)
       });
-    } catch (err) {
+    } catch {
       services.push({
         name: 'stripe',
         ok: false,
         mode: isLiveMode() ? 'live' : 'test',
         status: 'degraded',
-        message: err instanceof Error ? err.message : 'Stripe API check failed'
+        message: 'Stripe API check failed'
       });
     }
   }
@@ -96,7 +103,7 @@ export async function GET() {
     ok: allOk,
     timestamp: now,
     services,
-    stripe: { mode, last4 },
+    stripe: { mode: stripe ? (isLiveMode() ? ('live' as const) : ('test' as const)) : ('unknown' as const) },
     publishableKeySet: !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     ociConfigured: !!process.env.OCI_CANONICAL_URL && !!process.env.OCI_CANONICAL_API_KEY
   };

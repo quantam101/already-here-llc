@@ -19,10 +19,3 @@ export function liveStripeClient(): Stripe {
 export function isLiveMode(): boolean {
   return !!process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.startsWith('sk_test_');
 }
-
-export function sanitizeStripeKey(hint?: string): { mode: 'live' | 'test' | 'unknown'; last4: string } {
-  if (!hint) return { mode: 'unknown', last4: '' };
-  if (hint.startsWith('sk_live_')) return { mode: 'live', last4: hint.slice(-4) };
-  if (hint.startsWith('sk_test_')) return { mode: 'test', last4: hint.slice(-4) };
-  return { mode: 'unknown', last4: hint.slice(-4) };
-}
