@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 
-export const STRIPE_API_VERSION = '2026-06-24.dahlia' as const;
+export const STRIPE_API_VERSION = '2026-07-29.dahlia' as const;
 
 export const stripe: Stripe | null = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: STRIPE_API_VERSION })
