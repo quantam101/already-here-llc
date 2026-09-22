@@ -1,0 +1,38 @@
+{
+  "control": [
+    { "name": "VTOY_DEFAULT_SEARCH_ROOT", "value": "/ISOs" },
+    { "name": "VTOY_MENU_TIMEOUT", "value": "15" },
+    { "name": "VTOY_DEFAULT_IMAGE", "value": "/ISOs/Rescue/systemrescue-11.00-amd64.iso" },
+    { "name": "VTOY_SECONDARY_BOOT_MENU", "value": "1" },
+    { "name": "VTOY_SHOW_PLUGIN_DETECT", "value": "0" }
+  ],
+  "menu_alias": [
+    {
+      "image": "/ISOs/Rescue/systemrescue-11.00-amd64.iso",
+      "alias": "SystemRescue 11.00 (Linux CLI/GUI Repair & Forensics)"
+    },
+    {
+      "image": "/ISOs/Imaging/rescuezilla-2.5-64bit.iso",
+      "alias": "Rescuezilla 2.5 (Bare-Metal Image & Clone Suite)"
+    },
+    {
+      "image": "/ISOs/WinPE/Win11PE_x64_AlreadyHere_v2.iso",
+      "alias": "Already Here Win11PE Technician Workspace"
+    },
+    {
+      "image": "/ISOs/Installers/Win11_23H2_English_x64.iso",
+      "alias": "Windows 11 Enterprise (Clean Installer)"
+    }
+  ],
+  "auto_install": [
+    {
+      "image": "/ISOs/Installers/Win11_23H2_English_x64.iso",
+      "template": "/ventoy/script/autounattend.xml"
+    }
+  ],
+  "theme": {
+    "file": "/ventoy/theme/darkness/theme.txt",
+    "gfxmode": "1920x1080",
+    "display_mode": "tree"
+  }
+}
