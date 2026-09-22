@@ -83,6 +83,28 @@ Key pages to verify:
 - `npm run typecheck` / `npm run build` are strict; missing imports (`GincListing`, `GincJob`) or importing non-exported names (`PublicMember` from `lib/ginc-store`) will fail the build.
 - `npm run test` and `node scripts/a-plus-content-guard.mjs` usually pass if the above issues are clean.
 
+## Enterprise Orchestrator Testing
+
+The `app/api/enterprise/orchestrator` route is tested locally with `npm run dev` and `AHFOS_INTERNAL_API_KEY` set:
+
+```bash
+export PATH=/home/ubuntu/.nvm/versions/node/v22.12.0/bin:$PATH
+export AHFOS_INTERNAL_API_KEY=$(openssl rand -hex 32)
+npm run dev
+```
+
+Then probe:
+
+- Public healthcheck (no key): `GET /api/enterprise/orchestrator?operation=healthcheck_backend&source=test` → 200, `ok: true`, `approvalRequired: true`.
+- Auth gate: non-`healthcheck_backend` GET and all POST require `x-internal-api-key` → missing/wrong key returns 401.
+- Security gate: `GET /api/enterprise/orchestrator?operation=evaluate_security_gate&requestedAction=send_email` with key → 200, `summary` contains `Blocked pending owner approval`, `approvalRequired: true`.
+- Scan: `GET /api/enterprise/orchestrator?operation=scan_opportunities&prompt=City+RFI` with key → 200, `agent.id` is `agent_opportunity_intelligence`, `approvalRequired: true`.
+- POST validation: valid body → 200; invalid `operation` / oversized `queue` (>1000) → 400; missing key → 401.
+- Rate limit: 31 rapid requests from the same client (e.g. same `X-Forwarded-For`) to any endpoint cause the 31st to return 429.
+- Page: `http://localhost:3000/enterprise` renders without Next.js error overlay and shows the heading "Deploy GINC across your organization".
+
+> Note: `npm` and `npx` must resolve Node 22 from nvm (`PATH` above). The default system Node 20 does not support `--experimental-strip-types`, so `npm run test`/`qa:gate` fail if the wrong Node is used.
+
 ## Dependencies
 
 - Node.js packages: `npm install` (includes zod, remark, remark-html, @upstash/redis)
