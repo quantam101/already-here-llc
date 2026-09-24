@@ -64,8 +64,32 @@ function shouldUseSqlite(): boolean {
   return false;
 }
 
+function hasUpstashConfig(): boolean {
+  return Boolean(
+    process.env.UPSTASH_REDIS_REST_URL?.trim()
+    && process.env.UPSTASH_REDIS_REST_TOKEN?.trim()
+  );
+}
+
 function shouldUseUpstash(): boolean {
-  return process.env.CANONICAL_STORE_TYPE === 'upstash';
+  const configuredType = process.env.CANONICAL_STORE_TYPE?.trim().toLowerCase();
+  if (configuredType === 'memory' || configuredType === 'sqlite') return false;
+  if (configuredType === 'upstash') return true;
+  return hasUpstashConfig();
+}
+
+export type CanonicalStoreMode = 'remote' | 'upstash' | 'sqlite' | 'memory';
+
+export function getCanonicalStoreMode(): CanonicalStoreMode {
+  if (shouldUseRemote()) return 'remote';
+  if (shouldUseUpstash()) return 'upstash';
+  if (shouldUseSqlite()) return 'sqlite';
+  return 'memory';
+}
+
+export function isCanonicalStoreDurable(): boolean {
+  const mode = getCanonicalStoreMode();
+  return mode === 'remote' || mode === 'upstash' || (mode === 'sqlite' && !process.env.VERCEL);
 }
 
 function upstashKeyPrefix(): string {
