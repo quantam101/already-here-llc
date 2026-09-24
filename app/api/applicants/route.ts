@@ -1,7 +1,8 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 import { buildTechnicianRecords, type TechnicianInput } from '@/lib/technician';
-import { getCanonicalStore } from '@/lib/canonical-store';
+import { getCanonicalStore, getCanonicalStoreMode, isCanonicalStoreDurable } from '@/lib/canonical-store';
+import { canonicalId } from '@/lib/canonical-ids';
 import { buildFollowUpRecord } from '@/lib/followups';
 
 export const runtime = 'nodejs';
@@ -90,6 +91,34 @@ function getResume(formData: FormData): File | null {
   return resume instanceof File && resume.size > 0 ? resume : null;
 }
 
+type ApplicantDocumentType = 'resume' | 'certificate_of_insurance' | 'tax_form' | 'certification' | 'supporting_document';
+
+function classifyApplicantDocument(file: File): ApplicantDocumentType {
+  const name = sanitizeFilename(file.name).toLowerCase();
+  if (/\b(coi|certificate[_-]?of[_-]?insurance|insurance|liability)\b/.test(name)) return 'certificate_of_insurance';
+  if (/\b(w[-_]?9|w9|tax)\b/.test(name)) return 'tax_form';
+  if (/\b(certification|certificate|credential)\b/.test(name)) return 'certification';
+  if (/\b(resume|cv|curriculum)\b/.test(name)) return 'resume';
+  return 'supporting_document';
+}
+
+function readYearsExperience(formData: FormData): number | null {
+  const raw = asCleanString(formData, 'yearsExperience');
+  return raw ? Number(raw) : null;
+}
+
+function splitApplicantIdentity(formData: FormData): { contactName: string; companyName: string } {
+  const submittedName = asCleanString(formData, 'fullName');
+  if (asCleanString(formData, 'workerPath') !== 'partner_company') {
+    return { contactName: submittedName, companyName: '' };
+  }
+  const parts = submittedName.split(/\s+[—–]\s+/).map((part) => part.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    return { contactName: parts[0], companyName: parts.slice(1).join(' — ') };
+  }
+  return { contactName: submittedName, companyName: submittedName };
+}
+
 function generateApplicantId(): string {
   const stamp = new Date().toISOString().slice(0, 10).replaceAll('-', '');
   return `APP-${stamp}-${randomUUID().slice(0, 8).toUpperCase()}`;
@@ -108,6 +137,12 @@ function validate(formData: FormData): string | null {
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(asCleanString(formData, 'email'))) return 'Invalid email address.';
 
+  const phoneDigits = asCleanString(formData, 'phone').replace(/\D/g, '');
+  if (phoneDigits.length < 7 || phoneDigits.length > 15) return 'Invalid phone number.';
+
+  const zipCode = asCleanString(formData, 'zipCode');
+  if (zipCode && !/^\d{5}(?:-\d{4})?$/.test(zipCode)) return 'Invalid ZIP code.';
+
   const workLanes = formData.getAll('workLanes').filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
   if (workLanes.length === 0) return 'Select at least one work lane.';
 
@@ -122,16 +157,18 @@ function validate(formData: FormData): string | null {
 
   const resume = getResume(formData);
   if (resume) {
-    if (!acceptedResumeTypes.includes(resume.type)) return 'Resume must be PDF, DOC, or DOCX.';
-    if (resume.size > maxResumeSize) return 'Resume must be 5 MB or smaller.';
+    if (!acceptedResumeTypes.includes(resume.type)) return 'Uploaded document must be PDF, DOC, or DOCX.';
+    if (resume.size > maxResumeSize) return 'Uploaded document must be 5 MB or smaller.';
   }
 
   return null;
 }
 
-function buildTechnicianInput(applicantId: string, formData: FormData): TechnicianInput {
+function buildTechnicianInput(applicantId: string, formData: FormData, submittedAt: string): TechnicianInput {
+  const identity = splitApplicantIdentity(formData);
   return {
-    fullName: asCleanString(formData, 'fullName'),
+    fullName: identity.contactName,
+    companyName: identity.companyName || undefined,
     email: asCleanString(formData, 'email'),
     phone: asCleanString(formData, 'phone'),
     city: asCleanString(formData, 'city'),
@@ -145,25 +182,31 @@ function buildTechnicianInput(applicantId: string, formData: FormData): Technici
     availability: asCleanString(formData, 'availability'),
     travelRadiusMiles: Number(asCleanString(formData, 'travelRadiusMiles')),
     transportation: asCleanString(formData, 'transportation'),
-    yearsExperience: asCleanString(formData, 'yearsExperience') ? Number(asCleanString(formData, 'yearsExperience')) : 0,
+    yearsExperience: readYearsExperience(formData),
     hourlyRate: asCleanString(formData, 'hourlyRate'),
     source: 'website_applicant_form',
     sourceId: applicantId,
-    submittedAt: new Date().toISOString(),
+    submittedAt,
     consentContact: asCleanString(formData, 'consentContact') === 'true',
     consentData: asCleanString(formData, 'consentData') === 'true',
     consentTruth: asCleanString(formData, 'consentTruth') === 'true'
   };
 }
 
-function buildRecord(applicantId: string, formData: FormData) {
-  const resume = getResume(formData);
+function buildRecord(applicantId: string, formData: FormData, submittedAt: string) {
+  const uploadedDocument = getResume(formData);
+  const documentType = uploadedDocument ? classifyApplicantDocument(uploadedDocument) : null;
+  const identity = splitApplicantIdentity(formData);
+  const sanitizedDocumentName = uploadedDocument ? sanitizeFilename(uploadedDocument.name) : '';
+
   return {
     applicantId,
     status: 'received',
     source: 'website_applicant_form',
-    submittedAt: new Date().toISOString(),
-    fullName: asCleanString(formData, 'fullName'),
+    submittedAt,
+    submittedName: asCleanString(formData, 'fullName'),
+    fullName: identity.contactName,
+    companyName: identity.companyName,
     email: asCleanString(formData, 'email'),
     phone: asCleanString(formData, 'phone'),
     city: asCleanString(formData, 'city'),
@@ -177,19 +220,26 @@ function buildRecord(applicantId: string, formData: FormData) {
     availability: asCleanString(formData, 'availability'),
     travelRadiusMiles: Number(asCleanString(formData, 'travelRadiusMiles')),
     transportation: asCleanString(formData, 'transportation'),
-    yearsExperience: asCleanString(formData, 'yearsExperience') ? Number(asCleanString(formData, 'yearsExperience')) : 0,
+    yearsExperience: readYearsExperience(formData),
     hourlyRate: asCleanString(formData, 'hourlyRate'),
     preferredContact: 'email_or_phone',
-    resume: resume ? {
+    resume: uploadedDocument && documentType === 'resume' ? {
       received: true,
-      filename: sanitizeFilename(resume.name),
-      mimeType: resume.type,
-      sizeBytes: resume.size,
+      filename: sanitizedDocumentName,
+      mimeType: uploadedDocument.type,
+      sizeBytes: uploadedDocument.size,
       delivery: 'attached_to_applicant_email'
     } : {
       received: false,
       delivery: 'none'
     },
+    documents: uploadedDocument ? [{
+      documentType,
+      filename: sanitizedDocumentName,
+      mimeType: uploadedDocument.type,
+      sizeBytes: uploadedDocument.size,
+      delivery: 'attached_to_applicant_email'
+    }] : [],
     consent: {
       contact: asCleanString(formData, 'consentContact') === 'true',
       dataProcessing: asCleanString(formData, 'consentData') === 'true',
@@ -210,18 +260,20 @@ function rows(record: ReturnType<typeof buildRecord>): string {
   const data: Array<[string, string]> = [
     ['Applicant ID', record.applicantId],
     ['Name', record.fullName],
+    ['Company', record.companyName || 'Not stated'],
     ['Email', record.email],
     ['Phone', record.phone],
     ['Location', `${record.city}, ${record.state} ${record.zipCode}`.trim()],
     ['Work relationship', record.workerPath],
     ['Work lanes', record.workLanes.join(', ')],
-    ['Years experience', String(record.yearsExperience)],
+    ['Years experience', record.yearsExperience === null ? 'Not stated' : String(record.yearsExperience)],
     ['Travel radius', `${record.travelRadiusMiles} miles`],
     ['Transportation', record.transportation],
     ['Availability', record.availability],
     ['Rate preference', record.hourlyRate || 'Not stated'],
     ['Certifications', record.certifications || 'Not stated'],
     ['Tools', record.tools || 'Not stated'],
+    ['Uploaded document', record.documents[0]?.documentType || 'None'],
     ['Skills', record.skills]
   ];
 
@@ -245,7 +297,7 @@ async function sendResend(payload: Record<string, unknown>): Promise<void> {
 }
 
 async function deliverApplicant(record: ReturnType<typeof buildRecord>, formData: FormData): Promise<void> {
-  const resume = getResume(formData);
+  const uploadedDocument = getResume(formData);
   const attachments: Array<{ filename: string; content: string }> = [
     {
       filename: `${record.applicantId}-applicant-record.json`,
@@ -253,21 +305,22 @@ async function deliverApplicant(record: ReturnType<typeof buildRecord>, formData
     }
   ];
 
-  if (resume) {
+  if (uploadedDocument) {
     attachments.push({
-      filename: sanitizeFilename(resume.name),
-      content: Buffer.from(await resume.arrayBuffer()).toString('base64')
+      filename: sanitizeFilename(uploadedDocument.name),
+      content: Buffer.from(await uploadedDocument.arrayBuffer()).toString('base64')
     });
   }
 
   const to = process.env.APPLICANT_TO_EMAIL || process.env.DISPATCH_TO_EMAIL || applicantMailbox;
+  const subjectIdentity = record.companyName ? `${record.fullName} — ${record.companyName}` : record.fullName;
   const body = `<div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;border:1px solid #DDE5EF;border-radius:14px;overflow:hidden"><div style="background:#071B34;padding:24px 32px;color:#fff"><h1 style="margin:0;font-size:20px">New Applicant — ${escapeHtml(record.applicantId)}</h1></div><div style="padding:24px 32px"><table style="width:100%;border-collapse:collapse;font-size:14px">${rows(record)}</table></div></div>`;
 
   await sendResend({
     from: applicantFromEmail,
     to: [to],
     reply_to: record.email,
-    subject: `[${record.applicantId}] Applicant — ${record.fullName} — ${record.city}, ${record.state}`,
+    subject: `[${record.applicantId}] Applicant — ${subjectIdentity} — ${record.city}, ${record.state}`,
     html: body,
     attachments
   });
@@ -282,11 +335,17 @@ async function deliverApplicant(record: ReturnType<typeof buildRecord>, formData
 
   const webhook = process.env.APPLICANT_DATABASE_WEBHOOK_URL;
   if (webhook) {
-    await fetch(webhook, {
+    const response = await fetch(webhook, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': record.applicantId
+      },
       body: JSON.stringify(record)
-    }).catch(() => null);
+    });
+    if (!response.ok) {
+      throw new Error(`Applicant database webhook failed with status ${response.status}.`);
+    }
   }
 }
 
@@ -304,37 +363,155 @@ export async function POST(request: Request) {
   }
 
   const applicantId = generateApplicantId();
-  const record = buildRecord(applicantId, formData);
+  const submittedAt = new Date().toISOString();
+  const record = buildRecord(applicantId, formData, submittedAt);
+  const technicianInput = buildTechnicianInput(applicantId, formData, submittedAt);
+  const canonicalWrites = buildTechnicianRecords(technicianInput);
+  const storeMode = getCanonicalStoreMode();
+  const durablePersistence = isCanonicalStoreDurable();
+
+  let store: ReturnType<typeof getCanonicalStore> | null = null;
+  let canonicalError = '';
+  let canonicalRecordCount = 0;
 
   try {
-    const technicianInput = buildTechnicianInput(applicantId, formData);
-    const canonicalWrites = buildTechnicianRecords(technicianInput);
-    const writeResult = await getCanonicalStore().executeWrites(canonicalWrites);
-    if (!writeResult.ok) {
-      console.error('[applicants] canonical write failed', writeResult.failed);
-    } else {
-      const organizationId = canonicalWrites.find((w) => w.table === 'organizations')?.id;
-      const contactId = canonicalWrites.find((w) => w.table === 'contacts')?.id;
-      const technicianId = canonicalWrites.find((w) => w.table === 'technicians')?.id;
-      if (organizationId) {
-        const followUp = buildFollowUpRecord({
-          source: 'applicant_form',
-          organizationId,
-          contactId,
-          relatedRecordType: 'technician',
-          relatedRecordId: technicianId,
-          lane: 'technician_recruiting',
-          purpose: `Screen applicant ${record.fullName} — ${record.city}, ${record.state}`,
-          channel: 'email',
-          offer: record.workLanes.join(', '),
-          status: 'open'
-        });
-        await getCanonicalStore().executeWrites([followUp]);
+    store = getCanonicalStore();
+    const applicantWrite = {
+      table: 'applicants',
+      id: applicantId,
+      action: 'insert' as const,
+      record: {
+        ...record,
+        ingestion_state: 'parsed',
+        canonical_store_mode: storeMode,
+        durable_persistence: durablePersistence,
+        created_at: submittedAt,
+        updated_at: submittedAt
       }
+    };
+    const documentWrites = record.documents.map((document) => ({
+      table: 'applicant_documents',
+      id: canonicalId('appdoc', applicantId, document.filename),
+      action: 'upsert' as const,
+      record: {
+        applicant_id: applicantId,
+        ...document,
+        verification_status: 'received_unverified',
+        created_at: submittedAt,
+        updated_at: submittedAt,
+        source: 'website_applicant_form'
+      }
+    }));
+    const allWrites = [applicantWrite, ...canonicalWrites, ...documentWrites];
+    const writeResult = await store.executeWrites(allWrites);
+    if (!writeResult.ok) {
+      throw new Error(writeResult.failed.map((item) => `${item.table}:${item.id} ${item.error}`).join('; '));
     }
-    await deliverApplicant(record, formData);
-    return NextResponse.json({ ok: true, applicantId, canonicalRecordCount: canonicalWrites.length });
+    canonicalRecordCount = allWrites.length;
+
+    const organizationId = canonicalWrites.find((w) => w.table === 'organizations')?.id;
+    const contactId = canonicalWrites.find((w) => w.table === 'contacts')?.id;
+    const technicianId = canonicalWrites.find((w) => w.table === 'technicians')?.id;
+    if (organizationId) {
+      const followUp = buildFollowUpRecord({
+        source: 'applicant_form',
+        sourceId: applicantId,
+        organizationId,
+        contactId,
+        relatedRecordType: 'applicant',
+        relatedRecordId: applicantId,
+        lane: 'technician_recruiting',
+        purpose: `Screen applicant ${record.fullName}${record.companyName ? ` / ${record.companyName}` : ''} — ${record.city}, ${record.state}`,
+        channel: 'email',
+        offer: record.workLanes.join(', '),
+        notes: technicianId ? `Technician profile: ${technicianId}` : undefined,
+        status: 'open'
+      });
+      const followUpResult = await store.executeWrites([followUp]);
+      if (!followUpResult.ok) {
+        throw new Error(followUpResult.failed.map((item) => item.error).join('; '));
+      }
+      canonicalRecordCount += 1;
+    }
   } catch (error) {
-    return NextResponse.json({ message: error instanceof Error ? error.message : 'Application delivery failed.' }, { status: 502 });
+    canonicalError = error instanceof Error ? error.message : String(error);
+    console.error('[applicants] canonical persistence failed', { applicantId, storeMode, error: canonicalError });
   }
+
+  let deliveryError = '';
+  try {
+    await deliverApplicant(record, formData);
+  } catch (error) {
+    deliveryError = error instanceof Error ? error.message : String(error);
+    console.error('[applicants] delivery failed', { applicantId, error: deliveryError });
+  }
+
+  const ingestionState = canonicalError
+    ? 'email_fallback_required'
+    : durablePersistence
+      ? 'processed'
+      : 'email_fallback_queued';
+
+  if (store) {
+    const ingestionWrite = {
+      table: 'applicant_ingestions',
+      id: canonicalId('applicant_ingestion', applicantId),
+      action: 'upsert' as const,
+      record: {
+        applicant_id: applicantId,
+        ingestion_state: ingestionState,
+        canonical_store_mode: storeMode,
+        durable_persistence: durablePersistence,
+        canonical_error: canonicalError || null,
+        delivery_error: deliveryError || null,
+        source: 'website_applicant_form',
+        created_at: submittedAt,
+        updated_at: new Date().toISOString()
+      }
+    };
+    const ingestionResult = await store.executeWrites([ingestionWrite]).catch(() => null);
+    if (ingestionResult?.ok) canonicalRecordCount += 1;
+  }
+
+  if (canonicalError && deliveryError) {
+    return NextResponse.json(
+      { message: 'Application could not be durably captured. Please try again.', applicantId },
+      { status: 502 }
+    );
+  }
+
+  if (deliveryError) {
+    return NextResponse.json(
+      {
+        ok: true,
+        applicantId,
+        ingestionState,
+        canonicalRecordCount,
+        storeMode,
+        durablePersistence,
+        message: 'Application was captured, but confirmation delivery is delayed.'
+      },
+      { status: 202 }
+    );
+  }
+
+  if (canonicalError || !durablePersistence) {
+    return NextResponse.json(
+      {
+        ok: true,
+        applicantId,
+        ingestionState,
+        canonicalRecordCount,
+        storeMode,
+        durablePersistence,
+        message: 'Application received and queued for durable synchronization.'
+      },
+      { status: 202 }
+    );
+  }
+
+  return NextResponse.json(
+    { ok: true, applicantId, ingestionState, canonicalRecordCount, storeMode, durablePersistence },
+    { status: 201 }
+  );
 }
