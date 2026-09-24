@@ -7,7 +7,12 @@ import {
   extractSkills,
   computeDispatchReadinessScore
 } from '../lib/technician.ts';
-import { getCanonicalStore, resetCanonicalStore } from '../lib/canonical-store.ts';
+import {
+  getCanonicalStore,
+  getCanonicalStoreMode,
+  isCanonicalStoreDurable,
+  resetCanonicalStore
+} from '../lib/canonical-store.ts';
 
 const sampleInput = {
   fullName: 'Jane Technician',
@@ -62,6 +67,42 @@ assert.ok(writes.some((w) => w.table === 'skills'), 'skill write');
 assert.ok(writes.some((w) => w.table === 'technician_skills'), 'technician-skill write');
 assert.ok(writes.some((w) => w.table === 'certifications'), 'certification write');
 assert.ok(writes.some((w) => w.table === 'availability'), 'availability write');
+assert.ok(
+  writes.filter((w) => ['organizations', 'contacts', 'technicians'].includes(w.table)).every((w) => w.action === 'upsert'),
+  'identity records use idempotent upserts'
+);
+
+const partnerWrites = buildTechnicianRecords({
+  ...sampleInput,
+  fullName: 'Estarlin Jimmenez',
+  companyName: 'Precision Cabling LLC',
+  email: 'info@precisioncabling.net',
+  workerPath: 'partner_company',
+  yearsExperience: null,
+  sourceId: 'APP-TEST-PARTNER'
+});
+const partnerOrg = partnerWrites.find((w) => w.table === 'organizations');
+const partnerContact = partnerWrites.find((w) => w.table === 'contacts');
+const partnerTech = partnerWrites.find((w) => w.table === 'technicians');
+assert.equal(partnerOrg.record.name, 'Precision Cabling LLC');
+assert.equal(partnerOrg.record.organization_type, 'partner_company');
+assert.equal(partnerContact.record.role, 'partner_company_applicant');
+assert.equal(partnerTech.record.years_experience, null, 'unknown partner-company experience is not coerced to zero');
+
+const priorStoreType = process.env.CANONICAL_STORE_TYPE;
+const priorUpstashUrl = process.env.UPSTASH_REDIS_REST_URL;
+const priorUpstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+delete process.env.CANONICAL_STORE_TYPE;
+process.env.UPSTASH_REDIS_REST_URL = 'https://example.invalid';
+process.env.UPSTASH_REDIS_REST_TOKEN = 'test-token';
+assert.equal(getCanonicalStoreMode(), 'upstash', 'Upstash credentials auto-select the durable store');
+assert.equal(isCanonicalStoreDurable(), true);
+process.env.CANONICAL_STORE_TYPE = 'memory';
+assert.equal(getCanonicalStoreMode(), 'memory', 'explicit memory mode remains available for tests');
+assert.equal(isCanonicalStoreDurable(), false);
+if (priorStoreType === undefined) delete process.env.CANONICAL_STORE_TYPE; else process.env.CANONICAL_STORE_TYPE = priorStoreType;
+if (priorUpstashUrl === undefined) delete process.env.UPSTASH_REDIS_REST_URL; else process.env.UPSTASH_REDIS_REST_URL = priorUpstashUrl;
+if (priorUpstashToken === undefined) delete process.env.UPSTASH_REDIS_REST_TOKEN; else process.env.UPSTASH_REDIS_REST_TOKEN = priorUpstashToken;
 
 resetCanonicalStore();
 const store = getCanonicalStore();
