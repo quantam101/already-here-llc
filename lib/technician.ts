@@ -18,7 +18,8 @@ export interface TechnicianInput {
   availability: string;
   travelRadiusMiles: number;
   transportation: string;
-  yearsExperience?: number;
+  yearsExperience?: number | null;
+  companyName?: string;
   hourlyRate?: string;
   source?: string;
   sourceId?: string;
@@ -45,7 +46,7 @@ export interface TechnicianProfile {
   availability_text: string;
   travel_radius_miles: number;
   transportation: string;
-  years_experience: number;
+  years_experience: number | null;
   hourly_rate: string | null;
   status: 'received' | 'screening' | 'qualified' | 'approved' | 'do_not_dispatch';
   dispatch_readiness_score: number;
@@ -254,7 +255,11 @@ export function buildTechnicianRecords(input: TechnicianInput): DatabaseReadyWri
   const contactKey = normalizedEmail || normalizedPhone || canonicalSlug(input.fullName);
   const contactId = canonicalId('contact', contactKey);
   const techId = canonicalId('tech', contactKey);
-  const orgName = `${input.fullName} (Technician)`;
+  const workerPath = normalizeWorkPath(input.workerPath);
+  const partnerCompany = workerPath === 'partner_company';
+  const orgName = partnerCompany
+    ? (input.companyName?.trim() || input.fullName.trim())
+    : `${input.fullName} (Technician)`;
   const orgId = canonicalId('org', canonicalSlug(orgName));
 
   const workLanes = parseWorkLanes(input.workLanes);
@@ -273,7 +278,7 @@ export function buildTechnicianRecords(input: TechnicianInput): DatabaseReadyWri
     city: input.city?.trim() || null,
     state: input.state?.trim().toUpperCase() || null,
     zip_code: input.zipCode?.trim() || null,
-    worker_path: normalizeWorkPath(input.workerPath),
+    worker_path: workerPath,
     work_lanes: workLanes,
     skills_text: input.skills.trim(),
     certifications_text: (input.certifications ?? '').trim(),
@@ -281,7 +286,7 @@ export function buildTechnicianRecords(input: TechnicianInput): DatabaseReadyWri
     availability_text: input.availability.trim(),
     travel_radius_miles: Number.isFinite(input.travelRadiusMiles) ? Math.max(0, input.travelRadiusMiles) : 0,
     transportation: input.transportation.trim(),
-    years_experience: Number.isFinite(input.yearsExperience) ? Math.max(0, input.yearsExperience!) : 0,
+    years_experience: Number.isFinite(input.yearsExperience) ? Math.max(0, input.yearsExperience as number) : null,
     hourly_rate: input.hourlyRate?.trim() || null,
     status: 'received',
     dispatch_readiness_score: 0,
@@ -297,14 +302,14 @@ export function buildTechnicianRecords(input: TechnicianInput): DatabaseReadyWri
     {
       table: 'organizations',
       id: orgId,
-      action: 'insert',
+      action: 'upsert',
       record: {
         id: orgId,
         name: orgName,
-        organization_type: 'individual_contractor',
+        organization_type: partnerCompany ? 'partner_company' : 'individual_contractor',
         source: profile.source,
         source_id: profile.source_id,
-        aliases: [input.fullName],
+        aliases: [input.fullName, input.companyName].filter(Boolean),
         service_area: [input.city, input.state].filter(Boolean).join(', ') || null,
         created_at: now,
         updated_at: now
@@ -313,7 +318,7 @@ export function buildTechnicianRecords(input: TechnicianInput): DatabaseReadyWri
     {
       table: 'contacts',
       id: contactId,
-      action: 'insert',
+      action: 'upsert',
       record: {
         id: contactId,
         organization_id: orgId,
@@ -324,7 +329,7 @@ export function buildTechnicianRecords(input: TechnicianInput): DatabaseReadyWri
         source_id: profile.source_id,
         channel: 'website',
         aliases: [profile.full_name, profile.email, profile.phone].filter(Boolean),
-        role: 'technician_applicant',
+        role: partnerCompany ? 'partner_company_applicant' : 'technician_applicant',
         consent_status: input.consentContact && input.consentData && input.consentTruth ? 'consented' : 'unknown',
         created_at: now,
         updated_at: now
@@ -333,31 +338,31 @@ export function buildTechnicianRecords(input: TechnicianInput): DatabaseReadyWri
     {
       table: 'technicians',
       id: techId,
-      action: 'insert',
+      action: 'upsert',
       record: { ...profile, organization_id: orgId }
     }
   ];
 
   for (const skill of skills) {
-    writes.push({ table: 'skills', id: skill.id, action: 'insert', record: skill as unknown as Record<string, unknown> });
+    writes.push({ table: 'skills', id: skill.id, action: 'upsert', record: skill as unknown as Record<string, unknown> });
   }
 
   for (const ts of technicianSkills) {
     ts.technician_id = techId;
     ts.id = canonicalId('techskill', techId, ts.skill_id);
-    writes.push({ table: 'technician_skills', id: ts.id, action: 'insert', record: ts as unknown as Record<string, unknown> });
+    writes.push({ table: 'technician_skills', id: ts.id, action: 'upsert', record: ts as unknown as Record<string, unknown> });
   }
 
   for (const cert of certifications) {
     cert.technician_id = techId;
     cert.id = canonicalId('cert', techId, cert.certification_name);
-    writes.push({ table: 'certifications', id: cert.id, action: 'insert', record: cert as unknown as Record<string, unknown> });
+    writes.push({ table: 'certifications', id: cert.id, action: 'upsert', record: cert as unknown as Record<string, unknown> });
   }
 
   writes.push({
     table: 'availability',
     id: availability.id,
-    action: 'insert',
+    action: 'upsert',
     record: availability as unknown as Record<string, unknown>
   });
 
