@@ -9,7 +9,7 @@
  *   ... --system industry-newsletter --niche "Cloud Architecture" --feeds data/passive-income-feeds.json [--fetch]
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve, sep } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { runIncomeSystem, verifyPassiveIncomeEngine } from '../lib/passive-income-engine.ts';
