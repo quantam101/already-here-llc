@@ -72,7 +72,7 @@ function DropdownGroup({ group, pathname }: { group: typeof navGroups[number]; p
         type="button"
         aria-expanded={open}
         className={`link-ring inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold transition ${
-          isActive ? 'bg-white text-[#071B34]' : 'text-white hover:bg-white/10'
+          isActive ? 'nav-pill-active' : 'text-white hover:bg-white/10'
         }`}
       >
         {group.label}
