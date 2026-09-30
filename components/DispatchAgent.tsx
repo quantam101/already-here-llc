@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 type Message = { role: 'user' | 'assistant'; content: string };
@@ -10,6 +11,7 @@ const INITIAL: Message = {
 };
 
 export function DispatchAgent() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([INITIAL]);
   const [input, setInput] = useState('');
@@ -60,7 +62,7 @@ export function DispatchAgent() {
   }
 
   function openDispatchForm() {
-    window.location.assign('/dispatch');
+    router.push('/dispatch');
   }
 
   return (
