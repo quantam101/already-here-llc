@@ -26,7 +26,7 @@ export default function AgentFleetPage() {
 
   return (
     <div className="container-shell py-16 lg:py-24">
-      <Link className="eyebrow" href="/command-center">Command center</Link>
+      <Link className="eyebrow" href="/">Command center</Link>
       <h1 className="section-title mt-5">Agent fleet</h1>
       <p className="section-copy">
         Every agent owns one repo lane and carries its own prompt, tool grant, skill set, and hard budget. Threads are the
