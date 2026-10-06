@@ -77,6 +77,14 @@ Key pages to verify:
   ```
 - Coordinate-based automation for this site is unreliable on high-resolution displays; prefer `browser_console` clicks for header tabs and form submission when native clicks miss.
 
+## GINC Admin / Audit / Security Testing
+
+- The `/admin` page and `/api/admin/audit` route require `GINC_ADMIN_KEY` to be set. If the Vercel preview does not set it, `/admin` shows `Admin dashboard not configured`.
+- To test the authorized admin view locally, start `npm run dev` with `GINC_ADMIN_KEY=<test-key>` and either set a `ginc-admin-key` cookie or send an `x-admin-key` header.
+- `/api/admin/audit` returns `401` without the key and `200` with `{"events":[...]}` when authorized. It silently falls back to `limit=100` for negative or non-numeric `limit` values.
+- Security headers are set in `middleware.ts` (CSP, `X-Request-Id`) and `next.config.mjs` (`X-Frame-Options`, HSTS, etc.). Verify `X-Frame-Options` is sent exactly once and not duplicated/conflicting.
+- The `/ginc/network` page is `force-dynamic` and loads from `lib/ginc-store.ts`. When Redis env vars are not set it uses the seed/file fallback; to test the empty-Redis-list branch you need an Upstash Redis REST instance or a compatible mock.
+
 ## GINC Quality Gate Gotchas
 
 - `npm run lint` uses `--max-warnings=0`, so any unused-import warnings in GINC files will fail the gate.
