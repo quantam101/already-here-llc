@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'ASI Revenue Intelligence Engine | Already Here LLC',
+  title: 'ASI Revenue Intelligence Engine',
   description: 'Local-first revenue intelligence, dispatch scoring, retainer targeting, and company database orchestration for field-service operators, MSPs, vendors, and small businesses.',
   alternates: { canonical: 'https://www.alreadyherellc.com/asi-revenue-intelligence' },
   openGraph: {

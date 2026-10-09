@@ -5,7 +5,7 @@ import { environments } from '@/lib/site';
 export const metadata: Metadata = {
   title: 'Who We Serve | Managed IT for Phoenix Businesses & IT Teams',
   description:
-    'Already Here LLC provides managed IT, co-managed support, network and systems administration, cloud, security, projects, and onsite technical services for Phoenix businesses, internal IT teams, multi-site operators, and service partners.',
+    'Managed IT, co-managed support, cloud, security, and onsite technical services for Phoenix businesses, internal IT teams, and multi-site operators.',
   alternates: { canonical: '/who-we-serve' }
 };
 

@@ -3,9 +3,18 @@ import { DispatchForm } from '@/components/DispatchForm';
 import { markets } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Dispatch',
+  title: 'Contact & Dispatch Intake',
   description:
-    'Submit scope, schedule, city, and supporting files for Arizona field execution, dispatch support, or rollout-related onsite work.'
+    'Submit scope, schedule, city, and supporting files for Arizona field execution, dispatch support, or rollout-related onsite work.',
+  alternates: { canonical: '/contact' },
+  openGraph: {
+    title: 'Contact & Dispatch Intake | Already Here LLC',
+    description:
+      'Submit scope, schedule, city, and supporting files for Arizona field execution, dispatch support, or rollout-related onsite work.',
+    url: '/contact',
+    siteName: 'Already Here LLC',
+    type: 'website'
+  }
 };
 
 export default function ContactPage() {
