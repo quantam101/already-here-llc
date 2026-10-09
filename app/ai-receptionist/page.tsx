@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'AI Receptionist & Lead Recovery | Already Here LLC',
+  title: 'AI Receptionist & Lead Recovery',
   description: 'AI receptionist intake for missed calls, service requests, quote requests, and lead recovery for Already Here LLC.',
   alternates: { canonical: 'https://www.alreadyherellc.com/ai-receptionist' }
 };

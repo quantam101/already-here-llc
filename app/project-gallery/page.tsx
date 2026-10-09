@@ -4,7 +4,7 @@ import { ProjectGalleryGrid } from '@/components/ProjectGalleryGrid';
 import { siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Project Gallery | Already Here LLC',
+  title: 'Project Gallery',
   description: 'Representative onsite infrastructure execution, retail technology, smart hands, healthcare-adjacent, and rollout recovery work examples.',
   alternates: { canonical: '/project-gallery' },
   openGraph: {

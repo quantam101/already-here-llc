@@ -5,7 +5,7 @@ import { closeoutItems, serviceGroups } from '@/lib/site';
 export const metadata: Metadata = {
   title: 'Managed IT Services, Security, Cloud & Field Support',
   description:
-    'Already Here LLC is a Phoenix-based managed service provider (MSP) with 30+ years of IT experience, delivering managed IT support, help desk services, network and systems administration, Microsoft 365 and cloud support, security hardening, infrastructure services, and onsite technical field operations.',
+    'Phoenix MSP with 30+ years of IT experience: managed IT support, help desk, Microsoft 365 and cloud, security, and onsite technical field operations.',
   alternates: { canonical: '/services' },
   openGraph: {
     title: 'Managed IT Services, Security, Cloud & Field Support | Already Here LLC',

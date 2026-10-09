@@ -15,7 +15,7 @@ export const viewport: Viewport = {
   viewportFit: 'cover'
 };
 
-const mspDescription = 'Already Here LLC is a Phoenix-based managed service provider (MSP) with 30+ years of IT experience delivering managed IT support, help desk services, network and systems administration, Microsoft 365 and cloud support, identity and access support, security hardening, infrastructure services, projects, and onsite technical field operations.';
+const mspDescription = 'Phoenix managed service provider with 30+ years of IT experience: managed IT, help desk, Microsoft 365, security hardening, and onsite technical field operations.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
