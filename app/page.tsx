@@ -93,7 +93,7 @@ const engagementModels = [
 ] as const;
 
 const differentiators = [
-  '30+ years of hands-on IT experience across enterprise, healthcare, networking, infrastructure, retail, data center, and field operations',
+  'Hands-on technical leadership across enterprise, healthcare, networking, infrastructure, retail, data center, and field operations',
   'Operating as Already Here LLC since 2013',
   'Remote administration and onsite execution available through the same technical organization',
   'Managed IT, security, cloud, network, systems, project, and field capabilities under one service model',
@@ -118,7 +118,6 @@ export default function HomePage() {
           <div>
             <div className="mb-6 flex flex-wrap items-center gap-3">
               <span className="eyebrow">Phoenix Managed Service Provider (MSP)</span>
-              <span className="inline-flex items-center rounded-full border border-borderBrand bg-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-steel">30+ Years IT Experience</span>
               <span className="inline-flex items-center rounded-full border border-borderBrand bg-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-steel">Operating Since 2013</span>
             </div>
 
@@ -247,9 +246,9 @@ export default function HomePage() {
 
       <section className="container-shell py-16 lg:py-24">
         <span className="eyebrow">Experience and proof</span>
-        <h2 className="section-title mt-5">30+ years of technical experience. Operating since 2013.</h2>
+        <h2 className="section-title mt-5">Execution history across the environments that matter.</h2>
         <p className="section-copy">
-          Representative work demonstrates execution across enterprise infrastructure, server and storage, POS and retail technology, networking, healthcare-adjacent environments, IoT, surveys, rollouts, and multi-site support. Direct, subcontracted, service-channel, and marketplace-routed relationships are kept distinct.
+          Representative work spans enterprise infrastructure, server and storage, POS and retail technology, networking, healthcare-adjacent environments, IoT, surveys, rollouts, and multi-site support. Direct, subcontracted, service-channel, and marketplace-routed relationships are kept distinct.
         </p>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {representativeWork.slice(0, 6).map(({ tag, client, scope }) => (
