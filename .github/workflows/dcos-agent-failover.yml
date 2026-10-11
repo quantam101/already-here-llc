@@ -1,0 +1,57 @@
+name: DCOS agent failover
+on:
+  schedule:
+    # dispatch-retry: every 15 min (replaces deleted daily-command-os cron)
+    - cron: "*/15 * * * *"
+    # sla-escalation: every 30 min
+    - cron: "*/30 * * * *"
+    # opportunity-decay: daily
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+    inputs:
+      worker:
+        description: "Which agent to fire"
+        required: true
+        default: "all"
+        type: choice
+        options: [all, dispatch-retry, sla-escalation, opportunity-decay]
+
+# External-scheduler failover for the daily-command-os scan agents.
+# This repo is PUBLIC — scheduled Actions cost zero minutes. Each job
+# curls the secret-gated endpoint on the Vercel deployment, which
+# replays the exact signed webhook event the old GHA cron workers
+# produced (identical idempotency keys → overlap-safe).
+env:
+  CRON_BASE: https://daily-command-os.vercel.app/api/cron
+
+jobs:
+  fire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fire worker(s) for this schedule
+        env:
+          SCHED: ${{ github.event.schedule }}
+          WORKER_INPUT: ${{ github.event.inputs.worker }}
+        run: |
+          set -euo pipefail
+          if [ -n "${WORKER_INPUT}" ]; then
+            workers="$WORKER_INPUT"
+          else
+            case "$SCHED" in
+              "*/15"* ) workers="dispatch-retry" ;;
+              "*/30"* ) workers="sla-escalation" ;;
+              *       ) workers="opportunity-decay" ;;
+            esac
+          fi
+          for w in $workers; do
+            echo "firing $w"
+            code=$(curl -sS -o /tmp/cron-resp.json -w "%{http_code}" \
+              -A "dcos-agent-failover/1.0" \
+              -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+              "$CRON_BASE/$w")
+            cat /tmp/cron-resp.json; echo
+            if [ "$code" != "200" ]; then
+              echo "::error title=cron failover failed::$w returned HTTP $code"
+              exit 1
+            fi
+          done
