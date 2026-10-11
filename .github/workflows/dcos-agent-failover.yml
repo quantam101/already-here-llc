@@ -48,11 +48,14 @@ jobs:
           failed=0
           for w in $workers; do
             echo "firing $w"
+            # curl exits nonzero on transport failure under `set -e` —
+            # capture the error so later workers still fire.
             code=$(curl -sS -o /tmp/cron-resp.json -w "%{http_code}" \
               -A "dcos-agent-failover/1.0" \
               -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-              "$CRON_BASE/$w")
-            cat /tmp/cron-resp.json; echo
+              "$CRON_BASE/$w" || echo "000")
+            cat /tmp/cron-resp.json 2>/dev/null || true; echo
+            rm -f /tmp/cron-resp.json
             if [ "$code" != "200" ]; then
               echo "::error title=cron failover failed::$w returned HTTP $code"
               failed=1
