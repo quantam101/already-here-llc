@@ -45,6 +45,7 @@ jobs:
               *       ) workers="opportunity-decay" ;;
             esac
           fi
+          failed=0
           for w in $workers; do
             echo "firing $w"
             code=$(curl -sS -o /tmp/cron-resp.json -w "%{http_code}" \
@@ -54,6 +55,8 @@ jobs:
             cat /tmp/cron-resp.json; echo
             if [ "$code" != "200" ]; then
               echo "::error title=cron failover failed::$w returned HTTP $code"
-              exit 1
+              failed=1
             fi
           done
+          # One bad worker must not block the others — report all, then fail.
+          exit $failed
