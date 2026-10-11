@@ -34,7 +34,9 @@ jobs:
           WORKER_INPUT: ${{ github.event.inputs.worker }}
         run: |
           set -euo pipefail
-          if [ -n "${WORKER_INPUT}" ]; then
+          if [ "${WORKER_INPUT}" = "all" ]; then
+            workers="sla-escalation dispatch-retry opportunity-decay"
+          elif [ -n "${WORKER_INPUT}" ]; then
             workers="$WORKER_INPUT"
           else
             case "$SCHED" in
