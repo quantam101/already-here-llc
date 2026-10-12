@@ -219,6 +219,10 @@ export const closeoutItems = [
 ] as const;
 
 export const dispatchTypes = [
+  'Managed IT / recurring support',
+  'Remote support / administration',
+  'Project / migration / remediation',
+  'Not sure — route for me',
   'Technical field operations',
   'Smart hands support',
   'Onsite infrastructure execution',
@@ -306,7 +310,8 @@ export const naicsCodes = [
 ] as const;
 
 export const pricingTiers = [
-  { label: 'Standard dispatch', value: '$65/hr minimum', note: 'Two-hour minimum; scope, travel, and closeout requirements may increase rate' },
+  { label: 'Standard dispatch', value: '$130 minimum, then $100/hr', note: 'Two-hour minimum on same-day requests; scope, travel, and closeout requirements may increase rate' },
+  { label: 'Promotional intro rate', value: '$65/hr', note: 'Discounted introductory rate for qualifying first engagements' },
   { label: 'Advanced infrastructure', value: '$200 minimum', note: 'Server, data-center, and advanced smart-hands scopes' },
   { label: 'Urgent / same-day', value: 'Premium rate applies', note: 'Same-day requests carry a priority surcharge' },
   { label: 'Bundled / recurring', value: 'Volume pricing available', note: 'Multi-site and recurring programs qualify for negotiated rates when economics support the route' }

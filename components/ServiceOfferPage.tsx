@@ -23,7 +23,7 @@ export interface ServiceOffer {
 
 export function createOfferMetadata(offer: ServiceOffer): Metadata {
   return {
-    title: `${offer.name} | ${siteConfig.name}`,
+    title: { absolute: `${offer.name} | ${siteConfig.name}` },
     description: offer.description,
     alternates: { canonical: `/${offer.slug}` },
     openGraph: {

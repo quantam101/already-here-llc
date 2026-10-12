@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { SiteFaq } from '@/components/SiteFaq';
 import { representativeWork, siteConfig } from '@/lib/site';
@@ -103,11 +104,14 @@ const differentiators = [
 
 const clientTypes = [
   'Small and midsize businesses that need experienced IT ownership',
-  'Organizations without a full internal IT department',
   'Internal IT teams that need co-managed support or escalation capacity',
-  'Retail, commercial, and multi-site operators',
-  'Healthcare-adjacent, professional, infrastructure, and controlled environments',
-  'Government primes, OEMs, vendors, and service partners that need technical execution'
+  'Retail, commercial, and multi-site operators that need reliable onsite execution'
+] as const;
+
+const proofPhotos = [
+  { src: '/images/gallery-professional/rack-servers.jpg', alt: 'Server rack work performed by an Already Here LLC field technician' },
+  { src: '/images/gallery-professional/pos-installation.webp', alt: 'Retail POS installation completed onsite in Phoenix' },
+  { src: '/images/gallery-professional/hpe-infrastructure.jpg', alt: 'Enterprise infrastructure equipment installed and verified onsite' }
 ] as const;
 
 export default function HomePage() {
@@ -122,16 +126,15 @@ export default function HomePage() {
             </div>
 
             <h1 className="mt-2 max-w-4xl text-4xl font-semibold tracking-tight text-navy sm:text-5xl lg:text-6xl">
-              Managed IT Services in Phoenix, Backed by 30+ Years of Hands-On IT Experience
+              Phoenix IT support: remote help desk plus onsite technicians.
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-              Already Here LLC manages and supports the technology businesses depend on: users, endpoints, networks, servers, Microsoft 365, cloud services, identity, security controls, vendors, projects, and physical sites. When remote support reaches a physical limit, our onsite field capability keeps the same problem moving toward resolution.
+              We keep Phoenix businesses, IT teams, and multi-site operators running — users, devices, networks, Microsoft 365, and security handled remotely, with technicians dispatched onsite when hardware or hands are needed. 30+ years of IT experience.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link href="/dispatch" className="link-ring inline-flex items-center justify-center rounded-full bg-action px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-navy">Request IT Support</Link>
-              <Link href="/services" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action">View Managed IT Services</Link>
-              <Link href="/emergency-dispatch" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action">Same-Day Onsite Help</Link>
+              <Link href="/services" className="link-ring inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-action hover:text-action">View Services</Link>
             </div>
 
             <div className="mt-10 rounded-3xl border border-borderBrand bg-soft px-5 py-5">
@@ -259,6 +262,14 @@ export default function HomePage() {
             </article>
           ))}
         </div>
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          {proofPhotos.map((photo) => (
+            <figure key={photo.src} className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-borderBrand">
+              <Image src={photo.src} alt={photo.alt} fill sizes="(min-width: 640px) 33vw, 100vw" className="object-cover" />
+            </figure>
+          ))}
+        </div>
+        <Link href="/project-gallery" className="mt-6 inline-flex text-sm font-semibold text-action">View the full project gallery</Link>
         <p className="mt-6 text-xs leading-5 text-slate-500">
           Representative project references describe verified execution history and do not imply current preferred-vendor, authorized-service-provider, channel-partner, or certification status unless explicitly stated.
         </p>
