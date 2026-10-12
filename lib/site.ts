@@ -219,6 +219,10 @@ export const closeoutItems = [
 ] as const;
 
 export const dispatchTypes = [
+  'Managed IT / recurring support',
+  'Remote support / administration',
+  'Project / migration / remediation',
+  'Not sure — route for me',
   'Technical field operations',
   'Smart hands support',
   'Onsite infrastructure execution',
