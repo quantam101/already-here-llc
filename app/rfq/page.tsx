@@ -39,6 +39,9 @@ export default function RFQPage() {
         </div>
       </section>
       <section className="container-shell py-16 lg:py-24">
+        <p className="mb-8 max-w-3xl rounded-2xl border border-borderBrand bg-soft px-5 py-4 text-sm leading-6 text-slate-600">
+          Best for multi-site rollouts, remediation, and project-scoped field work. For a single onsite visit or ongoing IT support, use <Link href="/dispatch" className="font-semibold text-action">Request IT Support</Link> instead.
+        </p>
         <RFQForm />
       </section>
     </>

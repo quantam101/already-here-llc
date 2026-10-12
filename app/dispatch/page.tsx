@@ -100,6 +100,9 @@ export default function DispatchPage() {
         </div>
 
         <div>
+          <p className="mb-6 rounded-2xl border border-borderBrand bg-soft px-5 py-4 text-sm leading-6 text-slate-600">
+            Not sure which path fits? Describe the problem, the site or users affected, and your timing — we route it to the right service for you.
+          </p>
           <DispatchForm />
         </div>
       </div>
