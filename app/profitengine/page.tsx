@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: 'ProfitEngine Status | Already Here LLC',
+  title: 'ProfitEngine Status',
   description: 'Private operational status surface for the ProfitEngine v5 runtime.',
   robots: {
     index: false,

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { PartnerSignup } from '@/components/PartnerSignup';
 
 export const metadata: Metadata = {
-  title: 'Partner With Already Here LLC',
+  title: 'Partner With Us',
   description: 'Partner with Already Here LLC for Phoenix metro onsite IT field execution, MSP overflow, retail technology support, data-center smart hands, and closeout-heavy technical dispatch.'
 };
 
