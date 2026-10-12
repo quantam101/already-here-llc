@@ -116,15 +116,15 @@ export function DispatchForm() {
       <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
       <div className="grid gap-6 md:grid-cols-2">
         <label className="grid gap-2 text-sm font-medium text-navy">
-          Full name <span className="text-action">*</span>
+          <span>Full name <span className="text-action">*</span></span>
           <input name="fullName" autoComplete="name" required maxLength={120} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="Primary onsite contact" />
         </label>
         <label className="grid gap-2 text-sm font-medium text-navy">
-          Company <span className="text-action">*</span>
+          <span>Company <span className="text-action">*</span></span>
           <input name="company" autoComplete="organization" required maxLength={160} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="Vendor, MSP, operator, or client company" />
         </label>
         <label className="grid gap-2 text-sm font-medium text-navy">
-          Business email <span className="text-action">*</span>
+          <span>Business email <span className="text-action">*</span></span>
           <input name="email" type="email" autoComplete="email" required maxLength={160} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="you@company.com" />
         </label>
         <label className="grid gap-2 text-sm font-medium text-navy">
@@ -132,7 +132,7 @@ export function DispatchForm() {
           <input name="phone" type="tel" autoComplete="tel" inputMode="tel" maxLength={40} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="Direct callback number" />
         </label>
         <label className="grid gap-2 text-sm font-medium text-navy">
-          Site city <span className="text-action">*</span>
+          <span>Site city <span className="text-action">*</span></span>
           <input name="siteCity" required maxLength={120} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="Phoenix, Chandler, Mesa, etc." />
         </label>
         <label className="grid gap-2 text-sm font-medium text-navy">
@@ -140,7 +140,7 @@ export function DispatchForm() {
           <input name="siteZip" inputMode="numeric" pattern="[0-9]{5}" maxLength={20} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="Optional ZIP" />
         </label>
         <label className="grid gap-2 text-sm font-medium text-navy">
-          Service type <span className="text-action">*</span>
+          <span>Service type <span className="text-action">*</span></span>
           <select name="serviceType" required defaultValue="" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink">
             <option value="" disabled>Select a service type</option>
             {dispatchTypes.map((type) => <option key={type} value={type}>{type}</option>)}
@@ -166,7 +166,7 @@ export function DispatchForm() {
         <input name="ticketNumber" maxLength={120} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="WO / dispatch / ticket reference" />
       </label>
       <label className="mt-6 grid gap-2 text-sm font-medium text-navy">
-        Scope, scheduling notes, and site details <span className="text-action">*</span>
+        <span>Scope, scheduling notes, and site details <span className="text-action">*</span></span>
         <textarea name="message" required rows={7} maxLength={3000} className="link-ring rounded-3xl border border-borderBrand px-4 py-3 text-sm leading-6 text-ink placeholder:text-slate-400" placeholder="Scope summary, arrival instructions, site conditions, hardware details, and anything that affects dispatch planning." />
       </label>
       <label className="mt-6 grid gap-2 text-sm font-medium text-navy">
