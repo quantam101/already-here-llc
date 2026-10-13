@@ -145,13 +145,14 @@ await withEnv(
   async () => {
     const originalFetch = globalThis.fetch;
     const calls = [];
+    const hostOf = (input) => new URL(String(input)).hostname;
     globalThis.fetch = async (input) => {
-      const url = String(input);
-      calls.push(url);
-      if (url.includes('api.resend.com')) {
+      const host = hostOf(input);
+      calls.push(host);
+      if (host === 'api.resend.com') {
         return new Response(JSON.stringify({ message: 'resend down' }), { status: 500 });
       }
-      if (url.includes('formspree')) {
+      if (host === 'example.com') {
         return new Response(JSON.stringify({ ok: true }), { status: 200 });
       }
       return new Response('{}', { status: 200 });
@@ -164,8 +165,8 @@ await withEnv(
       assert.equal(json.delivery, 'formspree');
       assert.equal(json.failoverUsed, true);
       assert.equal(json.persistedExternally, true);
-      assert.equal(calls.filter((u) => u.includes('api.resend.com')).length, 2, 'resend attempted twice before failover');
-      assert.equal(calls.filter((u) => u.includes('formspree')).length, 1);
+      assert.equal(calls.filter((h) => h === 'api.resend.com').length, 2, 'resend attempted twice before failover');
+      assert.equal(calls.filter((h) => h === 'example.com').length, 1);
     } finally {
       globalThis.fetch = originalFetch;
     }
@@ -183,8 +184,8 @@ await withEnv(
     const originalFetch = globalThis.fetch;
     let resendCalls = 0;
     globalThis.fetch = async (input) => {
-      const url = String(input);
-      if (url.includes('api.resend.com')) {
+      const host = new URL(String(input)).hostname;
+      if (host === 'api.resend.com') {
         resendCalls += 1;
         if (resendCalls === 1) return new Response(JSON.stringify({ message: 'transient' }), { status: 500 });
         return new Response(JSON.stringify({ id: 'email-1' }), { status: 200 });
