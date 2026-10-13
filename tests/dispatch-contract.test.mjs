@@ -133,3 +133,93 @@ await withEnv(
     assert.ok(json.revenueSpine);
   }
 );
+
+// Provider failover: a configured-but-failing Resend must fall back to Formspree
+// (retry/recovery + failover), not 502 the intake.
+await withEnv(
+  {
+    RESEND_API_KEY: 'test',
+    DISPATCH_TO_EMAIL: 'dispatch@example.com',
+    FORMSPREE_ENDPOINT: 'https://example.com/formspree'
+  },
+  async () => {
+    const originalFetch = globalThis.fetch;
+    const calls = [];
+    const hostOf = (input) => new URL(String(input)).hostname;
+    globalThis.fetch = async (input) => {
+      const host = hostOf(input);
+      calls.push(host);
+      if (host === 'api.resend.com') {
+        return new Response(JSON.stringify({ message: 'resend down' }), { status: 500 });
+      }
+      if (host === 'example.com') {
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      }
+      return new Response('{}', { status: 200 });
+    };
+    try {
+      const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-forwarded-for': '203.0.113.14' }));
+      assert.equal(response.status, 200);
+      const json = await response.json();
+      assert.equal(json.ok, true);
+      assert.equal(json.delivery, 'formspree');
+      assert.equal(json.failoverUsed, true);
+      assert.equal(json.persistedExternally, true);
+      assert.equal(calls.filter((h) => h === 'api.resend.com').length, 2, 'resend attempted twice before failover');
+      assert.equal(calls.filter((h) => h === 'example.com').length, 1);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  }
+);
+
+// Resend succeeds on retry: no failover, delivery stays resend.
+await withEnv(
+  {
+    RESEND_API_KEY: 'test',
+    DISPATCH_TO_EMAIL: 'dispatch@example.com',
+    FORMSPREE_ENDPOINT: 'https://example.com/formspree'
+  },
+  async () => {
+    const originalFetch = globalThis.fetch;
+    let resendCalls = 0;
+    globalThis.fetch = async (input) => {
+      const host = new URL(String(input)).hostname;
+      if (host === 'api.resend.com') {
+        resendCalls += 1;
+        if (resendCalls === 1) return new Response(JSON.stringify({ message: 'transient' }), { status: 500 });
+        return new Response(JSON.stringify({ id: 'email-1' }), { status: 200 });
+      }
+      return new Response('{}', { status: 200 });
+    };
+    try {
+      const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-forwarded-for': '203.0.113.15' }));
+      assert.equal(response.status, 200);
+      const json = await response.json();
+      assert.equal(json.delivery, 'resend');
+      assert.equal(json.failoverUsed, false);
+      assert.ok(resendCalls >= 3, 'first email retried, second email sent');
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  }
+);
+
+// Both providers down: intake fails closed with 502 and records provider errors.
+await withEnv(
+  {
+    RESEND_API_KEY: 'test',
+    DISPATCH_TO_EMAIL: 'dispatch@example.com',
+    FORMSPREE_ENDPOINT: 'https://example.com/formspree'
+  },
+  async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({ message: 'down' }), { status: 500 });
+    try {
+      const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-forwarded-for': '203.0.113.16' }));
+      assert.equal(response.status, 502);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  }
+);
