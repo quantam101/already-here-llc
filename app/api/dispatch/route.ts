@@ -303,6 +303,37 @@ async function sendViaFormspree(formData: FormData, dispatchId: string): Promise
   }
 }
 
+type DispatchDelivery = {
+  delivery: 'resend' | 'formspree';
+  resendEmailId: string | null;
+  failoverUsed: boolean;
+  providerErrors: string[];
+};
+
+const providerMaxAttempts = 2;
+
+async function deliverDispatch(formData: FormData, dispatchId: string, hasResend: boolean, hasFormspree: boolean): Promise<DispatchDelivery> {
+  const providerErrors: string[] = [];
+
+  if (hasResend) {
+    for (let attempt = 1; attempt <= providerMaxAttempts; attempt += 1) {
+      try {
+        const resendEmailId = await sendViaResend(formData, dispatchId);
+        return { delivery: 'resend', resendEmailId, failoverUsed: false, providerErrors };
+      } catch (error) {
+        providerErrors.push(`resend attempt ${attempt}: ${error instanceof Error ? error.message : 'send failed'}`);
+      }
+    }
+  }
+
+  if (hasFormspree) {
+    await sendViaFormspree(formData, dispatchId);
+    return { delivery: 'formspree', resendEmailId: null, failoverUsed: hasResend && providerErrors.length > 0, providerErrors };
+  }
+
+  throw new Error(providerErrors.join(' | ') || 'No dispatch delivery provider configured.');
+}
+
 export async function POST(request: Request) {
   const clientKey = getClientKey(request);
   if (isRateLimited(clientKey)) return NextResponse.json({ message: 'Too many submissions. Try again later.' }, { status: 429 });
@@ -331,8 +362,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (hasResend) await sendViaResend(formData, dispatchId);
-    else await sendViaFormspree(formData, dispatchId);
+    const delivery = await deliverDispatch(formData, dispatchId, hasResend, hasFormspree);
 
     try {
       after(async () => {
@@ -366,8 +396,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       dispatchId,
-      recordLocation: hasResend ? 'dispatch_email_json_attachment' : 'formspree_payload',
-      delivery: hasResend ? 'resend' : 'formspree',
+      recordLocation: delivery.delivery === 'resend' ? 'dispatch_email_json_attachment' : 'formspree_payload',
+      delivery: delivery.delivery,
+      failoverUsed: delivery.failoverUsed,
+      providerErrors: delivery.providerErrors.length ? delivery.providerErrors : undefined,
       persistedExternally: true,
       revenueSpine
     });
