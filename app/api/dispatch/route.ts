@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { after, NextResponse } from 'next/server.js';
 import { buildRevenueIntakeProof } from '@/lib/revenue-command-intake';
 import { getCanonicalStore } from '@/lib/canonical-store';
+import { triageDispatchRequest } from '@/lib/dispatch-triage';
 
 export const runtime = 'nodejs';
 
@@ -113,11 +114,23 @@ function validateFormData(formData: FormData): string | null {
   return null;
 }
 
+function buildDispatchTriage(formData: FormData) {
+  return triageDispatchRequest({
+    priority: asCleanString(formData, 'priority'),
+    serviceType: asCleanString(formData, 'serviceType'),
+    message: asCleanString(formData, 'message'),
+    siteCount: asCleanString(formData, 'siteCount'),
+    travelLikely: asCleanString(formData, 'travelLikely'),
+    bridgeDetails: asCleanString(formData, 'bridgeDetails')
+  });
+}
+
 function buildDispatchRecord(dispatchId: string, formData: FormData) {
   const attachment = getAttachmentFile(formData);
   return {
     dispatchId,
     status: 'received',
+    triage: buildDispatchTriage(formData),
     source: 'website_dispatch_form',
     submittedAt: new Date().toISOString(),
     fullName: asCleanString(formData, 'fullName'),
@@ -204,6 +217,7 @@ function getDispatchRows(formData: FormData, dispatchId: string): Array<[string,
     ['Service type', asCleanString(formData, 'serviceType')],
     ['Requested schedule', getScheduleSummary(formData)],
     ['Ticket / work order', asCleanString(formData, 'ticketNumber')],
+    ['Triage', (() => { const t = buildDispatchTriage(formData); return `${t.primaryLane} — urgency ${t.urgencyScore}, risk ${t.riskScore}. ${t.nextStep}`; })()],
     ['Attachment', attachment ? `${sanitizeFilename(attachment.name)} (${formatBytes(attachment.size)})` : 'No attachment received'],
     ['Scope / notes', asCleanString(formData, 'message')]
   ];
@@ -316,6 +330,7 @@ export async function POST(request: Request) {
   const hasResend = !!process.env.RESEND_API_KEY && !!process.env.DISPATCH_TO_EMAIL;
   const hasFormspree = !!process.env.FORMSPREE_ENDPOINT;
   const dispatchId = generateDispatchId();
+  const triage = buildDispatchTriage(formData);
   const revenueSpine = buildRevenueSpineProof(dispatchId, formData);
   await getCanonicalStore().executeWrites(revenueSpine.databaseReadyWrites);
 
@@ -326,6 +341,7 @@ export async function POST(request: Request) {
       recordLocation: 'revenue_command_spine_local_proof',
       delivery: 'local_proof_only',
       persistedExternally: false,
+      triage,
       revenueSpine
     });
   }
@@ -369,11 +385,12 @@ export async function POST(request: Request) {
       recordLocation: hasResend ? 'dispatch_email_json_attachment' : 'formspree_payload',
       delivery: hasResend ? 'resend' : 'formspree',
       persistedExternally: true,
+      triage,
       revenueSpine
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Dispatch submission failed.';
-    return NextResponse.json({ message, dispatchId, revenueSpine }, { status: 502 });
+    return NextResponse.json({ message, dispatchId, triage, revenueSpine }, { status: 502 });
   }
 }
 
