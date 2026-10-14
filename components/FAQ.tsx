@@ -9,7 +9,7 @@ const faqs = [
   },
   {
     q: 'What is the typical rate for a field dispatch?',
-    a: 'Standard field dispatch runs $95–$195/hr depending on scope, travel, access requirements, and closeout deliverables. Urgent or same-day requests carry a premium rate. Multi-site and recurring programs qualify for volume pricing.'
+    a: 'Scheduled field engineering is $125/hr with a two-hour/$250 minimum. Advanced smart hands is $150/hr ($300 minimum), same-day priority $175/hr ($350 minimum), after-hours/weekends $187.50–$200/hr (two-hour minimum), and emergency response $225/hr ($450 minimum), subject to scope and availability. Travel is quoted separately with written approval.'
   },
   {
     q: 'How quickly can you respond to a same-day request?',
