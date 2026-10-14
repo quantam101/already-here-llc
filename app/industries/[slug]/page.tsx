@@ -27,13 +27,12 @@ const industries: Industry[] = [
       "Compliance audits that need photo evidence of physical controls",
     ],
     services: [
-      { name: "Healthcare equipment installation", price: "$150/hr" },
-      { name: "Biomedical equipment inventory", price: "$600–$1,500" },
-      { name: "Network health assessment", price: "$500–$900" },
-      { name: "Compliance documentation support", price: "$125/hr" },
+      { name: "Healthcare equipment installation", price: "Quoted under current Weston schedule" },
+      { name: "Biomedical equipment inventory", price: "Quoted under current Weston schedule" },
+      { name: "Network health assessment", price: "Quoted under current Weston schedule" },
+      { name: "Compliance documentation support", price: "Quoted under current Weston schedule" },
     ],
-    retainerFit:
-      "Enterprise tier includes dedicated healthcare technology support; Business tier covers clinic groups with quarterly assessments and asset management.",
+    retainerFit: "Priority retainer $2,000/month for approximately 8–10 scheduled hours. Additional work billed separately. Response targets subject to availability.",
   },
   {
     slug: "restaurants",
@@ -48,13 +47,12 @@ const industries: Industry[] = [
       "Franchise rollouts that need the same work done right at every site",
     ],
     services: [
-      { name: "POS deployment", price: "$150/lane" },
-      { name: "Restaurant technology assessment", price: "$400–$800" },
-      { name: "New store survey", price: "$350+" },
-      { name: "Standard dispatch visit", price: "$130 minimum" },
+      { name: "POS deployment", price: "Quoted under current Weston schedule" },
+      { name: "Restaurant technology assessment", price: "Quoted under current Weston schedule" },
+      { name: "New store survey", price: "Quoted under current Weston schedule" },
+      { name: "Standard dispatch visit", price: "Quoted under current Weston schedule" },
     ],
-    retainerFit:
-      "Essential tier covers a small group's break/fix; Business tier adds same-day-when-available response and quarterly site assessments across locations.",
+    retainerFit: "Priority retainer $2,000/month for approximately 8–10 scheduled hours. Additional work billed separately. Response targets subject to availability.",
   },
   {
     slug: "retail",
@@ -69,13 +67,12 @@ const industries: Industry[] = [
       "Openings and remodels that need surveys before the GC finishes",
     ],
     services: [
-      { name: "Retail store technology assessment", price: "$400–$800" },
-      { name: "Device rollout", price: "$60/unit (10+)" },
-      { name: "Digital signage installation", price: "$150–$350/unit" },
-      { name: "New site readiness assessment", price: "$350–$600" },
+      { name: "Retail store technology assessment", price: "Quoted under current Weston schedule" },
+      { name: "Device rollout", price: "Quoted under current Weston schedule" },
+      { name: "Digital signage installation", price: "Quoted under current Weston schedule" },
+      { name: "New site readiness assessment", price: "Quoted under current Weston schedule" },
     ],
-    retainerFit:
-      "Business tier fits multi-store operators: asset inventory, quarterly assessments, and priority response with per-unit rollout pricing on top.",
+    retainerFit: "Priority retainer $2,000/month for approximately 8–10 scheduled hours. Additional work billed separately. Response targets subject to availability.",
   },
   {
     slug: "data-centers",
@@ -90,13 +87,12 @@ const industries: Industry[] = [
       "Vendor deliveries nobody local can receive and verify",
     ],
     services: [
-      { name: "Remote hands block", price: "$200 minimum" },
-      { name: "Rack & stack", price: "$200 min + $125/hr" },
-      { name: "Rack audit", price: "$200/rack" },
-      { name: "Data center walkthrough", price: "$500 minimum" },
+      { name: "Remote hands block", price: "Quoted under current Weston schedule" },
+      { name: "Rack & stack", price: "Quoted under current Weston schedule" },
+      { name: "Rack audit", price: "Quoted under current Weston schedule" },
+      { name: "Data center walkthrough", price: "Quoted under current Weston schedule" },
     ],
-    retainerFit:
-      "Enterprise tier includes data center support with a dedicated technician; Essential works for teams needing occasional guaranteed-response smart hands.",
+    retainerFit: "Priority retainer $2,000/month for approximately 8–10 scheduled hours. Additional work billed separately. Response targets subject to availability.",
   },
   {
     slug: "msps",
@@ -111,13 +107,12 @@ const industries: Industry[] = [
       "One-off dispatch costs that make Arizona accounts unprofitable",
     ],
     services: [
-      { name: "Smart hands half-day", price: "$400" },
-      { name: "Network engineering visit", price: "$125/hr" },
-      { name: "AP installation", price: "$85/AP (5+)" },
-      { name: "Site survey", price: "$250–$500" },
+      { name: "Smart hands half-day", price: "Quoted under current Weston schedule" },
+      { name: "Network engineering visit", price: "Quoted under current Weston schedule" },
+      { name: "AP installation", price: "Quoted under current Weston schedule" },
+      { name: "Site survey", price: "Quoted under current Weston schedule" },
     ],
-    retainerFit:
-      "Business tier is the MSP workhorse: 35 hours, priority response, white-label delivery, and $95/hr overage you can mark up in your own agreements.",
+    retainerFit: "Priority retainer $2,000/month for approximately 8–10 scheduled hours. Additional work billed separately. Response targets subject to availability.",
   },
   {
     slug: "av-low-voltage",
@@ -132,13 +127,12 @@ const industries: Industry[] = [
       "Closeout documentation that eats project margin",
     ],
     services: [
-      { name: "Camera / CCTV assessment", price: "$400–$900" },
-      { name: "Access control audit", price: "$400–$900" },
-      { name: "Digital signage installation", price: "$150–$350/unit" },
+      { name: "Camera / CCTV assessment", price: "Quoted under current Weston schedule" },
+      { name: "Access control audit", price: "Quoted under current Weston schedule" },
+      { name: "Digital signage installation", price: "Quoted under current Weston schedule" },
       { name: "Structured cabling (small runs)", price: "Quoted per scope" },
     ],
-    retainerFit:
-      "Essential tier gives integrators a standing service arm for installed-base calls; project labor quotes separately at catalog rates.",
+    retainerFit: "Priority retainer $2,000/month for approximately 8–10 scheduled hours. Additional work billed separately. Response targets subject to availability.",
   },
   {
     slug: "national-dispatch",
@@ -153,13 +147,12 @@ const industries: Industry[] = [
       "After-hours and hard-to-cover geographies inside Arizona",
     ],
     services: [
-      { name: "Standard dispatch visit", price: "$130 minimum" },
-      { name: "Smart hands full-day", price: "$760" },
-      { name: "Emergency response", price: "1.5× standard" },
-      { name: "Equipment verification visit", price: "$130 minimum" },
+      { name: "Standard dispatch visit", price: "Quoted under current Weston schedule" },
+      { name: "Smart hands full-day", price: "Quoted under current Weston schedule" },
+      { name: "Emergency response", price: "Quoted under current Weston schedule" },
+      { name: "Equipment verification visit", price: "Quoted under current Weston schedule" },
     ],
-    retainerFit:
-      "Essential tier reserves a guaranteed-response Arizona bench at a flat monthly number — typically cheaper than 5 one-off market-rate tickets.",
+    retainerFit: "Priority retainer $2,000/month for approximately 8–10 scheduled hours. Additional work billed separately. Response targets subject to availability.",
   },
 ];
 
