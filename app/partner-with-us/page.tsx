@@ -27,9 +27,9 @@ const partnerTypes = [
 ];
 
 const partnerRules = [
-  '$130 minimum standard Phoenix metro dispatch',
+  'Scheduled field engineering: $125/hour, two-hour/$250 minimum',
   '2-hour minimum unless specifically contracted otherwise',
-  '$200 flat preferred for server, data-center, after-hours, or infrastructure smart-hands work',
+  'Advanced smart hands: $150/hour, two-hour/$300 minimum; emergency response: $225/hour, two-hour/$450 minimum, subject to availability',
   'No unpaid return trips for access failures, missing parts, or incomplete site readiness',
   'Clear scope, approved rate, site contact, and closeout requirements before dispatch'
 ];
