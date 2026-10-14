@@ -11,78 +11,25 @@ export const metadata: Metadata = createPageMetadata({
 
 const tiers = [
   {
-    name: "Essential Coverage",
+    name: "Priority Support",
     price: "$2,000",
     cadence: "/month",
-    tagline: "Reserved Arizona capacity for teams that need dependable boots on the ground.",
-    features: [
-      "Reserved Arizona field capacity",
-      "Up to 20 onsite service hours",
-      "24–48 hour response SLA",
-      "Priority scheduling",
-      "Unlimited scheduling requests",
-      "Basic remote troubleshooting",
-      "Site assessments",
-      "Equipment verification",
-      "Photo documentation",
-      "Monthly service report",
-    ],
-    overage: "Overage $100/hr · $130 minimum dispatch · $200 minimum data center / smart-hands dispatch",
-    highlighted: false,
-  },
-  {
-    name: "Business Coverage",
-    price: "$3,500",
-    cadence: "/month",
-    tagline: "Priority coverage with asset management for multi-vendor and multi-site operations.",
-    features: [
-      "Up to 35 onsite service hours",
-      "Priority response",
-      "Same-day dispatch when available",
-      "Quarterly site assessment",
-      "Asset inventory management",
-      "Vendor escort",
-      "Smart hands & network support",
-      "Printer and POS support",
-      "Photo documentation",
-      "Executive reporting",
-    ],
-    overage: "Overage $95/hr · standard dispatch minimums apply",
+    tagline: "Reserved scheduled field support with documented closeout.",
+    features: ["Approximately 8–10 scheduled support hours", "Priority scheduling subject to availability", "Documented technical closeout", "Additional work quoted and billed separately"],
+    overage: "Additional work at the applicable Weston schedule; travel and materials separately authorized.",
     highlighted: true,
-  },
-  {
-    name: "Enterprise Arizona Partner",
-    price: "$6,000",
-    cadence: "/month",
-    tagline: "Dedicated statewide coverage for enterprises, MSPs, and national service providers.",
-    features: [
-      "Up to 60 onsite service hours",
-      "Guaranteed priority response",
-      "Same-day response when available",
-      "Dedicated technician",
-      "Data center support & rack and stack",
-      "Healthcare and restaurant technology support",
-      "Multi-site coordination",
-      "Project management support",
-      "Vendor management",
-      "Executive reporting",
-    ],
-    overage: "Additional hours $90/hr",
-    highlighted: false,
   },
 ];
 
 const standaloneRates = [
-  ["Minimum dispatch", "$130"],
-  ["General onsite service", "$100/hr"],
-  ["Network engineering", "$125/hr"],
-  ["Wireless engineering", "$125/hr"],
-  ["Data center / smart hands", "$200 minimum"],
-  ["Rack & stack", "$200 minimum"],
-  ["Site survey", "$250–$500"],
-  ["Infrastructure assessment", "$500–$1,500"],
-  ["New store / site survey", "$350+"],
-  ["Emergency after-hours", "1.5× standard rate"],
+  ["Scheduled field engineering", "$125/hr · $250 minimum"],
+  ["Advanced engineering / smart hands", "$150/hr · $300 minimum"],
+  ["Same-day priority", "$175/hr · $350 minimum"],
+  ["After-hours / weekend", "$187.50–$200/hr · 2-hour minimum"],
+  ["Emergency response (under-four-hour target)", "$225/hr · $450 minimum"],
+  ["Standardized site audit", "$1,500"],
+  ["Materials", "Cost + 20%"],
+  ["Priority support retainer", "$2,000/month · approximately 8–10 scheduled hours"],
 ];
 
 const addOns = [
@@ -134,8 +81,8 @@ export default function ArizonaFieldCoveragePage() {
             full-time technician.
           </h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300">
-            A monthly retainer reserves Arizona field capacity, guarantees response
-            times, and includes a defined block of onsite service hours. Projects,
+            A monthly retainer reserves scheduled Arizona field capacity, subject to
+            availability, and includes approximately 8–10 scheduled support hours. Projects,
             rollouts, and deployments are scoped and billed separately — so the
             retainer stays predictable for both sides.
           </p>
@@ -223,8 +170,7 @@ export default function ArizonaFieldCoveragePage() {
             ))}
           </div>
           <p className="mt-8 max-w-3xl text-sm leading-7 text-slate-600">
-            Every retainer reserves capacity first: guaranteed response windows and
-            scheduling priority. Included hours cover break/fix, smart hands, and
+            Every retainer reserves capacity first: priority scheduling subject to availability. Included hours cover break/fix, smart hands, and
             assessments. Projects — rollouts, rack builds, cabling, installations —
             are quoted separately as professional services.
           </p>
@@ -297,7 +243,7 @@ export default function ArizonaFieldCoveragePage() {
           </h2>
           <p className="mt-4 max-w-3xl text-base leading-8 text-slate-700">
             Pay online, and we contact you within one business day to schedule.
-            Full refund if we can&apos;t schedule your site.
+            Scheduling and cancellation terms are confirmed in writing before purchase.
           </p>
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {[
@@ -315,8 +261,8 @@ export default function ArizonaFieldCoveragePage() {
               },
               {
                 name: "Smart Hands Half-Day",
-                price: "$400",
-                blurb: "Four hours of directed on-site work in the Phoenix metro, photo-documented.",
+                price: "Request quote",
+                blurb: "Four hours of directed onsite smart-hands work, separately scoped under the current rate schedule.",
                 url: "https://alreadyhere.gumroad.com/l/iezxvf",
               },
             ].map((s) => (
