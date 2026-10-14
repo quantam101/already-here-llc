@@ -131,5 +131,7 @@ await withEnv(
     assert.equal(json.persistedExternally, false);
     assert.ok(json.dispatchId);
     assert.ok(json.revenueSpine);
+    assert.equal(json.triage.primaryLane, 'emergency_onsite');
+    assert.equal(json.triage.urgencyScore, 95);
   }
 );
