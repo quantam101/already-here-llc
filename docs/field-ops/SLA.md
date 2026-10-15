@@ -1,52 +1,47 @@
-# SERVICE LEVEL AGREEMENT — Arizona Field Coverage
+# SERVICE LEVEL TARGETS — Arizona Field Coverage
 
-> **DRAFT — attach as Exhibit B to the Retainer Agreement.**
+> **DRAFT — legal and owner review required before attachment to any agreement.**
+> This document states planning targets only. It creates no guarantee, service credit,
+> penalty, or amendment to an existing signed contract.
 
 ## 1. Request Intake
-All requests enter via www.alreadyherellc.com/dispatch or
-dispatch@alreadyherellc.com. Each request receives an acknowledgment with a
-tracking reference. Business hours: Monday–Friday 08:00–17:00 MST, excluding
-US federal holidays. After-hours emergency dispatch is available at 1.5×
-standard rates.
 
-## 2. Response Targets by Tier
+Requests enter through https://www.alreadyherellc.com/dispatch or
+dispatch@alreadyherellc.com. A request is not accepted until scope, access,
+schedule, commercial terms, and availability are confirmed in writing.
 
-| Severity | Essential | Business | Enterprise |
-|---|---|---|---|
-| **S1 — Site down / outage** | Acknowledge 2 bus. hrs; onsite next business day | Acknowledge 1 bus. hr; onsite same day when dispatch received before 13:00, else next morning | Acknowledge 1 hr; same-day onsite when received before 15:00 |
-| **S2 — Degraded / single system** | Acknowledge 4 bus. hrs; onsite within 48 hrs | Acknowledge 2 bus. hrs; onsite within 24 hrs | Acknowledge 2 hrs; onsite within 24 hrs |
-| **S3 — Scheduled / routine** | Scheduled within 5 business days | Scheduled within 3 business days | Scheduled within 2 business days |
+## 2. Scheduling Targets
 
-"Onsite" targets assume the site is within the Phoenix metropolitan area;
-statewide sites add reasonable travel time, communicated at acknowledgment.
+- Scheduled field engineering: scheduled by written confirmation.
+- Same-day priority: target only, subject to technician availability and site readiness.
+- Emergency response: under-four-hour target, subject to written acceptance and availability.
+- Statewide sites require separately approved travel time and charges.
 
-## 3. Severity Definitions
-- **S1:** Business-stopping — location cannot transact, network down, data
-  center incident requiring immediate hands.
-- **S2:** Material degradation — a system or lane is down but the site
-  operates; failed device needing prompt replacement.
-- **S3:** Routine — assessments, installs, PMs, inventory, scheduled work.
+No response window is guaranteed unless an owner-approved, executed agreement says otherwise.
 
-## 4. Escalation Path
-1. Dispatch coordinator — dispatch@alreadyherellc.com
-2. Operations owner — [name/number filled at onboarding]
-Escalate if an acknowledgment target is missed or scope changes onsite.
+## 3. Current Weston Schedule
 
-## 5. Service Credits
-If Provider misses the acknowledgment or onsite target for a properly
-submitted S1/S2 request more than once in a calendar month (and the miss is
-not caused by Client access issues or force majeure), Client receives a credit
-of 5% of that month's retainer fee per additional miss, capped at 20% of the
-monthly fee. Credits apply to the next invoice and are Client's exclusive
-remedy for missed targets.
+| Service | Rate |
+|---|---|
+| Scheduled field engineering | $125/hour; two-hour/$250 minimum |
+| Advanced engineering / smart hands | $150/hour; two-hour/$300 minimum |
+| Same-day priority | $175/hour; two-hour/$350 minimum |
+| After-hours / weekend | $187.50–$200/hour; two-hour minimum |
+| Emergency response, under-four-hour target | $225/hour; two-hour/$450 minimum |
+| Standardized site audit | $1,500 |
+| Materials | Cost + 20% |
+| Priority support retainer | $2,000/month for approximately 8–10 scheduled support hours; additional work billed separately |
 
-## 6. Exclusions
-Targets do not apply when: site access, badging, or escort is unavailable;
-Client-provided scope was materially inaccurate; parts are not on hand and
-must be sourced; or work is outside the retainer's included scope pending
-SOW approval.
+Mileage, extended-distance travel, parking, and tolls require written approval.
+Net 15 is the target; Net 30 is the maximum without owner approval. Projects,
+fixed-price work, routes, storage, software, and managed services are separately scoped.
 
-## 7. Reporting
-Every visit produces a work log with photos. Monthly: utilization report
-(hours used/remaining, visits, SLA performance). Quarterly (Business and
-Enterprise): executive business review per the QBR template.
+## 4. Exclusions
+
+Targets do not apply when access, badging, escort, parts, site readiness, scope,
+remote support, safety conditions, or written commercial approval are incomplete.
+
+## 5. Closeout
+
+Every completed visit should produce agreed work notes, photo evidence when permitted,
+exceptions, parts/serial records when relevant, and a next-action recommendation.
