@@ -21,14 +21,14 @@ function request(body, ip = '203.0.113.180') {
     title: 'HPE CyrusOne memory replacement',
     buyer: 'Source Support Services',
     location: 'Phoenix, AZ',
-    fixedPay: 200,
+    fixedPay: 300,
     estimatedHours: 2.1,
     scope: 'Data center smart-hands memory replacement with structured closeout',
     urgency: 'same_day'
   });
 
   assert.equal(scored.grade, 'A');
-  assert.ok(scored.effectiveHourly >= 90);
+  assert.ok(scored.effectiveHourly >= 125);
   assert.equal(scored.counterMessage, undefined);
 }
 
@@ -44,8 +44,8 @@ function request(body, ip = '203.0.113.180') {
   });
 
   assert.notEqual(scored.grade, 'A');
-  assert.ok(scored.riskFlags.includes('below $130 minimum dispatch value'));
-  assert.ok(scored.counterMessage?.includes('$130'));
+  assert.ok(scored.riskFlags.includes('below $250 scheduled dispatch minimum'));
+  assert.ok(scored.counterMessage?.includes('$250'));
 }
 
 {
