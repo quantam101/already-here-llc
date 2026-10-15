@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
+import { trackPageView } from '@/lib/analytics';
 
 export function TrafficTracker() {
   const pathname = usePathname();
@@ -10,6 +11,8 @@ export function TrafficTracker() {
   useEffect(() => {
     if (!pathname || pathname === lastPath.current) return;
     lastPath.current = pathname;
+
+    trackPageView(pathname);
 
     const data = {
       page: pathname,
