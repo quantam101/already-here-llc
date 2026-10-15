@@ -22,7 +22,7 @@ export function GoogleAnalytics() {
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', '${measurementId}', {
-  send_page_view: true,
+  send_page_view: false,
   transport_type: 'beacon'
 });`}
       </Script>
