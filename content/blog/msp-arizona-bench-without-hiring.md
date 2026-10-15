@@ -20,12 +20,12 @@ Every MSP with Arizona clients eventually hits the same wall: the contract promi
 The third option is a standing field partner in-market on a monthly retainer. Here's how that looks with us:
 
 - **White-label by default.** We work your tickets under your process. Your client sees your brand; you see photo-documented work logs.
-- **A real SLA, in writing.** 24–48 hour onsite response on Essential ($2,000/month, 20 onsite hours included), same-day-when-available on Business ($3,500/month, 35 hours). The [SLA includes service credits](/arizona-field-coverage) if we miss targets — put it directly in front of your client.
-- **Known unit economics.** Overage at $95–$100/hour and a [42-service fixed-price catalog](/services-catalog) for projects: AP installs at $85 per unit at volume, POS lanes at $150, rack audits at $200 per rack. You can quote your client before we roll a truck.
+- **Current retainer.** $2,000/month for approximately 8–10 scheduled support hours; additional work billed separately under the [current field schedule](/dispatch). Response targets depend on availability and written scope.
+- **Current unit economics.** Scheduled engineering $125/hour ($250 two-hour minimum), advanced smart hands $150/hour ($300 minimum). Projects and per-unit work require separate quotes.
 - **A technician who has seen the site before.** The same hands come back — closet photos, port maps, and site quirks accumulate instead of evaporating with each marketplace ticket.
 
 ## Rolling it out
 
-Most MSPs start with a single-site smart-hands engagement or a paid assessment to test the work product, then move to a retainer once the photo documentation and response times check out. Our onboarding packet handles site access, escalation paths, and ticketing integration inside two weeks.
+Most MSPs start with a single-site smart-hands engagement or a paid assessment to test the work product, then move to a retainer once the photo documentation and response times check out. Onboarding timing, site access, escalation paths and ticketing integration are agreed in writing.
 
 If Arizona coverage is the gap in your service map, start with [Reserve Coverage](/dispatch) or dispatch@alreadyherellc.com. Send your Arizona client count and current SLA commitments — we'll come back with tier fit and the math.

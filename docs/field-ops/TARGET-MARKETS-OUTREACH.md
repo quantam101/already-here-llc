@@ -1,59 +1,48 @@
 # TARGET MARKETS & OUTREACH — Arizona Field Coverage
 
-Prospect segments, pitch angles, and the follow-up sequence for selling
-retainers. Track every prospect in Daily Command OS (approval queue →
-opportunity pipeline) with the fields at the bottom.
+All prospect identities, pain signals, and contacts must be verified before outreach.
+Outbound messages require approval. Never claim guaranteed response, insurance limits,
+certifications, or results without current evidence.
 
-## Priority Segments (in outreach order)
+## Priority Segments
 
-| # | Segment | Why they buy | Lead offer |
+| # | Segment | Verified-fit trigger | Lead offer |
 |---|---|---|---|
-| 1 | National dispatch companies (NCR, Kinettix, Barrister, Source Support, Field Nation buyers) | Need reliable AZ coverage they don't have to re-vet per ticket | Essential retainer as "reserved AZ bench" |
-| 2 | MSPs (out-of-state with AZ clients) | Can't justify an AZ hire; SLA exposure | White-label smart hands + Business tier |
-| 3 | Data center operators (Phoenix metro is a top-5 DC market) | Remote hands demand, vendor escort, rack work | Smart-hands blocks → Enterprise tier |
-| 4 | POS integrators & restaurant tech providers | Rollouts + break/fix across franchise sites | POS deployment catalog + Essential tier |
-| 5 | Retail rollout companies | Store openings/refreshes need site surveys + installs | New Store Survey + per-unit pricing |
-| 6 | Healthcare OEMs & biomedical service cos | AZ hospital/clinic installs need experienced hands | Healthcare install $150/hr + assessments |
-| 7 | Copier/printer companies | Fleet installs and service overflow | Printer fleet assessment + per-unit installs |
-| 8 | AV & security integrators | Overflow labor, CCTV/access control audits | Audit catalog items → Business tier |
-| 9 | Commercial property management | Multi-building low-voltage + access control | Infrastructure assessment → Business tier |
-| 10 | Multi-site franchise operators | One partner across all AZ locations | Business/Enterprise tier |
-| 11 | Municipal & state contractors | Need local subs with insurance + documentation | Capability statement + rate card |
+| 1 | National dispatch companies | Published Arizona coverage gap or open local work | Scheduled field engineering |
+| 2 | MSPs with Arizona clients | Confirmed onsite coverage need | White-label smart hands |
+| 3 | Data-center operators/vendors | Confirmed remote-hands or escort requirement | Advanced engineering / smart hands |
+| 4 | POS and restaurant technology providers | Confirmed rollout or break/fix need | Separately scoped project or dispatch |
+| 5 | Retail rollout companies | Confirmed surveys, installs, or refreshes | Separately scoped project |
+| 6 | Healthcare technology vendors | Confirmed non-clinical field-support need | Written-scope field engineering |
+| 7 | Printer/copier firms | Confirmed install or service overflow | Scheduled field engineering |
+| 8 | AV, CCTV, access-control, and low-voltage firms | Confirmed labor or closeout gap | Advanced engineering / project quote |
+| 9 | Commercial property managers | Confirmed infrastructure issue | Standardized site audit |
+| 10 | Multi-site operators | Repeated Arizona support demand | Priority support retainer |
 
-## Pitch Direction
-Sell **reserved capacity**, never discounted hours: "The retainer reserves
-Arizona field capacity, guarantees response times, and includes a defined
-block of onsite hours. Projects are billed separately." Proof points:
-healthcare background, enterprise field engineering, Phoenix anchor with
-statewide reach, photo-documented work product, formal SLA with credits.
+## Current Commercial Boundary
 
-## Outreach Sequence (per prospect)
+- Scheduled field engineering: $125/hour, two-hour/$250 minimum.
+- Advanced engineering/smart hands: $150/hour, two-hour/$300 minimum.
+- Same-day priority: $175/hour, two-hour/$350 minimum.
+- After-hours/weekend: $187.50–$200/hour, two-hour minimum.
+- Emergency response under-four-hour target: $225/hour, two-hour/$450 minimum, subject to availability.
+- Standardized site audit: $1,500.
+- Materials: cost + 20%.
+- Priority support: $2,000/month for approximately 8–10 scheduled support hours; additional work billed separately.
+- Travel, parking, and tolls: written approval required.
+- Net 15 target; Net 30 maximum without owner approval.
+- Projects, fixed-price, route, storage, software, and managed services: separately scoped.
 
-| Day | Touch | Content |
+## Outreach Sequence
+
+| Day | Touch | Boundary |
 |---|---|---|
-| 0 | Email 1 | Segment-specific pain + capability statement link + /arizona-field-coverage link. One CTA: 15-min fit call. |
-| 3 | LinkedIn | Connect w/ note referencing email 1. |
-| 7 | Email 2 | One relevant catalog service with fixed price ("Rack audits, $200/rack, photo-documented — this week's availability"). |
-| 14 | Call | Voicemail ≤20s: name, AZ coverage, callback number. |
-| 21 | Email 3 | Case/proof: photo-documented work sample or assessment excerpt. |
-| 35 | Email 4 (break) | "Closing the loop — reply COVERAGE if AZ field capacity becomes a gap." Move to quarterly nurture. |
-| Quarterly | Nurture | QBR-style AZ market note; re-offer assessment. |
+| 0 | Email | Verified company pain, one offer, one CTA |
+| 7 | Follow-up | One scoped pilot; no fabricated urgency |
+| 21 | Proof | Only verified, non-confidential evidence |
+| 35 | Close | End sequence unless the buyer engages |
 
-All outreach from dispatch@alreadyherellc.com with the standard company
-signature and website link (per company email standards).
+## Database Fields
 
-## Renewal & Expansion Motions
-- 60 days before term end: renewal notice + utilization summary.
-- Usage >90% of hours two months running → propose tier upgrade.
-- Usage <50% two months running → proactively right-size (builds trust).
-- Every QBR ends with one expansion recommendation (add-on or project SOW).
-
-## Prospect Tracking Fields (Daily Command)
-company · segment (1–11 above) · contact name/title · email/phone ·
-source · sequence step (0/3/7/14/21/35/nurture) · next action date ·
-tier fit (E/B/Ent) · est. MRR · status (new → contacted → call → proposal →
-signed → lost) · notes
-
-## Revenue Targets (Year 1)
-5 Essential ($10,000) + 3 Business ($10,500) + 2 Enterprise ($12,000)
-= **$32,500 MRR**, with project SOWs and dispatch volume incremental on top.
+company · stable_company_key · source · source_url · observed_at · verified_pain ·
+contact_status · outreach_status · owner · next_action · follow_up_date · evidence

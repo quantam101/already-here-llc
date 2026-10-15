@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { dispatchTypes } from '@/lib/site';
 import { getDispatchQueueDepth, queueDispatchSubmission, replayDispatchQueue } from '@/lib/dispatch-offline-queue';
+import { trackAnalyticsEvent } from '@/lib/analytics';
 
 type SubmitState = {
   error: string | null;
@@ -92,6 +93,11 @@ export function DispatchForm() {
       const response = await fetch('/api/dispatch', { method: 'POST', body: formData });
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
       if (!response.ok) throw new Error(payload?.message || 'Dispatch request could not be submitted.');
+      trackAnalyticsEvent('generate_lead', {
+        form_name: 'dispatch_intake',
+        lead_source: 'website',
+        service_type: String(formData.get('serviceType') ?? 'unspecified')
+      });
       form.reset();
       setState({ error: null, success: true, queued: false, queueDepth: getDispatchQueueDepth() });
       router.push('/thank-you');

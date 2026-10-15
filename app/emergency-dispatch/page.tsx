@@ -52,7 +52,7 @@ export default function EmergencyDispatchPage() {
           <div className="mt-8 rounded-3xl border border-borderBrand bg-soft p-6">
             <p className="grid-label">Preferred dispatch structure</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              {['$130 minimum', '2-hour minimum', '$200 smart-hands preferred'].map((item) => (
+              {['Same-day: $175/hr · $350 minimum', 'After-hours: $187.50–$200/hr · 2-hour minimum', 'Emergency: $225/hr · $450 minimum'].map((item) => (
                 <div key={item} className="rounded-2xl border border-borderBrand bg-white p-4 text-sm font-semibold text-navy">{item}</div>
               ))}
             </div>

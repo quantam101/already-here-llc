@@ -310,9 +310,12 @@ export const naicsCodes = [
 ] as const;
 
 export const pricingTiers = [
-  { label: 'Standard dispatch', value: '$130 minimum, then $100/hr', note: 'Two-hour minimum on same-day requests; scope, travel, and closeout requirements may increase rate' },
-  { label: 'Promotional intro rate', value: '$65/hr', note: 'Discounted introductory rate for qualifying first engagements' },
-  { label: 'Advanced infrastructure', value: '$200 minimum', note: 'Server, data-center, and advanced smart-hands scopes' },
-  { label: 'Urgent / same-day', value: 'Premium rate applies', note: 'Same-day requests carry a priority surcharge' },
-  { label: 'Bundled / recurring', value: 'Volume pricing available', note: 'Multi-site and recurring programs qualify for negotiated rates when economics support the route' }
+  { label: 'Scheduled field engineering', value: '$125/hr · $250 minimum', note: 'Two-hour minimum; scheduled onsite field work' },
+  { label: 'Advanced engineering / smart hands', value: '$150/hr · $300 minimum', note: 'Two-hour minimum; data center, server, and advanced infrastructure work' },
+  { label: 'Same-day priority', value: '$175/hr · $350 minimum', note: 'Two-hour minimum; subject to availability' },
+  { label: 'After-hours / weekend', value: '$187.50–$200/hr', note: 'Two-hour minimum; written quote confirms the applicable rate' },
+  { label: 'Emergency response', value: '$225/hr · $450 minimum', note: 'Under-four-hour response target, subject to availability and written confirmation' },
+  { label: 'Standardized site audit', value: '$1,500', note: 'Defined audit scope and deliverables confirmed before booking' },
+  { label: 'Priority support retainer', value: '$2,000/month', note: 'Approximately 8–10 scheduled hours; additional work billed separately' },
+  { label: 'Materials and travel', value: 'Materials cost + 20%', note: 'Mileage, extended-distance travel, parking, and tolls quoted or passed through with written approval' }
 ] as const;

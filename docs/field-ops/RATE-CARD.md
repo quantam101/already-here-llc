@@ -1,50 +1,19 @@
-# RATE CARD — Already Here LLC Field Services
+# RATE CARD — Already Here LLC | Weston Schedule
+Effective for new quotes from 2026-10-13 (America/Phoenix). Existing signed legacy engagements remain subject to their written agreements.
 
-Effective 2026-07-17 · Arizona statewide, anchored from Phoenix
-Source of truth: www.alreadyherellc.com/arizona-field-coverage
-
-## Monthly Retainers
-
-| Tier | Monthly | Included onsite hours | Overage |
-|---|---|---|---|
-| Essential Coverage | $2,000 | 20 | $100/hr |
-| Business Coverage | $3,500 | 35 | $95/hr |
-| Enterprise Arizona Partner | $6,000 | 60 | $90/hr |
-
-Retainers reserve capacity and response SLAs (see SLA.md). Projects are
-quoted separately.
-
-## Standalone / On-Demand
-
-| Service | Rate |
+| Service | Authorized rate |
 |---|---|
-| Minimum dispatch | $130 |
-| General onsite service | $100/hr |
-| Network engineering | $125/hr |
-| Wireless engineering | $125/hr |
-| Data center / smart hands dispatch | $200 minimum |
-| Rack & stack | $200 minimum + $125/hr |
-| Healthcare environment work | $150/hr |
-| Vendor escort | $90/hr |
-| Site survey | $250–$500 |
-| New store / site survey | $350+ |
-| Infrastructure assessment | $500–$1,500 |
-| Preventive maintenance visit | $150/visit |
-| Emergency after-hours | 1.5× standard rate |
+| Scheduled field engineering | $125/hr; 2-hour / $250 minimum |
+| Advanced engineering / smart hands | $150/hr; 2-hour / $300 minimum |
+| Same-day priority | $175/hr; 2-hour / $350 minimum |
+| After-hours / weekend | $187.50–$200/hr; 2-hour minimum |
+| Emergency response (under-four-hour target) | $225/hr; 2-hour / $450 minimum |
+| Standardized site audit | $1,500, defined scope |
+| Materials | Cost + 20% |
+| Priority retainer | $2,000/month; approximately 8–10 scheduled hours; additional work billed separately |
 
-## Per-Unit Deployment Pricing
+Payment terms: Net 15 target, Net 30 maximum without owner approval. Mileage, extended-distance travel, parking and tolls require written approval. Fixed-price, route, storage, software, managed IT, and project work are separately scoped. Emergency response is a target subject to availability, not a guarantee.
 
-| Item | Rate |
-|---|---|
-| Access point install (5+ units) | $85/AP |
-| POS lane deployment | $150/lane |
-| Desktop/kiosk rollout (10+ units) | $60/unit |
-| Rack audit | $200/rack |
-| Digital signage install | $150–$350/unit |
+The $65/hr two-hour/$130 minimum introductory acquisition rate is discretionary for a qualifying strategic buyer's **initial engagement only**, contingent on plausible recurring profitable volume; it is not the public standard rate. Do not apply it automatically.
 
-## Terms
-- Net 15. Retainers invoiced in advance; T&M and overage in arrears.
-- Cancellations with <4 business hours' notice bill the dispatch minimum.
-- Phoenix-metro travel included; statewide travel quoted at booking.
-- Full productized catalog with scopes and deliverables:
-  www.alreadyherellc.com/services-catalog
+Public rate-card source: /dispatch and /arizona-field-coverage. Existing historical prices in old posts or previously signed contracts are not new-business offers.

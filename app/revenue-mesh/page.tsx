@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 const lanes = [
   {
     title: 'Premium dispatch',
-    body: 'Prioritize IT, smart-hands, POS, printer, wireless/AP, access control, low-voltage, AV, data center, and healthcare device work at a $65/hr effective floor, $130 minimum dispatch value, and $200 preferred flat rate for server/data-center work.'
+    body: 'Prioritize IT, smart-hands, POS, printer, wireless/AP, access control, low-voltage, AV, data center, and healthcare device work under the Weston schedule: $125/hour scheduled field engineering with a two-hour/$250 minimum; advanced and urgent work priced separately.'
   },
   {
     title: 'Local cash backup',

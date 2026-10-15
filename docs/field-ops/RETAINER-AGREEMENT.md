@@ -5,41 +5,27 @@
 > **[MSA Date]** between Already Here LLC ("Provider") and
 > **[Client Legal Name]** ("Client").
 
-## 1. Selected Tier
+## 1. Priority Support Retainer — proposed terms
 
-| | Essential | Business | Enterprise |
-|---|---|---|---|
-| Monthly fee | $2,000 | $3,500 | $6,000 |
-| Included onsite hours | 20 | 35 | 60 |
-| Response SLA | 24–48 hr | Priority / same-day when available | Guaranteed priority / same-day when available |
-| Overage rate | $100/hr | $95/hr | $90/hr |
+Monthly fee: **$2,000** for approximately **8–10 scheduled support hours**. Additional work is billed separately. This draft does not amend existing signed legacy contracts.
 
-**Client selects:** ☐ Essential ☐ Business ☐ Enterprise
-**Start date:** [Date] **Initial term:** [3 / 6 / 12] months, then
-month-to-month with 30 days' notice.
+## 2. Scope
 
-## 2. What the Retainer Buys
-The retainer reserves Arizona field operations capacity: guaranteed response
-windows, scheduling priority, and the included block of onsite service hours.
-It is **reserved operational capacity, not prepaid project labor.**
+The signed statement of work defines included services, scheduling targets, cancellation and support. Response is subject to availability. Projects, installations, cabling, rollouts, after-hours work, materials and travel are separately scoped and quoted. No response-time guarantee or service credit is implied.
 
-**Included:** break/fix visits, smart hands, equipment verification, site
-assessments, photo documentation, remote troubleshooting, monthly service
-report, and the tier features listed on the Provider's Arizona Field Coverage
-page as of the start date (attached as Exhibit A).
+## 3. Weston schedule
 
-**Excluded (billed separately under a SOW or the Rate Card):** rollouts, rack
-builds, cabling projects, installations beyond incidental swaps, office moves,
-after-hours emergency response (billed at 1.5×), and materials/parts.
+| Service | Rate |
+|---|---|
+| Scheduled field engineering | $125/hour, two-hour/$250 minimum |
+| Advanced engineering / smart hands | $150/hour, two-hour/$300 minimum |
+| Same-day priority | $175/hour, two-hour/$350 minimum |
+| After-hours / weekends | $187.50–$200/hour, two-hour minimum |
+| Emergency response, under-four-hour target | $225/hour, two-hour/$450 minimum, subject to availability |
+| Standardized site audit | $1,500 |
+| Materials | Cost + 20% |
 
-## 3. Hours, Overage, and Rollover
-3.1 Included hours cover time onsite plus up to 30 minutes of same-day remote
-coordination per visit. Travel within the Phoenix metro is not billed;
-statewide travel outside the metro is billed at [rate/policy].
-3.2 Hours beyond the included block bill at the tier overage rate, with the
-standard dispatch minimums ($130 general / $200 data center or smart hands).
-3.3 Up to 25% of unused included hours roll into the following month; rollover
-hours expire after that month. No cash refunds for unused hours.
+Mileage, extended-distance travel, parking and tolls require written approval. Net 15 target; Net 30 maximum without owner approval. No rollover or guaranteed availability without express signed terms.
 
 ## 4. Scheduling and Response
 Requests enter through dispatch intake (www.alreadyherellc.com/dispatch) or
@@ -47,7 +33,7 @@ dispatch@alreadyherellc.com. Response targets, escalation, and remedies are
 defined in the attached Service Level Agreement (Exhibit B).
 
 ## 5. Billing
-Monthly fee invoiced in advance on the [1st] of each month, net 15. Overage
+Monthly fee invoiced in advance as agreed in the executed SOW, Net 15 target. Overage
 hours invoiced monthly in arrears with the visit log. A monthly utilization
 report accompanies each invoice.
 
@@ -60,11 +46,8 @@ only through a verified private AP channel; any change must be independently ver
 through dispatch@alreadyherellc.com or another previously known Provider contact.
 
 ## 6. Changes and Termination
-6.1 Client may change tiers effective the next monthly cycle with 15 days'
-notice.
-6.2 After the initial term, either party may terminate with 30 days' written
-notice. Early termination during the initial term requires payment of 50% of
-the remaining term's monthly fees.
+
+Initial term, changes, renewal, termination and cancellation must be agreed in writing after legal review. No legacy tier, automatic penalty or service-credit term is incorporated by default.
 
 ## Exhibits
 - **Exhibit A:** Tier feature list (from /arizona-field-coverage)

@@ -88,9 +88,9 @@ export type RevenueMeshPlan = {
 
 export const revenueMeshOperatingRules = {
   cashFloorTarget: 500,
-  premiumTargetHourly: 65,
-  minimumDispatchValue: 130,
-  preferredFlatDispatch: 200,
+  premiumTargetHourly: 125,
+  minimumDispatchValue: 250,
+  preferredFlatDispatch: 300,
   maximumDefaultRadiusMiles: 60,
   blockedActions: [
     'accepting work orders',
@@ -254,8 +254,8 @@ function buildRiskFlags(input: RevenueOpportunityInput, lane: RevenueLane, dispa
   }
 
   if (lane === 'premium_dispatch' || lane === 'local_cash_backup') {
-    if (dispatchValue > 0 && dispatchValue < revenueMeshOperatingRules.minimumDispatchValue) flags.add('below $130 minimum dispatch value');
-    if (effectiveHourly > 0 && effectiveHourly < revenueMeshOperatingRules.premiumTargetHourly) flags.add('below $65/hr effective target');
+    if (dispatchValue > 0 && dispatchValue < revenueMeshOperatingRules.minimumDispatchValue) flags.add('below $250 scheduled dispatch minimum');
+    if (effectiveHourly > 0 && effectiveHourly < revenueMeshOperatingRules.premiumTargetHourly) flags.add('below $125/hr scheduled field target');
     if (dispatchValue === 0 && effectiveHourly === 0) flags.add('pay not visible');
   }
 
