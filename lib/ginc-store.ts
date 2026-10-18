@@ -70,6 +70,11 @@ export async function loadNetwork(retries = 3): Promise<GincNetwork> {
         const data = legacy
           ? (typeof legacy === 'string' ? (JSON.parse(legacy) as GincNetwork) : (legacy as unknown as GincNetwork))
           : await loadFromDisk();
+        // Legacy/file backups may still carry the old fabricated seed
+        // records — never re-import them after they've been purged.
+        data.members = data.members.filter((m) => !GINC_SAMPLE_ID_SET.has(m.id));
+        data.listings = data.listings.filter((l) => !GINC_SAMPLE_ID_SET.has(l.id));
+        data.jobs = data.jobs.filter((j) => !GINC_SAMPLE_ID_SET.has(j.id));
         if (data.members.length || data.listings.length || data.jobs.length) {
           await saveNetwork(data);
           return data;
@@ -142,6 +147,10 @@ export async function addJob(job: GincJob): Promise<void> {
   await saveNetwork(network);
 }
 
+// Ids of the old fabricated seed records — filtered out during
+// migration so a purge is permanent. Exported for the admin route.
+export const GINC_SAMPLE_ID_SET = new Set(['MEM-001', 'MEM-002', 'LST-001', 'JOB-001']);
+
 const GINC_LIST_KEYS = {
   member: 'ginc:members',
   listing: 'ginc:listings',
@@ -151,9 +160,9 @@ const GINC_LIST_KEYS = {
 export type GincEntityKind = keyof typeof GINC_LIST_KEYS;
 
 /**
- * Remove a GINC record by id. Redis lists are rewritten without the
- * record; the file/memory fallback filters in place. Returns true when
- * a record was actually removed.
+ * Remove a GINC record by id. Redis removes the matching element with
+ * LREM (atomic — no read-modify-write window); the file/memory
+ * fallback filters in place. Returns true when a record was removed.
  */
 export async function removeGincRecord(kind: GincEntityKind, id: string): Promise<boolean> {
   const key = GINC_LIST_KEYS[kind];
@@ -163,14 +172,18 @@ export async function removeGincRecord(kind: GincEntityKind, id: string): Promis
     kind === 'member' ? network.members : kind === 'listing' ? network.listings : network.jobs;
 
   if (redis) {
-    const items = await loadRedisList<{ id?: string }>(redis, key);
-    const kept = items.filter((item) => item.id !== id);
-    if (kept.length === items.length) return false;
-    const pipeline = redis.multi();
-    pipeline.del(key);
-    for (const item of kept) pipeline.rpush(key, JSON.stringify(item));
-    await pipeline.exec();
-    return true;
+    // LREM on the raw serialized element is atomic — a read-modify-
+    // write replacement could silently drop a concurrent submission.
+    const raw = await redis.lrange<string>(key, 0, -1);
+    let removed = false;
+    for (const item of raw) {
+      const parsed = typeof item === 'string' ? (JSON.parse(item) as { id?: string }) : item;
+      if (parsed.id === id) {
+        await redis.lrem(key, 0, item);
+        removed = true;
+      }
+    }
+    return removed;
   }
 
   const network = await loadNetwork();
@@ -194,14 +207,13 @@ export async function purgeGincRecords(ids: string[]): Promise<{ removed: string
     const redis = getRedis();
     const key = GINC_LIST_KEYS[kind];
     if (redis) {
-      const items = await loadRedisList<{ id?: string }>(redis, key);
-      const kept = items.filter((item) => !targets.has(item.id ?? ''));
-      for (const item of items) if (targets.has(item.id ?? '')) removed.push(item.id ?? '');
-      if (kept.length !== items.length) {
-        const pipeline = redis.multi();
-        pipeline.del(key);
-        for (const item of kept) pipeline.rpush(key, JSON.stringify(item));
-        await pipeline.exec();
+      const raw = await redis.lrange<string>(key, 0, -1);
+      for (const item of raw) {
+        const parsed = typeof item === 'string' ? (JSON.parse(item) as { id?: string }) : item;
+        if (targets.has(parsed.id ?? '')) {
+          await redis.lrem(key, 0, item);
+          removed.push(parsed.id ?? '');
+        }
       }
     } else {
       const network = await loadNetwork();

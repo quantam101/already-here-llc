@@ -229,8 +229,14 @@ export async function syncFromDailyCommand(since?: string, store?: CanonicalStor
     combined.errors.push(...part.errors);
     combined.ok = combined.errors.length === 0;
 
-    if (!payload.truncated || !payload.nextSince || payload.nextSince === cursor) break;
+    if (!payload.truncated || !payload.nextSince || payload.nextSince === cursor) {
+      return combined;
+    }
     cursor = payload.nextSince;
   }
+  // Page cap hit while the export is still truncated — report honestly
+  // that records beyond it were not synced rather than claiming success.
+  combined.ok = false;
+  combined.errors.push(`Export still truncated after page cap; resume with since=${cursor}.`);
   return combined;
 }

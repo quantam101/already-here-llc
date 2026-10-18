@@ -1,13 +1,13 @@
 import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server.js';
-import { purgeGincRecords, removeGincRecord, type GincEntityKind } from '@/lib/ginc-store';
+import { GINC_SAMPLE_ID_SET, purgeGincRecords, removeGincRecord, type GincEntityKind } from '@/lib/ginc-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // Sample ids previously fabricated by the auto-seeder. They are demo
 // records, not real network data, and must not survive in prod.
-export const GINC_SAMPLE_IDS = ['MEM-001', 'MEM-002', 'LST-001', 'JOB-001'];
+export const GINC_SAMPLE_IDS = [...GINC_SAMPLE_ID_SET];
 
 const KINDS = new Set<GincEntityKind>(['member', 'listing', 'job']);
 

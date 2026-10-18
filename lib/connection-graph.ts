@@ -414,6 +414,7 @@ function buildCanonical(b: Builder, tables: Map<string, Record<string, unknown>[
   for (const record of tables.get('dispatches') ?? []) {
     const id = ref(b, 'canonical', record.id);
     addEdge(b, id, ref(b, 'canonical', record.job_id) ?? ref(b, 'canonical', record.work_order_id), 'dispatch_for_job');
+    addEdge(b, id, ref(b, 'canonical', record.contact_id), 'dispatch_requested_by');
     addEdge(b, id, ref(b, 'canonical', record.technician_id), 'dispatch_to_technician');
     addEdge(b, id, ref(b, 'canonical', record.vehicle_id), 'dispatch_on_vehicle');
   }

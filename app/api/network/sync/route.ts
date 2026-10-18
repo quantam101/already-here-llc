@@ -46,6 +46,11 @@ export async function POST(request: Request) {
   }
 
   const since = new URL(request.url).searchParams.get('since') ?? undefined;
+  // `since` is forwarded to the upstream export — require a real
+  // ISO-8601 timestamp before trusting it.
+  if (since !== undefined && (since.length > 40 || Number.isNaN(Date.parse(since)))) {
+    return NextResponse.json({ ok: false, error: 'since must be a valid ISO-8601 timestamp.' }, { status: 400 });
+  }
   try {
     const summary = await syncFromDailyCommand(since);
     return NextResponse.json(summary, { status: summary.ok ? 200 : 502 });
