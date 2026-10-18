@@ -48,6 +48,9 @@ export default async function PassportPage({ params }: { params: Promise<{ token
       {passport.skills.length > 0 && (
         <p style={{ marginTop: '1rem', color: '#444' }}>Skills: {passport.skills.join(', ')}</p>
       )}
+      {passport.certifications.length > 0 && (
+        <p style={{ color: '#444' }}>Certifications: {passport.certifications.join(', ')}</p>
+      )}
       <p style={{ marginTop: '2rem', fontSize: '0.8rem', color: '#999' }}>
         Issued {passport.issued_at.slice(0, 10)} · Cryptographically signed — this page can only be served for a real completed work record.
       </p>

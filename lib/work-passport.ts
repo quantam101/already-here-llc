@@ -27,6 +27,7 @@ export interface WorkPassport {
   revenue_cents: number | null;
   currency: string;
   skills: string[];
+  certifications: string[];
   issued_at: string;
 }
 
@@ -116,6 +117,17 @@ export async function getWorkPassport(closeoutId: string, store?: CanonicalStore
     ...(Array.isArray(tech?.certifications) ? tech.certifications : []),
   ].map((s) => String(s).trim()).filter(Boolean).slice(0, 12);
 
+  // Certification names held by the technician (names only — no cert
+  // numbers or dates that could identify someone).
+  const techId = text(tech?.id);
+  const certifications = techId
+    ? (await canonical.queryTable('certifications', 1000).catch(() => []))
+        .filter((c) => text(c.technician_id) === techId)
+        .map((c) => text(c.certification_name))
+        .filter(Boolean)
+        .slice(0, 12)
+    : [];
+
   const rating = num(closeout.customer_rating);
   const showRevenue = process.env.PASSPORT_SHOW_REVENUE === 'true';
 
@@ -137,6 +149,7 @@ export async function getWorkPassport(closeoutId: string, store?: CanonicalStore
     revenue_cents: showRevenue ? num(closeout.revenue_cents || revenue?.amount_cents) : null,
     currency: text(closeout.currency || revenue?.currency) || 'USD',
     skills,
+    certifications,
     issued_at: new Date().toISOString(),
   };
 }
