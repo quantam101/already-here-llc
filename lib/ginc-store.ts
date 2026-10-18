@@ -3,8 +3,8 @@ import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { getRedis } from '@/lib/redis';
-import {
-  gincConfig,
+import { gincConfig } from '@/lib/ginc';
+import type {
   GincJob,
   GincListing,
   GincMatch,

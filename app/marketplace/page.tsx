@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { FleetMarketplaceListings } from '@/components/FleetMarketplaceListings';
 import { MobilityMarketplaceForm } from '@/components/MobilityMarketplaceForm';
 import { fleetAvailability, proDeliveryKit, rentalPricing } from '@/lib/scooter-rental';
-import { arrangementTypes, fleetMarketplaceFeatures, howItWorks, marketplaceCategories, marketplaceMission, fleetMarketplaceListings } from '@/lib/fleet-marketplace';
+import { arrangementTypes, fleetMarketplaceFeatures, howItWorks, marketplaceCategories, marketplaceMission } from '@/lib/fleet-marketplace';
+import { loadMarketplaceListings } from '@/lib/marketplace-listings';
 
 export const metadata: Metadata = {
   title: 'GINC Marketplace — Vehicles, Work, and People',
@@ -11,7 +12,11 @@ export const metadata: Metadata = {
   alternates: { canonical: '/marketplace' }
 };
 
-export default function MarketplacePage() {
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+export default async function MarketplacePage() {
+  const marketplaceListings = await loadMarketplaceListings();
   return (
     <div className="container-shell py-16 lg:py-24">
       <span className="eyebrow">GINC Marketplace</span>
@@ -62,7 +67,7 @@ export default function MarketplacePage() {
         </div>
       </section>
 
-      <FleetMarketplaceListings listings={fleetMarketplaceListings} />
+      <FleetMarketplaceListings listings={marketplaceListings} />
 
       <section className="mt-12 card p-8">
         <h2 className="text-2xl font-semibold text-navy">How it works</h2>
