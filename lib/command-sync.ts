@@ -45,15 +45,25 @@ export interface DcosDispatch {
   createdAt?: string | null;
 }
 
+export interface DcosBrainItem {
+  id: string;
+  scope?: string | null;
+  key?: string | null;
+  value?: unknown;
+  source?: string | null;
+  updatedAt?: string | null;
+}
+
 interface DcosExport {
   leads?: DcosLead[];
   rfqs?: DcosRfq[];
   dispatchRequests?: DcosDispatch[];
+  brainItems?: DcosBrainItem[];
 }
 
 export interface SyncSummary {
   ok: boolean;
-  fetched: { leads: number; rfqs: number; dispatchRequests: number };
+  fetched: { leads: number; rfqs: number; dispatchRequests: number; brainItems: number };
   upserted: number;
   errors: string[];
 }
@@ -174,12 +184,25 @@ export async function syncFromExport(payload: DcosExport, store: CanonicalStore 
     });
   }
 
+  for (const item of payload.brainItems ?? []) {
+    // Brain values are JSON-encoded; store a short readable summary.
+    const raw = typeof item.value === 'string' ? item.value : JSON.stringify(item.value ?? '');
+    await write('knowledge', `dcos-brain-${item.id}`, {
+      key: text(item.key) || 'knowledge',
+      scope: text(item.scope) || 'business',
+      summary: raw.replace(/^"|"$/g, '').slice(0, 300),
+      source: `daily-command-os:${text(item.source) || 'brain'}`,
+      created_at: text(item.updatedAt) || undefined,
+    });
+  }
+
   return {
     ok: errors.length === 0,
     fetched: {
       leads: payload.leads?.length ?? 0,
       rfqs: payload.rfqs?.length ?? 0,
       dispatchRequests: payload.dispatchRequests?.length ?? 0,
+      brainItems: payload.brainItems?.length ?? 0,
     },
     upserted,
     errors,
@@ -201,7 +224,7 @@ export async function syncFromDailyCommand(since?: string, store?: CanonicalStor
 
   const combined: SyncSummary = {
     ok: true,
-    fetched: { leads: 0, rfqs: 0, dispatchRequests: 0 },
+    fetched: { leads: 0, rfqs: 0, dispatchRequests: 0, brainItems: 0 },
     upserted: 0,
     errors: [],
   };
@@ -225,6 +248,7 @@ export async function syncFromDailyCommand(since?: string, store?: CanonicalStor
     combined.fetched.leads += part.fetched.leads;
     combined.fetched.rfqs += part.fetched.rfqs;
     combined.fetched.dispatchRequests += part.fetched.dispatchRequests;
+    combined.fetched.brainItems += part.fetched.brainItems;
     combined.upserted += part.upserted;
     combined.errors.push(...part.errors);
     combined.ok = combined.errors.length === 0;

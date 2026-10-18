@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 const KINDS = new Set<GraphNodeKind>([
   'person', 'organization', 'vehicle', 'equipment', 'site', 'job',
-  'listing', 'skill', 'lead', 'opportunity', 'dispatch',
+  'listing', 'skill', 'lead', 'opportunity', 'dispatch', 'knowledge',
 ]);
 
 function clientKey(request: Request): string {

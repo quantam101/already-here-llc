@@ -26,7 +26,8 @@ export type GraphNodeKind =
   | 'skill'
   | 'lead'
   | 'opportunity'
-  | 'dispatch';
+  | 'dispatch'
+  | 'knowledge';
 
 export interface GraphNode {
   id: string;
@@ -111,6 +112,7 @@ const CANONICAL_TABLES = [
   'opportunities',
   'dispatches',
   'hauling_jobs',
+  'knowledge',
 ] as const;
 
 function nodeId(kind: GraphNodeKind, source: 'canonical' | 'ginc', id: string): string {
@@ -280,6 +282,20 @@ function buildCanonical(b: Builder, tables: Map<string, Record<string, unknown>[
       city: '',
       state: '',
       status: '',
+      createdAt: firstText(record, ['created_at']),
+    }, text(record.id));
+  }
+
+  for (const record of tables.get('knowledge') ?? []) {
+    addNode(b, {
+      id: nodeId('knowledge', 'canonical', text(record.id)),
+      kind: 'knowledge',
+      source: 'canonical',
+      label: firstText(record, ['key']) || 'Knowledge',
+      detail: [firstText(record, ['scope']), firstText(record, ['summary'])].filter(Boolean).join(' · '),
+      city: '',
+      state: '',
+      status: firstText(record, ['source']),
       createdAt: firstText(record, ['created_at']),
     }, text(record.id));
   }
