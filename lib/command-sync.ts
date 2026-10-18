@@ -188,24 +188,49 @@ export async function syncFromExport(payload: DcosExport, store: CanonicalStore 
 
 /**
  * Pull the export from daily-command-os and sync it. Requires
- * DCOS_SYNC_SECRET (shared internal bearer) and uses COMMAND_CENTER_URL
- * (defaulting to the production deployment) as the base.
+ * DCOS_SYNC_SECRET (the command brain's admin-tier bearer) and uses
+ * COMMAND_CENTER_URL (defaulting to the production deployment).
+ * Pages through truncated exports via `nextSince` until complete —
+ * upserts are idempotent, so boundary re-reads are harmless.
  */
 export async function syncFromDailyCommand(since?: string, store?: CanonicalStore): Promise<SyncSummary> {
   const secret = process.env.DCOS_SYNC_SECRET?.trim();
   if (!secret) throw new Error('DCOS_SYNC_SECRET not configured.');
   const base = (process.env.COMMAND_CENTER_URL?.trim() || 'https://daily-command-os.vercel.app').replace(/\/$/, '');
+  const canonical = store ?? getCanonicalStore();
 
-  const params = new URLSearchParams({ limit: '500' });
-  if (since) params.set('since', since);
-  const res = await fetch(`${base}/api/sync/export?${params}`, {
-    headers: { Authorization: `Bearer ${secret}`, Accept: 'application/json' },
-    cache: 'no-store',
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!res.ok) {
-    throw new Error(`daily-command-os export failed: HTTP ${res.status}`);
+  const combined: SyncSummary = {
+    ok: true,
+    fetched: { leads: 0, rfqs: 0, dispatchRequests: 0 },
+    upserted: 0,
+    errors: [],
+  };
+
+  let cursor = since;
+  for (let page = 0; page < 10; page++) {
+    const params = new URLSearchParams({ limit: '500' });
+    if (cursor) params.set('since', cursor);
+    const res = await fetch(`${base}/api/sync/export?${params}`, {
+      headers: { Authorization: `Bearer ${secret}`, Accept: 'application/json' },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) {
+      combined.ok = false;
+      combined.errors.push(`daily-command-os export failed: HTTP ${res.status}`);
+      return combined;
+    }
+    const payload = (await res.json()) as DcosExport & { nextSince?: string; truncated?: boolean };
+    const part = await syncFromExport(payload, canonical);
+    combined.fetched.leads += part.fetched.leads;
+    combined.fetched.rfqs += part.fetched.rfqs;
+    combined.fetched.dispatchRequests += part.fetched.dispatchRequests;
+    combined.upserted += part.upserted;
+    combined.errors.push(...part.errors);
+    combined.ok = combined.errors.length === 0;
+
+    if (!payload.truncated || !payload.nextSince || payload.nextSince === cursor) break;
+    cursor = payload.nextSince;
   }
-  const payload = (await res.json()) as DcosExport;
-  return syncFromExport(payload, store ?? getCanonicalStore());
+  return combined;
 }
