@@ -441,6 +441,59 @@ function buildCanonical(b: Builder, tables: Map<string, Record<string, unknown>[
   }
 }
 
+const KNOWLEDGE_STOP_TOKENS = new Set(['this', 'that', 'with', 'from', 'have', 'will', 'been', 'were', 'they', 'them', 'then', 'than', 'when', 'what', 'which']);
+
+function textTokens(s: string): Set<string> {
+  return new Set(
+    s.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 4 && !KNOWLEDGE_STOP_TOKENS.has(t))
+  );
+}
+
+/**
+ * Heuristic link pass: connect each knowledge node to the graph entities
+ * it mentions (orgs, jobs, people, equipment, listings, dispatches...).
+ * A reference is counted when every token of the entity's label appears
+ * in the knowledge text (exact), or a distinctive >=5-char token shared
+ * by at most 3 entities does (fuzzy). Exact matches outrank fuzzy ones
+ * under the 25-link cap. Edge type `references`, knowledge -> entity.
+ */
+function linkKnowledgeReferences(b: Builder): void {
+  const nodes = [...b.nodes.values()];
+  const knowledge = nodes.filter((n) => n.kind === 'knowledge');
+  if (!knowledge.length) return;
+  const targets = nodes.filter((n) => n.kind !== 'knowledge');
+  const MAX_LINKS = 25;
+
+  // Document frequency per token across targets: a token shared by many
+  // entities ("customer", "phoenix") is not a distinctive reference.
+  const df = new Map<string, number>();
+  const targetTokens = targets.map((t) => {
+    const set = textTokens(`${t.label} ${t.detail}`);
+    for (const tok of set) df.set(tok, (df.get(tok) ?? 0) + 1);
+    return set;
+  });
+  const labelTokens = targets.map((t) => [...textTokens(t.label)]);
+
+  for (const kn of knowledge) {
+    const knTokens = textTokens(`${kn.label} ${kn.detail}`);
+    const hits: { id: string; exact: boolean }[] = [];
+    targets.forEach((t, i) => {
+      // Exact reference: every token of the entity's label appears in the
+      // knowledge text (whole tokens — "Site" can't hide inside "website").
+      const lt = labelTokens[i];
+      const exact = lt.length > 0 && lt.every((tok) => knTokens.has(tok));
+      // Distinctive reference: a >=5-char token rare across the graph.
+      const fuzzy =
+        !exact &&
+        [...targetTokens[i]].some((tok) => tok.length >= 5 && (df.get(tok) ?? 0) <= 3 && knTokens.has(tok));
+      if (exact || fuzzy) hits.push({ id: t.id, exact });
+    });
+    // Exact-name references outrank fuzzy ones so the cap can't drop them.
+    hits.sort((a, b2) => Number(b2.exact) - Number(a.exact));
+    for (const h of hits.slice(0, MAX_LINKS)) addEdge(b, kn.id, h.id, 'references');
+  }
+}
+
 function buildGinc(b: Builder, network: GincNetwork): void {
   for (const member of network.members) {
     const pub = sanitizeMember(member);
@@ -522,6 +575,7 @@ export async function loadConnectionGraph(store?: CanonicalStore, includeCanonic
   const b: Builder = { nodes: new Map(), edges: [], ids: new Map() };
   buildCanonical(b, tables);
   buildGinc(b, network);
+  linkKnowledgeReferences(b);
 
   const nodes = [...b.nodes.values()];
   const byKind = Object.fromEntries(
