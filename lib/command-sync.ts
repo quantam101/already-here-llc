@@ -45,15 +45,25 @@ export interface DcosDispatch {
   createdAt?: string | null;
 }
 
+export interface DcosBrainItem {
+  id: string;
+  scope?: string | null;
+  key?: string | null;
+  value?: unknown;
+  source?: string | null;
+  updatedAt?: string | null;
+}
+
 interface DcosExport {
   leads?: DcosLead[];
   rfqs?: DcosRfq[];
   dispatchRequests?: DcosDispatch[];
+  brainItems?: DcosBrainItem[];
 }
 
 export interface SyncSummary {
   ok: boolean;
-  fetched: { leads: number; rfqs: number; dispatchRequests: number };
+  fetched: { leads: number; rfqs: number; dispatchRequests: number; brainItems: number };
   upserted: number;
   errors: string[];
 }
@@ -174,12 +184,29 @@ export async function syncFromExport(payload: DcosExport, store: CanonicalStore 
     });
   }
 
+  for (const item of payload.brainItems ?? []) {
+    // Brain values are JSON-encoded; decode so the summary is readable.
+    let raw = typeof item.value === 'string' ? item.value : JSON.stringify(item.value ?? '');
+    try {
+      const decoded = JSON.parse(raw) as unknown;
+      raw = typeof decoded === 'string' ? decoded : JSON.stringify(decoded);
+    } catch { /* not JSON-encoded — use as-is */ }
+    await write('knowledge', `dcos-brain-${item.id}`, {
+      key: text(item.key) || 'knowledge',
+      scope: text(item.scope) || 'business',
+      summary: raw.replace(/^"|"$/g, '').slice(0, 300),
+      source: `daily-command-os:${text(item.source) || 'brain'}`,
+      created_at: text(item.updatedAt) || undefined,
+    });
+  }
+
   return {
     ok: errors.length === 0,
     fetched: {
       leads: payload.leads?.length ?? 0,
       rfqs: payload.rfqs?.length ?? 0,
       dispatchRequests: payload.dispatchRequests?.length ?? 0,
+      brainItems: payload.brainItems?.length ?? 0,
     },
     upserted,
     errors,
@@ -201,15 +228,32 @@ export async function syncFromDailyCommand(since?: string, store?: CanonicalStor
 
   const combined: SyncSummary = {
     ok: true,
-    fetched: { leads: 0, rfqs: 0, dispatchRequests: 0 },
+    fetched: { leads: 0, rfqs: 0, dispatchRequests: 0, brainItems: 0 },
     upserted: 0,
     errors: [],
   };
 
-  let cursor = since;
+  const SYNC_COLLECTIONS = ['leads', 'rfqs', 'dispatchRequests', 'brainItems'] as const;
+  type CollectionCursors = Record<string, { truncated?: boolean; since?: string; after?: string | null }>;
+
+  let cursors: CollectionCursors | null = null;
+  let nextSince = since;
   for (let page = 0; page < 10; page++) {
     const params = new URLSearchParams({ limit: '500' });
-    if (cursor) params.set('since', cursor);
+    if (cursors) {
+      // Per-collection keyset cursors: each collection resumes at its
+      // own (watermark, id) — a shared cursor would skip backlogged
+      // rows in collections whose last page ended on an older stamp.
+      for (const name of SYNC_COLLECTIONS) {
+        const c = cursors[name];
+        if (c?.since) {
+          params.set(`since_${name}`, c.since);
+          if (c.after) params.set(`after_${name}`, c.after);
+        }
+      }
+    } else if (nextSince) {
+      params.set('since', nextSince);
+    }
     const res = await fetch(`${base}/api/sync/export?${params}`, {
       headers: { Authorization: `Bearer ${secret}`, Accept: 'application/json' },
       cache: 'no-store',
@@ -220,23 +264,37 @@ export async function syncFromDailyCommand(since?: string, store?: CanonicalStor
       combined.errors.push(`daily-command-os export failed: HTTP ${res.status}`);
       return combined;
     }
-    const payload = (await res.json()) as DcosExport & { nextSince?: string; truncated?: boolean };
+    const payload = (await res.json()) as DcosExport & {
+      nextSince?: string;
+      truncated?: boolean;
+      cursors?: CollectionCursors;
+    };
     const part = await syncFromExport(payload, canonical);
     combined.fetched.leads += part.fetched.leads;
     combined.fetched.rfqs += part.fetched.rfqs;
     combined.fetched.dispatchRequests += part.fetched.dispatchRequests;
+    combined.fetched.brainItems += part.fetched.brainItems;
     combined.upserted += part.upserted;
     combined.errors.push(...part.errors);
     combined.ok = combined.errors.length === 0;
 
-    if (!payload.truncated || !payload.nextSince || payload.nextSince === cursor) {
+    if (payload.cursors) {
+      cursors = payload.cursors;
+      if (!payload.truncated) return combined;
+      continue;
+    }
+    // Legacy export shape without per-collection cursors.
+    if (!payload.truncated || !payload.nextSince || payload.nextSince === nextSince) {
       return combined;
     }
-    cursor = payload.nextSince;
+    nextSince = payload.nextSince;
   }
   // Page cap hit while the export is still truncated — report honestly
   // that records beyond it were not synced rather than claiming success.
   combined.ok = false;
-  combined.errors.push(`Export still truncated after page cap; resume with since=${cursor}.`);
+  const resume = cursors
+    ? 'the per-collection cursors from the last response'
+    : `since=${nextSince}`;
+  combined.errors.push(`Export still truncated after page cap; resume with ${resume}.`);
   return combined;
 }

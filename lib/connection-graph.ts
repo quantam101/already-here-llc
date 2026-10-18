@@ -26,7 +26,8 @@ export type GraphNodeKind =
   | 'skill'
   | 'lead'
   | 'opportunity'
-  | 'dispatch';
+  | 'dispatch'
+  | 'knowledge';
 
 export interface GraphNode {
   id: string;
@@ -111,6 +112,7 @@ const CANONICAL_TABLES = [
   'opportunities',
   'dispatches',
   'hauling_jobs',
+  'knowledge',
 ] as const;
 
 function nodeId(kind: GraphNodeKind, source: 'canonical' | 'ginc', id: string): string {
@@ -280,6 +282,20 @@ function buildCanonical(b: Builder, tables: Map<string, Record<string, unknown>[
       city: '',
       state: '',
       status: '',
+      createdAt: firstText(record, ['created_at']),
+    }, text(record.id));
+  }
+
+  for (const record of tables.get('knowledge') ?? []) {
+    addNode(b, {
+      id: nodeId('knowledge', 'canonical', text(record.id)),
+      kind: 'knowledge',
+      source: 'canonical',
+      label: firstText(record, ['key']) || 'Knowledge',
+      detail: [firstText(record, ['scope']), firstText(record, ['summary'])].filter(Boolean).join(' · '),
+      city: '',
+      state: '',
+      status: firstText(record, ['source']),
       createdAt: firstText(record, ['created_at']),
     }, text(record.id));
   }
@@ -475,21 +491,19 @@ function buildGinc(b: Builder, network: GincNetwork): void {
 }
 
 /**
- * includeCanonical=false returns the public graph only — GINC members,
- * listings and jobs. Canonical rows (customers, technicians, work
- * orders, assets) are private business records and must only be served
- * to authorized callers.
+ * includeCanonical=false returns the public graph — GINC members,
+ * listings and jobs, plus canonical `knowledge` rows only: those are
+ * upstream-filtered non-sensitive brain facts (no customer records,
+ * technicians, work orders, or assets — all still full-scope only).
  */
 export async function loadConnectionGraph(store?: CanonicalStore, includeCanonical = true): Promise<ConnectionGraph> {
   // The canonical store must not be constructed for public requests —
   // a missing private config would reject the whole public graph.
   let canonical: CanonicalStore | undefined;
-  if (includeCanonical) {
-    try {
-      canonical = store ?? getCanonicalStore();
-    } catch {
-      canonical = undefined;
-    }
+  try {
+    canonical = store ?? getCanonicalStore();
+  } catch {
+    canonical = undefined;
   }
   const [rows, network] = await Promise.all([
     canonical
@@ -500,14 +514,18 @@ export async function loadConnectionGraph(store?: CanonicalStore, includeCanonic
 
   const tables = new Map<string, Record<string, unknown>[]>();
   CANONICAL_TABLES.forEach((t, i) => tables.set(t, rows[i] ?? []));
+  if (!includeCanonical) {
+    // Public scope: knowledge is the only canonical table served.
+    for (const t of CANONICAL_TABLES) if (t !== 'knowledge') tables.set(t, []);
+  }
 
   const b: Builder = { nodes: new Map(), edges: [], ids: new Map() };
-  if (includeCanonical) buildCanonical(b, tables);
+  buildCanonical(b, tables);
   buildGinc(b, network);
 
   const nodes = [...b.nodes.values()];
   const byKind = Object.fromEntries(
-    (['person', 'organization', 'vehicle', 'equipment', 'site', 'job', 'listing', 'skill', 'lead', 'opportunity', 'dispatch'] as GraphNodeKind[])
+    (['person', 'organization', 'vehicle', 'equipment', 'site', 'job', 'listing', 'skill', 'lead', 'opportunity', 'dispatch', 'knowledge'] as GraphNodeKind[])
       .map((k) => [k, nodes.filter((n) => n.kind === k).length])
   ) as Record<GraphNodeKind, number>;
 
