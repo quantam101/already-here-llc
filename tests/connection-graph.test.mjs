@@ -181,5 +181,10 @@ assert.ok(
 );
 const refLookup = lookupGraph(synced, { id: refKn.id });
 assert.ok(refLookup.connections.some((n) => n.id === acmeOrg.id), 'org surfaces as a knowledge connection');
+// no invented references: B1 ("deploy_target → vercel") names no entity
+assert.ok(
+  !synced.edges.some((e) => e.from === kNode.id && e.type === 'references'),
+  'knowledge that names nothing should have no reference edges'
+);
 
 console.log('connection-graph tests passed');

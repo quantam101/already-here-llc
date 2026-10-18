@@ -452,9 +452,10 @@ function textTokens(s: string): Set<string> {
 /**
  * Heuristic link pass: connect each knowledge node to the graph entities
  * it mentions (orgs, jobs, people, equipment, listings, dispatches...).
- * A reference is counted when the entity's label appears in the knowledge
- * text, or a distinctive >=5-char token from its label/detail does.
- * Edge type `references`, knowledge -> entity. Deterministic and local.
+ * A reference is counted when every token of the entity's label appears
+ * in the knowledge text (exact), or a distinctive >=5-char token shared
+ * by at most 3 entities does (fuzzy). Exact matches outrank fuzzy ones
+ * under the 25-link cap. Edge type `references`, knowledge -> entity.
  */
 function linkKnowledgeReferences(b: Builder): void {
   const nodes = [...b.nodes.values()];
@@ -462,21 +463,34 @@ function linkKnowledgeReferences(b: Builder): void {
   if (!knowledge.length) return;
   const targets = nodes.filter((n) => n.kind !== 'knowledge');
   const MAX_LINKS = 25;
+
+  // Document frequency per token across targets: a token shared by many
+  // entities ("customer", "phoenix") is not a distinctive reference.
+  const df = new Map<string, number>();
+  const targetTokens = targets.map((t) => {
+    const set = textTokens(`${t.label} ${t.detail}`);
+    for (const tok of set) df.set(tok, (df.get(tok) ?? 0) + 1);
+    return set;
+  });
+  const labelTokens = targets.map((t) => [...textTokens(t.label)]);
+
   for (const kn of knowledge) {
-    const haystack = `${kn.label} ${kn.detail}`.toLowerCase();
-    const knTokens = textTokens(haystack);
-    let linked = 0;
-    for (const target of targets) {
-      if (linked >= MAX_LINKS) break;
-      const label = target.label.trim().toLowerCase();
-      const referenced =
-        (label.length >= 4 && haystack.includes(label)) ||
-        [...textTokens(target.label), ...textTokens(target.detail)].some((tok) => tok.length >= 5 && knTokens.has(tok));
-      if (referenced) {
-        addEdge(b, kn.id, target.id, 'references');
-        linked++;
-      }
-    }
+    const knTokens = textTokens(`${kn.label} ${kn.detail}`);
+    const hits: { id: string; exact: boolean }[] = [];
+    targets.forEach((t, i) => {
+      // Exact reference: every token of the entity's label appears in the
+      // knowledge text (whole tokens — "Site" can't hide inside "website").
+      const lt = labelTokens[i];
+      const exact = lt.length > 0 && lt.every((tok) => knTokens.has(tok));
+      // Distinctive reference: a >=5-char token rare across the graph.
+      const fuzzy =
+        !exact &&
+        [...targetTokens[i]].some((tok) => tok.length >= 5 && (df.get(tok) ?? 0) <= 3 && knTokens.has(tok));
+      if (exact || fuzzy) hits.push({ id: t.id, exact });
+    });
+    // Exact-name references outrank fuzzy ones so the cap can't drop them.
+    hits.sort((a, b2) => Number(b2.exact) - Number(a.exact));
+    for (const h of hits.slice(0, MAX_LINKS)) addEdge(b, kn.id, h.id, 'references');
   }
 }
 
