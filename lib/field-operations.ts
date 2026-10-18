@@ -95,9 +95,11 @@ export interface CloseoutInput {
   materialsUsed?: string[];
   testingResults?: string;
   customerSignatureReceived?: boolean;
+  customerRating?: number;
   photos?: Array<{ filename: string; mimeType: string; sizeBytes: number }>;
   qaStatus?: 'pass' | 'fail' | 'needs_review';
   revenueCents: number;
+  currency?: string;
   technicianPayoutCents?: number;
   mileageMiles?: number;
   disposalCostCents?: number;
@@ -116,6 +118,8 @@ export interface CloseoutRecord {
   materials_used: string[];
   testing_results: string;
   customer_signature_received: boolean;
+  customer_rating: number | null;
+  currency: string;
   photos: Array<{ filename: string; mimeType: string; sizeBytes: number }>;
   qa_status: string;
   revenue_cents: number;
@@ -133,6 +137,7 @@ export interface RevenueEventRecord {
   assignment_id: string;
   closeout_id: string;
   amount_cents: number;
+  currency: string;
   cost_cents: number;
   gross_margin_cents: number;
   source: string;
@@ -267,7 +272,8 @@ export function buildAssignmentRecords(input: AssignmentInput): DatabaseReadyWri
     {
       table: 'jobs',
       id: input.workOrderId,
-      action: 'insert',
+      // upsert: this is a status patch — 'insert' would wipe the work order.
+      action: 'upsert',
       record: {
         id: input.workOrderId,
         status: 'assigned',
@@ -303,6 +309,10 @@ export function buildCloseoutRecords(input: CloseoutInput): DatabaseReadyWrite[]
     materials_used: (input.materialsUsed ?? []).map((s) => s.trim()).filter(Boolean),
     testing_results: (input.testingResults ?? '').trim(),
     customer_signature_received: input.customerSignatureReceived ?? false,
+    customer_rating: typeof input.customerRating === 'number' && input.customerRating >= 1 && input.customerRating <= 5
+      ? Math.round(input.customerRating)
+      : null,
+    currency: (input.currency ?? 'USD').trim().toUpperCase() || 'USD',
     photos: (input.photos ?? []).map((p) => ({ filename: p.filename, mimeType: p.mimeType, sizeBytes: p.sizeBytes })),
     qa_status: input.qaStatus ?? 'needs_review',
     revenue_cents: revenueCents,
@@ -320,6 +330,7 @@ export function buildCloseoutRecords(input: CloseoutInput): DatabaseReadyWrite[]
     assignment_id: input.assignmentId,
     closeout_id: closeoutId,
     amount_cents: revenueCents,
+    currency: closeout.currency,
     cost_cents: technicianPayoutCents + disposalCostCents,
     gross_margin_cents: grossMarginCents,
     source: 'field_closeout',
@@ -335,7 +346,8 @@ export function buildCloseoutRecords(input: CloseoutInput): DatabaseReadyWrite[]
     {
       table: 'jobs',
       id: input.workOrderId,
-      action: 'insert',
+      // upsert: this is a status patch — 'insert' would wipe the work order.
+      action: 'upsert',
       record: {
         id: input.workOrderId,
         status: 'closed',
@@ -348,7 +360,8 @@ export function buildCloseoutRecords(input: CloseoutInput): DatabaseReadyWrite[]
     {
       table: 'assignments',
       id: input.assignmentId,
-      action: 'insert',
+      // upsert: this is a status patch — 'insert' would wipe the assignment.
+      action: 'upsert',
       record: {
         id: input.assignmentId,
         status: 'completed',

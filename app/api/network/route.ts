@@ -1,6 +1,6 @@
-import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { loadConnectionGraph, lookupGraph, type GraphNodeKind } from '@/lib/connection-graph';
+import { isInternalAuthorized } from '@/lib/internal-auth';
 import { isRateLimited } from '@/lib/ginc-store';
 
 export const runtime = 'nodejs';
@@ -44,18 +44,7 @@ function clientKey(request: Request): string {
 // work orders, assets). Anonymous callers get the public GINC graph
 // only; the full graph requires an internal admin bearer.
 function isAuthorized(request: Request): boolean {
-  const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim() ?? '';
-  if (!token) return false;
-  const keys = [process.env.AHFOS_INTERNAL_API_KEY, process.env.GINC_ADMIN_KEY]
-    .map((k) => k?.trim()).filter((k): k is string => !!k);
-  return keys.some((key) => {
-    if (key.length !== token.length) return false;
-    try {
-      return timingSafeEqual(Buffer.from(key), Buffer.from(token));
-    } catch {
-      return false;
-    }
-  });
+  return isInternalAuthorized(request);
 }
 
 export async function GET(request: Request) {
