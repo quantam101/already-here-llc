@@ -185,8 +185,12 @@ export async function syncFromExport(payload: DcosExport, store: CanonicalStore 
   }
 
   for (const item of payload.brainItems ?? []) {
-    // Brain values are JSON-encoded; store a short readable summary.
-    const raw = typeof item.value === 'string' ? item.value : JSON.stringify(item.value ?? '');
+    // Brain values are JSON-encoded; decode so the summary is readable.
+    let raw = typeof item.value === 'string' ? item.value : JSON.stringify(item.value ?? '');
+    try {
+      const decoded = JSON.parse(raw) as unknown;
+      raw = typeof decoded === 'string' ? decoded : JSON.stringify(decoded);
+    } catch { /* not JSON-encoded — use as-is */ }
     await write('knowledge', `dcos-brain-${item.id}`, {
       key: text(item.key) || 'knowledge',
       scope: text(item.scope) || 'business',
