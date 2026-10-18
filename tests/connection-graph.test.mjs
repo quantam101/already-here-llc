@@ -150,10 +150,13 @@ const syncRes = await syncFromExport({
   leads: [{ id: 'L1', name: 'Dana Ops', email: 'dana@x.invalid', company: 'OpsCo', channel: 'form', message: 'needs help', status: 'qualified' }],
   rfqs: [{ id: 'R1', requester: 'Ron Buyer', email: 'ron@x.invalid', details: '20 laptops', status: 'new' }],
   dispatchRequests: [{ id: 'D1', requester: 'Sam Site', service: 'Smart Hands', location: 'Tempe, AZ', urgency: 'rush', status: 'assigned' }],
-  brainItems: [{ id: 'B1', scope: 'repo', key: 'already-here-llc.deploy_target', value: '"vercel"', source: 'repo-scan' }],
+  brainItems: [
+    { id: 'B1', scope: 'repo', key: 'already-here-llc.deploy_target', value: '"vercel"', source: 'repo-scan' },
+    { id: 'B2', scope: 'customer', key: 'customer.acme_notes', value: '"Service notes for Acme Properties trailer fleet"', source: 'intake' },
+  ],
 }, store);
 assert.equal(syncRes.errors.length, 0, `sync errors: ${syncRes.errors.join('; ')}`);
-assert.equal(syncRes.upserted, 9, 'each intake record should upsert its contact/org/job chain');
+assert.equal(syncRes.upserted, 10, 'each intake record should upsert its contact/org/job chain');
 const synced = await loadConnectionGraph(store);
 assert.ok(synced.nodes.some((n) => n.label === 'Dana Ops'), 'dcos lead contact should graph as a person');
 assert.ok(synced.nodes.some((n) => n.kind === 'lead' && n.id.includes('dcos-lead-L1')), 'dcos lead node');
@@ -167,5 +170,16 @@ assert.ok(kNode, 'brain item should graph as a knowledge node');
 assert.equal(kNode.label, 'already-here-llc.deploy_target', 'knowledge label is the brain key');
 const kLookup = lookupGraph(synced, { q: 'deploy_target' });
 assert.ok(kLookup.matches.some((n) => n.kind === 'knowledge'), 'knowledge searchable by key');
+
+// heuristic references: the acme_notes brain item should edge to the Acme org
+const refKn = synced.nodes.find((n) => n.kind === 'knowledge' && n.id.includes('dcos-brain-B2'));
+const acmeOrg = synced.nodes.find((n) => n.label === 'Acme Properties');
+assert.ok(refKn && acmeOrg, 'acme knowledge node + org should exist');
+assert.ok(
+  synced.edges.some((e) => e.from === refKn.id && e.to === acmeOrg.id && e.type === 'references'),
+  'knowledge node should reference the org it names'
+);
+const refLookup = lookupGraph(synced, { id: refKn.id });
+assert.ok(refLookup.connections.some((n) => n.id === acmeOrg.id), 'org surfaces as a knowledge connection');
 
 console.log('connection-graph tests passed');

@@ -441,6 +441,45 @@ function buildCanonical(b: Builder, tables: Map<string, Record<string, unknown>[
   }
 }
 
+const KNOWLEDGE_STOP_TOKENS = new Set(['this', 'that', 'with', 'from', 'have', 'will', 'been', 'were', 'they', 'them', 'then', 'than', 'when', 'what', 'which']);
+
+function textTokens(s: string): Set<string> {
+  return new Set(
+    s.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 4 && !KNOWLEDGE_STOP_TOKENS.has(t))
+  );
+}
+
+/**
+ * Heuristic link pass: connect each knowledge node to the graph entities
+ * it mentions (orgs, jobs, people, equipment, listings, dispatches...).
+ * A reference is counted when the entity's label appears in the knowledge
+ * text, or a distinctive >=5-char token from its label/detail does.
+ * Edge type `references`, knowledge -> entity. Deterministic and local.
+ */
+function linkKnowledgeReferences(b: Builder): void {
+  const nodes = [...b.nodes.values()];
+  const knowledge = nodes.filter((n) => n.kind === 'knowledge');
+  if (!knowledge.length) return;
+  const targets = nodes.filter((n) => n.kind !== 'knowledge');
+  const MAX_LINKS = 25;
+  for (const kn of knowledge) {
+    const haystack = `${kn.label} ${kn.detail}`.toLowerCase();
+    const knTokens = textTokens(haystack);
+    let linked = 0;
+    for (const target of targets) {
+      if (linked >= MAX_LINKS) break;
+      const label = target.label.trim().toLowerCase();
+      const referenced =
+        (label.length >= 4 && haystack.includes(label)) ||
+        [...textTokens(target.label), ...textTokens(target.detail)].some((tok) => tok.length >= 5 && knTokens.has(tok));
+      if (referenced) {
+        addEdge(b, kn.id, target.id, 'references');
+        linked++;
+      }
+    }
+  }
+}
+
 function buildGinc(b: Builder, network: GincNetwork): void {
   for (const member of network.members) {
     const pub = sanitizeMember(member);
@@ -522,6 +561,7 @@ export async function loadConnectionGraph(store?: CanonicalStore, includeCanonic
   const b: Builder = { nodes: new Map(), edges: [], ids: new Map() };
   buildCanonical(b, tables);
   buildGinc(b, network);
+  linkKnowledgeReferences(b);
 
   const nodes = [...b.nodes.values()];
   const byKind = Object.fromEntries(
