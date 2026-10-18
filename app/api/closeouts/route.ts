@@ -69,6 +69,7 @@ function inputFromBody(body: Record<string, unknown>): CloseoutInput | null {
     materialsUsed: asStringArray(body.materialsUsed),
     testingResults: asString(body.testingResults) || undefined,
     customerSignatureReceived: Boolean(body.customerSignatureReceived),
+    customerRating: asNumber(body.customerRating),
     photos,
     qaStatus: ['pass', 'fail', 'needs_review'].includes(asString(body.qaStatus)) ? (asString(body.qaStatus) as CloseoutInput['qaStatus']) : 'needs_review',
     revenueCents,
