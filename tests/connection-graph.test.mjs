@@ -28,7 +28,7 @@ await write('technicians', techId, {
 });
 await write('vehicles', vehicleId, {
   contact_id: contactId, organization_id: orgId,
-  year: '2019', make: 'Ford', model: 'F-150', vin: '1HGCM82633A004352',
+  year: 2019, make: 'Ford', model: 'F-150', vin: '1HGCM82633A004352',
 });
 await write('assets', assetId, {
   organization_id: orgId, name: 'Utility trailer 7',
@@ -38,16 +38,22 @@ await write('skills', skillId, { name: 'vehicle mechanic', category: 'vehicle' }
 await write('technician_skills', canonicalId('ts', techId, skillId), {
   technician_id: techId, skill_id: skillId,
 });
+// site with an address-derived name must not publish the street
+await write('sites', canonicalId('site', orgId, 's1'), {
+  organization_id: orgId, name: '123 Main St, Phoenix, AZ',
+  address: '123 Main St', city: 'Phoenix', state: 'AZ', zip: '85001',
+});
 await write('jobs', jobId, {
   contact_id: contactId, organization_id: orgId, vehicle_id: vehicleId,
   complaint: 'Brake inspection', location_city: 'Phoenix', location_state: 'AZ',
   status: 'queued_for_review',
 });
+// field-operations records key work orders as work_order_id
 await write('assignments', canonicalId('asg', jobId, techId, '2026-10-18'), {
-  job_id: jobId, technician_id: techId,
+  work_order_id: jobId, technician_id: techId,
 });
 await write('closeouts', canonicalId('close', jobId, '2026-10-18'), {
-  job_id: jobId, technician_id: techId,
+  work_order_id: jobId, technician_id: techId,
 });
 
 const graph = await loadConnectionGraph(store);
@@ -65,7 +71,17 @@ const flat = JSON.stringify(graph.nodes);
 assert.ok(!flat.includes('owner@acme.invalid'), 'contact email must not appear');
 assert.ok(!flat.includes('602-555-0100'), 'contact phone must not appear');
 assert.ok(!flat.includes('1HGCM82633A004352'), 'VIN must not appear');
+assert.ok(!flat.includes('123 Main St'), 'street address must not appear');
+assert.ok(!flat.includes('85001'), 'zip must not appear');
+const siteNode = graph.nodes.find((n) => n.kind === 'site');
+assert.equal(siteNode?.label, 'Phoenix, AZ', 'site label falls back to city, state — not the address');
+assert.ok(graph.nodes.some((n) => n.label === '2019 Ford F-150'), 'numeric year should appear in vehicle label');
 assert.deepEqual(publicFields({ email: 'a@b.c', phone: '1', city: 'X' }), { city: 'X' });
+
+// public scope: canonical records never load without authorization
+const publicGraph = await loadConnectionGraph(store, false);
+assert.ok(!publicGraph.nodes.some((n) => n.source === 'canonical'), 'public graph excludes canonical records');
+assert.ok(!publicGraph.nodes.some((n) => n.id.includes(contactId)), 'public graph hides customers');
 
 // Lookup connects person → vehicle → job → technician
 const res = lookupGraph(graph, { q: 'Pat Owner' });

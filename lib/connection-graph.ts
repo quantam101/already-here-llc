@@ -134,8 +134,13 @@ function ref(b: Builder, source: 'canonical' | 'ginc', rawId: unknown): string |
   return b.ids.get(`${source}:${id}`);
 }
 
+function scalar(value: unknown): string {
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return text(value);
+}
+
 function vehicleLabel(record: Record<string, unknown>): string {
-  const ymd = [record.year, record.make, record.model].map((v) => text(v)).filter(Boolean).join(' ');
+  const ymd = [record.year, record.make, record.model].map(scalar).filter(Boolean).join(' ');
   return ymd || firstText(record, ['title', 'name']) || 'Vehicle';
 }
 
@@ -146,8 +151,11 @@ function assetLabel(record: Record<string, unknown>): string {
 function siteLabel(record: Record<string, unknown>): string {
   const city = firstText(record, ['city', 'site_city']);
   const state = firstText(record, ['state', 'site_state']);
-  const name = firstText(record, ['name', 'site_name', 'label']);
-  if (name) return name;
+  const name = firstText(record, ['site_name', 'name', 'label']);
+  // Some writers fall back to "<street>, <city>, <state>" when no site
+  // name is given — never publish a street address as a label.
+  const address = text(record.address).toLowerCase();
+  if (name && !(address && name.toLowerCase().includes(address))) return name;
   return [city, state].filter(Boolean).join(', ') || 'Site';
 }
 
@@ -303,13 +311,16 @@ function buildCanonical(b: Builder, tables: Map<string, Record<string, unknown>[
     addEdge(b, id, ref(b, 'canonical', record.asset_id), 'job_on_equipment');
     addEdge(b, id, ref(b, 'canonical', record.site_id), 'job_at_site');
   }
+  // field-operations assignments/closeouts key the work order as
+  // work_order_id; other producers use job_id — accept either.
   for (const record of tables.get('assignments') ?? []) {
-    const jobId = ref(b, 'canonical', record.job_id);
+    const jobId = ref(b, 'canonical', record.job_id) ?? ref(b, 'canonical', record.work_order_id);
     const techId = ref(b, 'canonical', record.technician_id);
     addEdge(b, techId, jobId, 'assigned_to_job');
   }
   for (const record of tables.get('closeouts') ?? []) {
-    addEdge(b, ref(b, 'canonical', record.job_id), ref(b, 'canonical', record.technician_id), 'closed_by_technician');
+    const jobId = ref(b, 'canonical', record.job_id) ?? ref(b, 'canonical', record.work_order_id);
+    addEdge(b, jobId, ref(b, 'canonical', record.technician_id), 'closed_by_technician');
   }
   for (const record of tables.get('technician_skills') ?? []) {
     addEdge(b, ref(b, 'canonical', record.technician_id), ref(b, 'canonical', record.skill_id), 'has_skill');
@@ -365,18 +376,26 @@ function buildGinc(b: Builder, network: GincNetwork): void {
   }
 }
 
-export async function loadConnectionGraph(store?: CanonicalStore): Promise<ConnectionGraph> {
+/**
+ * includeCanonical=false returns the public graph only — GINC members,
+ * listings and jobs. Canonical rows (customers, technicians, work
+ * orders, assets) are private business records and must only be served
+ * to authorized callers.
+ */
+export async function loadConnectionGraph(store?: CanonicalStore, includeCanonical = true): Promise<ConnectionGraph> {
   const canonical = store ?? getCanonicalStore();
   const [rows, network] = await Promise.all([
-    Promise.all(CANONICAL_TABLES.map((t) => canonical.queryTable(t, 1000).catch(() => [] as Record<string, unknown>[]))),
+    includeCanonical
+      ? Promise.all(CANONICAL_TABLES.map((t) => canonical.queryTable(t, 1000).catch(() => [] as Record<string, unknown>[])))
+      : Promise.resolve([] as Record<string, unknown>[][]) ,
     loadNetwork().catch(() => ({ members: [], listings: [], jobs: [] }) as GincNetwork),
   ]);
 
   const tables = new Map<string, Record<string, unknown>[]>();
-  CANONICAL_TABLES.forEach((t, i) => tables.set(t, rows[i]));
+  CANONICAL_TABLES.forEach((t, i) => tables.set(t, rows[i] ?? []));
 
   const b: Builder = { nodes: new Map(), edges: [], ids: new Map() };
-  buildCanonical(b, tables);
+  if (includeCanonical) buildCanonical(b, tables);
   buildGinc(b, network);
 
   const nodes = [...b.nodes.values()];
