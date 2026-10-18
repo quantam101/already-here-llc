@@ -7,7 +7,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const KINDS = new Set<GraphNodeKind>([
-  'person', 'organization', 'vehicle', 'equipment', 'site', 'job', 'listing', 'skill',
+  'person', 'organization', 'vehicle', 'equipment', 'site', 'job',
+  'listing', 'skill', 'lead', 'opportunity', 'dispatch',
 ]);
 
 function clientKey(request: Request): string {
@@ -31,7 +32,7 @@ function clientKey(request: Request): string {
  *
  *   ?q=<text>    substring match over label, detail, location, status
  *   ?kind=<k>    one of: person, organization, vehicle, equipment, site,
- *                job, listing, skill
+ *                job, listing, skill, lead, opportunity, dispatch
  *   ?id=<node>   exact node id (e.g. ginc:listing:LST-001)
  *   ?limit=<n>   max matched nodes (default 50, cap 200)
  *
