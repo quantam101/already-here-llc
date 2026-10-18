@@ -383,11 +383,20 @@ function buildGinc(b: Builder, network: GincNetwork): void {
  * to authorized callers.
  */
 export async function loadConnectionGraph(store?: CanonicalStore, includeCanonical = true): Promise<ConnectionGraph> {
-  const canonical = store ?? getCanonicalStore();
+  // The canonical store must not be constructed for public requests —
+  // a missing private config would reject the whole public graph.
+  let canonical: CanonicalStore | undefined;
+  if (includeCanonical) {
+    try {
+      canonical = store ?? getCanonicalStore();
+    } catch {
+      canonical = undefined;
+    }
+  }
   const [rows, network] = await Promise.all([
-    includeCanonical
+    canonical
       ? Promise.all(CANONICAL_TABLES.map((t) => canonical.queryTable(t, 1000).catch(() => [] as Record<string, unknown>[])))
-      : Promise.resolve([] as Record<string, unknown>[][]) ,
+      : Promise.resolve([] as Record<string, unknown>[][]),
     loadNetwork().catch(() => ({ members: [], listings: [], jobs: [] }) as GincNetwork),
   ]);
 
