@@ -91,4 +91,21 @@ assert.equal(board.organizations[0].revenue_cents, 45000);
 assert.equal(rawEntityId('canonical:job:abc'), 'abc');
 assert.equal(rawEntityId('plain-id'), 'plain-id');
 
+// --- verified work passport ---
+process.env.WORK_PASSPORT_SECRET = 'test-passport-key';
+const { mintPassportToken, verifyPassportToken, getWorkPassport } = await import('../lib/work-passport.ts');
+const token = mintPassportToken(techHistory.entries[0].closeout_id);
+assert.ok(token, 'mint should produce a token');
+assert.equal(verifyPassportToken(token), techHistory.entries[0].closeout_id, 'token round-trips');
+assert.equal(verifyPassportToken(`${token}x`), null, 'tampered token rejected');
+assert.equal(verifyPassportToken('garbage.token.here'), null);
+const passport = await getWorkPassport(techHistory.entries[0].closeout_id, store);
+assert.ok(passport);
+assert.equal(passport.service_type, 'Brake inspection');
+assert.equal(passport.technician, 'Sam', 'passport shows first name only');
+assert.equal(passport.customer_rating, 5);
+assert.equal(passport.signed, true);
+assert.equal(passport.currency, 'USD');
+assert.equal(await getWorkPassport('nonexistent', store), null);
+
 console.log('work-history tests passed');

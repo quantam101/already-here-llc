@@ -18,6 +18,7 @@ export interface WorkHistoryEntry {
   site_label: string;
   hours_worked: number | null;
   revenue_cents: number;
+  currency: string;
   gross_margin_cents: number;
   qa_status: string;
   customer_rating: number | null;
@@ -51,6 +52,7 @@ export interface WorkHistoryLeader {
   label: string;
   jobs_completed: number;
   revenue_cents: number;
+  currency: string;
   gross_margin_cents: number;
   hours_worked: number;
   avg_customer_rating: number | null;
@@ -150,6 +152,7 @@ function entryFor(
     site_label: siteBits,
     hours_worked: hoursBetween(closeout.actual_start, closeout.actual_end),
     revenue_cents: num(closeout.revenue_cents || revenue.amount_cents),
+    currency: text(closeout.currency || revenue.currency) || 'USD',
     gross_margin_cents: num(revenue.gross_margin_cents),
     qa_status: text(closeout.qa_status) || 'needs_review',
     customer_rating: ratingOf(closeout),
@@ -266,6 +269,7 @@ export async function getWorkHistoryLeaderboard(store?: CanonicalStore): Promise
       label: labelFor(tables, id).label,
       jobs_completed: s.jobs_completed,
       revenue_cents: s.revenue_cents,
+      currency: entries[0]?.currency ?? 'USD',
       gross_margin_cents: s.gross_margin_cents,
       hours_worked: s.hours_worked,
       avg_customer_rating: s.avg_customer_rating,

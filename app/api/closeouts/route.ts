@@ -73,6 +73,7 @@ function inputFromBody(body: Record<string, unknown>): CloseoutInput | null {
     photos,
     qaStatus: ['pass', 'fail', 'needs_review'].includes(asString(body.qaStatus)) ? (asString(body.qaStatus) as CloseoutInput['qaStatus']) : 'needs_review',
     revenueCents,
+    currency: asString(body.currency) || 'USD',
     technicianPayoutCents: asNumber(body.technicianPayoutCents),
     mileageMiles: asNumber(body.mileageMiles),
     disposalCostCents: asNumber(body.disposalCostCents),
