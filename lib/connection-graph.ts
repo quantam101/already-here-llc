@@ -23,7 +23,10 @@ export type GraphNodeKind =
   | 'site'
   | 'job'
   | 'listing'
-  | 'skill';
+  | 'skill'
+  | 'lead'
+  | 'opportunity'
+  | 'dispatch';
 
 export interface GraphNode {
   id: string;
@@ -104,6 +107,10 @@ const CANONICAL_TABLES = [
   'closeouts',
   'skills',
   'technician_skills',
+  'leads',
+  'opportunities',
+  'dispatches',
+  'hauling_jobs',
 ] as const;
 
 function nodeId(kind: GraphNodeKind, source: 'canonical' | 'ginc', id: string): string {
@@ -140,8 +147,19 @@ function scalar(value: unknown): string {
 }
 
 function vehicleLabel(record: Record<string, unknown>): string {
+  const unit = firstText(record, ['unit_number', 'fleet_id', 'asset_tag', 'unit']);
   const ymd = [record.year, record.make, record.model].map(scalar).filter(Boolean).join(' ');
-  return ymd || firstText(record, ['title', 'name']) || 'Vehicle';
+  const base = ymd || firstText(record, ['title', 'name']) || 'Vehicle';
+  return unit ? `Unit ${unit} — ${base}` : base;
+}
+
+// Business identifiers (unit number, fleet tag) are safe to surface;
+// VIN and plate stay stored-only per PRIVATE_FIELD_PATTERNS.
+function vehicleDetail(record: Record<string, unknown>): string {
+  return [
+    firstText(record, ['unit_number', 'fleet_id', 'asset_tag', 'unit']),
+    firstText(record, ['fuel_scope', 'color', 'source']),
+  ].filter(Boolean).join(' · ');
 }
 
 function assetLabel(record: Record<string, unknown>): string {
@@ -244,7 +262,7 @@ function buildCanonical(b: Builder, tables: Map<string, Record<string, unknown>[
       kind: 'vehicle',
       source: 'canonical',
       label: vehicleLabel(record),
-      detail: firstText(record, ['fuel_scope', 'color', 'source']),
+      detail: vehicleDetail(record),
       city: firstText(record, ['city']),
       state: firstText(record, ['state']),
       status: firstText(record, ['status']),
@@ -275,6 +293,62 @@ function buildCanonical(b: Builder, tables: Map<string, Record<string, unknown>[
       detail: jobDetail(record),
       city: firstText(record, ['location_city', 'city']),
       state: firstText(record, ['location_state', 'state']),
+      status: firstText(record, ['status']),
+      createdAt: firstText(record, ['created_at']),
+    }, text(record.id));
+  }
+
+  for (const record of tables.get('leads') ?? []) {
+    addNode(b, {
+      id: nodeId('lead', 'canonical', text(record.id)),
+      kind: 'lead',
+      source: 'canonical',
+      label: firstText(record, ['title', 'body']) || 'Lead',
+      detail: firstText(record, ['lane', 'source_channel', 'source']),
+      city: firstText(record, ['city']),
+      state: firstText(record, ['state']),
+      status: firstText(record, ['status']),
+      createdAt: firstText(record, ['created_at']),
+    }, text(record.id));
+  }
+
+  for (const record of tables.get('opportunities') ?? []) {
+    addNode(b, {
+      id: nodeId('opportunity', 'canonical', text(record.id)),
+      kind: 'opportunity',
+      source: 'canonical',
+      label: firstText(record, ['title', 'next_action']) || 'Opportunity',
+      detail: firstText(record, ['lane', 'status', 'source']),
+      city: firstText(record, ['city']),
+      state: firstText(record, ['state']),
+      status: firstText(record, ['status']),
+      createdAt: firstText(record, ['created_at']),
+    }, text(record.id));
+  }
+
+  for (const record of tables.get('dispatches') ?? []) {
+    addNode(b, {
+      id: nodeId('dispatch', 'canonical', text(record.id)),
+      kind: 'dispatch',
+      source: 'canonical',
+      label: firstText(record, ['title', 'service_type']) || 'Dispatch',
+      detail: firstText(record, ['dispatch_status', 'lane', 'source']),
+      city: firstText(record, ['city', 'site_city']),
+      state: firstText(record, ['state', 'site_state']),
+      status: firstText(record, ['dispatch_status', 'status']),
+      createdAt: firstText(record, ['created_at']),
+    }, text(record.id));
+  }
+
+  for (const record of tables.get('hauling_jobs') ?? []) {
+    addNode(b, {
+      id: nodeId('job', 'canonical', text(record.id)),
+      kind: 'job',
+      source: 'canonical',
+      label: firstText(record, ['title', 'load_type']) || 'Hauling job',
+      detail: firstText(record, ['load_type', 'status']),
+      city: firstText(record, ['city', 'pickup_city']),
+      state: firstText(record, ['state', 'pickup_state']),
       status: firstText(record, ['status']),
       createdAt: firstText(record, ['created_at']),
     }, text(record.id));
@@ -324,6 +398,29 @@ function buildCanonical(b: Builder, tables: Map<string, Record<string, unknown>[
   }
   for (const record of tables.get('technician_skills') ?? []) {
     addEdge(b, ref(b, 'canonical', record.technician_id), ref(b, 'canonical', record.skill_id), 'has_skill');
+  }
+  for (const record of tables.get('leads') ?? []) {
+    const id = ref(b, 'canonical', record.id);
+    addEdge(b, id, ref(b, 'canonical', record.contact_id), 'lead_from_person');
+    addEdge(b, id, ref(b, 'canonical', record.organization_id), 'lead_from_organization');
+  }
+  for (const record of tables.get('opportunities') ?? []) {
+    const id = ref(b, 'canonical', record.id);
+    addEdge(b, id, ref(b, 'canonical', record.lead_id), 'opportunity_from_lead');
+    addEdge(b, id, ref(b, 'canonical', record.contact_id), 'opportunity_for_person');
+    addEdge(b, id, ref(b, 'canonical', record.organization_id), 'opportunity_for_organization');
+    addEdge(b, id, ref(b, 'canonical', record.job_id), 'opportunity_to_job');
+  }
+  for (const record of tables.get('dispatches') ?? []) {
+    const id = ref(b, 'canonical', record.id);
+    addEdge(b, id, ref(b, 'canonical', record.job_id) ?? ref(b, 'canonical', record.work_order_id), 'dispatch_for_job');
+    addEdge(b, id, ref(b, 'canonical', record.technician_id), 'dispatch_to_technician');
+    addEdge(b, id, ref(b, 'canonical', record.vehicle_id), 'dispatch_on_vehicle');
+  }
+  for (const record of tables.get('hauling_jobs') ?? []) {
+    const id = ref(b, 'canonical', record.id);
+    addEdge(b, id, ref(b, 'canonical', record.opportunity_id), 'hauling_from_opportunity');
+    addEdge(b, id, ref(b, 'canonical', record.vehicle_id), 'hauling_on_vehicle');
   }
 }
 
@@ -409,7 +506,7 @@ export async function loadConnectionGraph(store?: CanonicalStore, includeCanonic
 
   const nodes = [...b.nodes.values()];
   const byKind = Object.fromEntries(
-    (['person', 'organization', 'vehicle', 'equipment', 'site', 'job', 'listing', 'skill'] as GraphNodeKind[])
+    (['person', 'organization', 'vehicle', 'equipment', 'site', 'job', 'listing', 'skill', 'lead', 'opportunity', 'dispatch'] as GraphNodeKind[])
       .map((k) => [k, nodes.filter((n) => n.kind === k).length])
   ) as Record<GraphNodeKind, number>;
 

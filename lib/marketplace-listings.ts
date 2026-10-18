@@ -1,15 +1,13 @@
 import type { VerificationBadge } from './badges';
-import { fleetMarketplaceListings } from './fleet-marketplace';
 import { loadNetwork } from './ginc-store';
 
 /**
- * Marketplace listing feed — real records first.
+ * Marketplace listing feed — real records only.
  *
- * Live records come from the GINC network (member-published vehicle /
- * equipment / space listings). The static `fleetMarketplaceListings`
- * entries are category previews marked coming_soon; once a live listing
- * covers a category, the matching preview is dropped so the page shows
- * records, not placeholders.
+ * Listings come from the GINC network (member-published vehicle /
+ * equipment / space listings). There are no static "coming soon"
+ * previews: an empty network renders the page's honest empty state
+ * instead of fabricated listings.
  */
 
 export interface MarketplaceListing {
@@ -74,10 +72,5 @@ async function liveListings(): Promise<MarketplaceListing[]> {
 }
 
 export async function loadMarketplaceListings(): Promise<MarketplaceListing[]> {
-  const live = await liveListings();
-  const liveCategories = new Set(live.map((l) => l.category.toLowerCase()));
-  const previews: MarketplaceListing[] = fleetMarketplaceListings
-    .filter((l) => !liveCategories.has(l.category.toLowerCase()))
-    .map((l) => ({ ...l, live: false }));
-  return [...live, ...previews];
+  return liveListings();
 }

@@ -56,6 +56,30 @@ await write('closeouts', canonicalId('close', jobId, '2026-10-18'), {
   work_order_id: jobId, technician_id: techId,
 });
 
+// intake records written by the revenue-command-spine land in the
+// leads/opportunities/dispatches tables — the graph must pick them up.
+const leadId = canonicalId('lead', 'intake-1', 'lead');
+const oppId = canonicalId('opp', jobId);
+await write('leads', leadId, {
+  contact_id: contactId, organization_id: orgId,
+  title: 'Dispatch lead', lane: 'Dispatch', status: 'new',
+});
+await write('opportunities', oppId, {
+  lead_id: leadId, contact_id: contactId, organization_id: orgId,
+  job_id: jobId, title: 'Brake job opportunity', status: 'open',
+});
+await write('dispatches', canonicalId('dispatch', oppId), {
+  job_id: jobId, technician_id: techId, vehicle_id: vehicleId,
+  dispatch_status: 'queued_for_review',
+});
+
+// vehicle identity: a unit number rides along the year/make/model label
+// (stored-only identifiers like VIN stay out of the graph entirely).
+await write('vehicles', canonicalId('vehicle', orgId, 'unit-42'), {
+  contact_id: contactId, year: 2021, make: 'Ford', model: 'Transit',
+  unit_number: '42', vin: 'NM0GS9F77M1234567',
+});
+
 const graph = await loadConnectionGraph(store);
 
 const personNodes = graph.nodes.filter((n) => n.kind === 'person');
@@ -100,8 +124,42 @@ const byKind = lookupGraph(graph, { kind: 'vehicle' });
 assert.ok(byKind.matches.every((n) => n.kind === 'vehicle'), 'kind filter');
 assert.ok(byKind.matches.length >= 1, 'vehicle lookup');
 
+// intake pipeline nodes + edges
+assert.ok(graph.nodes.some((n) => n.kind === 'lead' && n.label === 'Dispatch lead'), 'lead node');
+assert.ok(graph.nodes.some((n) => n.kind === 'opportunity' && n.label === 'Brake job opportunity'), 'opportunity node');
+assert.ok(graph.nodes.some((n) => n.kind === 'dispatch'), 'dispatch node');
+const leadRes = lookupGraph(graph, { q: 'Dispatch lead' });
+assert.ok(leadRes.edges.some((e) => e.type === 'lead_from_person'), 'lead→person edge');
+assert.ok(leadRes.connections.some((n) => n.kind === 'opportunity'), 'lead should reach its opportunity');
+const dispatchRes = lookupGraph(graph, { kind: 'dispatch' });
+assert.ok(dispatchRes.edges.some((e) => e.type === 'dispatch_to_technician'), 'dispatch→technician edge');
+assert.ok(dispatchRes.edges.some((e) => e.type === 'dispatch_on_vehicle'), 'dispatch→vehicle edge');
+
+// vehicle unit identity is searchable; VIN stays out of the layer
+const unitRes = lookupGraph(graph, { q: 'Unit 42' });
+assert.ok(unitRes.matches.some((n) => n.label.includes('Unit 42') && n.label.includes('Transit')), 'unit number label');
+assert.ok(!JSON.stringify(graph.nodes).includes('NM0GS9F77M1234567'), 'second VIN must not appear either');
+
 const noMatch = lookupGraph(graph, { q: 'zzz-no-such-thing' });
 assert.equal(noMatch.matches.length, 0);
 assert.equal(noMatch.connections.length, 0);
+
+// daily-command-os intake export → canonical upserts → graph nodes
+const { syncFromExport } = await import('../lib/command-sync.ts');
+const syncRes = await syncFromExport({
+  leads: [{ id: 'L1', name: 'Dana Ops', email: 'dana@x.invalid', company: 'OpsCo', channel: 'form', message: 'needs help', status: 'qualified' }],
+  rfqs: [{ id: 'R1', requester: 'Ron Buyer', email: 'ron@x.invalid', details: '20 laptops', status: 'new' }],
+  dispatchRequests: [{ id: 'D1', requester: 'Sam Site', service: 'Smart Hands', location: 'Tempe, AZ', urgency: 'rush', status: 'assigned' }],
+}, store);
+assert.equal(syncRes.errors.length, 0, `sync errors: ${syncRes.errors.join('; ')}`);
+assert.equal(syncRes.upserted, 8, 'each intake record should upsert its contact/org/job chain');
+const synced = await loadConnectionGraph(store);
+assert.ok(synced.nodes.some((n) => n.label === 'Dana Ops'), 'dcos lead contact should graph as a person');
+assert.ok(synced.nodes.some((n) => n.kind === 'lead' && n.id.includes('dcos-lead-L1')), 'dcos lead node');
+assert.ok(synced.nodes.some((n) => n.kind === 'lead' && n.id.includes('dcos-rfq-R1')), 'dcos rfq node');
+const dJob = synced.nodes.find((n) => n.kind === 'job' && n.id.includes('dcos-job-D1'));
+assert.ok(dJob, 'dcos dispatch should create a job node');
+const dLookup = lookupGraph(synced, { id: `canonical:dispatch:dcos-dispatch-D1` });
+assert.ok(dLookup.edges.some((e) => e.type === 'dispatch_for_job'), 'dcos dispatch→job edge');
 
 console.log('connection-graph tests passed');
