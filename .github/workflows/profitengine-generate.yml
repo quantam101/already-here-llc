@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   generate:
@@ -61,13 +62,28 @@ jobs:
           "
         working-directory: profitengine
 
-      - name: Commit new content
+      - name: Enforce prepublication catalog gate
+        run: npm run content:validate
+
+      - name: Open an approval-required content pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.email "profitengine@alreadyherellc.com"
           git config user.name "ProfitEngine"
           git add content/blog/
-          git diff --staged --quiet && echo "No new content" || (
-            git commit -m "content: auto-generate blog post $(date -u +%Y-%m-%d-%H%M)" &&
-            git pull --rebase origin main &&
-            git push origin main
-          )
+          if git diff --staged --quiet; then
+            echo "No new content"
+            exit 0
+          fi
+          branch="profitengine/content-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          title="content: ProfitEngine draft $(date -u +%Y-%m-%d-%H%M)"
+          git switch -c "$branch"
+          git commit -m "$title"
+          git push --set-upstream origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "$title" \
+            --body "Automated content draft. Merge only after required CI passes and an owner approves the publication."
+

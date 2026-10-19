@@ -26,10 +26,11 @@ ${extra}`;
 }
 
 function post(title, content = body()) {
+  const description = 'A detailed, practical workflow that helps small-business operators evaluate a decision, document assumptions, test safely, and act on verified evidence.';
   return {
     title,
     filename: 'candidate.md',
-    content
+    content: `---\ntitle: "${title}"\ndescription: "${description}"\ntags: "operations, validation, small business"\ndate: 2026-10-19\nniche: "operations"\n---\n\n${content}`
   };
 }
 
@@ -100,3 +101,63 @@ test('accepts a specific, original, actionable draft', () => {
   assert.equal(result.pass, true, result.errors.join(' | '));
   assert.ok(result.score >= 90);
 });
+
+test('rejects fabricated performance claims without a source', () => {
+  const result = validatePost(post(
+    'A Specific Workflow for Testing Service Operations',
+    body('\n\nThis system will increase client engagement by at least 20% within two weeks.')
+  ), { ...relaxed, existingArticles: [] });
+
+  assert.equal(result.pass, false);
+  assert.match(result.errors.join(' '), /forecast\/research claims/);
+});
+
+test('rejects duplicate topics even when the titles are paraphrased', () => {
+  const candidate = post('Package Your Expertise as a Productized Service Offer');
+  const existing = post('Turn Your Expertise Into a Productized Service Template');
+  existing.filename = 'existing-productized-service.md';
+  const result = validatePost(candidate, {
+    ...relaxed,
+    topicSimilarityThreshold: 0.45,
+    similarityThreshold: 0.99,
+    existingArticles: [existing]
+  });
+
+  assert.equal(result.pass, false);
+  assert.match(result.errors.join(' '), /Duplicate topic detected/);
+});
+
+test('rejects hourly pricing outside the approved Weston schedule', () => {
+  const result = validatePost(post(
+    'A Specific Workflow for Pricing Service Operations',
+    body('\n\nCharge $80/hr for implementation and invoice after delivery.')
+  ), { ...relaxed, existingArticles: [] });
+
+  assert.equal(result.pass, false);
+  assert.match(result.errors.join(' '), /pricing conflicts/i);
+});
+
+test('rejects incomplete metadata', () => {
+  const candidate = post('A Specific Workflow for Verifying Article Metadata');
+  candidate.content = candidate.content.replace(/description:.*\n/, '');
+  const result = validatePost(candidate, { ...relaxed, existingArticles: [] });
+
+  assert.equal(result.pass, false);
+  assert.match(result.errors.join(' '), /Missing required frontmatter field: description/);
+});
+
+test('rejects malformed Markdown tables and accepts GFM tables', () => {
+  const malformed = validatePost(post(
+    'A Specific Workflow for Validating Markdown Tables',
+    body('\n\n| Gate | Expected |\n| Claims | Verified |')
+  ), { ...relaxed, existingArticles: [] });
+  assert.equal(malformed.pass, false);
+  assert.match(malformed.errors.join(' '), /no valid separator row/);
+
+  const valid = validatePost(post(
+    'A Specific Workflow for Rendering Markdown Tables',
+    body('\n\n| Gate | Expected |\n| --- | --- |\n| Claims | Verified |')
+  ), { ...relaxed, existingArticles: [] });
+  assert.equal(valid.pass, true, valid.errors.join(' | '));
+});
+
