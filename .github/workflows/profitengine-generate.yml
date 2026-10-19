@@ -61,13 +61,10 @@ jobs:
           "
         working-directory: profitengine
 
-      - name: Commit new content
+      - name: Validate generated content before any publication
+        run: node scripts/blog-publish-gate.mjs
+
+      - name: Stage generated content for owner review
         run: |
-          git config user.email "profitengine@alreadyherellc.com"
-          git config user.name "ProfitEngine"
-          git add content/blog/
-          git diff --staged --quiet && echo "No new content" || (
-            git commit -m "content: auto-generate blog post $(date -u +%Y-%m-%d-%H%M)" &&
-            git pull --rebase origin main &&
-            git push origin main
-          )
+          echo 'Automatic push to production is disabled. Generated content must pass review and approved PR merge.'
+          git status --short content/blog/
