@@ -6,7 +6,9 @@ import {
   RETIRED_ROUTES
 } from '../lib/route-policy.ts';
 
-const basic = (user, password) => `Basic ${btoa(`${user}:${password}`)}`;
+// Encode credentials the way browsers do with charset="UTF-8": UTF-8 bytes, then base64.
+const basic = (user, password) =>
+  `Basic ${btoa(String.fromCharCode(...new TextEncoder().encode(`${user}:${password}`)))}`;
 
 // Internal operator pages are protected, including sub-paths, trailing slashes and case.
 for (const path of [
@@ -71,5 +73,11 @@ assert.equal(isAuthorizedBasic(null, 'ops', 's3cret'), false);
 assert.equal(isAuthorizedBasic('Bearer abc', 'ops', 's3cret'), false);
 assert.equal(isAuthorizedBasic('Basic !!!not-base64', 'ops', 's3cret'), false);
 assert.equal(isAuthorizedBasic(`Basic ${btoa('no-colon')}`, 'ops', 's3cret'), false);
+// Non-ASCII passwords (UTF-8 credentials) authorize when they match, and only then.
+assert.equal(isAuthorizedBasic(basic('ops', 'päss'), 'ops', 'päss'), true);
+assert.equal(isAuthorizedBasic(basic('ops', 'pass🔑'), 'ops', 'pass🔑'), true);
+assert.equal(isAuthorizedBasic(basic('ops', 'pass'), 'ops', 'päss'), false);
+// Bytes that are not valid UTF-8 are rejected rather than mis-decoded.
+assert.equal(isAuthorizedBasic(`Basic ${btoa('ops:\xff\xfe')}`, 'ops', 'ÿþ'), false);
 
 console.log('route-policy: all assertions passed');

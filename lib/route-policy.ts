@@ -80,9 +80,13 @@ export function isAuthorizedBasic(
   const [scheme, encoded] = authorization.split(' ');
   if (!scheme || scheme.toLowerCase() !== 'basic' || !encoded) return false;
 
+  // The challenge advertises charset="UTF-8", so browsers send UTF-8 bytes.
+  // atob yields one character per byte; decode those bytes as UTF-8.
   let decoded: string;
   try {
-    decoded = atob(encoded);
+    const binary = atob(encoded);
+    const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+    decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
   } catch {
     return false;
   }
