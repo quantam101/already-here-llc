@@ -7,10 +7,12 @@
  */
 
 import { remark } from 'remark';
+import remarkGfm from 'remark-gfm';
 import html from 'remark-html';
 
 /** Render markdown string to sanitized HTML. Pure, async transform. */
 export async function renderMarkdown(markdown: string): Promise<string> {
-  const result = await remark().use(html, { sanitize: true }).process(markdown);
+  const result = await remark().use(remarkGfm).use(html, { sanitize: true }).process(markdown);
   return result.toString();
 }
+
