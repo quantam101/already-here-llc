@@ -12,7 +12,9 @@ const checks = [
   { id: 'build', command: 'npm', args: ['run', 'build', '--if-present'] },
   { id: 'test', command: 'npm', args: ['run', 'test', '--if-present'] },
   { id: 'seo-route-audit', command: 'node', args: ['scripts/seo-route-audit.mjs'] },
-  { id: 'content-guard', command: 'npm', args: ['run', 'qa:content', '--if-present'] }
+  { id: 'content-guard', command: 'npm', args: ['run', 'qa:content', '--if-present'] },
+  { id: 'blog-publishing', command: 'npm', args: ['run', 'qa:blog'] },
+  { id: 'blog-regressions', command: 'npm', args: ['run', 'test:blog'] }
 ];
 
 function runCheck(check) {
