@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generatedFrom": "d9d5163675600dbf48fb11004e6dcc35208503b8",
-  "note": "Legacy catalog hashes are grandfathered; any new or changed article must pass the full prepublication gate.",
+  "note": "Legacy catalog hashes are grandfathered after LF and trailing-newline normalization; any new or changed article must pass the full prepublication gate.",
   "files": {
     "content/blog/2026-08-22-best-fleet-and-mobility-strategies-2026.md": "d43a8d02a12aea3b18f9756c08899366da851e722f24f83f3f4f24e3b929c48a",
     "content/blog/2026-08-23-best-passive-income-strategies-2026.md": "1fac2926cade20b3bd5ecb1654ce2902bcbdb09a3f70c1255d3ee9f12bf976ae",
@@ -86,13 +86,13 @@
     "content/blog/2026-10-16-how-to-build-a-free-tier-automated-digital-product-funnel-for-passive-income-in-2026.md": "69860ed83d5bdb0627a65edde2fe0bfedf002fe15964d1d80074434534bb256b",
     "content/blog/2026-10-17-build-an-organic-affiliate-content-funnel-for-small-publishers-2026.md": "cadea592a15609a51d30703af179664719885a043328c54478f6e0d4ae6961b8",
     "content/blog/2026-10-18-a-step-by-step-scorecard-for-vetting-ai-tools-in-2026.md": "3cce7dd16b0c233614e4bebbe0d5e482ab99f3157b8cf11574604f0ae6d1eca8",
-    "content/blog/ai-lead-capture-implementation-checklist.md": "be77ef9e213eb3c1bbf589cc3e3066f7b7ce2f7b17eecedc398dba272ddcf914",
-    "content/blog/ai-website-agent-missed-leads-service-businesses.md": "ae5e34b3a450990c9089758d94c0454233f8e38c098bbb22415125b11e93703f",
-    "content/blog/arizona-field-coverage-retainer-pricing-2026.md": "cba832921c48c01ceea7af0bce698dc996d1726fee2d7bcc124d580d5b2e79a6",
-    "content/blog/it-field-technician-phoenix-rollout-support.md": "97f2ea56bd5e8d1ef41c03caa1dcfede246775590c1daa6d748de7f09a834f95",
-    "content/blog/msp-arizona-bench-without-hiring.md": "ab9b5d663e18e6f922f7cfcb30af9d5c917f9637c497facfcfb0a539422aa272",
-    "content/blog/msp-smart-hands-phoenix-az.md": "8e3ac302a07f28615739578b1dc23a4f93da4680b620528997aeed54d4ddcb33",
-    "content/blog/pos-kiosk-support-phoenix.md": "913d03fd6c6bb7c114e57d07df7496693cc70f50bf60a9bd150293c6e153f9a3",
-    "content/blog/productized-field-services-fixed-price-catalog.md": "a0efc71cef1f1d4776f7ecd11d09800070bebd4c9311607e12812090df81915e"
+    "content/blog/ai-lead-capture-implementation-checklist.md": "26fbe431494be3eb4d75c6b9c464e5f6c20261d8375b4c0a30c3f5c5825858a2",
+    "content/blog/ai-website-agent-missed-leads-service-businesses.md": "1d76f8c00c696265f87f6178ce6294c5bc76337d7222547d58f870311b79379a",
+    "content/blog/arizona-field-coverage-retainer-pricing-2026.md": "728aff3dff39c58eabca6e6fae4d1b617e4e3b5d0dc2c61bb2f4072a25e68897",
+    "content/blog/it-field-technician-phoenix-rollout-support.md": "74ba010be8e66acde99de8186ba986de066b24e9ae20671e850a7b7d9704737f",
+    "content/blog/msp-arizona-bench-without-hiring.md": "c137ca734a5cb93319e5dc191b688ff8dbd9ef8d039b35d8d0fb2c51ac36a3de",
+    "content/blog/msp-smart-hands-phoenix-az.md": "e0bfa0b55769d0045f931d332ba26cfaa925fcceda867e9daa7cbf1380fd8fac",
+    "content/blog/pos-kiosk-support-phoenix.md": "ad3786e9a1761004098e8961af085ccae13d3dfab07ff27b243034da1699f84a",
+    "content/blog/productized-field-services-fixed-price-catalog.md": "17a63ef285809361cce4264e47389aa63babc5fdce7d5223e11400406ae70a7f"
   }
 }

@@ -10,7 +10,8 @@ const CONTENT_DIR = path.join(ROOT, 'content', 'blog');
 const BASELINE_PATH = path.join(__dirname, 'catalog-baseline.json');
 
 function digest(content) {
-  return crypto.createHash('sha256').update(content, 'utf8').digest('hex');
+  const normalized = String(content).replace(/\r\n/g, '\n').replace(/\n+$/g, '') + '\n';
+  return crypto.createHash('sha256').update(normalized, 'utf8').digest('hex');
 }
 
 function loadBaseline(baselinePath = BASELINE_PATH) {
