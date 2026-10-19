@@ -5,6 +5,8 @@ const nextConfig = {
   skipTrailingSlashRedirect: true,
   async redirects() {
     return [
+      { source: '/blog/2026-10-18-how-to-build-a-repeatable-ai-tool-evaluation-scorecard-for-small-business-automation', destination: '/blog/2026-09-24-build-a-repeatable-scorecard-to-vet-ai-tools-for-small-business-automation-2026', permanent: true },
+      { source: '/blog/2026-10-19-how-to-package-your-expertise-into-a-productized-service-offer-for-a-2026-side-hustle', destination: '/blog/2026-09-25-how-to-turn-your-expertise-into-a-productized-service-offer-in-2026-a-complete-template', permanent: true },
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'already-here-llc.vercel.app' }],
