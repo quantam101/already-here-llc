@@ -78,8 +78,7 @@
     "remark": "^15.0.1",
     "remark-html": "^16.0.1",
     "stripe": "^22.3.2",
-    "zod": "^4.4.3",
-    "remark-gfm": "^4.0.1"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",
