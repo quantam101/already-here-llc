@@ -9,8 +9,8 @@ export function validatePost(file,raw) {
  const title=front?.[1].match(/^title:\s*(.+)$/m)?.[1]?.replace(/^['"]|['"]$/g,'') || file;
  const excerpt=front?.[1].match(/^(?:excerpt|description):\s*(.+)$/m)?.[1];
  if(!excerpt) failures.push(file+': missing excerpt/description');
- if(/(?:sample|fake|fabricated) testimonial|mock (?:results|metrics)|guaranteed (?:results|revenue)/i.test(raw)) failures.push(file+': unsupported marketing proof');
- if(/(?:\$80\s*\/\s*(?:hour|hr)|\$400.{0,60}(?:four|4).{0,25}hours)/i.test(raw)) failures.push(file+': conflicting service price');
+ if(/(?:sample|fake|fabricated) testimonial|mock (?:results|metrics)|guaranteed (?:results|revenue)|testimonial template|before\/after metrics|increase.{0,60}(?:engagement|conversions).{0,20}(?:20\s*%|20\s*percent)/i.test(raw)) failures.push(file+': unsupported marketing proof');
+ if(/(?:\$80\s*(?:\/\s*(?:hour|hr)|per hour|hourly)|\$400.{0,60}(?:four|4).{0,25}hours)/i.test(raw)) failures.push(file+': conflicting service price');
  return {file,title,failures};
 }
 export function validateCatalog(posts) {
