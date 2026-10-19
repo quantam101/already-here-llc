@@ -62,7 +62,8 @@
     "qa:ecosystem": "node scripts/ecosystem-production-gate.mjs",
     "test:email-intake": "node --experimental-sqlite --experimental-strip-types --import ./tests/register-next-alias.mjs tests/email-intake.test.mjs",
     "qa:blog": "node scripts/blog-publish-gate.mjs",
-    "test:blog": "node --test tests/blog-publish-gate.test.mjs"
+    "test:blog": "node --test tests/blog-publish-gate.test.mjs",
+    "prebuild": "npm run qa:blog && npm run test:blog"
   },
   "dependencies": {
     "@upstash/redis": "^1.38.4",
