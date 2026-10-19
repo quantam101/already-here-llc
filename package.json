@@ -14,7 +14,7 @@
     "start": "next start",
     "lint": "eslint app components lib tests scripts tailwind.config.ts next.config.mjs postcss.config.js eslint.config.mjs --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test": "npm run test:regression && npm run test:dispatch && npm run test:technician && npm run test:field-operations && npm run test:autoworks && npm run test:ahfos && npm run test:outreach && npm run test:followups && npm run test:assets && npm run test:stripe && npm run test:payment-identity && npm run test:daily-command && npm run test:revenue-command && npm run test:canonical-migration && npm run test:platform-control && npm run test:revenue-pipeline && npm run test:revenue-os-seed && npm run test:route-stack && npm run test:local-revenue-radar && npm run test:ai-agent && npm run test:revenue-mesh && npm run test:level4 && npm run test:enterprise && npm run test:referral-partner && npm run test:agent-fleet && npm run test:canonical-upstash && npm run test:seven-send-backfill && npm run test:canonical-ids && npm run test:connection-graph && npm run test:work-history && npm run test:email-intake",
+    "test": "npm run test:regression && npm run test:dispatch && npm run test:technician && npm run test:field-operations && npm run test:autoworks && npm run test:ahfos && npm run test:outreach && npm run test:followups && npm run test:assets && npm run test:stripe && npm run test:payment-identity && npm run test:daily-command && npm run test:revenue-command && npm run test:canonical-migration && npm run test:platform-control && npm run test:revenue-pipeline && npm run test:revenue-os-seed && npm run test:route-stack && npm run test:local-revenue-radar && npm run test:ai-agent && npm run test:revenue-mesh && npm run test:level4 && npm run test:enterprise && npm run test:referral-partner && npm run test:agent-fleet && npm run test:canonical-upstash && npm run test:seven-send-backfill && npm run test:canonical-ids && npm run test:connection-graph && npm run test:work-history && npm run test:email-intake && npm run test:route-policy",
     "test:regression": "node scripts/regression-config-check.mjs",
     "test:dispatch": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/dispatch-contract.test.mjs && node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/dispatch-triage.test.mjs",
     "test:technician": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/technician.test.mjs",
@@ -60,6 +60,7 @@
     "qa:gate": "node scripts/quality-gate.mjs",
     "qa:classify": "node scripts/ci-failure-classifier.mjs",
     "qa:ecosystem": "node scripts/ecosystem-production-gate.mjs",
+    "test:route-policy": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/route-policy.test.mjs",
     "test:email-intake": "node --experimental-sqlite --experimental-strip-types --import ./tests/register-next-alias.mjs tests/email-intake.test.mjs"
   },
   "dependencies": {

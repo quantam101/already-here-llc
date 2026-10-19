@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     productName = 'Already Here service',
     description,
     customerEmail,
-    successPath = '/dashboard/payments?success=true',
+    successPath = '/thank-you?payment=success',
     cancelPath = '/',
     referralCode = '',
     metadata = {}

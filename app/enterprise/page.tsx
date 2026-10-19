@@ -95,10 +95,10 @@ export default function EnterprisePage() {
           Request an enterprise consultation
         </Link>
         <Link
-          href="/ginc"
+          href="/capability-statement"
           className="inline-flex items-center justify-center rounded-full border border-borderBrand px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
         >
-          Explore the public GINC network
+          View our capability statement
         </Link>
       </div>
     </div>
