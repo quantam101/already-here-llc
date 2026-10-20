@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { naicsCodes, siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/government-contracting' },
   title: 'Government Contracting Readiness',
   description: 'Already Here LLC government, municipal, and prime-contractor readiness profile for onsite IT field execution, smart hands, infrastructure support, retail technology, and closeout-heavy technical dispatch.'
 };

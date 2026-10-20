@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ApplicantForm } from '@/components/ApplicantForm';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/technician-network' },
   title: 'Technician Network',
   description: 'Apply for employee, contractor, vendor, partner, and project-based field opportunities with Already Here LLC.'
 };
