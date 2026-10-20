@@ -5,9 +5,9 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  schedule:
-    - cron: '0 7 * * *'   # 7AM UTC daily
-    - cron: '0 19 * * *'  # 7PM UTC daily
+  # Schedule paused 2026-10-19: the generator produced near-duplicate,
+  # off-topic posts (side hustles, Etsy, scooters) that hurt indexing of the
+  # IT/field-service pages. Run manually once it targets field-service topics.
   workflow_dispatch:
 
 permissions:

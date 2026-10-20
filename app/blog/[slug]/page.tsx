@@ -21,6 +21,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     title: post.title,
     description: post.excerpt,
     alternates: { canonical: `/blog/${slug}` },
+    ...(post.indexable ? {} : { robots: { index: false, follow: true } }),
     openGraph: {
       title: `${post.title} | Already Here LLC`,
       description: post.excerpt,
