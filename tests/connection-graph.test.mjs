@@ -181,6 +181,16 @@ assert.ok(
 );
 const refLookup = lookupGraph(synced, { id: refKn.id });
 assert.ok(refLookup.connections.some((n) => n.id === acmeOrg.id), 'org surfaces as a knowledge connection');
+// partial references: a suffix-variant org ("Acme Properties LLC") is
+// still linked when the knowledge text names the core label
+const llcId = canonicalId('org', 'Acme Properties LLC');
+await write('organizations', llcId, { name: 'Acme Properties LLC', organization_type: 'customer' });
+const syncedLlc = await loadConnectionGraph(store);
+const llcOrg = syncedLlc.nodes.find((n) => n.label === 'Acme Properties LLC');
+assert.ok(
+  syncedLlc.edges.some((e) => e.from === refKn.id && e.to === llcOrg.id && e.type === 'references'),
+  'knowledge naming "Acme Properties" should still reference "Acme Properties LLC"'
+);
 // no invented references: B1 ("deploy_target → vercel") names no entity
 assert.ok(
   !synced.edges.some((e) => e.from === kNode.id && e.type === 'references'),

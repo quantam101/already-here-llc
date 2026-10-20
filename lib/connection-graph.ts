@@ -453,9 +453,11 @@ function textTokens(s: string): Set<string> {
  * Heuristic link pass: connect each knowledge node to the graph entities
  * it mentions (orgs, jobs, people, equipment, listings, dispatches...).
  * A reference is counted when every token of the entity's label appears
- * in the knowledge text (exact), or a distinctive >=5-char token shared
- * by at most 3 entities does (fuzzy). Exact matches outrank fuzzy ones
- * under the 25-link cap. Edge type `references`, knowledge -> entity.
+ * in the knowledge text (exact), most of them do and every matched one
+ * is distinctive (partial — catches "Acme Properties" naming
+ * "Acme Properties LLC"), or a distinctive >=5-char token shared by at
+ * most 3 entities does (fuzzy). Ranking: exact > partial > fuzzy under
+ * the 25-link cap. Edge type `references`, knowledge -> entity.
  */
 function linkKnowledgeReferences(b: Builder): void {
   const nodes = [...b.nodes.values()];
@@ -474,22 +476,37 @@ function linkKnowledgeReferences(b: Builder): void {
   });
   const labelTokens = targets.map((t) => [...textTokens(t.label)]);
 
+  const distinctive = (tok: string) => tok.length >= 4 && (df.get(tok) ?? 0) <= 5;
+
   for (const kn of knowledge) {
     const knTokens = textTokens(`${kn.label} ${kn.detail}`);
-    const hits: { id: string; exact: boolean }[] = [];
+    const hits: { id: string; rank: number }[] = [];
     targets.forEach((t, i) => {
       // Exact reference: every token of the entity's label appears in the
       // knowledge text (whole tokens — "Site" can't hide inside "website").
       const lt = labelTokens[i];
-      const exact = lt.length > 0 && lt.every((tok) => knTokens.has(tok));
+      const matched = lt.filter((tok) => knTokens.has(tok));
+      const exact = lt.length > 0 && matched.length === lt.length;
+      // Partial reference: most label tokens matched and every matched
+      // one is distinctive — catches suffix/prefix variants like
+      // "Acme Properties" vs "Acme Properties LLC" without inventing
+      // links from generic shared words.
+      const partial =
+        !exact &&
+        lt.length >= 2 &&
+        matched.length >= 2 &&
+        matched.length * 2 >= lt.length &&
+        matched.every(distinctive);
       // Distinctive reference: a >=5-char token rare across the graph.
       const fuzzy =
         !exact &&
+        !partial &&
         [...targetTokens[i]].some((tok) => tok.length >= 5 && (df.get(tok) ?? 0) <= 3 && knTokens.has(tok));
-      if (exact || fuzzy) hits.push({ id: t.id, exact });
+      const rank = exact ? 2 : partial ? 1 : fuzzy ? 0 : -1;
+      if (rank >= 0) hits.push({ id: t.id, rank });
     });
-    // Exact-name references outrank fuzzy ones so the cap can't drop them.
-    hits.sort((a, b2) => Number(b2.exact) - Number(a.exact));
+    // Stronger references outrank weaker ones so the cap can't drop them.
+    hits.sort((a, b2) => b2.rank - a.rank);
     for (const h of hits.slice(0, MAX_LINKS)) addEdge(b, kn.id, h.id, 'references');
   }
 }
