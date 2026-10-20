@@ -226,6 +226,7 @@ export const dispatchTypes = [
   'Project / rollout / remediation',
   'POS / retail store tech',
   'Healthcare / controlled environment',
+  'Procurement / government contracting support',
   'Not sure — route for me'
 ] as const;
 
