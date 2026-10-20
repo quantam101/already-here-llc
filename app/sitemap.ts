@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/lib/site';
-import { getAllPosts } from '@/lib/blog';
+import { getIndexablePosts } from '@/lib/blog';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = siteConfig.url.endsWith('/') ? siteConfig.url.slice(0, -1) : siteConfig.url;
@@ -60,7 +60,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/legal/gdpr`,                          changeFrequency: 'yearly',  priority: 0.3 },
   ];
 
-  const posts = getAllPosts();
+  const posts = getIndexablePosts();
   const blogRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${base}/blog/${post.slug}`,
     lastModified: post.date ? new Date(post.date) : new Date(),

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getAllPosts } from '@/lib/blog';
+import { getIndexablePosts } from '@/lib/blog';
 
 export const metadata: Metadata = {
   title: 'Field Service Insights',
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default function BlogIndexPage() {
-  const posts = getAllPosts();
+  const posts = getIndexablePosts();
 
   return (
     <div className="container-shell py-16 lg:py-24">
