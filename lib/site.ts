@@ -221,23 +221,12 @@ export const closeoutItems = [
 export const dispatchTypes = [
   'Managed IT / recurring support',
   'Remote support / administration',
-  'Project / migration / remediation',
-  'Not sure — route for me',
-  'Technical field operations',
-  'Smart hands support',
-  'Onsite infrastructure execution',
-  'Network troubleshooting',
-  'Server / storage break-fix',
-  'Warranty / RMA part replacement',
-  'Rollout recovery',
-  'Remediation / revisit',
-  'POS / store tech',
-  'RFID / barcode / asset tracking',
-  'IT asset recovery / return logistics',
-  'Survey / site verification',
+  'Onsite smart hands / break-fix',
+  'Network / server / infrastructure',
+  'Project / rollout / remediation',
+  'POS / retail store tech',
   'Healthcare / controlled environment',
-  'Procurement support',
-  'Critical systems support'
+  'Not sure — route for me'
 ] as const;
 
 export const representativeWork = [
@@ -314,7 +303,7 @@ export const pricingTiers = [
   { label: 'Advanced engineering / smart hands', value: '$150/hr · $300 minimum', note: 'Two-hour minimum; data center, server, and advanced infrastructure work' },
   { label: 'Same-day priority', value: '$175/hr · $350 minimum', note: 'Two-hour minimum; subject to availability' },
   { label: 'After-hours / weekend', value: '$187.50–$200/hr', note: 'Two-hour minimum; written quote confirms the applicable rate' },
-  { label: 'Emergency response', value: '$225/hr · $450 minimum', note: 'Under-four-hour response target, subject to availability and written confirmation' },
+  { label: 'Emergency response', value: '$225/hr · $450 minimum', note: 'Two-hour minimum; under-four-hour response target, subject to availability and written confirmation' },
   { label: 'Standardized site audit', value: '$1,500', note: 'Defined audit scope and deliverables confirmed before booking' },
   { label: 'Priority support retainer', value: '$2,000/month', note: 'Approximately 8–10 scheduled hours; additional work billed separately' },
   { label: 'Materials and travel', value: 'Materials cost + 20%', note: 'Mileage, extended-distance travel, parking, and tolls quoted or passed through with written approval' }
