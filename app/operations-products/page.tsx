@@ -3,6 +3,7 @@ import Link from 'next/link';
 import catalog from '@/data/phase-2-product-catalog.json';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/operations-products' },
   title: 'Field Operations Products & Automation Systems',
   description:
     'Field-tested templates, trackers, intake systems, closeout kits, dispatch tools, and implementation services for technicians, contractors, mechanics, MSPs, and field-service businesses.'
