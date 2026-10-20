@@ -41,7 +41,6 @@ const navGroups = [
       { href: '/dispatch', label: 'Request IT Support' },
       { href: '/emergency-dispatch', label: 'Same-Day Onsite Support' },
       { href: '/rfq', label: 'Project RFQ' },
-      { href: '/dashboard', label: 'Operations Portal' },
     ],
   },
 ];

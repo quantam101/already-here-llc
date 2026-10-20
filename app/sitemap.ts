@@ -26,11 +26,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     // Services & products
     { url: `${base}/operations-products`,                 changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/mobility`,                            changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/scooter-rentals`,                     changeFrequency: 'monthly', priority: 0.75 },
     { url: `${base}/rollout-support`,                     changeFrequency: 'monthly', priority: 0.75 },
     { url: `${base}/arizona-field-coverage`,              changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${base}/autoworks`,                           changeFrequency: 'weekly',  priority: 0.8 },
 
     // Tools & resources
     { url: `${base}/field-operations-workflow-review`,    changeFrequency: 'weekly',  priority: 0.85 },
@@ -42,8 +39,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Network & partnerships
     { url: `${base}/partner-with-us`,                     changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/technician-network`,                  changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/ginc`,                                changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${base}/connect`,                             changeFrequency: 'monthly', priority: 0.75 },
 
     { url: `${base}/self-hosted-solutions`,              changeFrequency: 'monthly', priority: 0.85 },
 
@@ -51,11 +46,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // AI / lead capture
     { url: `${base}/ai-agent`,                            changeFrequency: 'weekly',  priority: 0.9 },
     { url: `${base}/ai-agent-demo`,                       changeFrequency: 'weekly',  priority: 0.85 },
-    { url: `${base}/ai-agent-ebook`,                      changeFrequency: 'weekly',  priority: 0.8 },
     { url: `${base}/ai-agent-resources`,                  changeFrequency: 'weekly',  priority: 0.8 },
     { url: `${base}/ai-lead-capture`,                     changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/ai-receptionist`,                     changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/revenue-mesh`,                        changeFrequency: 'weekly',  priority: 0.85 },
 
     // Blog & contact
     { url: `${base}/blog`,                                changeFrequency: 'daily',   priority: 0.75 },
