@@ -31,12 +31,9 @@
       "recurringCostCeilingUsd": 0
     },
     "email": {
-      "mode": "free_tier",
-      "provider": "resend-with-verified-free-quota",
-      "recurringCostCeilingUsd": 0,
-      "quotaLimit": 100,
-      "failClosedAtQuota": true,
-      "automaticPaidOverages": false
+      "mode": "manual",
+      "provider": "owned-business-mailbox-human-reviewed-followups",
+      "recurringCostCeilingUsd": 0
     },
     "social": {
       "mode": "manual",
