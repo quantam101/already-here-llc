@@ -6,6 +6,8 @@ const secret = 'whsec_test_secret_12345678901234567890';
 process.env.STRIPE_SECRET_KEY = 'sk_test_12345678901234567890';
 process.env.STRIPE_WEBHOOK_SECRET = secret;
 
+process.env.CANONICAL_STORE_TYPE = 'sqlite';
+process.env.CANONICAL_SQLITE_PATH = ':memory:';
 resetCanonicalStore();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-06-24.dahlia' });
@@ -61,5 +63,13 @@ assert.equal(replayResponse.status, 200);
 assert.equal((await replayResponse.json()).duplicate, true);
 const afterReplay = await getCanonicalStore().queryTable('revenue_events', 10);
 assert.equal(afterReplay.length, 1);
+const eventRows = await getCanonicalStore().queryTable('stripe_events', 10);
+assert.equal(eventRows[0].status, 'done');
+
+const concurrent = await Promise.all(Array.from({ length: 10 }, () => POST(new Request('http://localhost:3000/api/stripe/webhook', {
+  method: 'POST', headers: { 'stripe-signature': signature }, body: payload
+}))));
+assert.ok(concurrent.every(r => r.status === 200 || r.status === 409));
+assert.equal((await getCanonicalStore().queryTable('revenue_events', 50)).length, 1);
 
 console.log('stripe webhook tests passed');
