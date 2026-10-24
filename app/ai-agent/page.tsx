@@ -4,12 +4,12 @@ import { AiAgentLeadForm } from '@/components/AiAgentLeadForm';
 import { aiAgentIndustries, aiAgentPackages } from '@/lib/ai-agent-products';
 
 export const metadata: Metadata = {
-  title: 'AI Website Chatbox and Lead Capture Agent Setup',
+  title: 'AI Lead Intake and Routing for Service Businesses',
   description:
-    'Already Here LLC builds AI website chatboxes, lead capture agents, quote intake flows, owner alert systems, and free trial demos for service businesses that need more qualified opportunities.',
+    'AI lead intake for service businesses: qualify website requests, route structured lead records, and demonstrate owner alerts before purchasing.',
   alternates: { canonical: 'https://www.alreadyherellc.com/ai-agent' },
   openGraph: {
-    title: 'AI Website Chatbox and Lead Capture Agent Setup | Already Here LLC',
+    title: 'AI Lead Intake and Routing for Service Businesses | Already Here LLC',
     description:
       'AI website chatbox setup with lead qualification, quote intake, owner alerts, free trial demo intake, and monthly optimization.',
     url: 'https://www.alreadyherellc.com/ai-agent',
@@ -90,6 +90,25 @@ export default function AiAgentPage() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="container-shell py-12" aria-labelledby="ai-agent-choose-path">
+        <h2 id="ai-agent-choose-path" className="section-title">Choose the right AI lead-capture path</h2>
+        <p className="section-copy proof-muted mt-4">This page is the commercial offer and package comparison. The live demo shows the actual intake experience; the resources hub explains implementation and buyer evaluation. These are separate from managed IT support and field dispatch.</p>
+        <div className="mt-8 grid gap-5 md:grid-cols-3">
+          <Link href="/ai-agent-demo" className="card p-6">
+            <h3 className="text-xl font-semibold text-navy">Test the lead intake demo</h3>
+            <p className="mt-3 text-sm leading-7 text-slate-600">See qualification fields, example routing and owner-alert output before selecting a package. A completed live form may create a real inquiry.</p>
+          </Link>
+          <Link href="/ai-agent-resources" className="card p-6">
+            <h3 className="text-xl font-semibold text-navy">Review implementation resources</h3>
+            <p className="mt-3 text-sm leading-7 text-slate-600">Explore buyer guides, deployment steps, lead-routing boundaries and sales enablement.</p>
+          </Link>
+          <Link href="/ai-agent-ebook" className="card p-6">
+            <h3 className="text-xl font-semibold text-navy">Read the buyer guide</h3>
+            <p className="mt-3 text-sm leading-7 text-slate-600">Understand where structured quote intake fits and what to verify before installing an agent.</p>
+          </Link>
         </div>
       </section>
 
