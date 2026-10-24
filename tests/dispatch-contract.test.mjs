@@ -123,15 +123,9 @@ await withEnv(
   },
   async () => {
     const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-forwarded-for': '203.0.113.13' }));
-    assert.equal(response.status, 200);
+    assert.equal(response.status, 503);
     const json = await response.json();
-    assert.equal(json.ok, true);
-    assert.equal(json.delivery, 'local_proof_only');
-    assert.equal(json.recordLocation, 'revenue_command_spine_local_proof');
-    assert.equal(json.persistedExternally, false);
-    assert.ok(json.dispatchId);
-    assert.ok(json.revenueSpine);
-    assert.equal(json.triage.primaryLane, 'emergency_onsite');
-    assert.equal(json.triage.urgencyScore, 95);
+    assert.match(json.message, /Dispatch delivery is unavailable/);
+
   }
 );

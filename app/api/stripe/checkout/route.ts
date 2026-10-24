@@ -19,14 +19,6 @@ export interface CheckoutBody {
   metadata?: Record<string, string>;
 }
 
-function originFrom(request: Request): string {
-  const header = request.headers.get('origin');
-  if (header) return header;
-  const host = request.headers.get('host');
-  if (host) return `https://${host}`;
-  return process.env.NEXT_PUBLIC_SITE_URL || 'https://www.alreadyherellc.com';
-}
-
 export async function POST(request: Request) {
   let stripeClient: Stripe | null = null;
   try {
@@ -38,11 +30,8 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({})) as CheckoutBody;
   const {
     mode = 'payment',
-    amount,
     priceId,
     quantity = 1,
-    productName = 'Already Here service',
-    description,
     customerEmail,
     successPath = '/thank-you?payment=success',
     cancelPath = '/',
@@ -50,28 +39,24 @@ export async function POST(request: Request) {
     metadata = {}
   } = body;
 
-  if (!priceId) {
-    if (amount === undefined || !Number.isFinite(amount) || amount <= 0) {
-      return NextResponse.json({ message: 'Invalid amount.' }, { status: 400 });
-    }
+  // Browser-provided prices are not authoritative.
+  const approvedPriceIds = (process.env.APPROVED_STRIPE_PRICE_IDS ?? '')
+    .split(',').map((id) => id.trim()).filter(Boolean);
+  if (!priceId || !approvedPriceIds.includes(priceId)) {
+    return NextResponse.json({ message: 'Online checkout is unavailable for this offer. Request an approved quote.' }, { status: 403 });
   }
-
-  const parsedQuantity = Number.isFinite(Number(quantity)) && Number(quantity) > 0 ? Number(quantity) : 1;
-  const origin = originFrom(request);
+  if (mode !== 'payment' && mode !== 'subscription') {
+    return NextResponse.json({ message: 'Invalid checkout mode.' }, { status: 400 });
+  }
+  if (!Number.isSafeInteger(quantity) || quantity !== 1) {
+    return NextResponse.json({ message: 'Invalid quantity.' }, { status: 400 });
+  }
+  const parsedQuantity = 1;
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.alreadyherellc.com';
   const success_url = `${origin}${successPath}`;
   const cancel_url = `${origin}${cancelPath}`;
 
-  const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = priceId
-    ? { price: priceId, quantity: parsedQuantity }
-    : {
-        price_data: {
-          currency: 'usd',
-          product_data: { name: productName, description },
-          unit_amount: amount!,
-          ...(mode === 'subscription' ? { recurring: { interval: 'month' } } : {})
-        },
-        quantity: parsedQuantity
-      };
+  const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = { price: priceId, quantity: parsedQuantity };
 
   try {
     const canonicalMetadata: Record<string, string> = {

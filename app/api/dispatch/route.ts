@@ -3,6 +3,8 @@ import { after, NextResponse } from 'next/server.js';
 import { buildRevenueIntakeProof } from '@/lib/revenue-command-intake';
 import { getCanonicalStore } from '@/lib/canonical-store';
 import { triageDispatchRequest } from '@/lib/dispatch-triage';
+import { getRedis } from '@/lib/redis';
+import { isCanonicalStoreDurable } from '@/lib/canonical-store';
 
 export const runtime = 'nodejs';
 
@@ -39,12 +41,20 @@ function generateDispatchId(): string {
 }
 
 function getClientKey(request: Request): string {
-  const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  const realIp = request.headers.get('x-real-ip')?.trim();
-  return forwardedFor || realIp || 'unknown';
+  // Only trust the proxy-owned connecting IP, not client-supplied forwarded chains.
+  const header = (process.env.TRUSTED_IP_HEADER || 'x-real-ip').toLowerCase();
+  return request.headers.get(header)?.trim() || 'unknown';
 }
 
-function isRateLimited(key: string): boolean {
+async function isRateLimited(key: string): Promise<boolean> {
+  const redis = getRedis();
+  if (process.env.NODE_ENV === 'production' && !redis) throw new Error('Shared rate limiter is not configured');
+  if (redis) {
+    const bucket = Math.floor(Date.now() / rateLimitWindowMs);
+    const redisKey = `dispatch:rate:${bucket}:${key}`;
+    const [count] = await redis.multi().incr(redisKey).expire(redisKey, 120).exec<[number, number]>();
+    return count > rateLimitMax;
+  }
   const now = Date.now();
   const current = rateLimit.get(key);
   if (!current || current.resetAt <= now) {
@@ -319,22 +329,37 @@ async function sendViaFormspree(formData: FormData, dispatchId: string): Promise
 
 export async function POST(request: Request) {
   const clientKey = getClientKey(request);
-  if (isRateLimited(clientKey)) return NextResponse.json({ message: 'Too many submissions. Try again later.' }, { status: 429 });
+  if (process.env.NODE_ENV === 'production' && clientKey === 'unknown') {
+    return NextResponse.json({ message: 'Dispatch protection is temporarily unavailable.' }, { status: 503 });
+  }
+  try {
+    if (await isRateLimited(clientKey)) return NextResponse.json({ message: 'Too many submissions. Try again later.' }, { status: 429 });
+  } catch {
+    return NextResponse.json({ message: 'Dispatch protection is temporarily unavailable.' }, { status: 503 });
+  }
 
   const formData = await request.formData();
   const validationError = validateFormData(formData);
   if (validationError) return NextResponse.json({ message: validationError }, { status: 400 });
 
   const url = new URL(request.url);
-  const localProofMode = request.headers.get('x-ah-local-proof') === 'true' || url.searchParams.get('mode') === 'local-proof';
+  const localProofMode = process.env.NODE_ENV !== 'production' && (request.headers.get('x-ah-local-proof') === 'true' || url.searchParams.get('mode') === 'local-proof');
   const hasResend = !!process.env.RESEND_API_KEY && !!process.env.DISPATCH_TO_EMAIL;
   const hasFormspree = !!process.env.FORMSPREE_ENDPOINT;
   const dispatchId = generateDispatchId();
   const triage = buildDispatchTriage(formData);
   const revenueSpine = buildRevenueSpineProof(dispatchId, formData);
-  await getCanonicalStore().executeWrites(revenueSpine.databaseReadyWrites);
+  if (process.env.NODE_ENV === 'production' && !isCanonicalStoreDurable()) {
+    return NextResponse.json({ message: 'Durable dispatch intake is unavailable.', dispatchId }, { status: 503 });
+  }
+  const writeResult = await getCanonicalStore().executeWrites(revenueSpine.databaseReadyWrites);
+  if (!writeResult.ok) return NextResponse.json({ message: 'Dispatch intake could not be recorded.', dispatchId }, { status: 503 });
 
-  if (localProofMode || (!hasResend && !hasFormspree)) {
+  if (!localProofMode && !hasResend && !hasFormspree) {
+    return NextResponse.json({ message: 'Dispatch delivery is unavailable. Contact dispatch@alreadyherellc.com directly.', dispatchId }, { status: 503 });
+  }
+
+  if (localProofMode) {
     return NextResponse.json({
       ok: true,
       dispatchId,
@@ -406,7 +431,7 @@ export async function GET() {
     service: 'dispatch',
     delivery,
     records,
-    localProofSupported: true,
+    localProofSupported: process.env.NODE_ENV !== 'production',
     env: {
       RESEND_API_KEY: Boolean(process.env.RESEND_API_KEY),
       DISPATCH_FROM_EMAIL: Boolean(process.env.DISPATCH_FROM_EMAIL),
