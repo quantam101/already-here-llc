@@ -326,7 +326,7 @@ export async function POST(request: Request) {
   if (validationError) return NextResponse.json({ message: validationError }, { status: 400 });
 
   const url = new URL(request.url);
-  const localProofMode = request.headers.get('x-ah-local-proof') === 'true' || url.searchParams.get('mode') === 'local-proof';
+  const localProofMode = process.env.NODE_ENV !== 'production' && (request.headers.get('x-ah-local-proof') === 'true' || url.searchParams.get('mode') === 'local-proof');
   const hasResend = !!process.env.RESEND_API_KEY && !!process.env.DISPATCH_TO_EMAIL;
   const hasFormspree = !!process.env.FORMSPREE_ENDPOINT;
   const dispatchId = generateDispatchId();
@@ -334,7 +334,11 @@ export async function POST(request: Request) {
   const revenueSpine = buildRevenueSpineProof(dispatchId, formData);
   await getCanonicalStore().executeWrites(revenueSpine.databaseReadyWrites);
 
-  if (localProofMode || (!hasResend && !hasFormspree)) {
+  if (!localProofMode && !hasResend && !hasFormspree) {
+    return NextResponse.json({ message: 'Dispatch delivery is unavailable. Contact dispatch@alreadyherellc.com directly.', dispatchId }, { status: 503 });
+  }
+
+  if (localProofMode) {
     return NextResponse.json({
       ok: true,
       dispatchId,
