@@ -1,0 +1,42 @@
+name: Phoenix Cabling Production Proof
+
+# Does not send marketing emails, SMS, create invoices, or make payments.
+# The initial push to main performs one clearly labeled internal lead-delivery test.
+# Weekly and ordinary manual runs check read-only public routes by default.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/phoenix-cabling-production-proof.yml'
+  workflow_dispatch:
+    inputs:
+      submit_internal_test:
+        description: 'Submit one synthetic lead to the owned dispatch mailbox'
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    - cron: '41 14 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phoenix-cabling-production-proof
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout production proof script
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9e9a # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Verify node runtime
+        run: node --version
+      - name: Check public landing page, PDF, and lead delivery
+        env:
+          AH_RUN_INTERNAL_TEST: ${{ github.event_name == 'push' || inputs.submit_internal_test == true }}
+        run: node scripts/phoenix-cabling-production-smoke.mjs
