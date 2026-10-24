@@ -67,7 +67,7 @@ async function main() {
         siteZip: 'Phoenix, AZ 85007',
         projectType: 'Network upgrade',
         projectStage: 'Researching',
-        marketingConsent: false,
+        marketingConsent: true, // Company-owned synthetic test address only; verifies the opt-in trigger
         website: '',
         utmSource: 'internal-qa',
         utmCampaign: 'phoenix-cabling-delivery-verification'
@@ -79,9 +79,11 @@ async function main() {
     assert.equal(response.status, 201, 'Internal lead must be accepted and routed');
     assert.equal(reply.ok, true);
     assert.match(String(reply.leadId), /^AH-CBL-/);
+    assert.equal(reply.marketingEnrolled, true, 'Opted-in internal test must trigger Resend automation');
     proof('internal-test-lead', {
       status: 'pass', httpStatus: response.status,
-      transactionalReceiptSent: reply.receiptSent === true
+      transactionalReceiptSent: reply.receiptSent === true,
+      optInEventAccepted: reply.marketingEnrolled === true
     });
   } else {
     proof('internal-test-lead', { status: 'skipped' });
@@ -94,7 +96,7 @@ try {
     target: BASE,
     verdict: 'pass',
     checks: receipts,
-    disclosure: 'One synthetic INTERNAL TEST record may have been created; no paid transaction.'
+    disclosure: 'One synthetic INTERNAL TEST record and consented nurture run may have been created for the company-owned test mailbox; no paid transaction.'
   }, null, 2));
 } catch (e) {
   console.error(JSON.stringify({
