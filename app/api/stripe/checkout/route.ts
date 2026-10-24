@@ -56,22 +56,24 @@ export async function POST(request: Request) {
     }
   }
 
-  const parsedQuantity = Number.isFinite(Number(quantity)) && Number(quantity) > 0 ? Number(quantity) : 1;
-  const origin = originFrom(request);
+  // Browser-provided prices are not authoritative.
+  const approvedPriceIds = (process.env.APPROVED_STRIPE_PRICE_IDS ?? '')
+    .split(',').map((id) => id.trim()).filter(Boolean);
+  if (!priceId || !approvedPriceIds.includes(priceId)) {
+    return NextResponse.json({ message: 'Online checkout is unavailable for this offer. Request an approved quote.' }, { status: 403 });
+  }
+  if (mode !== 'payment' && mode !== 'subscription') {
+    return NextResponse.json({ message: 'Invalid checkout mode.' }, { status: 400 });
+  }
+  if (!Number.isSafeInteger(quantity) || quantity !== 1) {
+    return NextResponse.json({ message: 'Invalid quantity.' }, { status: 400 });
+  }
+  const parsedQuantity = 1;
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.alreadyherellc.com';
   const success_url = `${origin}${successPath}`;
   const cancel_url = `${origin}${cancelPath}`;
 
-  const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = priceId
-    ? { price: priceId, quantity: parsedQuantity }
-    : {
-        price_data: {
-          currency: 'usd',
-          product_data: { name: productName, description },
-          unit_amount: amount!,
-          ...(mode === 'subscription' ? { recurring: { interval: 'month' } } : {})
-        },
-        quantity: parsedQuantity
-      };
+  const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = { price: priceId, quantity: parsedQuantity };
 
   try {
     const canonicalMetadata: Record<string, string> = {
