@@ -23,9 +23,16 @@ async function main() {
   const landing = await get('/phoenix-cabling-checklist');
   const markup = await landing.text();
   assert.equal(landing.status, 200, 'Landing page must return HTTP 200');
-  assert(markup.includes('Avoid costly cabling mistakes') && markup.includes('phoenix-cabling-lead'),
-    'Landing page must include campaign heading and intake endpoint');
-  proof('landing', { status: 'pass', httpStatus: landing.status });
+  const headingPresent = markup.includes('Avoid costly cabling mistakes');
+  const formPresent = markup.includes('Get the free checklist');
+  proof('landing', {
+    status: headingPresent && formPresent ? 'pass' : 'fail', httpStatus: landing.status,
+    headingPresent, formPresent, responseBytes: markup.length,
+    finalHost: new URL(landing.url).hostname,
+    contentType: landing.headers.get('content-type') || 'unknown'
+  });
+  assert(headingPresent && formPresent,
+    'Landing page must include campaign heading and signup CTA');
 
   const pdf = await get('/api/phoenix-cabling-guide');
   const data = new Uint8Array(await pdf.arrayBuffer());
