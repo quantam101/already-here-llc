@@ -42,7 +42,8 @@ function generateDispatchId(): string {
 
 function getClientKey(request: Request): string {
   // Only trust the proxy-owned connecting IP, not client-supplied forwarded chains.
-  return request.headers.get('x-real-ip')?.trim() || 'unknown';
+  const header = (process.env.TRUSTED_IP_HEADER || 'x-real-ip').toLowerCase();
+  return request.headers.get(header)?.trim() || 'unknown';
 }
 
 async function isRateLimited(key: string): Promise<boolean> {
@@ -51,8 +52,7 @@ async function isRateLimited(key: string): Promise<boolean> {
   if (redis) {
     const bucket = Math.floor(Date.now() / rateLimitWindowMs);
     const redisKey = `dispatch:rate:${bucket}:${key}`;
-    const count = await redis.incr(redisKey);
-    if (count === 1) await redis.expire(redisKey, 120);
+    const [count] = await redis.multi().incr(redisKey).expire(redisKey, 120).exec<[number, number]>();
     return count > rateLimitMax;
   }
   const now = Date.now();
@@ -329,6 +329,9 @@ async function sendViaFormspree(formData: FormData, dispatchId: string): Promise
 
 export async function POST(request: Request) {
   const clientKey = getClientKey(request);
+  if (process.env.NODE_ENV === 'production' && clientKey === 'unknown') {
+    return NextResponse.json({ message: 'Dispatch protection is temporarily unavailable.' }, { status: 503 });
+  }
   try {
     if (await isRateLimited(clientKey)) return NextResponse.json({ message: 'Too many submissions. Try again later.' }, { status: 429 });
   } catch {
