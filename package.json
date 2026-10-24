@@ -65,7 +65,7 @@
     "test:email-intake": "node --experimental-sqlite --experimental-strip-types --import ./tests/register-next-alias.mjs tests/email-intake.test.mjs"
   },
   "dependencies": {
-    "@upstash/redis": "^1.38.4",
+    "@upstash/redis": "^1.39.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "better-sqlite3": "^13.0.3",
