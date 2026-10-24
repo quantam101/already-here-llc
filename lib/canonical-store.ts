@@ -311,7 +311,8 @@ class SqliteCanonicalStore implements CanonicalStore {
   }
 
   async claimEvent(table: string, id: string, record: Record<string, unknown>, opts: { leaseMs: number }): Promise<'claimed' | 'done' | 'in_progress'> {
-    const existing = await this.getRecord(table, id);
+    const row = this.db.prepare('SELECT payload FROM canonical_records WHERE table_name = ? AND id = ?').get(table, id) as { payload: string } | undefined;
+    const existing = row ? JSON.parse(row.payload) as Record<string, unknown> : undefined;
     if (existing?.status === 'done') return 'done';
     if (existing?.status === 'processing' && Date.now() - Number(existing.claimed_at_ms ?? 0) <= opts.leaseMs) return 'in_progress';
     const now = isoNow();
