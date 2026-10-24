@@ -62,6 +62,14 @@ function pathSafe(value: string): boolean {
     && !value.includes('..');
 }
 
+function validLocale(value: string): boolean {
+  try {
+    return typeof value === 'string' && Intl.getCanonicalLocales(value).length === 1;
+  } catch {
+    return false;
+  }
+}
+
 function originSafe(value: string): boolean {
   try {
     const url = new URL(value);
@@ -91,13 +99,14 @@ export function auditPortableCampaign(config: PortableCampaign): PortabilityAudi
 
   const market = config.market;
   if (!market || !/^[A-Z]{2}$/.test(market.country) ||
-      !/^[A-Za-z0-9-]{1,24}$/.test(market.region) ||
-      !/^[a-z]{2,3}(?:-[A-Z]{2})?$/.test(market.locale) ||
+      (typeof market.region !== 'string' || !/^[A-Za-z0-9-]{0,48}$/.test(market.region)) ||
+      !validLocale(market.locale) ||
       !/^[A-Z]{3}$/.test(market.currency)) {
     errors.push('A valid country, region, locale, and currency are required.');
   }
   try {
-    Intl.DateTimeFormat('en-US', { timeZone: market?.timeZone }).format(0);
+    if (typeof market?.timeZone !== 'string' || !market.timeZone.trim()) throw new Error('Missing time zone');
+    Intl.DateTimeFormat('en-US', { timeZone: market.timeZone }).format(0);
   } catch {
     errors.push('A valid IANA market time zone is required.');
   }
