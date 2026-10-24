@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { Stripe } from 'stripe';
 import { canonicalId } from '@/lib/canonical-ids';
-import { getCanonicalStore } from '@/lib/canonical-store';
+import { getCanonicalStore, isCanonicalStoreDurable } from '@/lib/canonical-store';
 import { stripe, webhookSecret } from '@/lib/stripe';
 import { buildReferralCodeUpdate, buildReferralConversionWrite, getReferralCodeByCode, isValidReferralCode } from '@/lib/referral';
 
@@ -23,8 +23,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ message }, { status: 400 });
   }
 
+  if (!isCanonicalStoreDurable()) return NextResponse.json({ message: 'Durable ledger unavailable' }, { status: 503 });
   const store = getCanonicalStore();
   const now = new Date().toISOString();
+  const eventKey = canonicalId('stripe_event', event.id);
+  if (await store.getRecord('stripe_events', eventKey)) return NextResponse.json({ received: true, duplicate: true });
 
   async function recordConversionForCheckout(session: Stripe.Checkout.Session, sourceId: string) {
     const referralCode = session.metadata?.referralCode ?? '';
@@ -217,5 +220,7 @@ export async function POST(request: Request) {
     }
   }
 
+  const processed = await store.executeWrites([{ table: 'stripe_events', id: eventKey, action: 'upsert', record: { source: 'stripe', event_id: event.id, event_type: event.type, created_at: now } }]);
+  if (!processed.ok) return NextResponse.json({ message: 'Event ledger write failed' }, { status: 503 });
   return NextResponse.json({ received: true });
 }
