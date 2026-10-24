@@ -1,8 +1,24 @@
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { buildOutreachRecords, type OutreachInput } from '@/lib/outreach';
 import { getCanonicalStore } from '@/lib/canonical-store';
 
 export const runtime = 'nodejs';
+
+const INTERNAL_API_KEY = process.env.AHFOS_INTERNAL_API_KEY;
+
+// approvals/policy.yaml: client_outreach and email_send always require approval.
+// Unauthenticated callers may only stage 'draft'/'ready' records; lifecycle
+// transitions that assert an outbound action happened require the internal key.
+const approvalGatedStatuses = ['sent', 'responded', 'meeting', 'proposal', 'won', 'lost', 'no_response', 'do_not_contact'];
+
+function isValidInternalKey(provided: string | null): boolean {
+  if (!INTERNAL_API_KEY || !provided) return false;
+  const expected = Buffer.from(INTERNAL_API_KEY);
+  const actual = Buffer.from(provided);
+  if (expected.length !== actual.length) return false;
+  return timingSafeEqual(expected, actual);
+}
 
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -32,7 +48,7 @@ function asString(value: unknown): string {
 const validChannels = ['email', 'phone', 'social', 'sms', 'in_person', 'vendor', 'other'];
 const validStatuses = ['draft', 'ready', 'sent', 'responded', 'meeting', 'proposal', 'won', 'lost', 'no_response', 'do_not_contact'];
 
-function inputFromBody(body: Record<string, unknown>): OutreachInput | null {
+function inputFromBody(body: Record<string, unknown>, internalKey: string | null): OutreachInput | null | 'approval_required' {
   const fullName = asString(body.fullName);
   const company = asString(body.company);
   const messageType = asString(body.messageType);
@@ -43,6 +59,8 @@ function inputFromBody(body: Record<string, unknown>): OutreachInput | null {
   if (!validChannels.includes(channel)) return null;
 
   const status = asString(body.status);
+
+  if (approvalGatedStatuses.includes(status) && !isValidInternalKey(internalKey)) return 'approval_required';
 
   return {
     source: asString(body.source) || 'outreach_api',
@@ -71,7 +89,13 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({})) as Record<string, unknown>;
-  const input = inputFromBody(body);
+  const input = inputFromBody(body, request.headers.get('x-internal-api-key'));
+  if (input === 'approval_required') {
+    return NextResponse.json(
+      { ok: false, error: 'Outbound lifecycle statuses require approval (x-internal-api-key). See approvals/policy.yaml.' },
+      { status: 403 }
+    );
+  }
   if (!input) {
     return NextResponse.json({ ok: false, error: 'Missing required outreach fields.' }, { status: 400 });
   }
