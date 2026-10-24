@@ -43,6 +43,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/self-hosted-solutions`,              changeFrequency: 'monthly', priority: 0.85 },
 
 
+    // Phoenix commercial cabling campaign
+    { url: `${base}/phoenix-cabling-checklist`, changeFrequency: 'monthly', priority: 0.8 },
+
     // AI / lead capture
     { url: `${base}/ai-agent`,                            changeFrequency: 'weekly',  priority: 0.9 },
     { url: `${base}/ai-agent-demo`,                       changeFrequency: 'weekly',  priority: 0.85 },
