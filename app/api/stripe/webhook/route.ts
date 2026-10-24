@@ -52,11 +52,12 @@ export async function POST(request: Request) {
     await store.executeWrites([conversionWrite, codeUpdate]);
   }
 
-  if (event.type === 'checkout.session.completed') {
+  if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
     const session = event.data.object as Stripe.Checkout.Session;
+    if (session.payment_status !== 'paid') return NextResponse.json({ received: true, ignored: 'unpaid_checkout' });
     const { referralCode, ...metadata } = session.metadata ?? {};
 
-    const revenueId = canonicalId('revenue', session.id, String(session.customer_email ?? 'unknown'), now);
+    const revenueId = canonicalId('revenue', event.id);
 
     await store.executeWrites([
       {
@@ -95,7 +96,7 @@ export async function POST(request: Request) {
 
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object as Stripe.Invoice;
-    const revenueId = canonicalId('revenue', 'invoice', invoice.id, now);
+    const revenueId = canonicalId('revenue', event.id);
 
     await store.executeWrites([
       {
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
 
   if (event.type === 'invoice.payment_failed') {
     const invoice = event.data.object as Stripe.Invoice;
-    const revenueId = canonicalId('revenue', 'invoice_failed', invoice.id, now);
+    const revenueId = canonicalId('revenue', event.id);
 
     await store.executeWrites([
       {
@@ -157,7 +158,7 @@ export async function POST(request: Request) {
 
   if (event.type === 'payout.paid') {
     const payout = event.data.object as Stripe.Payout;
-    const payoutId = canonicalId('payout', payout.id, now);
+    const payoutId = canonicalId('payout', event.id);
 
     await store.executeWrites([
       {
@@ -189,7 +190,7 @@ export async function POST(request: Request) {
     const charge = event.data.object as Stripe.Charge;
     const refund = charge.refunds?.data?.[0];
     if (refund) {
-      const refundId = canonicalId('refund', refund.id, now);
+      const refundId = canonicalId('refund', event.id);
       await store.executeWrites([
         {
           table: 'refunds',
