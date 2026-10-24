@@ -118,3 +118,15 @@ Resend automation dashboard: https://resend.com/automations/01a16f5d-9fd6-750d-a
 - The RFQ process currently requires human review. Do not infer an actual booking or sale merely from a guide download or form submission.
 - Meta activation remains separate: no Instagram or Facebook Page OAuth grant or ManyChat account with rights to edit automations is available to this agent. The `BUILDOUT` flow above is the exact configuration reference, not an activated workflow.
 
+
+## RFQ-to-nurture conversion stop — October 24, 2026
+
+A **submitted and successfully delivered RFQ** tagged with a valid Phoenix cabling campaign lead ID is a lead-to-RFQ conversion stage, not an approved quote, contract, dispatch booking, or paid sale.
+
+- The existing RFQ form includes the original `AH-CBL-UUID` reference in the project request.
+- The dispatch API parses that reference only for the `RFQ / project-based bid` service type.
+- After the dispatch receiver confirms delivery, it emits the `phoenix.cabling.converted` event for the RFQ submitter's email.
+- The opted-in Resend automation ends before the Day 4 email if that conversion event arrives while the conversion wait is active.
+- A failed event does not block an authentic customer's RFQ; it is logged for reconciliation.
+- Local-only proof, failed dispatch delivery, other service types, and unattributed RFQs cannot generate this event.
+- The conversion signal records an **RFQ stage**, not customer revenue. Quote approval, Stripe invoice matching, paid-status reconciliation, and gross-margin proof remain independent required controls.
