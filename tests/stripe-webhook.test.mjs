@@ -52,4 +52,14 @@ assert.equal(records[0].amount_cents, 14900);
 assert.equal(records[0].status, 'collected');
 assert.equal(records[0].referral_code, 'partner1');
 
+const replayResponse = await POST(new Request('http://localhost:3000/api/stripe/webhook', {
+  method: 'POST',
+  headers: { 'stripe-signature': signature },
+  body: payload
+}));
+assert.equal(replayResponse.status, 200);
+assert.equal((await replayResponse.json()).duplicate, true);
+const afterReplay = await getCanonicalStore().queryTable('revenue_events', 10);
+assert.equal(afterReplay.length, 1);
+
 console.log('stripe webhook tests passed');
