@@ -34,6 +34,17 @@ async function main() {
   assert(headingPresent && formPresent,
     'Landing page must include campaign heading and signup CTA');
 
+  // Read-only verification: the public RFQ has real native date/time inputs.
+  // Do not create a real customer RFQ merely to test UI rendering.
+  const rfq = await get('/rfq');
+  const rfqHtml = await rfq.text();
+  assert.equal(rfq.status, 200, 'RFQ form must return HTTP 200');
+  assert(rfqHtml.includes('type="date"') && rfqHtml.includes('type="time"'),
+    'RFQ form must expose native calendar and time pickers');
+  assert(rfqHtml.includes('Specific date') && rfqHtml.includes('Bid deadline'),
+    'RFQ form must offer exact date, period, and deadline options');
+  proof('rfq-calendar', { status: 'pass', httpStatus: rfq.status, nativeDateInput: true, nativeTimeInput: true });
+
   const pdf = await get('/api/phoenix-cabling-guide');
   const data = new Uint8Array(await pdf.arrayBuffer());
   assert.equal(pdf.status, 200, 'Guide must return HTTP 200');
