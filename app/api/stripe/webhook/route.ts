@@ -27,7 +27,15 @@ export async function POST(request: Request) {
   const store = getCanonicalStore();
   const now = new Date().toISOString();
   const eventKey = canonicalId('stripe_event', event.id);
-  if (await store.getRecord('stripe_events', eventKey)) return NextResponse.json({ received: true, duplicate: true });
+  let claim: 'claimed' | 'done' | 'in_progress';
+  try {
+    claim = await store.claimEvent('stripe_events', eventKey, { source: 'stripe', event_id: event.id, event_type: event.type, created_at: now }, { leaseMs: 300000 });
+  } catch {
+    return NextResponse.json({ message: 'Atomic event claim unavailable' }, { status: 503 });
+  }
+  if (claim === 'done') return NextResponse.json({ received: true, duplicate: true });
+  if (claim === 'in_progress') return NextResponse.json({ message: 'Event in progress' }, { status: 409 });
+  try {
 
   async function recordConversionForCheckout(session: Stripe.Checkout.Session, sourceId: string) {
     const referralCode = session.metadata?.referralCode ?? '';
@@ -52,17 +60,17 @@ export async function POST(request: Request) {
       createdAt: now
     }, codeRecord);
     const codeUpdate = buildReferralCodeUpdate(codeRecord, revenueCents, rewardCents);
-    await store.executeWrites([conversionWrite, codeUpdate]);
+    const result = await store.executeWrites([conversionWrite, codeUpdate]);
   }
 
   if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
     const session = event.data.object as Stripe.Checkout.Session;
-    if (session.payment_status !== 'paid') return NextResponse.json({ received: true, ignored: 'unpaid_checkout' });
+    if (session.payment_status === 'paid' && session.mode !== 'subscription') {
     const { referralCode, ...metadata } = session.metadata ?? {};
 
-    const revenueId = canonicalId('revenue', event.id);
+    const revenueId = canonicalId('revenue', session.id);
 
-    await store.executeWrites([
+    const result = await store.executeWrites([
       {
         table: 'revenue_events',
         id: revenueId,
@@ -95,13 +103,14 @@ export async function POST(request: Request) {
       amountCents: session.amount_total,
       referralCode
     });
+    }
   }
 
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object as Stripe.Invoice;
-    const revenueId = canonicalId('revenue', event.id);
+    const revenueId = canonicalId('revenue', invoice.id);
 
-    await store.executeWrites([
+    const result = await store.executeWrites([
       {
         table: 'revenue_events',
         id: revenueId,
@@ -125,6 +134,7 @@ export async function POST(request: Request) {
         }
       }
     ]);
+    if (!result.ok) throw new Error('Ledger write failed');
 
     console.log('[stripe webhook] Invoice paid recorded', { revenueId, invoiceId: invoice.id, amountCents: invoice.amount_paid });
   }
@@ -133,7 +143,7 @@ export async function POST(request: Request) {
     const invoice = event.data.object as Stripe.Invoice;
     const revenueId = canonicalId('revenue', event.id);
 
-    await store.executeWrites([
+    const result = await store.executeWrites([
       {
         table: 'revenue_events',
         id: revenueId,
@@ -155,15 +165,16 @@ export async function POST(request: Request) {
         }
       }
     ]);
+    if (!result.ok) throw new Error('Ledger write failed');
 
     console.log('[stripe webhook] Invoice payment failed recorded', { revenueId, invoiceId: invoice.id });
   }
 
   if (event.type === 'payout.paid') {
     const payout = event.data.object as Stripe.Payout;
-    const payoutId = canonicalId('payout', event.id);
+    const payoutId = canonicalId('payout', payout.id);
 
-    await store.executeWrites([
+    const result = await store.executeWrites([
       {
         table: 'payouts',
         id: payoutId,
@@ -185,6 +196,7 @@ export async function POST(request: Request) {
         }
       }
     ]);
+    if (!result.ok) throw new Error('Ledger write failed');
 
     console.log('[stripe webhook] Payout recorded', { payoutId, payoutIdStripe: payout.id, amountCents: payout.amount });
   }
@@ -193,8 +205,8 @@ export async function POST(request: Request) {
     const charge = event.data.object as Stripe.Charge;
     const refund = charge.refunds?.data?.[0];
     if (refund) {
-      const refundId = canonicalId('refund', event.id);
-      await store.executeWrites([
+      const refundId = canonicalId('refund', refund.id);
+      const result = await store.executeWrites([
         {
           table: 'refunds',
           id: refundId,
@@ -215,12 +227,17 @@ export async function POST(request: Request) {
           }
         }
       ]);
+      if (!refundResult.ok) throw new Error('Refund write failed');
 
       console.log('[stripe webhook] Refund recorded', { refundId, refundIdStripe: refund.id, amountCents: refund.amount });
     }
   }
 
-  const processed = await store.executeWrites([{ table: 'stripe_events', id: eventKey, action: 'upsert', record: { source: 'stripe', event_id: event.id, event_type: event.type, created_at: now } }]);
-  if (!processed.ok) return NextResponse.json({ message: 'Event ledger write failed' }, { status: 503 });
+  const processed = await store.executeWrites([{ table: 'stripe_events', id: eventKey, action: 'upsert', record: { status: 'done', completed_at: new Date().toISOString() } }]);
+  if (!processed.ok) throw new Error('Event completion write failed');
   return NextResponse.json({ received: true });
+  } catch (error) {
+    await store.executeWrites([{ table: 'stripe_events', id: eventKey, action: 'upsert', record: { status: 'failed', last_error: String(error).slice(0, 500) } }]).catch(() => {});
+    return NextResponse.json({ message: 'Processing failed' }, { status: 500 });
+  }
 }
