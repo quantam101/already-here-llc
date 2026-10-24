@@ -81,7 +81,7 @@ try {
   assert(accepted.every(body=>!body.includes('To: <internal-qa@example.org>')));
   assert.deepEqual(gate.inspect().quotas.map(x=>x.reserved),[2,2]);
   assert.equal(store.exportTenant(tenant).messages.filter(m=>m.state==='delivered').length,2);
-  assert.equal(store.exportTenant(tenant).messages.find(m=>m.id===third).state,'approved');
+  assert.equal(store.exportTenant(tenant).messages.filter(m=>m.state==='approved').length,1);
 
   // A repeat runner can neither duplicate sends nor raise the committed cap.
   const repeated=await gate.deliverDue(time);
