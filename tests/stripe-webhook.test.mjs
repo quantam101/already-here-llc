@@ -15,6 +15,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-06-
 const payload = JSON.stringify({
   id: 'evt_test_1',
   object: 'event',
+  created: 1792850000,
   type: 'checkout.session.completed',
   data: {
     object: {
