@@ -62,7 +62,7 @@ try {
   store=new OwnedOutbox(dbFile);
   const gate=new OwnedLoopbackDelivery(store,{tenant,maxDaily:2,maxMonthly:2,port});
   assert.throws(()=>new OwnedLoopbackDelivery(store,{tenant,maxDaily:0,maxMonthly:2,port}),/quota/);
-  assert.throws(()=>sendToLoopbackSmtp({subject:'hi',body:'hi'},25),/unprivileged/);
+  await assert.rejects(sendToLoopbackSmtp({subject:'hi',body:'hi'},25),/unprivileged/);
   const first=enqueueApproved(store,sample('lead-a/day2'));
   const second=enqueueApproved(store,sample('lead-b/day2'));
   const third=enqueueApproved(store,sample('lead-c/day2'));
