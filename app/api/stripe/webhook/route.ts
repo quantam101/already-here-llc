@@ -229,7 +229,7 @@ export async function POST(request: Request) {
           }
         }
       ]);
-      if (!refundResult.ok) throw new Error('Refund write failed');
+      if (!result.ok) throw new Error('Refund write failed');
 
       console.log('[stripe webhook] Refund recorded', { refundId, refundIdStripe: refund.id, amountCents: refund.amount });
     }
