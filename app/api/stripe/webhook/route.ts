@@ -61,6 +61,7 @@ export async function POST(request: Request) {
     }, codeRecord);
     const codeUpdate = buildReferralCodeUpdate(codeRecord, revenueCents, rewardCents);
     const result = await store.executeWrites([conversionWrite, codeUpdate]);
+    if (!result.ok) throw new Error('Referral write failed');
   }
 
   if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
         }
       }
     ]);
+    if (!result.ok) throw new Error('Checkout revenue write failed');
 
     if (referralCode) await recordConversionForCheckout(session, revenueId);
 
