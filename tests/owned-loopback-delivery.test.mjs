@@ -66,6 +66,8 @@ try {
   const first=enqueueApproved(store,sample('lead-a/day2'));
   const second=enqueueApproved(store,sample('lead-b/day2'));
   const third=enqueueApproved(store,sample('lead-c/day2'));
+  assert.notEqual(first,second);
+  assert.notEqual(second,third);
 
   // Nothing leaves the queue before an explicit, internal-only runner executes.
   assert.equal(accepted.length,0);
