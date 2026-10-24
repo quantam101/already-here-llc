@@ -144,6 +144,7 @@ function openSqliteDatabase(path: string): SqliteDatabase {
   if (nodeSqlite?.DatabaseSync) {
     const db = new nodeSqlite.DatabaseSync(path);
     db.exec('PRAGMA journal_mode = WAL;');
+    db.exec('PRAGMA busy_timeout = 5000;');
     return db;
   }
   return createBetterSqlite3Database(path);
@@ -311,14 +312,24 @@ class SqliteCanonicalStore implements CanonicalStore {
   }
 
   async claimEvent(table: string, id: string, record: Record<string, unknown>, opts: { leaseMs: number }): Promise<'claimed' | 'done' | 'in_progress'> {
-    const row = this.db.prepare('SELECT payload FROM canonical_records WHERE table_name = ? AND id = ?').get(table, id) as { payload: string } | undefined;
-    const existing = row ? JSON.parse(row.payload) as Record<string, unknown> : undefined;
-    if (existing?.status === 'done') return 'done';
-    if (existing?.status === 'processing' && Date.now() - Number(existing.claimed_at_ms ?? 0) <= opts.leaseMs) return 'in_progress';
-    const now = isoNow();
-    const payload = { ...record, id, _table: table, status: 'processing', claimed_at_ms: Date.now(), attempts: Number(existing?.attempts ?? 0) + 1, created_at: existing?.created_at ?? now };
-    this.insertStmt.run({ id, table_name: table, payload: JSON.stringify(payload), source: String(record.source ?? table), created_at: String(payload.created_at), updated_at: now });
-    return 'claimed';
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      const row = this.db.prepare('SELECT payload FROM canonical_records WHERE table_name = ? AND id = ?').get(table, id) as { payload: string } | undefined;
+      const existing = row ? JSON.parse(row.payload) as Record<string, unknown> : undefined;
+      let outcome: 'claimed' | 'done' | 'in_progress' = 'claimed';
+      if (existing?.status === 'done') outcome = 'done';
+      else if (existing?.status === 'processing' && Date.now() - Number(existing.claimed_at_ms ?? 0) <= opts.leaseMs) outcome = 'in_progress';
+      if (outcome === 'claimed') {
+        const now = isoNow();
+        const payload = { ...record, id, _table: table, status: 'processing', claimed_at_ms: Date.now(), attempts: Number(existing?.attempts ?? 0) + 1, created_at: existing?.created_at ?? now };
+        this.insertStmt.run({ id, table_name: table, payload: JSON.stringify(payload), source: String(record.source ?? table), created_at: String(payload.created_at), updated_at: now });
+      }
+      this.db.exec('COMMIT');
+      return outcome;
+    } catch (error) {
+      try { this.db.exec('ROLLBACK'); } catch { /* already rolled back */ }
+      throw error;
+    }
   }
 
   private migrate(): void {
@@ -663,11 +674,11 @@ export class UpstashCanonicalStore implements CanonicalStore {
       if status == '"processing"' and last and (tonumber(ARGV[1]) - tonumber(last)) <= tonumber(ARGV[2]) then return 'in_progress' end
       local attempts = redis.call('HGET', KEYS[1], 'attempts')
       redis.call('HSET', KEYS[1], 'status', '"processing"', 'claimed_at_ms', ARGV[1], 'attempts', tostring((tonumber(attempts) or 0) + 1), 'id', ARGV[3], '_table', ARGV[4], 'created_at', ARGV[5], 'source', ARGV[6])
-      redis.call('ZADD', KEYS[2], 'NX', ARGV[1], ARGV[3])
-      redis.call('ZADD', KEYS[3], 'NX', ARGV[1], ARGV[4] .. ':' .. ARGV[3])
+      redis.call('ZADD', KEYS[2], 'NX', ARGV[1], ARGV[7])
+      redis.call('ZADD', KEYS[3], 'NX', ARGV[1], ARGV[8] .. ':' .. ARGV[7])
       return 'claimed'
     `;
-    return await redis.eval(script, [key, this.tableKey(table), this.allKey()], [now, opts.leaseMs, JSON.stringify(id), JSON.stringify(table), JSON.stringify(record.created_at ?? isoNow()), JSON.stringify(record.source ?? table)]) as 'claimed' | 'done' | 'in_progress';
+    return await redis.eval(script, [key, this.tableKey(table), this.allKey()], [now, opts.leaseMs, JSON.stringify(id), JSON.stringify(table), JSON.stringify(record.created_at ?? isoNow()), JSON.stringify(record.source ?? table), id, table]) as 'claimed' | 'done' | 'in_progress';
   }
 
   private recordKey(table: string, id: string): string {
