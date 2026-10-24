@@ -6,7 +6,7 @@
 export function attributedPhoenixLeadId(serviceType: string, message: string): string | null {
   if (serviceType !== 'RFQ / project-based bid') return null;
   const match = /^Attributed Phoenix cabling guide lead:\s*(AH-CBL-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\s*$/im.exec(message);
-  return match ? match[1].toLowerCase() : null;
+  return match ? match[1] : null;
 }
 
 export function buildPhoenixRfqConversionEvent(input: {
