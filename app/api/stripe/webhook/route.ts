@@ -3,7 +3,7 @@ import type { Stripe } from 'stripe';
 import { canonicalId } from '@/lib/canonical-ids';
 import { getCanonicalStore, isCanonicalStoreDurable } from '@/lib/canonical-store';
 import { stripe, webhookSecret } from '@/lib/stripe';
-import { buildReferralCodeUpdate, buildReferralConversionWrite, getReferralCodeByCode, isValidReferralCode } from '@/lib/referral';
+import { buildReferralConversionWrite, getReferralCodeByCode, isValidReferralCode } from '@/lib/referral';
 
 export const runtime = 'nodejs';
 
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
   if (!isCanonicalStoreDurable()) return NextResponse.json({ message: 'Durable ledger unavailable' }, { status: 503 });
   const store = getCanonicalStore();
-  const now = new Date().toISOString();
+  const now = new Date(event.created * 1000).toISOString();
   const eventKey = canonicalId('stripe_event', event.id);
   let claim: 'claimed' | 'done' | 'in_progress';
   try {
@@ -59,8 +59,8 @@ export async function POST(request: Request) {
       status: 'pending',
       createdAt: now
     }, codeRecord);
-    const codeUpdate = buildReferralCodeUpdate(codeRecord, revenueCents, rewardCents);
-    const result = await store.executeWrites([conversionWrite, codeUpdate]);
+    if (await store.getRecord('referral_conversions', conversionWrite.id)) return;
+    const result = await store.executeWrites([conversionWrite]);
     if (!result.ok) throw new Error('Referral write failed');
   }
 
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       {
         table: 'revenue_events',
         id: revenueId,
-        action: 'insert',
+        action: 'upsert',
         record: {
           id: revenueId,
           source: 'stripe_checkout',
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
       {
         table: 'revenue_events',
         id: revenueId,
-        action: 'insert',
+        action: 'upsert',
         record: {
           id: revenueId,
           source: 'stripe_invoice',
@@ -149,7 +149,7 @@ export async function POST(request: Request) {
       {
         table: 'revenue_events',
         id: revenueId,
-        action: 'insert',
+        action: 'upsert',
         record: {
           id: revenueId,
           source: 'stripe_invoice',
@@ -180,7 +180,7 @@ export async function POST(request: Request) {
       {
         table: 'payouts',
         id: payoutId,
-        action: 'insert',
+        action: 'upsert',
         record: {
           id: payoutId,
           source: 'stripe_payout',
@@ -212,7 +212,7 @@ export async function POST(request: Request) {
         {
           table: 'refunds',
           id: refundId,
-          action: 'insert',
+          action: 'upsert',
           record: {
             id: refundId,
             source: 'stripe_refund',
