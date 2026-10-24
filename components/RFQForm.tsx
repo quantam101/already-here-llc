@@ -51,8 +51,15 @@ export function RFQForm() {
       }
     }
 
+    const campaignParams = new URLSearchParams(window.location.search);
+    const attributedLeadId = (campaignParams.get('lead_id') || '').trim();
+    const validCampaignLeadId = /^AH-CBL-[0-9a-f-]{36}$/.test(attributedLeadId) ? attributedLeadId : '';
+    const utmSource = (campaignParams.get('utm_source') || '').slice(0, 100);
+
     const message = [
       'RFQ / Project-based bid request',
+      ...(validCampaignLeadId ? [`Attributed Phoenix cabling guide lead: ${validCampaignLeadId}`] : []),
+      ...(utmSource ? [`RFQ referral source: ${utmSource}`] : []),
       '',
       `Project scope: ${String(sourceData.get('projectScope') || '').trim()}`,
       `Timeline / bid deadline: ${String(sourceData.get('timeline') || '').trim()}`,

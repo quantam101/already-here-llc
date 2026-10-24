@@ -11,6 +11,7 @@ export function PhoenixCablingLeadForm() {
   const [state, setState] = useState<State>('idle');
   const [message, setMessage] = useState('');
   const [receiptSent, setReceiptSent] = useState(false);
+  const [leadId, setLeadId] = useState('');
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,9 +40,10 @@ export function PhoenixCablingLeadForm() {
         body: JSON.stringify(payload),
         cache: 'no-store'
       });
-      const result = await res.json() as { ok?: boolean; message?: string; receiptSent?: boolean };
+      const result = await res.json() as { ok?: boolean; message?: string; receiptSent?: boolean; leadId?: string };
       if (!res.ok || !result.ok) throw new Error(result.message || 'Submission could not be delivered.');
       setReceiptSent(Boolean(result.receiptSent));
+      setLeadId(String(result.leadId || ''));
       setState('sent');
       form.reset();
     } catch (err) {
@@ -60,7 +62,7 @@ export function PhoenixCablingLeadForm() {
         <a className="mt-6 block rounded-lg bg-amber-400 px-5 py-3 text-center font-bold text-slate-950 hover:bg-amber-300" href="/api/phoenix-cabling-guide" target="_blank" rel="noopener noreferrer">
           Open the free PDF checklist
         </a>
-        <a className="mt-4 block text-center text-sm font-semibold text-amber-300 underline underline-offset-4" href="/rfq">Request a project scope review</a>
+        <a className="mt-4 block text-center text-sm font-semibold text-amber-300 underline underline-offset-4" href={leadId ? '/rfq?utm_source=phoenix_cabling_checklist&utm_medium=onsite&utm_campaign=phoenix_cabling_q4_2026&lead_id=' + encodeURIComponent(leadId) : '/rfq'}>Request a project scope review</a>
         <p className="mt-5 text-xs text-slate-400">No appointment or project obligation was created by requesting this guide.</p>
       </div>
     );

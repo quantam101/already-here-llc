@@ -62,7 +62,7 @@ Important: Only the first comment from each user under a post/reel triggers the 
 On-screen: "Phoenix commercial cabling | Comment BUILDOUT | Already Here LLC"
 Campaign link: https://www.alreadyherellc.com/phoenix-cabling-checklist?utm_source=instagram&utm_medium=reel&utm_campaign=phoenix_cabling_q4_2026
 
-## Consent-based email nurture — NOT automatically activated
+## Consent-based email nurture — Resend automation configured
 
 Email 1 — immediate delivery is already implemented as a transactional receipt when the Resend runtime is configured.
 Subject: Your Phoenix Commercial IT Cabling Checklist
@@ -73,7 +73,7 @@ It covers material ratings, Cat6 vs. Cat6A, pathways, link testing, and contract
 For a project scope review: https://www.alreadyherellc.com/rfq
 Already Here LLC | Phoenix, Arizona | dispatch@alreadyherellc.com"
 
-Email 2 — Day 2. ONLY send to subscribers with separate marketing opt-in and a functional unsubscribe mechanism.
+Email 2 — Day 2. Published in Resend. Triggered only after explicit opt-in, successful transactional receipt, and durable lead persistence.
 Subject: What should be in a cabling contractor's closeout package?
 Body:
 "Hello,
@@ -81,7 +81,7 @@ Before sign-off, ask for cable IDs, as-built routes, patch-panel maps, test limi
 For an independent scope conversation, use https://www.alreadyherellc.com/rfq
 Already Here LLC"
 
-Email 3 — Day 4. ONLY send to subscribers with separate marketing opt-in and a functional unsubscribe mechanism.
+Email 3 — Day 4. Published in Resend. Waits for two additional days; a conversion event can stop this last email.
 Subject: Planning a Phoenix office network upgrade?
 Body:
 "Hello,
@@ -101,3 +101,20 @@ Record source, UTM campaign, lead ID, project ZIP/city, project stage, opt-in st
 
 Official technical sources: https://www.phoenix.gov/administration/departments/pdd/tools-resources/codes-ordinance/building-code.html ; https://roc.az.gov/license-classifications
 Official ManyChat messaging: https://help.manychat.com/hc/en-us/articles/23358636027932-Understanding-messaging-windows
+
+
+## Production follow-up integration — October 24, 2026
+
+Resend automation dashboard: https://resend.com/automations/01a16f5d-9fd6-750d-a174-f18fb73eb65c/editor
+
+- Email topic: Phoenix Cabling Planning Tips, default opt-out.
+- Event: `phoenix.cabling.opted_in`; emitted from the lead endpoint only after explicit separate email marketing permission, successful delivery receipt, and durable graph storage. A non-consenting lead never receives the event.
+- Day 2 message: Published Resend template `phoenix-cabling-day2-2026`.
+- Day 4 message: Published Resend template `phoenix-cabling-day4-2026`.
+- Conversion stop event: `phoenix.cabling.converted` skips Day 4 if received during the intervening two-day wait.
+- Each message contains the Resend-managed `RESEND_UNSUBSCRIBE_URL`. Subscribers can stop marketing without affecting their original guide or service inquiry.
+- Status API reports only technical marketing readiness; it does not prove any individual prospect opted in, received messages, or booked service.
+- On automated event failure, the owner is alerted with the lead ID. Operators should reconcile the Resend run and durable consent record before manual retry, avoiding duplicates.
+- The RFQ process currently requires human review. Do not infer an actual booking or sale merely from a guide download or form submission.
+- Meta activation remains separate: no Instagram or Facebook Page OAuth grant or ManyChat account with rights to edit automations is available to this agent. The `BUILDOUT` flow above is the exact configuration reference, not an activated workflow.
+

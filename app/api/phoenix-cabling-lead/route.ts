@@ -80,6 +80,31 @@ async function sendResend(payload: Record<string, unknown>): Promise<string> {
   const body = await result.json() as { id?: string };
   return body.id || '';
 }
+// Marketing starts only after explicit opt-in and confirmed receipt delivery.
+// Resend's event trigger is not a substitute for the site's consent record.
+async function startOptInNurture(lead: Lead, leadId: string): Promise<boolean> {
+  if (!lead.marketingConsent || !process.env.RESEND_API_KEY) return false;
+  const result = await fetch('https://api.resend.com/events', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + process.env.RESEND_API_KEY,
+      'Content-Type': 'application/json',
+      'Idempotency-Key': 'phoenix-cabling-optin/' + leadId
+    },
+    body: JSON.stringify({
+      event: 'phoenix.cabling.opted_in',
+      email: lead.email,
+      payload: {
+        company: lead.company,
+        project_stage: lead.projectStage,
+        lead_id: leadId,
+        source: lead.utmSource || 'website'
+      }
+    }),
+    cache: 'no-store'
+  });
+  return result.ok;
+}
 async function sendFormspree(record: Record<string, string>): Promise<void> {
   const response = await fetch(process.env.FORMSPREE_ENDPOINT!, {
     method: 'POST',
@@ -193,7 +218,28 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ message: 'We could not confirm lead delivery. Please try again or contact dispatch@alreadyherellc.com.' }, { status: 502, headers });
   }
-  return NextResponse.json({ ok: true, leadId, guideUrl: GUIDE_PATH, receiptSent }, { status: 201, headers });
+  // Sending a nurture event is strictly opt-in, and never blocks the requested PDF receipt.
+  // Failed event delivery is observable to the owner but is not reported as enrollment.
+  let marketingEnrolled = false;
+  if (data.marketingConsent && receiptSent && graphPersisted) {
+    try {
+      marketingEnrolled = await startOptInNurture(data, leadId);
+    } catch {
+      marketingEnrolled = false;
+    }
+    if (!marketingEnrolled && resendReady) {
+      try {
+        await sendResend({
+          from: FROM, to: [process.env.DISPATCH_TO_EMAIL!],
+          subject: '[' + leadId + '] Nurture enrollment requires retry',
+          text: 'An opted-in Phoenix cabling lead was delivered, but the nurture event was not accepted. Review the consent record and reconcile this lead before any manual retry. Lead ID: ' + leadId
+        });
+      } catch {
+        // Never send unsolicited marketing due to an alerting failure.
+      }
+    }
+  }
+  return NextResponse.json({ ok: true, leadId, guideUrl: GUIDE_PATH, receiptSent, marketingEnrolled }, { status: 201, headers });
 }
 export async function GET() {
   return NextResponse.json({
@@ -201,7 +247,7 @@ export async function GET() {
     emailDeliveryAvailable: Boolean(process.env.RESEND_API_KEY && process.env.DISPATCH_TO_EMAIL),
     fallbackAvailable: Boolean(process.env.FORMSPREE_ENDPOINT),
     durableGraphAvailable: isCanonicalStoreDurable(),
-    automatedMarketingEnabled: false,
+    automatedMarketingEnabled: Boolean(process.env.RESEND_API_KEY && process.env.DISPATCH_TO_EMAIL && isCanonicalStoreDurable()),
     smsEnabled: false
   }, { headers: { 'Cache-Control': 'no-store' } });
 }

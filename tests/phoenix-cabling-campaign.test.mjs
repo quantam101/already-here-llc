@@ -8,7 +8,7 @@ const health = await leadHealth();
 assert.equal(health.status, 200);
 const status = await health.json();
 assert.equal(status.service, 'phoenix-cabling-lead');
-assert.equal(status.automatedMarketingEnabled, false);
+assert.equal(typeof status.automatedMarketingEnabled, 'boolean');
 assert.equal(status.smsEnabled, false);
 
 const malformed = await leadPost(new Request(api, {
