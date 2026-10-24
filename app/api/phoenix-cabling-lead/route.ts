@@ -84,7 +84,7 @@ async function sendResend(payload: Record<string, unknown>): Promise<string> {
 // Resend's event trigger is not a substitute for the site's consent record.
 async function startOptInNurture(lead: Lead, leadId: string): Promise<boolean> {
   if (!lead.marketingConsent || !process.env.RESEND_API_KEY) return false;
-  const result = await fetch('https://api.resend.com/events', {
+  const result = await fetch('https://api.resend.com/events/send', {
     method: 'POST',
     headers: {
       Authorization: 'Bearer ' + process.env.RESEND_API_KEY,
