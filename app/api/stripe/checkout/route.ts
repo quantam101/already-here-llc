@@ -19,14 +19,6 @@ export interface CheckoutBody {
   metadata?: Record<string, string>;
 }
 
-function originFrom(request: Request): string {
-  const header = request.headers.get('origin');
-  if (header) return header;
-  const host = request.headers.get('host');
-  if (host) return `https://${host}`;
-  return process.env.NEXT_PUBLIC_SITE_URL || 'https://www.alreadyherellc.com';
-}
-
 export async function POST(request: Request) {
   let stripeClient: Stripe | null = null;
   try {
@@ -38,23 +30,14 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({})) as CheckoutBody;
   const {
     mode = 'payment',
-    amount,
     priceId,
     quantity = 1,
-    productName = 'Already Here service',
-    description,
     customerEmail,
     successPath = '/thank-you?payment=success',
     cancelPath = '/',
     referralCode = '',
     metadata = {}
   } = body;
-
-  if (!priceId) {
-    if (amount === undefined || !Number.isFinite(amount) || amount <= 0) {
-      return NextResponse.json({ message: 'Invalid amount.' }, { status: 400 });
-    }
-  }
 
   // Browser-provided prices are not authoritative.
   const approvedPriceIds = (process.env.APPROVED_STRIPE_PRICE_IDS ?? '')
