@@ -44,6 +44,7 @@ export interface WriteResult {
 
 export interface CanonicalStore {
   executeWrites(writes: DatabaseReadyWrite[]): Promise<WriteResult>;
+  claimEvent(table: string, id: string, record: Record<string, unknown>, opts: { leaseMs: number }): Promise<'claimed' | 'done' | 'in_progress'>;
   recordAiRun(input: AiRunInput): Promise<string>;
   recordReviewAction(input: ReviewActionInput): Promise<string>;
   getRecord(table: string, id: string): Promise<Record<string, unknown> | undefined>;
@@ -155,6 +156,15 @@ class MemoryCanonicalStore implements CanonicalStore {
 
   private key(table: string, id: string): string {
     return `${table}:${id}`;
+  }
+
+  async claimEvent(table: string, id: string, record: Record<string, unknown>, opts: { leaseMs: number }): Promise<'claimed' | 'done' | 'in_progress'> {
+    const key = this.key(table, id);
+    const existing = this.records.get(key);
+    if (existing?.status === 'done') return 'done';
+    if (existing?.status === 'processing' && Date.now() - Number(existing.claimed_at_ms ?? 0) <= opts.leaseMs) return 'in_progress';
+    this.records.set(key, { ...record, id, _table: table, status: 'processing', claimed_at_ms: Date.now(), attempts: Number(existing?.attempts ?? 0) + 1 });
+    return 'claimed';
   }
 
   private trimRecords(): void {
@@ -298,6 +308,16 @@ class SqliteCanonicalStore implements CanonicalStore {
       `INSERT OR REPLACE INTO canonical_records (id, table_name, payload, source, created_at, updated_at)
        VALUES ($id, $table_name, $payload, $source, $created_at, $updated_at)`
     );
+  }
+
+  async claimEvent(table: string, id: string, record: Record<string, unknown>, opts: { leaseMs: number }): Promise<'claimed' | 'done' | 'in_progress'> {
+    const existing = await this.getRecord(table, id);
+    if (existing?.status === 'done') return 'done';
+    if (existing?.status === 'processing' && Date.now() - Number(existing.claimed_at_ms ?? 0) <= opts.leaseMs) return 'in_progress';
+    const now = isoNow();
+    const payload = { ...record, id, _table: table, status: 'processing', claimed_at_ms: Date.now(), attempts: Number(existing?.attempts ?? 0) + 1, created_at: existing?.created_at ?? now };
+    this.insertStmt.run({ id, table_name: table, payload: JSON.stringify(payload), source: String(record.source ?? table), created_at: String(payload.created_at), updated_at: now });
+    return 'claimed';
   }
 
   private migrate(): void {
@@ -446,6 +466,10 @@ class RemoteCanonicalStore implements CanonicalStore {
   constructor(baseUrl: string, apiKey: string) {
     this.baseUrl = baseUrl.replace(/\/$/, '');
     this.apiKey = apiKey;
+  }
+
+  async claimEvent(): Promise<'claimed' | 'done' | 'in_progress'> {
+    throw new Error('Remote canonical store requires a server-side atomic claim endpoint');
   }
 
   private headers(): Record<string, string> {
@@ -624,6 +648,25 @@ export class UpstashCanonicalStore implements CanonicalStore {
   constructor(client: CanonicalRedisClient, prefix = upstashKeyPrefix()) {
     this.client = client;
     this.prefix = prefix;
+  }
+
+  async claimEvent(table: string, id: string, record: Record<string, unknown>, opts: { leaseMs: number }): Promise<'claimed' | 'done' | 'in_progress'> {
+    const redis = getRedis();
+    if (!redis) throw new Error('Redis unavailable for atomic claim');
+    const now = Date.now();
+    const key = this.recordKey(table, id);
+    const script = `
+      local status = redis.call('HGET', KEYS[1], 'status')
+      if status == '"done"' then return 'done' end
+      local last = redis.call('HGET', KEYS[1], 'claimed_at_ms')
+      if status == '"processing"' and last and (tonumber(ARGV[1]) - tonumber(last)) <= tonumber(ARGV[2]) then return 'in_progress' end
+      local attempts = redis.call('HGET', KEYS[1], 'attempts')
+      redis.call('HSET', KEYS[1], 'status', '"processing"', 'claimed_at_ms', ARGV[1], 'attempts', tostring((tonumber(attempts) or 0) + 1), 'id', ARGV[3], '_table', ARGV[4], 'created_at', ARGV[5], 'source', ARGV[6])
+      redis.call('ZADD', KEYS[2], 'NX', ARGV[1], ARGV[3])
+      redis.call('ZADD', KEYS[3], 'NX', ARGV[1], ARGV[4] .. ':' .. ARGV[3])
+      return 'claimed'
+    `;
+    return await redis.eval(script, [key, this.tableKey(table), this.allKey()], [now, opts.leaseMs, JSON.stringify(id), JSON.stringify(table), JSON.stringify(record.created_at ?? isoNow()), JSON.stringify(record.source ?? table)]) as 'claimed' | 'done' | 'in_progress';
   }
 
   private recordKey(table: string, id: string): string {
