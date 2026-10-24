@@ -24,6 +24,9 @@ export async function POST(request: Request) {
   }
 
   if (!isCanonicalStoreDurable()) return NextResponse.json({ message: 'Durable ledger unavailable' }, { status: 503 });
+  if (!Number.isFinite(event.created)) {
+    return NextResponse.json({ message: 'Invalid event timestamp' }, { status: 400 });
+  }
   const store = getCanonicalStore();
   const now = new Date(event.created * 1000).toISOString();
   const eventKey = canonicalId('stripe_event', event.id);
