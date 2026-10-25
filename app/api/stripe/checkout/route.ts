@@ -83,7 +83,7 @@ export async function POST(request: Request) {
 
     const sessionCreateParams: Stripe.Checkout.SessionCreateParams = {
       mode,
-      payment_method_types: ['card'],
+      allowed_payment_method_types: ['card'],
       line_items: [lineItem],
       metadata: canonicalMetadata,
       success_url,
