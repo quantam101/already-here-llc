@@ -3,13 +3,23 @@ export type OfflineDispatchRecord = {
   createdAt: string;
   updatedAt: string;
   attempts: number;
-  status: 'queued' | 'replayed' | 'failed';
+  maxAttempts: number;
+  status: 'queued' | 'replayed' | 'failed' | 'dead';
   endpoint: '/api/dispatch';
   fields: Record<string, string>;
   fileNotice: string | null;
+  nextAttemptAt: string | null;
+  lastError: string | null;
 };
 
 const queueKey = 'already_here_dispatch_offline_queue_v1';
+const defaultMaxAttempts = 6;
+const baseBackoffMs = 30_000;
+const maxBackoffMs = 30 * 60_000;
+
+function nextAttemptDelayMs(attempts: number): number {
+  return Math.min(maxBackoffMs, baseBackoffMs * 2 ** Math.max(0, attempts - 1));
+}
 
 function canUseStorage(): boolean {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -59,24 +69,40 @@ export function queueDispatchSubmission(formData: FormData): OfflineDispatchReco
     createdAt: timestamp,
     updatedAt: timestamp,
     attempts: 0,
+    maxAttempts: defaultMaxAttempts,
     status: 'queued',
     endpoint: '/api/dispatch',
     fields,
-    fileNotice
+    fileNotice,
+    nextAttemptAt: null,
+    lastError: null
   };
 
   writeQueue([...readQueue(), record]);
   return record;
 }
 
-export async function replayDispatchQueue(): Promise<{ attempted: number; replayed: number; remaining: number }> {
+export async function replayDispatchQueue(): Promise<{ attempted: number; replayed: number; remaining: number; deferred: number; dead: number }> {
   const records = readQueue();
+  const now = Date.now();
   let attempted = 0;
   let replayed = 0;
+  let deferred = 0;
   const remaining: OfflineDispatchRecord[] = [];
 
   for (const record of records) {
     if (record.status === 'replayed') continue;
+    if (record.status === 'dead') {
+      remaining.push(record);
+      continue;
+    }
+
+    if (record.nextAttemptAt && Date.parse(record.nextAttemptAt) > now) {
+      deferred += 1;
+      remaining.push(record);
+      continue;
+    }
+
     attempted += 1;
 
     const formData = new FormData();
@@ -84,22 +110,37 @@ export async function replayDispatchQueue(): Promise<{ attempted: number; replay
 
     try {
       const response = await fetch(record.endpoint, { method: 'POST', body: formData });
-      if (!response.ok) throw new Error('Replay failed');
+      if (!response.ok) throw new Error(`Replay failed with status ${response.status}`);
       replayed += 1;
-    } catch {
+    } catch (error) {
+      const attempts = record.attempts + 1;
+      const maxAttempts = record.maxAttempts ?? defaultMaxAttempts;
+      const exhausted = attempts >= maxAttempts;
       remaining.push({
         ...record,
-        attempts: record.attempts + 1,
-        status: 'failed',
-        updatedAt: nowIso()
+        attempts,
+        status: exhausted ? 'dead' : 'failed',
+        updatedAt: nowIso(),
+        lastError: error instanceof Error ? error.message : 'Replay failed',
+        nextAttemptAt: exhausted ? null : new Date(now + nextAttemptDelayMs(attempts)).toISOString()
       });
     }
   }
 
   writeQueue(remaining);
-  return { attempted, replayed, remaining: remaining.length };
+  return { attempted, replayed, remaining: remaining.filter((r) => r.status !== 'dead').length, deferred, dead: remaining.filter((r) => r.status === 'dead').length };
 }
 
 export function getDispatchQueueDepth(): number {
-  return readQueue().filter((record) => record.status !== 'replayed').length;
+  return readQueue().filter((record) => record.status === 'queued' || record.status === 'failed').length;
+}
+
+export function getDispatchQueueStats(): { queued: number; dead: number; nextRetryAt: string | null } {
+  const records = readQueue().filter((record) => record.status === 'queued' || record.status === 'failed' || record.status === 'dead');
+  const pending = records.filter((record) => record.status !== 'dead');
+  const nextRetryAt = pending
+    .map((record) => record.nextAttemptAt)
+    .filter((value): value is string => Boolean(value))
+    .sort()[0] ?? null;
+  return { queued: pending.length, dead: records.filter((record) => record.status === 'dead').length, nextRetryAt };
 }
