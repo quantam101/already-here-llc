@@ -13,6 +13,7 @@ export default async function ThankYouPage({ searchParams }: Props) {
   const params = await searchParams;
   const download = getParam(params, 'download');
   const offer = getParam(params, 'offer');
+  const paymentSucceeded = getParam(params, 'payment') === 'success';
 
   const fieldOpsDownloads = download === 'field-ops' ? [
     { label: 'Work order template (CSV)', href: '/templates/field-operations/work-order-template.csv' },
@@ -26,16 +27,22 @@ export default async function ThankYouPage({ searchParams }: Props) {
     ? 'Purchase complete.'
     : offer === 'field-operations-workflow-review' || offer === 'equipment-lifecycle-assessment'
       ? 'Scope received.'
-      : 'Submission received.';
+      : paymentSucceeded
+        ? 'Payment received.'
+        : 'Submission received.';
 
   const body = fieldOpsDownloads
     ? 'Your Field Operations Template Library is ready to download. Files are vendor-neutral CSV and Markdown templates you can import into any spreadsheet, CRM, or documentation system.'
-    : 'The dispatch request has been submitted. If the coverage fit and schedule alignment are workable, the next step is dispatch confirmation.';
+    : paymentSucceeded && !offer
+      ? 'Thank you. Your payment went through, and Stripe will email your receipt. Already Here LLC will follow up to confirm scheduling and next steps.'
+      : 'The dispatch request has been submitted. If the coverage fit and schedule alignment are workable, the next step is dispatch confirmation.';
+
+  const eyebrow = fieldOpsDownloads ? 'Order confirmed' : paymentSucceeded && !offer ? 'Payment confirmed' : 'Submission received';
 
   return (
     <div className="container-shell py-20 lg:py-28">
       <div className="mx-auto max-w-3xl card p-8 text-center sm:p-12">
-        <span className="eyebrow">{fieldOpsDownloads ? 'Order confirmed' : 'Submission received'}</span>
+        <span className="eyebrow">{eyebrow}</span>
         <h1 className="mt-6 text-4xl font-semibold tracking-tight text-navy">{heading}</h1>
         <p className="mt-5 text-base leading-7 text-slate-600">{body}</p>
 

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/lib/site';
-import { getAllPosts } from '@/lib/blog';
+import { getIndexablePosts } from '@/lib/blog';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = siteConfig.url.endsWith('/') ? siteConfig.url.slice(0, -1) : siteConfig.url;
@@ -26,11 +26,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     // Services & products
     { url: `${base}/operations-products`,                 changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/mobility`,                            changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/scooter-rentals`,                     changeFrequency: 'monthly', priority: 0.75 },
     { url: `${base}/rollout-support`,                     changeFrequency: 'monthly', priority: 0.75 },
     { url: `${base}/arizona-field-coverage`,              changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${base}/autoworks`,                           changeFrequency: 'weekly',  priority: 0.8 },
 
     // Tools & resources
     { url: `${base}/field-operations-workflow-review`,    changeFrequency: 'weekly',  priority: 0.85 },
@@ -42,20 +39,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Network & partnerships
     { url: `${base}/partner-with-us`,                     changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/technician-network`,                  changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/ginc`,                                changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${base}/connect`,                             changeFrequency: 'monthly', priority: 0.75 },
 
     { url: `${base}/self-hosted-solutions`,              changeFrequency: 'monthly', priority: 0.85 },
 
 
+    // Phoenix commercial cabling campaign
+    { url: `${base}/phoenix-cabling-checklist`, changeFrequency: 'monthly', priority: 0.8 },
+
     // AI / lead capture
     { url: `${base}/ai-agent`,                            changeFrequency: 'weekly',  priority: 0.9 },
     { url: `${base}/ai-agent-demo`,                       changeFrequency: 'weekly',  priority: 0.85 },
-    { url: `${base}/ai-agent-ebook`,                      changeFrequency: 'weekly',  priority: 0.8 },
     { url: `${base}/ai-agent-resources`,                  changeFrequency: 'weekly',  priority: 0.8 },
     { url: `${base}/ai-lead-capture`,                     changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/ai-receptionist`,                     changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/revenue-mesh`,                        changeFrequency: 'weekly',  priority: 0.85 },
 
     // Blog & contact
     { url: `${base}/blog`,                                changeFrequency: 'daily',   priority: 0.75 },
@@ -67,7 +63,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/legal/gdpr`,                          changeFrequency: 'yearly',  priority: 0.3 },
   ];
 
-  const posts = getAllPosts();
+  const posts = getIndexablePosts();
   const blogRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${base}/blog/${post.slug}`,
     lastModified: post.date ? new Date(post.date) : new Date(),

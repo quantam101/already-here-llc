@@ -57,6 +57,9 @@ export default function DispatchPage() {
             <p className="mb-5 text-sm leading-7 text-slate-600">
               Recurring managed services are scoped separately based on the environment, users, devices, responsibilities, service requirements, and support model. The rates below apply to field and project work, where pricing varies by scope, travel, access, priority, and closeout requirements.
             </p>
+            <p className="mb-5 rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm leading-6 text-navy">
+              Rates do not stack: each visit is billed at one rate, the highest tier that applies, and that rate is confirmed in writing before dispatch.
+            </p>
             <div className="grid gap-3">
               {pricingTiers.map((tier) => (
                 <div key={tier.label} className="rounded-2xl border border-borderBrand bg-soft p-4">
@@ -100,6 +103,9 @@ export default function DispatchPage() {
         </div>
 
         <div>
+          <p className="mb-3 rounded-2xl border border-action/30 bg-white px-5 py-4 text-sm font-semibold leading-6 text-navy">
+            We reply within one business hour, 7am–6pm Arizona time, Monday–Friday. Need someone onsite today? Use <Link href="/emergency-dispatch" className="text-action underline">Same-Day Onsite Support</Link> or call {siteConfig.phoneDisplay}.
+          </p>
           <p className="mb-6 rounded-2xl border border-borderBrand bg-soft px-5 py-4 text-sm leading-6 text-slate-600">
             Not sure which path fits? Describe the problem, the site or users affected, and your timing — we route it to the right service for you.
           </p>

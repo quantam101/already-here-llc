@@ -3,6 +3,7 @@ import { StripePaymentButton } from '@/components/StripePaymentButton';
 import { siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/field-operations-template-library' },
   title: 'Field Operations Template Library',
   description: 'Vendor-neutral CSV and Markdown templates for work orders, technician intake, asset registers, closeout checklists, and quote-to-cash workflows. Own your operating process regardless of the software stack.'
 };

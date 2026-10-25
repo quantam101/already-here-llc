@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "tenantId": "already-here-llc",
+  "campaignId": "phoenix-commercial-cabling",
+  "businessName": "Already Here LLC",
+  "market": {
+    "country": "US",
+    "region": "US-AZ",
+    "locale": "en-US",
+    "timeZone": "America/Phoenix",
+    "currency": "USD"
+  },
+  "publicOrigin": "https://www.alreadyherellc.com",
+  "routes": {
+    "landing": "/phoenix-cabling-checklist",
+    "lead": "/api/phoenix-cabling-lead",
+    "quote": "/rfq",
+    "guide": "/api/phoenix-cabling-guide"
+  },
+  "policy": {
+    "monthlySubscriptionBudgetUsd": 0,
+    "paidAdaptersEnabled": false,
+    "explicitMarketingConsentRequired": true,
+    "customerApprovalForCharges": true,
+    "approvalRequiredForQuotesAndPayments": true
+  },
+  "adapters": {
+    "lead_storage": {
+      "mode": "self_hosted",
+      "provider": "sqlite-or-owned-durable-store",
+      "recurringCostCeilingUsd": 0
+    },
+    "email": {
+      "mode": "manual",
+      "provider": "owned-business-mailbox-human-reviewed-followups",
+      "recurringCostCeilingUsd": 0
+    },
+    "social": {
+      "mode": "manual",
+      "provider": "owned-social-accounts-no-saas-dependency",
+      "recurringCostCeilingUsd": 0
+    },
+    "payments": {
+      "mode": "disabled",
+      "provider": "no-automatic-charges",
+      "recurringCostCeilingUsd": 0
+    }
+  }
+}
