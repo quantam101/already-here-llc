@@ -8,7 +8,7 @@ process.env.STRIPE_WEBHOOK_SECRET = secret;
 
 resetCanonicalStore();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-06-24.dahlia' });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-09-30.endive' });
 
 const payload = JSON.stringify({
   id: 'evt_test_1',

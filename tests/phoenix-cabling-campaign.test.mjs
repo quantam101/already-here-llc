@@ -38,6 +38,11 @@ assert.equal(invalidEmail.status, 400);
 
 // In a test environment without mail credentials, valid intake must fail closed,
 // never claim delivery or create an appointment.
+function restoreEnv(name, value) {
+  if (value === undefined) delete process.env[name];
+  else process.env[name] = value;
+}
+
 const prior = { resend: process.env.RESEND_API_KEY, to: process.env.DISPATCH_TO_EMAIL, formspree: process.env.FORMSPREE_ENDPOINT };
 delete process.env.RESEND_API_KEY;
 delete process.env.DISPATCH_TO_EMAIL;
@@ -55,9 +60,9 @@ try {
   assert.equal(valid.status, 503);
   assert.equal((await valid.json()).ok, undefined);
 } finally {
-  if (prior.resend === undefined) delete process.env.RESEND_API_KEY; else process.env.RESEND_API_KEY = prior.resend;
-  if (prior.to === undefined) delete process.env.DISPATCH_TO_EMAIL; else process.env.DISPATCH_TO_EMAIL = prior.to;
-  if (prior.formspree === undefined) delete process.env.FORMSPREE_ENDPOINT; else process.env.FORMSPREE_ENDPOINT = prior.formspree;
+  restoreEnv('RESEND_API_KEY', prior.resend);
+  restoreEnv('DISPATCH_TO_EMAIL', prior.to);
+  restoreEnv('FORMSPREE_ENDPOINT', prior.formspree);
 }
 
 const pdfResponse = await guideGet();
