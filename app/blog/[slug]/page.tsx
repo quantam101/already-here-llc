@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { getPostBySlug, getStaticPostParams } from '@/lib/blog';
 import { renderMarkdown } from '@/lib/markdown';
 import { siteConfig } from '@/lib/site';
+import { defaultOgImage } from '@/lib/og';
 
 type BlogPostPageProps = {
   params: Promise<{ slug: string }>;
@@ -23,6 +24,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     alternates: { canonical: `/blog/${slug}` },
     ...(post.indexable ? {} : { robots: { index: false, follow: true } }),
     openGraph: {
+      images: [defaultOgImage],
       title: `${post.title} | Already Here LLC`,
       description: post.excerpt,
       url: `${siteConfig.url}/blog/${slug}`

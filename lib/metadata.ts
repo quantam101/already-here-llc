@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/lib/site";
+import { defaultOgImage } from "@/lib/og";
 
 type PageMetadataInput = {
   title: string;
@@ -21,6 +22,7 @@ export function createPageMetadata({
       canonical: path,
     },
     openGraph: {
+      images: [defaultOgImage],
       type: "website",
       url,
       title,
@@ -28,6 +30,7 @@ export function createPageMetadata({
       siteName: siteConfig.name,
     },
     twitter: {
+      images: [defaultOgImage],
       card: "summary_large_image",
       title,
       description,

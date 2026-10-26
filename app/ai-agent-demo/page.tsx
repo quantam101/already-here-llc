@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'Live AI Web Agent Demo',
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
     'See how the Already Here AI Web Agent captures website leads, qualifies quote requests, scores urgency, and routes structured owner alerts for service businesses.',
   alternates: { canonical: 'https://www.alreadyherellc.com/ai-agent-demo' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'Live AI Web Agent Demo | Already Here LLC',
     description:
       'A prospect-facing demo of AI website lead capture, qualification, owner alerting, and structured lead records.',

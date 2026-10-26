@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getIndexablePosts } from '@/lib/blog';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'Field Service Insights',
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
     'Practical guides on IT field execution, MSP smart-hands, kiosk and POS support, and Phoenix-area field operations from Already Here LLC.',
   alternates: { canonical: '/blog' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'Field Service Insights | Already Here LLC',
     description: 'Practical guides on IT field execution, MSP smart-hands, kiosk support, and Phoenix-area field operations.',
     url: 'https://www.alreadyherellc.com/blog'

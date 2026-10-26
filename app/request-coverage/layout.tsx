@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { defaultOgImage } from '@/lib/og';
 
 const title = 'Request Regional Coverage | Already Here LLC';
 const description = 'Request Arizona regional coverage review for bundled visits, recurring field support, rollout projects, smart hands, and rework coverage.';
 
 export const metadata: Metadata = {
   openGraph: {
+    images: [defaultOgImage],
     title,
     description,
     url: '/request-coverage',
@@ -13,6 +15,7 @@ export const metadata: Metadata = {
     type: 'website'
   },
   twitter: {
+    images: [defaultOgImage],
     card: 'summary_large_image',
     title,
     description

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AiAgentLeadForm } from '@/components/AiAgentLeadForm';
 import { alreadyHereLeadCaptureAccount, leadCaptureStatusValues } from '@/lib/lead-capture-accounts';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'AI Lead Capture for Service Businesses',
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
     'Already Here LLC builds AI Lead Capture systems for service businesses that need missed-call recovery, quote intake, owner alerts, follow-up readiness, and proof tracking.',
   alternates: { canonical: 'https://www.alreadyherellc.com/ai-lead-capture' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'AI Lead Capture for Service Businesses | Already Here LLC',
     description:
       'Turn missed calls, quote requests, and after-hours inquiries into structured lead records with owner routing and proof tracking.',
