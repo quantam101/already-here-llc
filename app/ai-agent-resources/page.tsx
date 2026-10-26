@@ -35,7 +35,7 @@ const prospectLinks = [
   },
   {
     title: 'Implementation checklist',
-    href: '/blog/ai-lead-capture-implementation-checklist',
+    href: '/content/posts/ai-lead-capture-implementation-checklist/',
     body: 'Use this blog post to explain the practical launch process and safe operating boundaries.'
   }
 ] as const;
