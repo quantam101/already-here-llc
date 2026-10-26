@@ -1,6 +1,5 @@
 import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/lib/site';
-import { getIndexablePosts } from '@/lib/blog';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = siteConfig.url.endsWith('/') ? siteConfig.url.slice(0, -1) : siteConfig.url;
@@ -53,8 +52,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/ai-lead-capture`,                     changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/ai-receptionist`,                     changeFrequency: 'monthly', priority: 0.8 },
 
-    // Blog & contact
-    { url: `${base}/blog`,                                changeFrequency: 'daily',   priority: 0.75 },
+    // Contact (blog lives at /content, listed in /content/sitemap.xml)
     { url: `${base}/contact`,                             changeFrequency: 'monthly', priority: 0.7 },
 
     // Legal
@@ -63,13 +61,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/legal/gdpr`,                          changeFrequency: 'yearly',  priority: 0.3 },
   ];
 
-  const posts = getIndexablePosts();
-  const blogRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: `${base}/blog/${post.slug}`,
-    lastModified: post.date ? new Date(post.date) : new Date(),
-    changeFrequency: 'monthly',
-    priority: 0.65,
-  }));
-
-  return [...staticRoutes, ...blogRoutes];
+  return staticRoutes;
 }

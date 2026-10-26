@@ -12,7 +12,6 @@ const publicRoutes = [
   '/coverage',
   '/project-gallery',
   '/capability-statement',
-  '/blog',
   '/privacy'
 ];
 
@@ -27,7 +26,6 @@ const routeFiles = new Map([
   ['/coverage', 'app/coverage/page.tsx'],
   ['/project-gallery', 'app/project-gallery/page.tsx'],
   ['/capability-statement', 'app/capability-statement/page.tsx'],
-  ['/blog', 'app/blog/page.tsx'],
   ['/privacy', 'app/privacy/page.tsx'],
   ['/profitengine', 'app/profitengine/page.tsx']
 ]);
@@ -65,9 +63,15 @@ for (const route of publicRoutes) {
   if (route === '/' && !sitemap.includes(expected)) failures.push('Home route missing from sitemap.ts');
 }
 
-for (const route of ['/services', '/who-we-serve', '/dispatch', '/rfq', '/coverage', '/project-gallery', '/capability-statement', '/blog', '/privacy']) {
+for (const route of ['/services', '/who-we-serve', '/dispatch', '/rfq', '/coverage', '/project-gallery', '/capability-statement', '/privacy']) {
   if (!footer.includes(`href="${route}"`)) failures.push(`Public route ${route} missing from footer internal links`);
 }
+
+// The blog lives at /content (Jekyll); /blog must 301 there, not be indexed here.
+if (!footer.includes('href="/content/"')) failures.push('Blog hub /content/ missing from footer internal links');
+if (/\/blog['`]/.test(sitemap)) failures.push('/blog must not be listed in sitemap.ts; it redirects to /content');
+const nextConfig = hasFile('next.config.mjs') ? read('next.config.mjs') : '';
+if (!nextConfig.includes("source: '/blog/:path*'")) failures.push('next.config.mjs must redirect /blog/* to /content');
 
 for (const route of operationalRoutes) {
   if (sitemap.includes(route)) failures.push(`Operational route ${route} must not be indexed in sitemap.ts`);

@@ -32,7 +32,7 @@ const navGroups = [
       { href: '/capability-statement', label: 'Capability Statement' },
       { href: '/project-gallery', label: 'Project Gallery' },
       { href: '/coverage', label: 'Coverage Area' },
-      { href: '/blog', label: 'IT & Field Insights' },
+      { href: '/content/', label: 'IT & Field Insights' },
     ],
   },
   {

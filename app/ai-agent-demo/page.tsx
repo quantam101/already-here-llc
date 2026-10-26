@@ -60,7 +60,7 @@ const useCases = [
 const resourceLinks = [
   { href: '/ai-agent-ebook', label: 'Read Ebook', body: 'Buyer guide explaining why service businesses lose website leads and how the agent fixes the intake gap.' },
   { href: '/ai-agent-resources', label: 'Open Resources', body: 'Sales content hub with target verticals, prospect links, and call talking points.' },
-  { href: '/blog/ai-website-agent-missed-leads-service-businesses', label: 'Read Blog', body: 'Blog post explaining the missed-lead problem and how AI website intake improves owner response.' }
+  { href: '/content/posts/ai-website-agent-missed-leads-service-businesses/', label: 'Read Blog', body: 'Blog post explaining the missed-lead problem and how AI website intake improves owner response.' }
 ] as const;
 
 export default function AiAgentDemoPage() {
