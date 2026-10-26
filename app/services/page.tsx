@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { closeoutItems, serviceGroups } from '@/lib/site';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'Managed IT Services, Security, Cloud & Field Support',
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
     'Phoenix MSP with 30+ years of IT experience: managed IT support, help desk, Microsoft 365 and cloud, security, and onsite technical field operations.',
   alternates: { canonical: '/services' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'Managed IT Services, Security, Cloud & Field Support | Already Here LLC',
     description:
       'Phoenix managed IT services backed by 30+ years of hands-on IT experience, including help desk, networks, systems, cloud, security, projects, and onsite field support.',

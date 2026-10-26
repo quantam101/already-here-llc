@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { productizedRevenueOffers, revenueMeshOperatingRules } from '@/lib/revenue-mesh';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'Revenue Mesh v1 | Daily Work, Dispatch Partners, and AI Automation Offers',
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
     'Already Here Revenue Mesh v1 turns local work scanning, dispatch partner acquisition, AI automation offers, and approval-gated execution into one revenue operating system.',
   alternates: { canonical: 'https://www.alreadyherellc.com/revenue-mesh' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'Revenue Mesh v1 | Already Here LLC',
     description:
       'A revenue operating system for field dispatch, local cash work, direct partner outreach, productized AI automation, and approval-gated execution.',

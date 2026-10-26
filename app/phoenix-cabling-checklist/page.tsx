@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PhoenixCablingLeadForm } from '@/components/PhoenixCablingLeadForm';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'Phoenix Commercial IT Cabling Checklist | Free PDF Guide',
   description: 'Free Phoenix commercial network cabling checklist for office build-outs and warehouses. Avoid planning, testing, pathway, and code-review mistakes.',
   alternates: { canonical: 'https://www.alreadyherellc.com/phoenix-cabling-checklist' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'Free Phoenix Commercial IT Cabling Checklist | Already Here LLC',
     description: 'Five cabling planning mistakes to avoid in Phoenix business build-outs and network upgrades.',
     url: 'https://www.alreadyherellc.com/phoenix-cabling-checklist',

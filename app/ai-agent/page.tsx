@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AiAgentLeadForm } from '@/components/AiAgentLeadForm';
 import { aiAgentIndustries, aiAgentPackages } from '@/lib/ai-agent-products';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'AI Website Chatbox and Lead Capture Agent Setup',
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
     'Already Here LLC builds AI website chatboxes, lead capture agents, quote intake flows, owner alert systems, and free trial demos for service businesses that need more qualified opportunities.',
   alternates: { canonical: 'https://www.alreadyherellc.com/ai-agent' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'AI Website Chatbox and Lead Capture Agent Setup | Already Here LLC',
     description:
       'AI website chatbox setup with lead qualification, quote intake, owner alerts, free trial demo intake, and monthly optimization.',

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { siteConfig } from '@/lib/site';
 import { StripePaymentButton } from './StripePaymentButton';
+import { defaultOgImage } from '@/lib/og';
 
 export interface ServiceOffer {
   slug: string;
@@ -27,6 +28,7 @@ export function createOfferMetadata(offer: ServiceOffer): Metadata {
     description: offer.description,
     alternates: { canonical: `/${offer.slug}` },
     openGraph: {
+      images: [defaultOgImage],
       title: `${offer.name} | ${siteConfig.name}`,
       description: offer.description,
       url: `/${offer.slug}`,
