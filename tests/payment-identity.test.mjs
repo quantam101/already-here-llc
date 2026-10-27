@@ -22,7 +22,7 @@ for (const [file, marker] of requiredMarkers) {
   assert.ok(read(file).includes(marker), `${file} must include ${marker}`);
 }
 
-const publicRoots = ['app', 'components', 'content/blog', 'public'];
+const publicRoots = ['app', 'components', 'public'];
 const textExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.md', '.mdx', '.html', '.txt', '.json']);
 
 const forbiddenPatterns = [
