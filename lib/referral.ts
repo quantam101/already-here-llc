@@ -92,6 +92,8 @@ export interface ReferralConversionInput {
   partnerId?: string | null;
   status?: ReferralConversionStatus;
   createdAt?: string;
+  /** Stable id for idempotent sources (e.g. one Stripe checkout session); defaults to a timestamped id. */
+  id?: string;
 }
 
 export interface ReferralStats {
@@ -233,7 +235,7 @@ export function buildReferralConversionRecord(input: ReferralConversionInput, co
   const revenue = Math.max(0, input.revenueCents ?? 0);
   const reward = input.rewardCents ?? (codeRecord?.reward_cents ?? REFERRAL_REWARD_CENTS);
   return {
-    id: conversionId(input.code, input.sourceId, now),
+    id: input.id ?? conversionId(input.code, input.sourceId, now),
     referral_code: input.code.toUpperCase(),
     partner_id: input.partnerId ?? (codeRecord?.owner_type === 'partner' ? codeRecord.owner_id : null),
     referred_email: input.referredEmail ? normalizeEmail(input.referredEmail) : null,

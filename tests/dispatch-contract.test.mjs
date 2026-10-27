@@ -93,7 +93,7 @@ await withEnv(
 );
 
 {
-  const response = await dispatchApiPost(formRequest(new FormData(), { 'x-forwarded-for': '203.0.113.10' }));
+  const response = await dispatchApiPost(formRequest(new FormData(), { 'x-real-ip': '203.0.113.10' }));
   assert.equal(response.status, 400);
   const json = await response.json();
   assert.equal(json.message, 'Missing required field: fullName');
@@ -101,7 +101,7 @@ await withEnv(
 
 {
   const formData = dispatchForm({ website: 'bot' });
-  const response = await dispatchApiPost(formRequest(formData, { 'x-forwarded-for': '203.0.113.11' }));
+  const response = await dispatchApiPost(formRequest(formData, { 'x-real-ip': '203.0.113.11' }));
   assert.equal(response.status, 400);
   const json = await response.json();
   assert.equal(json.message, 'Submission rejected.');
@@ -109,7 +109,7 @@ await withEnv(
 
 {
   const formData = dispatchForm({ email: 'not-an-email' });
-  const response = await dispatchApiPost(formRequest(formData, { 'x-forwarded-for': '203.0.113.12' }));
+  const response = await dispatchApiPost(formRequest(formData, { 'x-real-ip': '203.0.113.12' }));
   assert.equal(response.status, 400);
   const json = await response.json();
   assert.equal(json.message, 'Invalid email address.');
@@ -122,17 +122,11 @@ await withEnv(
     FORMSPREE_ENDPOINT: ''
   },
   async () => {
-    const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-forwarded-for': '203.0.113.13' }));
-    assert.equal(response.status, 200);
+    const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-real-ip': '203.0.113.13' }));
+    assert.equal(response.status, 503);
     const json = await response.json();
-    assert.equal(json.ok, true);
-    assert.equal(json.delivery, 'local_proof_only');
-    assert.equal(json.recordLocation, 'revenue_command_spine_local_proof');
-    assert.equal(json.persistedExternally, false);
-    assert.ok(json.dispatchId);
-    assert.ok(json.revenueSpine);
-    assert.equal(json.triage.primaryLane, 'emergency_onsite');
-    assert.equal(json.triage.urgencyScore, 95);
+    assert.match(json.message, /Dispatch delivery is unavailable/);
+
   }
 );
 
@@ -160,7 +154,7 @@ await withEnv(
       return new Response('{}', { status: 200 });
     };
     try {
-      const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-forwarded-for': '203.0.113.14' }));
+      const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-real-ip': '203.0.113.14' }));
       assert.equal(response.status, 200);
       const json = await response.json();
       assert.equal(json.ok, true);
@@ -195,7 +189,7 @@ await withEnv(
       return new Response('{}', { status: 200 });
     };
     try {
-      const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-forwarded-for': '203.0.113.15' }));
+      const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-real-ip': '203.0.113.15' }));
       assert.equal(response.status, 200);
       const json = await response.json();
       assert.equal(json.delivery, 'resend');
@@ -218,7 +212,7 @@ await withEnv(
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async () => new Response(JSON.stringify({ message: 'down' }), { status: 500 });
     try {
-      const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-forwarded-for': '203.0.113.16' }));
+      const response = await dispatchApiPost(formRequest(dispatchForm(), { 'x-real-ip': '203.0.113.16' }));
       assert.equal(response.status, 502);
     } finally {
       globalThis.fetch = originalFetch;

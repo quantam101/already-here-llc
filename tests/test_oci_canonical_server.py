@@ -65,3 +65,31 @@ def test_backup_and_list():
     list_resp = client.get("/backup/list", headers={"X-API-Key": "test-api-key"})
     assert list_resp.status_code == 200
     assert any(b["name"] == backup_name for b in list_resp.json()["backups"])
+
+
+def test_claim_is_atomic_and_idempotent():
+    headers = {"X-API-Key": "test-api-key"}
+    body = {"table": "stripe_events", "id": "evt_claim_1", "record": {"source": "stripe"}, "leaseMs": 300000}
+    first = client.post("/claim", json=body, headers=headers)
+    assert first.status_code == 200 and first.json()["outcome"] == "claimed"
+
+    second = client.post("/claim", json=body, headers=headers)
+    assert second.json()["outcome"] == "in_progress"
+
+    done = client.post(
+        "/write",
+        json={"table": "stripe_events", "id": "evt_claim_1", "record": {"status": "done"}, "action": "upsert"},
+        headers=headers,
+    )
+    assert done.status_code == 200
+    third = client.post("/claim", json=body, headers=headers)
+    assert third.json()["outcome"] == "done"
+
+    expired = {"table": "stripe_events", "id": "evt_claim_2", "record": {}, "leaseMs": -1}
+    assert client.post("/claim", json=expired, headers=headers).json()["outcome"] == "claimed"
+    assert client.post("/claim", json=expired, headers=headers).json()["outcome"] == "claimed"
+
+
+def test_claim_requires_auth():
+    response = client.post("/claim", json={"table": "stripe_events", "id": "evt_x"})
+    assert response.status_code == 401

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { Stripe } from 'stripe';
 import { canonicalId } from '@/lib/canonical-ids';
-import { getCanonicalStore } from '@/lib/canonical-store';
+import { getCanonicalStore, isCanonicalStoreDurable } from '@/lib/canonical-store';
 import { stripe, webhookSecret } from '@/lib/stripe';
 import { buildReferralCodeUpdate, buildReferralConversionWrite, getReferralCodeByCode, isValidReferralCode } from '@/lib/referral';
 
@@ -23,8 +23,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ message }, { status: 400 });
   }
 
+  if (!isCanonicalStoreDurable()) return NextResponse.json({ message: 'Durable ledger unavailable' }, { status: 503 });
+  if (!Number.isFinite(event.created)) {
+    return NextResponse.json({ message: 'Invalid event timestamp' }, { status: 400 });
+  }
   const store = getCanonicalStore();
-  const now = new Date().toISOString();
+  const now = new Date(event.created * 1000).toISOString();
+  const eventKey = canonicalId('stripe_event', event.id);
+  let claim: 'claimed' | 'done' | 'in_progress';
+  try {
+    claim = await store.claimEvent('stripe_events', eventKey, { source: 'stripe', event_id: event.id, event_type: event.type, created_at: now }, { leaseMs: 300000 });
+  } catch {
+    return NextResponse.json({ message: 'Atomic event claim unavailable' }, { status: 503 });
+  }
+  if (claim === 'done') return NextResponse.json({ received: true, duplicate: true });
+  if (claim === 'in_progress') return NextResponse.json({ message: 'Event in progress' }, { status: 409 });
+  try {
 
   async function recordConversionForCheckout(session: Stripe.Checkout.Session, sourceId: string) {
     const referralCode = session.metadata?.referralCode ?? '';
@@ -35,7 +49,16 @@ export async function POST(request: Request) {
 
     const revenueCents = session.amount_total ?? 0;
     const rewardCents = codeRecord.reward_cents;
+    // One reward per checkout session, regardless of how many paid events Stripe emits for it.
+    const conversionKey = canonicalId('conversion', referralCode.toUpperCase(), session.id);
+    // Canonical ids are globally unique (id is the primary key across tables), so the claim needs its own id.
+    const claimKey = canonicalId('referral_claim', referralCode.toUpperCase(), session.id);
+    const claim = await store.claimEvent('referral_claims', claimKey, {
+      source: 'stripe', referral_code: referralCode.toUpperCase(), session_id: session.id, created_at: now
+    }, { leaseMs: 300000 });
+    if (claim !== 'claimed') return;
     const conversionWrite = buildReferralConversionWrite({
+      id: conversionKey,
       code: referralCode,
       referredEmail: session.customer_email ?? undefined,
       referredName: session.customer_details?.name ?? undefined,
@@ -49,20 +72,26 @@ export async function POST(request: Request) {
       createdAt: now
     }, codeRecord);
     const codeUpdate = buildReferralCodeUpdate(codeRecord, revenueCents, rewardCents);
-    await store.executeWrites([conversionWrite, codeUpdate]);
+    const result = await store.executeWrites([conversionWrite, codeUpdate]);
+    if (!result.ok) {
+      await store.executeWrites([{ table: 'referral_claims', id: claimKey, action: 'upsert', record: { status: 'failed' } }]).catch(() => {});
+      throw new Error('Referral write failed');
+    }
+    await store.executeWrites([{ table: 'referral_claims', id: claimKey, action: 'upsert', record: { status: 'done', completed_at: new Date().toISOString() } }]);
   }
 
-  if (event.type === 'checkout.session.completed') {
+  if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
     const session = event.data.object as Stripe.Checkout.Session;
+    if (session.payment_status === 'paid' && session.mode !== 'subscription') {
     const { referralCode, ...metadata } = session.metadata ?? {};
 
-    const revenueId = canonicalId('revenue', session.id, String(session.customer_email ?? 'unknown'), now);
+    const revenueId = canonicalId('revenue', session.id);
 
-    await store.executeWrites([
+    const result = await store.executeWrites([
       {
         table: 'revenue_events',
         id: revenueId,
-        action: 'insert',
+        action: 'upsert',
         record: {
           id: revenueId,
           source: 'stripe_checkout',
@@ -82,6 +111,7 @@ export async function POST(request: Request) {
         }
       }
     ]);
+    if (!result.ok) throw new Error('Checkout revenue write failed');
 
     if (referralCode) await recordConversionForCheckout(session, revenueId);
 
@@ -91,17 +121,18 @@ export async function POST(request: Request) {
       amountCents: session.amount_total,
       referralCode
     });
+    }
   }
 
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object as Stripe.Invoice;
-    const revenueId = canonicalId('revenue', 'invoice', invoice.id, now);
+    const revenueId = canonicalId('revenue', invoice.id);
 
-    await store.executeWrites([
+    const result = await store.executeWrites([
       {
         table: 'revenue_events',
         id: revenueId,
-        action: 'insert',
+        action: 'upsert',
         record: {
           id: revenueId,
           source: 'stripe_invoice',
@@ -121,19 +152,20 @@ export async function POST(request: Request) {
         }
       }
     ]);
+    if (!result.ok) throw new Error('Ledger write failed');
 
     console.log('[stripe webhook] Invoice paid recorded', { revenueId, invoiceId: invoice.id, amountCents: invoice.amount_paid });
   }
 
   if (event.type === 'invoice.payment_failed') {
     const invoice = event.data.object as Stripe.Invoice;
-    const revenueId = canonicalId('revenue', 'invoice_failed', invoice.id, now);
+    const revenueId = canonicalId('revenue', event.id);
 
-    await store.executeWrites([
+    const result = await store.executeWrites([
       {
         table: 'revenue_events',
         id: revenueId,
-        action: 'insert',
+        action: 'upsert',
         record: {
           id: revenueId,
           source: 'stripe_invoice',
@@ -151,19 +183,20 @@ export async function POST(request: Request) {
         }
       }
     ]);
+    if (!result.ok) throw new Error('Ledger write failed');
 
     console.log('[stripe webhook] Invoice payment failed recorded', { revenueId, invoiceId: invoice.id });
   }
 
   if (event.type === 'payout.paid') {
     const payout = event.data.object as Stripe.Payout;
-    const payoutId = canonicalId('payout', payout.id, now);
+    const payoutId = canonicalId('payout', payout.id);
 
-    await store.executeWrites([
+    const result = await store.executeWrites([
       {
         table: 'payouts',
         id: payoutId,
-        action: 'insert',
+        action: 'upsert',
         record: {
           id: payoutId,
           source: 'stripe_payout',
@@ -181,6 +214,7 @@ export async function POST(request: Request) {
         }
       }
     ]);
+    if (!result.ok) throw new Error('Ledger write failed');
 
     console.log('[stripe webhook] Payout recorded', { payoutId, payoutIdStripe: payout.id, amountCents: payout.amount });
   }
@@ -189,12 +223,12 @@ export async function POST(request: Request) {
     const charge = event.data.object as Stripe.Charge;
     const refund = charge.refunds?.data?.[0];
     if (refund) {
-      const refundId = canonicalId('refund', refund.id, now);
-      await store.executeWrites([
+      const refundId = canonicalId('refund', refund.id);
+      const result = await store.executeWrites([
         {
           table: 'refunds',
           id: refundId,
-          action: 'insert',
+          action: 'upsert',
           record: {
             id: refundId,
             source: 'stripe_refund',
@@ -211,10 +245,17 @@ export async function POST(request: Request) {
           }
         }
       ]);
+      if (!result.ok) throw new Error('Refund write failed');
 
       console.log('[stripe webhook] Refund recorded', { refundId, refundIdStripe: refund.id, amountCents: refund.amount });
     }
   }
 
+  const processed = await store.executeWrites([{ table: 'stripe_events', id: eventKey, action: 'upsert', record: { status: 'done', completed_at: new Date().toISOString() } }]);
+  if (!processed.ok) throw new Error('Event completion write failed');
   return NextResponse.json({ received: true });
+  } catch (error) {
+    await store.executeWrites([{ table: 'stripe_events', id: eventKey, action: 'upsert', record: { status: 'failed', last_error: String(error).slice(0, 500) } }]).catch(() => {});
+    return NextResponse.json({ message: 'Processing failed' }, { status: 500 });
+  }
 }

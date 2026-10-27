@@ -155,6 +155,22 @@ async def write_many(
     return {"ok": True, "insertedIds": inserted, "failed": []}
 
 
+class ClaimRequest(BaseModel):
+    table: str
+    id: str
+    record: Dict[str, Any] = {}
+    leaseMs: int = 300000
+
+
+@app.post("/claim")
+async def claim_event(
+    payload: ClaimRequest,
+    auth: str = Depends(_require_api_key),
+) -> Dict[str, Any]:
+    outcome = state.store.claim_event(payload.table, payload.id, payload.record or {}, payload.leaseMs)
+    return {"ok": True, "outcome": outcome, "id": payload.id, "table": payload.table}
+
+
 @app.get("/read/{table}/{id}")
 async def read_record(
     table: str,
