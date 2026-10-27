@@ -3,7 +3,7 @@ import type { Stripe } from 'stripe';
 import { canonicalId } from '@/lib/canonical-ids';
 import { getCanonicalStore, isCanonicalStoreDurable } from '@/lib/canonical-store';
 import { stripe, webhookSecret } from '@/lib/stripe';
-import { buildReferralConversionWrite, getReferralCodeByCode, isValidReferralCode } from '@/lib/referral';
+import { buildReferralCodeUpdate, buildReferralConversionWrite, getReferralCodeByCode, isValidReferralCode } from '@/lib/referral';
 
 export const runtime = 'nodejs';
 
@@ -49,7 +49,16 @@ export async function POST(request: Request) {
 
     const revenueCents = session.amount_total ?? 0;
     const rewardCents = codeRecord.reward_cents;
+    // One reward per checkout session, regardless of how many paid events Stripe emits for it.
+    const conversionKey = canonicalId('conversion', referralCode.toUpperCase(), session.id);
+    // Canonical ids are globally unique (id is the primary key across tables), so the claim needs its own id.
+    const claimKey = canonicalId('referral_claim', referralCode.toUpperCase(), session.id);
+    const claim = await store.claimEvent('referral_claims', claimKey, {
+      source: 'stripe', referral_code: referralCode.toUpperCase(), session_id: session.id, created_at: now
+    }, { leaseMs: 300000 });
+    if (claim !== 'claimed') return;
     const conversionWrite = buildReferralConversionWrite({
+      id: conversionKey,
       code: referralCode,
       referredEmail: session.customer_email ?? undefined,
       referredName: session.customer_details?.name ?? undefined,
@@ -62,9 +71,13 @@ export async function POST(request: Request) {
       status: 'pending',
       createdAt: now
     }, codeRecord);
-    if (await store.getRecord('referral_conversions', conversionWrite.id)) return;
-    const result = await store.executeWrites([conversionWrite]);
-    if (!result.ok) throw new Error('Referral write failed');
+    const codeUpdate = buildReferralCodeUpdate(codeRecord, revenueCents, rewardCents);
+    const result = await store.executeWrites([conversionWrite, codeUpdate]);
+    if (!result.ok) {
+      await store.executeWrites([{ table: 'referral_claims', id: claimKey, action: 'upsert', record: { status: 'failed' } }]).catch(() => {});
+      throw new Error('Referral write failed');
+    }
+    await store.executeWrites([{ table: 'referral_claims', id: claimKey, action: 'upsert', record: { status: 'done', completed_at: new Date().toISOString() } }]);
   }
 
   if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {

@@ -480,8 +480,12 @@ class RemoteCanonicalStore implements CanonicalStore {
     this.apiKey = apiKey;
   }
 
-  async claimEvent(): Promise<'claimed' | 'done' | 'in_progress'> {
-    throw new Error('Remote canonical store requires a server-side atomic claim endpoint');
+  async claimEvent(table: string, id: string, record: Record<string, unknown>, opts: { leaseMs: number }): Promise<'claimed' | 'done' | 'in_progress'> {
+    const result = await this.post<{ ok: boolean; outcome: 'claimed' | 'done' | 'in_progress' }>('/claim', { table, id, record, leaseMs: opts.leaseMs });
+    if (!result.ok || !['claimed', 'done', 'in_progress'].includes(result.outcome)) {
+      throw new Error('Remote canonical store returned an invalid claim outcome');
+    }
+    return result.outcome;
   }
 
   private headers(): Record<string, string> {

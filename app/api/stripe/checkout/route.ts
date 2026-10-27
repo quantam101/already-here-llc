@@ -19,6 +19,8 @@ export interface CheckoutBody {
   metadata?: Record<string, string>;
 }
 
+const CLIENT_METADATA_ALLOWLIST = new Set(['rentalId', 'leadId', 'dispatchId', 'source', 'campaign', 'utm_source', 'utm_medium', 'utm_campaign']);
+
 export async function POST(request: Request) {
   let stripeClient: Stripe | null = null;
   try {
@@ -59,8 +61,15 @@ export async function POST(request: Request) {
   const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = { price: priceId, quantity: parsedQuantity };
 
   try {
+    // Entitlement is defined by the approved Stripe price, never by browser-supplied metadata.
+    const clientMetadata: Record<string, string> = {};
+    for (const [key, value] of Object.entries(metadata ?? {})) {
+      if (CLIENT_METADATA_ALLOWLIST.has(key) && typeof value === 'string' && value.length <= 200) clientMetadata[key] = value;
+    }
     const canonicalMetadata: Record<string, string> = {
-      ...metadata,
+      ...clientMetadata,
+      offer: priceId,
+      priceId,
       referralCode,
       businessName: siteConfig.name,
       stripeProfileHandle: siteConfig.stripeProfileHandle

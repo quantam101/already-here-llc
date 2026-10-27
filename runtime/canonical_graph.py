@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 import os
 import re
 import sqlite3
@@ -116,6 +117,49 @@ class CanonicalGraphStore:
                 """,
                 (id, table, payload, merged["source"], merged["created_at"], merged["updated_at"]),
             )
+
+    def claim_event(self, table: str, id: str, record: Dict[str, Any], lease_ms: int) -> str:
+        """Atomically claim an idempotency record. Returns 'claimed', 'done' or 'in_progress'.
+
+        Mirrors the Node SQLite store: a row with status 'done' is final; a row with status
+        'processing' whose lease has not expired is in progress; anything else is (re)claimed.
+        """
+        now_ms = int(time.time() * 1000)
+        with self._conn:
+            self._conn.execute("BEGIN IMMEDIATE")
+            row = self._conn.execute(
+                "SELECT payload FROM canonical_records WHERE table_name = ? AND id = ?",
+                (table, id),
+            ).fetchone()
+            existing: Dict[str, Any] = json.loads(row[0]) if row else {}
+            if existing.get("status") == "done":
+                return "done"
+            if existing.get("status") == "processing":
+                claimed_at = int(existing.get("claimed_at_ms") or 0)
+                if now_ms - claimed_at <= int(lease_ms):
+                    return "in_progress"
+            now = _now()
+            created_at = existing.get("created_at") or record.get("created_at") or now
+            payload = {
+                **record,
+                "id": id,
+                "_table": table,
+                "_canonical_id": id,
+                "status": "processing",
+                "claimed_at_ms": now_ms,
+                "attempts": int(existing.get("attempts") or 0) + 1,
+                "created_at": created_at,
+                "updated_at": now,
+                "source": record.get("source") or existing.get("source") or table,
+            }
+            self._conn.execute(
+                """
+                INSERT OR REPLACE INTO canonical_records (id, table_name, payload, source, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (id, table, json.dumps(payload, default=str), payload["source"], created_at, now),
+            )
+            return "claimed"
 
     def write_many(self, writes: List[Dict[str, Any]], source: str = "") -> List[str]:
         """Writes is a list of {"table": str, "id": str, "record": dict, "action": str}."""
