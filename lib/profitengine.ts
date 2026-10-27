@@ -20,21 +20,6 @@ async function post(path: string, data: Record<string, unknown>): Promise<boolea
   }
 }
 
-export function notifyBlogPost(blog: {
-  title: string;
-  slug: string;
-  content: string;
-  excerpt: string;
-  date: string;
-  category: string;
-}): Promise<boolean> {
-  return post('/api/webhooks/blog', {
-    ...blog,
-    url: `https://www.alreadyherellc.com/blog/${blog.slug}`,
-    source: 'alreadyherellc.com',
-  });
-}
-
 export function notifyDispatch(dispatch: {
   dispatchId: string;
   fullName: string;
