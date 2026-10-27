@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import { RFQTimelinePicker } from './RFQTimelinePicker';
 
 const acceptedFileTypes = ['application/pdf', 'image/jpeg', 'image/png'];
 const maxFileSize = 10 * 1024 * 1024;
@@ -25,12 +26,18 @@ export function RFQForm() {
       return;
     }
 
-    const required = ['fullName', 'company', 'email', 'projectLocation', 'projectScope', 'timeline'];
+    const required = ['fullName', 'company', 'email', 'projectLocation', 'projectScope'];
     for (const field of required) {
       if (!String(sourceData.get(field) || '').trim()) {
         setState({ error: 'Complete all required RFQ fields before submitting.', success: false });
         return;
       }
+    }
+
+    const timeline = String(sourceData.get('timeline') || '').trim();
+    if (!timeline) {
+      setState({ error: 'Choose a valid timeline date and time or start–end project period.', success: false });
+      return;
     }
 
     const email = String(sourceData.get('email') || '').trim();
@@ -51,8 +58,15 @@ export function RFQForm() {
       }
     }
 
+    const campaignParams = new URLSearchParams(window.location.search);
+    const attributedLeadId = (campaignParams.get('lead_id') || '').trim();
+    const validCampaignLeadId = /^AH-CBL-[0-9a-f-]{36}$/.test(attributedLeadId) ? attributedLeadId : '';
+    const utmSource = (campaignParams.get('utm_source') || '').slice(0, 100);
+
     const message = [
       'RFQ / Project-based bid request',
+      ...(validCampaignLeadId ? [`Attributed Phoenix cabling guide lead: ${validCampaignLeadId}`] : []),
+      ...(utmSource ? [`RFQ referral source: ${utmSource}`] : []),
       '',
       `Project scope: ${String(sourceData.get('projectScope') || '').trim()}`,
       `Timeline / bid deadline: ${String(sourceData.get('timeline') || '').trim()}`,
@@ -73,8 +87,11 @@ export function RFQForm() {
     dispatchData.set('siteCity', String(sourceData.get('projectLocation') || '').trim());
     dispatchData.set('siteZip', '');
     dispatchData.set('serviceType', 'RFQ / project-based bid');
-    dispatchData.set('requestedDate', '');
-    dispatchData.set('requestedTime', '');
+    // Only an exact PROJECT START is a requested onsite date, never a bid deadline.
+    // Range and deadline details remain complete in requestedWindow/message.
+    const isExactStart = sourceData.get('timelineMode') === 'exact';
+    dispatchData.set('requestedDate', isExactStart ? String(sourceData.get('timelineStartDate') || '') : '');
+    dispatchData.set('requestedTime', isExactStart ? String(sourceData.get('timelineStartTime') || '') : '');
     dispatchData.set('requestedWindow', String(sourceData.get('timeline') || '').trim());
     dispatchData.set('ticketNumber', String(sourceData.get('rfqNumber') || '').trim());
     dispatchData.set('message', message);
@@ -109,7 +126,7 @@ export function RFQForm() {
         <label className="grid gap-2 text-sm font-medium text-navy">Phone<input name="phone" type="tel" autoComplete="tel" className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink" /></label>
         <label className="grid gap-2 text-sm font-medium text-navy"><span>Project location / sites <span className="text-action">*</span></span><input name="projectLocation" required placeholder="City, market, region, or list of sites" className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink" /></label>
         <label className="grid gap-2 text-sm font-medium text-navy">Estimated site count<input name="siteCount" inputMode="numeric" placeholder="1, 5, 20+, TBD" className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink" /></label>
-        <label className="grid gap-2 text-sm font-medium text-navy"><span>Timeline / bid deadline <span className="text-action">*</span></span><input name="timeline" required placeholder="Target start date, deadline, rollout window" className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink" /></label>
+        <RFQTimelinePicker />
         <label className="grid gap-2 text-sm font-medium text-navy">RFQ / project reference<input name="rfqNumber" placeholder="Optional PO, RFQ, ticket, or bid reference" className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink" /></label>
       </div>
       <label className="mt-6 grid gap-2 text-sm font-medium text-navy"><span>Project scope <span className="text-action">*</span></span><textarea name="projectScope" required rows={6} placeholder="Work type, equipment, deliverables, assumptions, travel needs, and what must be priced." className="link-ring rounded-3xl border border-borderBrand px-4 py-3 text-sm leading-6 text-ink" /></label>

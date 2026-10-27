@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* A <select> sizes itself to its longest <option>; keep it inside its grid cell. */
+  select {
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
 :root {
   color-scheme: dark;
   --ah-bg: #07111f;

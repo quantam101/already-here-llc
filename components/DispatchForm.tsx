@@ -145,7 +145,7 @@ export function DispatchForm() {
           Site ZIP
           <input name="siteZip" inputMode="numeric" pattern="[0-9]{5}" maxLength={20} className="link-ring rounded-2xl border border-borderBrand px-4 py-3 text-sm text-ink placeholder:text-slate-400" placeholder="Optional ZIP" />
         </label>
-        <label className="grid gap-2 text-sm font-medium text-navy">
+        <label className="grid content-start gap-2 text-sm font-medium text-navy">
           <span>Service type <span className="text-action">*</span></span>
           <select name="serviceType" required defaultValue="" className="link-ring rounded-2xl border border-borderBrand bg-white px-4 py-3 text-sm text-ink">
             <option value="" disabled>Select a service type</option>

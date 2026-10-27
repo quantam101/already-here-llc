@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { defaultOgImage } from '@/lib/og';
 
 const title = 'Managed IT Services, Security, Cloud & Field Support | Already Here LLC';
 const description = 'Phoenix managed IT services backed by 30+ years of hands-on IT experience, including help desk, networks, systems, Microsoft 365, cloud, identity, security, projects, and onsite technical support.';
 
 export const metadata: Metadata = {
   openGraph: {
+    images: [defaultOgImage],
     title,
     description,
     url: '/services',
@@ -13,6 +15,7 @@ export const metadata: Metadata = {
     type: 'website'
   },
   twitter: {
+    images: [defaultOgImage],
     card: 'summary_large_image',
     title,
     description

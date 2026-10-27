@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'The Service Business AI Web Agent Playbook',
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
     'A practical ebook from Already Here LLC on using AI website agents to capture leads, qualify quote requests, route owner alerts, and reduce missed revenue.',
   alternates: { canonical: 'https://www.alreadyherellc.com/ai-agent-ebook' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'The Service Business AI Web Agent Playbook | Already Here LLC',
     description:
       'A practical guide for service businesses that need fewer missed leads, cleaner quote intake, and faster owner response.',

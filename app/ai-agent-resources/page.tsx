@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'AI Web Agent Sales Resources',
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
     'Demo links, buyer talk tracks, and prospect content for the Already Here LLC AI Web Agent offer.',
   alternates: { canonical: 'https://www.alreadyherellc.com/ai-agent-resources' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'AI Web Agent Sales Resources | Already Here LLC',
     description: 'Prospect-facing content for AI website lead capture, quote intake, and owner alert routing.',
     url: 'https://www.alreadyherellc.com/ai-agent-resources',
@@ -33,7 +35,7 @@ const prospectLinks = [
   },
   {
     title: 'Implementation checklist',
-    href: '/blog/ai-lead-capture-implementation-checklist',
+    href: '/content/posts/ai-lead-capture-implementation-checklist/',
     body: 'Use this blog post to explain the practical launch process and safe operating boundaries.'
   }
 ] as const;

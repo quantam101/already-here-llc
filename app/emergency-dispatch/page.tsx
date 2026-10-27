@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { siteConfig } from '@/lib/site';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'Same-Day Phoenix IT Dispatch',
   description: 'Same-day and next-day Phoenix metro onsite IT field support for smart hands, POS, network, AV, camera/cabling, printer, access-control, and closeout-heavy dispatch work.',
   alternates: { canonical: '/emergency-dispatch' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'Same-Day Phoenix IT Dispatch | Already Here LLC',
     description: 'Same-day and next-day Phoenix metro onsite IT field support for smart hands, POS, network, AV, camera/cabling, printer, access-control, and closeout-heavy dispatch work.',
     url: '/emergency-dispatch',

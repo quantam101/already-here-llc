@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'ASI Revenue Intelligence Engine',
   description: 'Local-first revenue intelligence, dispatch scoring, retainer targeting, and company database orchestration for field-service operators, MSPs, vendors, and small businesses.',
   alternates: { canonical: 'https://www.alreadyherellc.com/asi-revenue-intelligence' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'ASI Revenue Intelligence Engine | Already Here LLC',
     description: 'Turn scattered work orders, vendor messages, procurement paths, and field history into owned revenue intelligence.',
     url: 'https://www.alreadyherellc.com/asi-revenue-intelligence',

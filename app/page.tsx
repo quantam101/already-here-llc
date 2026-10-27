@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { SiteFaq } from '@/components/SiteFaq';
 import { representativeWork, siteConfig } from '@/lib/site';
+import { defaultOgImage } from '@/lib/og';
 
 const pageDescription =
   'Phoenix MSP with 30+ years of IT experience: managed IT support, help desk, Microsoft 365 and cloud, security hardening, and onsite technical support.';
@@ -32,6 +33,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: 'https://www.alreadyherellc.com' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'Phoenix Managed IT Services | Already Here LLC',
     description: pageDescription,
     url: 'https://www.alreadyherellc.com',
@@ -39,6 +41,7 @@ export const metadata: Metadata = {
     type: 'website'
   },
   twitter: {
+    images: [defaultOgImage],
     card: 'summary_large_image',
     title: 'Phoenix Managed IT Services | Already Here LLC',
     description: pageDescription

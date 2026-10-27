@@ -2,12 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ProjectGalleryGrid } from '@/components/ProjectGalleryGrid';
 import { siteConfig } from '@/lib/site';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'Project Gallery',
   description: 'Representative onsite infrastructure execution, retail technology, smart hands, healthcare-adjacent, and rollout recovery work examples.',
   alternates: { canonical: '/project-gallery' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'Project Gallery | Already Here LLC',
     description: 'Representative onsite infrastructure execution, retail technology, smart hands, healthcare-adjacent, and rollout recovery work examples.',
     url: '/project-gallery',
