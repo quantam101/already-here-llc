@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { defaultOgImage } from '@/lib/og';
 
 const title = 'Who We Serve | Already Here LLC';
 const description = 'Field execution support for MSPs, vendors, government primes, retail operators, and commercial teams that need documented Arizona onsite work.';
 
 export const metadata: Metadata = {
   openGraph: {
+    images: [defaultOgImage],
     title,
     description,
     url: '/who-we-serve',
@@ -13,6 +15,7 @@ export const metadata: Metadata = {
     type: 'website'
   },
   twitter: {
+    images: [defaultOgImage],
     card: 'summary_large_image',
     title,
     description

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/industries' },
   title: 'Industries Served',
   description: 'Industries served by Already Here LLC: MSPs, retail, healthcare-adjacent environments, data centers, restaurants, government, education, warehouses, and commercial sites.'
 };

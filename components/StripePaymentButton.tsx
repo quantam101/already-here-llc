@@ -27,7 +27,7 @@ export function StripePaymentButton({
   productName = 'Already Here service',
   description = '',
   customerEmail,
-  successPath = '/dashboard/payments?success=true',
+  successPath = '/thank-you?payment=success',
   cancelPath = '/',
   rentalId,
   referralCode,

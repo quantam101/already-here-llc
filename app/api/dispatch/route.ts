@@ -3,6 +3,7 @@ import { after, NextResponse } from 'next/server.js';
 import { buildRevenueIntakeProof } from '@/lib/revenue-command-intake';
 import { getCanonicalStore } from '@/lib/canonical-store';
 import { triageDispatchRequest } from '@/lib/dispatch-triage';
+import { buildPhoenixRfqConversionEvent } from '@/lib/phoenix-rfq-conversion';
 
 export const runtime = 'nodejs';
 
@@ -306,6 +307,41 @@ async function sendViaResend(formData: FormData, dispatchId: string): Promise<st
   return resendEmailId;
 }
 
+/**
+ * An accepted attributed RFQ is a lead-to-RFQ conversion, not a contract,
+ * invoice, appointment, or payment. It stops a pending opt-in nurture series.
+ * Delivery failures are logged for reconciliation and never fail the RFQ.
+ */
+async function stopPhoenixNurtureAfterAcceptedRfq(formData: FormData, dispatchId: string): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) return false;
+  const event = buildPhoenixRfqConversionEvent({
+    serviceType: asCleanString(formData, 'serviceType'),
+    message: asCleanString(formData, 'message'),
+    email: asCleanString(formData, 'email'),
+    dispatchId
+  });
+  if (!event) return false;
+  try {
+    const response = await fetch('https://api.resend.com/events/send', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + process.env.RESEND_API_KEY,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': 'phoenix-rfq-conversion/' + dispatchId
+      },
+      body: JSON.stringify(event),
+      cache: 'no-store'
+    });
+    if (!response.ok) {
+      console.warn('[phoenix-rfq] nurture stop event rejected', { dispatchId, status: response.status });
+    }
+    return response.ok;
+  } catch {
+    console.warn('[phoenix-rfq] nurture stop event request failed', { dispatchId });
+    return false;
+  }
+}
+
 async function sendViaFormspree(formData: FormData, dispatchId: string): Promise<void> {
   const endpoint = process.env.FORMSPREE_ENDPOINT!;
   formData.set('dispatchId', dispatchId);
@@ -315,6 +351,37 @@ async function sendViaFormspree(formData: FormData, dispatchId: string): Promise
     const payload = await res.json().catch(() => null) as { errors?: Array<{ message?: string }> } | null;
     throw new Error(payload?.errors?.[0]?.message || 'Formspree rejected the submission.');
   }
+}
+
+type DispatchDelivery = {
+  delivery: 'resend' | 'formspree';
+  resendEmailId: string | null;
+  failoverUsed: boolean;
+  providerErrors: string[];
+};
+
+const providerMaxAttempts = 2;
+
+async function deliverDispatch(formData: FormData, dispatchId: string, hasResend: boolean, hasFormspree: boolean): Promise<DispatchDelivery> {
+  const providerErrors: string[] = [];
+
+  if (hasResend) {
+    for (let attempt = 1; attempt <= providerMaxAttempts; attempt += 1) {
+      try {
+        const resendEmailId = await sendViaResend(formData, dispatchId);
+        return { delivery: 'resend', resendEmailId, failoverUsed: false, providerErrors };
+      } catch (error) {
+        providerErrors.push(`resend attempt ${attempt}: ${error instanceof Error ? error.message : 'send failed'}`);
+      }
+    }
+  }
+
+  if (hasFormspree) {
+    await sendViaFormspree(formData, dispatchId);
+    return { delivery: 'formspree', resendEmailId: null, failoverUsed: hasResend && providerErrors.length > 0, providerErrors };
+  }
+
+  throw new Error(providerErrors.join(' | ') || 'No dispatch delivery provider configured.');
 }
 
 export async function POST(request: Request) {
@@ -347,8 +414,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (hasResend) await sendViaResend(formData, dispatchId);
-    else await sendViaFormspree(formData, dispatchId);
+    const delivery = await deliverDispatch(formData, dispatchId, hasResend, hasFormspree);
+
+    // Only a successfully delivered RFQ can advance an attributed lead.
+    // This request cannot book a job or move an invoice to paid.
+    const nurtureStopSent = await stopPhoenixNurtureAfterAcceptedRfq(formData, dispatchId);
 
     try {
       after(async () => {
@@ -382,9 +452,12 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       dispatchId,
-      recordLocation: hasResend ? 'dispatch_email_json_attachment' : 'formspree_payload',
-      delivery: hasResend ? 'resend' : 'formspree',
+      recordLocation: delivery.delivery === 'resend' ? 'dispatch_email_json_attachment' : 'formspree_payload',
+      delivery: delivery.delivery,
+      failoverUsed: delivery.failoverUsed,
+      providerErrors: delivery.providerErrors.length ? delivery.providerErrors : undefined,
       persistedExternally: true,
+      nurtureStopSent,
       triage,
       revenueSpine
     });

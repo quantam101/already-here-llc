@@ -19,6 +19,12 @@ const mspDescription = 'Phoenix managed service provider with 30+ years of IT ex
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
+  // Search engine ownership verification. Paste the codes from Google Search
+  // Console (HTML tag method) and Bing Webmaster Tools into Vercel env vars.
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION ? { 'msvalidate.01': process.env.BING_SITE_VERIFICATION } : undefined
+  },
   title: {
     default: 'Managed IT Services & Technical Field Operations | Already Here LLC',
     template: '%s | Already Here LLC'

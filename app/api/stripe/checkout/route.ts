@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     productName = 'Already Here service',
     description,
     customerEmail,
-    successPath = '/dashboard/payments?success=true',
+    successPath = '/thank-you?payment=success',
     cancelPath = '/',
     referralCode = '',
     metadata = {}
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
 
     const sessionCreateParams: Stripe.Checkout.SessionCreateParams = {
       mode,
-      payment_method_types: ['card'],
+      allowed_payment_method_types: ['card'],
       line_items: [lineItem],
       metadata: canonicalMetadata,
       success_url,

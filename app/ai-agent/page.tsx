@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AiAgentLeadForm } from '@/components/AiAgentLeadForm';
 import { aiAgentIndustries, aiAgentPackages } from '@/lib/ai-agent-products';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'AI Lead Intake and Routing for Service Businesses',
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
     'AI lead intake for service businesses: qualify website requests, route structured lead records, and demonstrate owner alerts before purchasing.',
   alternates: { canonical: 'https://www.alreadyherellc.com/ai-agent' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'AI Lead Intake and Routing for Service Businesses | Already Here LLC',
     description:
       'AI website chatbox setup with lead qualification, quote intake, owner alerts, free trial demo intake, and monthly optimization.',

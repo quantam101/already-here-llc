@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { DispatchForm } from '@/components/DispatchForm';
 import { markets } from '@/lib/site';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'Contact & Dispatch Intake',
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
     'Submit scope, schedule, city, and supporting files for Arizona field execution, dispatch support, or rollout-related onsite work.',
   alternates: { canonical: '/contact' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'Contact & Dispatch Intake | Already Here LLC',
     description:
       'Submit scope, schedule, city, and supporting files for Arizona field execution, dispatch support, or rollout-related onsite work.',

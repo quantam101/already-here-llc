@@ -8,6 +8,7 @@ export type EnterpriseProcessId =
   | 'revenue_os'
   | 'grant_procurement_packet_library'
   | 'backend_command'
+  | 'completed_work'
   | 'lifelong_catch_correct'
   | 'global_enterprise';
 
@@ -25,6 +26,7 @@ export type EnterpriseOperation =
   | 'track_funding_sources'
   | 'healthcheck_backend'
   | 'build_proof_packet'
+  | 'aggregate_work_history'
   | 'draft_outreach'
   | 'evaluate_security_gate'
   | 'catch_correct'
@@ -44,6 +46,7 @@ export const ENTERPRISE_OPERATIONS: EnterpriseOperation[] = [
   'track_funding_sources',
   'healthcheck_backend',
   'build_proof_packet',
+  'aggregate_work_history',
   'draft_outreach',
   'evaluate_security_gate',
   'catch_correct',
@@ -65,6 +68,7 @@ export type EnterpriseAgentId =
   | 'agent_grant_procurement_packet'
   | 'agent_backend_command'
   | 'agent_proof'
+  | 'agent_work_history'
   | 'agent_outreach'
   | 'agent_compliance'
   | 'agent_lifelong_catch_correct';
@@ -280,6 +284,14 @@ const AGENTS: EnterpriseAgent[] = [
     handoffTo: 'agent_lifelong_catch_correct',
   },
   {
+    id: 'agent_work_history',
+    name: 'Completed Work Agent',
+    process: 'completed_work',
+    operation: 'aggregate_work_history',
+    purpose: 'Aggregate verified closeouts into per-entity track records: jobs completed, hours, revenue, margin, QA pass rate, CSAT, and proof-of-work artifacts.',
+    handoffTo: 'agent_proof',
+  },
+  {
     id: 'agent_outreach',
     name: 'Outreach Agent',
     process: 'daily_command',
@@ -354,6 +366,10 @@ function classifyLane(text: string): string {
     return 'Lifelong Catch and Correct';
   }
 
+  if (['work history', 'completed work', 'closeout', 'track record', 'leaderboard'].some((term) => hasTerm(value, term))) {
+    return 'Completed Work';
+  }
+
   return 'Enterprise General';
 }
 
@@ -410,6 +426,7 @@ export const ENTERPRISE_PROCESS_IDS: readonly EnterpriseProcessId[] = [
   'revenue_os',
   'grant_procurement_packet_library',
   'backend_command',
+  'completed_work',
   'lifelong_catch_correct',
   'global_enterprise',
 ];
@@ -583,6 +600,9 @@ export function runEnterpriseOperation(input: {
       break;
     case 'build_proof_packet':
       summary = `Proof packet draft built for ${item.title} (${item.lane}, ${item.priority}).`;
+      break;
+    case 'aggregate_work_history':
+      summary = `Completed-work aggregation queued for ${item.title} (${item.lane}, ${item.priority}). Handoff to proof.`;
       break;
     case 'draft_outreach':
       summary = `Outreach draft prepared for ${item.title}. Sending is blocked pending owner approval.`;

@@ -2,12 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { RFQForm } from '@/components/RFQForm';
 import { siteConfig } from '@/lib/site';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'Request for Quote',
   description: 'Submit a project-based RFQ for onsite infrastructure execution, multi-site field work, rollout support, and technical dispatch coverage.',
   alternates: { canonical: '/rfq' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'Request for Quote | Already Here LLC',
     description: 'Submit a project-based RFQ for onsite infrastructure execution, multi-site field work, rollout support, and technical dispatch coverage.',
     url: '/rfq',

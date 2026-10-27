@@ -7,8 +7,21 @@ export type Post = {
   date: string;
   excerpt: string;
   category: string;
+  /**
+   * Whether search engines should index this post. Hand-written posts carry a
+   * `category`; auto-generated posts do not. A post is hidden from search, the
+   * sitemap and the blog list when it has no category or sets `noindex: true`.
+   * Hidden posts stay reachable by URL. Set `index: true` to force indexing.
+   */
+  indexable: boolean;
   content: string;
 };
+
+function isIndexable(data: Record<string, string>): boolean {
+  if (/^(true|yes|1)$/i.test(data.noindex ?? '')) return false;
+  if (/^(true|yes|1)$/i.test(data.index ?? '')) return true;
+  return Boolean((data.category ?? '').trim());
+}
 
 const BLOG_DIR = path.join(process.cwd(), 'content', 'blog');
 
@@ -41,6 +54,7 @@ export function getAllPosts(): Post[] {
         date: data.date ?? '',
         excerpt: data.excerpt ?? '',
         category: data.category ?? 'Field Service',
+        indexable: isIndexable(data),
         content
       };
     })
@@ -59,8 +73,14 @@ export function getPostBySlug(slug: string): Post | null {
     date: data.date ?? '',
     excerpt: data.excerpt ?? '',
     category: data.category ?? 'Field Service',
+    indexable: isIndexable(data),
     content
   };
+}
+
+/** Posts that search engines should index (see Post.indexable). */
+export function getIndexablePosts(): Post[] {
+  return getAllPosts().filter((post) => post.indexable);
 }
 
 export function getStaticPostParams(): { slug: string }[] {

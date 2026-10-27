@@ -2,12 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CoverageMap } from '@/components/CoverageMap';
 import { siteConfig } from '@/lib/site';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'Coverage Area',
   description: 'Phoenix-centered onsite infrastructure execution coverage across Arizona markets with qualified project coverage by scope.',
   alternates: { canonical: '/coverage' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'Coverage Area | Already Here LLC',
     description: 'Phoenix-centered onsite infrastructure execution coverage across Arizona markets with qualified project coverage by scope.',
     url: '/coverage',

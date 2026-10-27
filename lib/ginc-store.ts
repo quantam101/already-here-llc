@@ -3,8 +3,8 @@ import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { getRedis } from '@/lib/redis';
-import {
-  gincConfig,
+import { gincConfig } from '@/lib/ginc';
+import type {
   GincJob,
   GincListing,
   GincMatch,
@@ -19,69 +19,8 @@ const dataPath = path.join(process.cwd(), 'data', 'ginc-network.json');
 
 let memoryCache: GincNetwork | null = null;
 
-function seedNetwork(): GincNetwork {
-  return {
-    members: [
-      {
-        id: 'MEM-001',
-        type: 'owner',
-        fullName: 'GINC Owner',
-        email: 'owner@alreadyherellc.com',
-        phone: '602-000-0001',
-        city: 'Phoenix',
-        state: 'AZ',
-        zip: '85007',
-        skills: 'Has utility trailer, small truck, and tools.',
-        bio: 'Local contractor with extra equipment looking to rent or partner on jobs.',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 'MEM-002',
-        type: 'business',
-        fullName: 'GINC Crew',
-        email: 'crew@alreadyherellc.com',
-        phone: '602-000-0002',
-        city: 'Tempe',
-        state: 'AZ',
-        zip: '85281',
-        skills: 'Roofing, gutters, dump runs.',
-        bio: 'Need a trailer a few times a month and extra labor on big jobs.',
-        createdAt: new Date().toISOString()
-      }
-    ],
-    listings: [
-      {
-        id: 'LST-001',
-        memberId: 'MEM-001',
-        title: 'Utility trailer for dump runs',
-        category: 'Construction & landscaping',
-        assetType: 'Trailer',
-        city: 'Phoenix',
-        state: 'AZ',
-        price: '$75',
-        period: 'day',
-        description: '14ft utility trailer available for dump runs and material hauling.',
-        status: 'available',
-        createdAt: new Date().toISOString()
-      }
-    ],
-    jobs: [
-      {
-        id: 'JOB-001',
-        memberId: 'MEM-002',
-        title: 'Roof tear-off helper + trailer needed',
-        category: 'Roofing / trades',
-        assetType: 'Trailer',
-        city: 'Tempe',
-        state: 'AZ',
-        schedule: 'Weekends and some weekdays',
-        budget: '$200/day',
-        description: 'Need an extra person and a trailer for shingle tear-offs. Could become regular work.',
-        status: 'open',
-        createdAt: new Date().toISOString()
-      }
-    ]
-  };
+function emptyNetwork(): GincNetwork {
+  return { members: [], listings: [], jobs: [] };
 }
 
 async function loadFromDisk(): Promise<GincNetwork> {
@@ -89,7 +28,9 @@ async function loadFromDisk(): Promise<GincNetwork> {
     const raw = await fs.readFile(dataPath, 'utf-8');
     return JSON.parse(raw) as GincNetwork;
   } catch {
-    return seedNetwork();
+    // No fabricated demo members/listings — an empty network is the
+    // honest starting state until real records arrive.
+    return emptyNetwork();
   }
 }
 
@@ -119,7 +60,9 @@ export async function loadNetwork(retries = 3): Promise<GincNetwork> {
       return { members, listings, jobs };
     }
 
-    // Lists are empty — seed/migrate once using a short-lived lock to avoid duplicate seeding.
+    // Lists are empty — migrate legacy/file data once using a
+    // short-lived lock to avoid duplicate work. There is no demo
+    // seed: a genuinely empty network stays empty.
     const lockAcquired = await redis.set('ginc:seeded', '1', { nx: true, ex: 30 });
     if (lockAcquired === 'OK') {
       try {
@@ -127,18 +70,26 @@ export async function loadNetwork(retries = 3): Promise<GincNetwork> {
         const data = legacy
           ? (typeof legacy === 'string' ? (JSON.parse(legacy) as GincNetwork) : (legacy as unknown as GincNetwork))
           : await loadFromDisk();
-        await saveNetwork(data);
+        // Legacy/file backups may still carry the old fabricated seed
+        // records — never re-import them after they've been purged.
+        data.members = data.members.filter((m) => !GINC_SAMPLE_ID_SET.has(m.id));
+        data.listings = data.listings.filter((l) => !GINC_SAMPLE_ID_SET.has(l.id));
+        data.jobs = data.jobs.filter((j) => !GINC_SAMPLE_ID_SET.has(j.id));
+        if (data.members.length || data.listings.length || data.jobs.length) {
+          await saveNetwork(data);
+          return data;
+        }
       } finally {
         // Lock expires automatically; no need to delete.
       }
-    } else if (retries > 0) {
-      // Another process is seeding; wait briefly and re-read.
+      return emptyNetwork();
+    }
+    if (retries > 0) {
+      // Another process is migrating; wait briefly and re-read.
       await new Promise((resolve) => setTimeout(resolve, 100));
       return loadNetwork(retries - 1);
     }
-
-    // After seeding (or if lock could not be acquired), re-read the lists.
-    return loadNetwork(retries - 1);
+    return emptyNetwork();
   }
 
   if (!memoryCache) {
@@ -194,6 +145,91 @@ export async function addJob(job: GincJob): Promise<void> {
   const network = await loadNetwork();
   network.jobs.push(job);
   await saveNetwork(network);
+}
+
+// Ids of the old fabricated seed records — filtered out during
+// migration so a purge is permanent. Exported for the admin route.
+export const GINC_SAMPLE_ID_SET = new Set(['MEM-001', 'MEM-002', 'LST-001', 'JOB-001']);
+
+const GINC_LIST_KEYS = {
+  member: 'ginc:members',
+  listing: 'ginc:listings',
+  job: 'ginc:jobs',
+} as const;
+
+export type GincEntityKind = keyof typeof GINC_LIST_KEYS;
+
+/**
+ * Remove a GINC record by id. Redis removes the matching element with
+ * LREM (atomic — no read-modify-write window); the file/memory
+ * fallback filters in place. Returns true when a record was removed.
+ */
+export async function removeGincRecord(kind: GincEntityKind, id: string): Promise<boolean> {
+  const key = GINC_LIST_KEYS[kind];
+  const redis = getRedis();
+
+  const pickList = (network: GincNetwork) =>
+    kind === 'member' ? network.members : kind === 'listing' ? network.listings : network.jobs;
+
+  if (redis) {
+    // LREM on the raw serialized element is atomic — a read-modify-
+    // write replacement could silently drop a concurrent submission.
+    const raw = await redis.lrange<string>(key, 0, -1);
+    let removed = false;
+    for (const item of raw) {
+      const parsed = typeof item === 'string' ? (JSON.parse(item) as { id?: string }) : item;
+      if (parsed.id === id) {
+        await redis.lrem(key, 0, item);
+        removed = true;
+      }
+    }
+    return removed;
+  }
+
+  const network = await loadNetwork();
+  const list = pickList(network);
+  const kept = list.filter((item) => item.id !== id);
+  if (kept.length === list.length) return false;
+  if (kind === 'member') network.members = kept as GincNetwork['members'];
+  else if (kind === 'listing') network.listings = kept as GincNetwork['listings'];
+  else network.jobs = kept as GincNetwork['jobs'];
+  memoryCache = network;
+  await saveToDisk(network);
+  return true;
+}
+
+// Removes records whose ids are in the given set across all three lists.
+// Used by the admin cleanup route to purge leftover sample data.
+export async function purgeGincRecords(ids: string[]): Promise<{ removed: string[] }> {
+  const targets = new Set(ids);
+  const removed: string[] = [];
+  for (const kind of Object.keys(GINC_LIST_KEYS) as GincEntityKind[]) {
+    const redis = getRedis();
+    const key = GINC_LIST_KEYS[kind];
+    if (redis) {
+      const raw = await redis.lrange<string>(key, 0, -1);
+      for (const item of raw) {
+        const parsed = typeof item === 'string' ? (JSON.parse(item) as { id?: string }) : item;
+        if (targets.has(parsed.id ?? '')) {
+          await redis.lrem(key, 0, item);
+          removed.push(parsed.id ?? '');
+        }
+      }
+    } else {
+      const network = await loadNetwork();
+      const list = kind === 'member' ? network.members : kind === 'listing' ? network.listings : network.jobs;
+      const kept = list.filter((item) => !targets.has(item.id));
+      for (const item of list) if (targets.has(item.id)) removed.push(item.id);
+      if (kept.length !== list.length) {
+        if (kind === 'member') network.members = kept as GincNetwork['members'];
+        else if (kind === 'listing') network.listings = kept as GincNetwork['listings'];
+        else network.jobs = kept as GincNetwork['jobs'];
+        memoryCache = network;
+        await saveToDisk(network);
+      }
+    }
+  }
+  return { removed };
 }
 
 export function generateGincId(prefix: 'MEM' | 'LST' | 'JOB'): string {

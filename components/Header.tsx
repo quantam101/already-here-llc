@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useRef, useState, type ComponentProps } from 'react';
 import { BrandMark } from '@/components/BrandMark';
 import { siteConfig } from '@/lib/site';
 
@@ -32,7 +32,7 @@ const navGroups = [
       { href: '/capability-statement', label: 'Capability Statement' },
       { href: '/project-gallery', label: 'Project Gallery' },
       { href: '/coverage', label: 'Coverage Area' },
-      { href: '/blog', label: 'IT & Field Insights' },
+      { href: '/content/', label: 'IT & Field Insights' },
     ],
   },
   {
@@ -41,12 +41,25 @@ const navGroups = [
       { href: '/dispatch', label: 'Request IT Support' },
       { href: '/emergency-dispatch', label: 'Same-Day Onsite Support' },
       { href: '/rfq', label: 'Project RFQ' },
-      { href: '/dashboard', label: 'Operations Portal' },
     ],
   },
 ];
 
 const mobileNavGroups = navGroups.map((group) => ({ heading: group.label, items: group.items }));
+
+// /content is the Jekyll site served via a Vercel rewrite, not a Next.js route,
+// so it needs a full page load instead of client-side navigation/prefetch.
+function NavLink(props: ComponentProps<typeof Link>) {
+  const href = typeof props.href === 'string' ? props.href : '';
+  if (href.startsWith('/content')) {
+    return (
+      <a href={href} className={props.className} aria-current={props['aria-current']} onClick={props.onClick}>
+        {props.children}
+      </a>
+    );
+  }
+  return <Link {...props} />;
+}
 
 function pathFor(href: string) {
   return href.split('#')[0];
@@ -86,7 +99,7 @@ function DropdownGroup({ group, pathname }: { group: typeof navGroups[number]; p
           {group.items.map((item) => {
             const active = pathname === pathFor(item.href);
             return (
-              <Link
+              <NavLink
                 key={item.href}
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
@@ -96,7 +109,7 @@ function DropdownGroup({ group, pathname }: { group: typeof navGroups[number]; p
                 onClick={() => setOpen(false)}
               >
                 {item.label}
-              </Link>
+              </NavLink>
             );
           })}
         </div>
@@ -153,7 +166,7 @@ export function Header() {
                   {group.items.map((item) => {
                     const active = pathname === pathFor(item.href);
                     return (
-                      <Link
+                      <NavLink
                         key={item.href}
                         href={item.href}
                         aria-current={active ? 'page' : undefined}
@@ -163,7 +176,7 @@ export function Header() {
                         onClick={() => setOpen(false)}
                       >
                         {item.label}
-                      </Link>
+                      </NavLink>
                     );
                   })}
                 </div>

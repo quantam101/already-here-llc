@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { defaultOgImage } from '@/lib/og';
 
 export const metadata: Metadata = {
   title: 'Live AI Web Agent Demo',
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
     'See how the Already Here AI Web Agent captures website leads, qualifies quote requests, scores urgency, and routes structured owner alerts for service businesses.',
   alternates: { canonical: 'https://www.alreadyherellc.com/ai-agent-demo' },
   openGraph: {
+    images: [defaultOgImage],
     title: 'Live AI Web Agent Demo | Already Here LLC',
     description:
       'A prospect-facing demo of AI website lead capture, qualification, owner alerting, and structured lead records.',
@@ -58,7 +60,7 @@ const useCases = [
 const resourceLinks = [
   { href: '/ai-agent-ebook', label: 'Read Ebook', body: 'Buyer guide explaining why service businesses lose website leads and how the agent fixes the intake gap.' },
   { href: '/ai-agent-resources', label: 'Open Resources', body: 'Sales content hub with target verticals, prospect links, and call talking points.' },
-  { href: '/blog/ai-website-agent-missed-leads-service-businesses', label: 'Read Blog', body: 'Blog post explaining the missed-lead problem and how AI website intake improves owner response.' }
+  { href: '/content/posts/ai-website-agent-missed-leads-service-businesses/', label: 'Read Blog', body: 'Blog post explaining the missed-lead problem and how AI website intake improves owner response.' }
 ] as const;
 
 export default function AiAgentDemoPage() {
