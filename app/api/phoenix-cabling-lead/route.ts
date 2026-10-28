@@ -78,7 +78,10 @@ async function sendResend(payload: Record<string, unknown>): Promise<string> {
     cache: 'no-store'
   });
   if (!result.ok) throw new Error('Email provider rejected campaign delivery.');
-  const body = await result.js// Each email can start this campaign once, even if the same person submits multiple
+  const body = await result.json() as { id?: string };
+  return body.id || '';
+}
+// Each email can start this campaign once, even if the same person submits multiple
 // forms or several serverless instances process requests concurrently. A durable,
 // atomic reservation is required BEFORE the external Resend side effect. An ambiguous
 // provider outcome is held for manual reconciliation, never automatically replayed.
