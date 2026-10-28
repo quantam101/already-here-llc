@@ -151,10 +151,6 @@ async function startOptInNurture(lead: Lead, leadId: string): Promise<NurtureSta
 }
 
 
-    cache: 'no-store'
-  });
-  return result.ok;
-}
 async function sendFormspree(record: Record<string, string>): Promise<void> {
   const response = await fetch(process.env.FORMSPREE_ENDPOINT!, {
     method: 'POST',
