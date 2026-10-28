@@ -62,7 +62,7 @@
     "qa:ecosystem": "node scripts/ecosystem-production-gate.mjs",
     "test:route-policy": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/route-policy.test.mjs",
     "test:email-intake": "node --experimental-sqlite --experimental-strip-types --import ./tests/register-next-alias.mjs tests/email-intake.test.mjs",
-    "test:phoenix-cabling": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/phoenix-cabling-campaign.test.mjs",
+    "test:phoenix-cabling": "node --experimental-sqlite --experimental-strip-types --import ./tests/register-next-alias.mjs tests/phoenix-cabling-campaign.test.mjs",
     "test:rfq-timeline": "node --experimental-strip-types tests/rfq-timeline.test.mjs",
     "test:phoenix-rfq-conversion": "node --experimental-strip-types tests/phoenix-rfq-conversion.test.mjs",
     "test:portable-campaign": "node --experimental-strip-types tests/portable-campaign.test.mjs",
