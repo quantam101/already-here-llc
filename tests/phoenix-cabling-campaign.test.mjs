@@ -133,7 +133,7 @@ console.log('Phoenix cabling lead funnel contract tests passed.');
     }));
     assert.equal(events.length, 1, 'multiple submissions must trigger exactly one nurture event');
     assert.equal(events[0].payload.email, 'repeat@example.test');
-    assert.match(events[0].idempotencyKey, /^phoenix-cabling-optin\\/cabling_nurture_/);
+    assert.equal(events[0].idempotencyKey.startsWith('phoenix-cabling-optin/cabling_nurture_'), true);
     assert.equal(responses.filter(v => v.nurtureStatus === 'accepted').length, 1);
     assert.equal(responses.filter(v => v.nurtureStatus === 'already_claimed').length, 2);
     assert.equal(responses.every(v => v.receiptSent === true), true, 'guide receipts remain available');
