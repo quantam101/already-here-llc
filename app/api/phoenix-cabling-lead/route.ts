@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { canonicalId } from '@/lib/canonical-ids';
 import { NextResponse } from 'next/server';
 import { buildRevenueIntakeProof } from '@/lib/revenue-command-intake';
 import { getCanonicalStore, isCanonicalStoreDurable } from '@/lib/canonical-store';
@@ -77,30 +78,79 @@ async function sendResend(payload: Record<string, unknown>): Promise<string> {
     cache: 'no-store'
   });
   if (!result.ok) throw new Error('Email provider rejected campaign delivery.');
-  const body = await result.json() as { id?: string };
-  return body.id || '';
+  const body = await result.js// Each email can start this campaign once, even if the same person submits multiple
+// forms or several serverless instances process requests concurrently. A durable,
+// atomic reservation is required BEFORE the external Resend side effect. An ambiguous
+// provider outcome is held for manual reconciliation, never automatically replayed.
+type NurtureStatus = 'accepted' | 'already_claimed' | 'internal_suppressed' | 'failed';
+
+function isInternalCampaignAddress(address: string): boolean {
+  const normalized = address.trim().toLowerCase();
+  return normalized.endsWith('@alreadyherellc.com') ||
+    normalized === 'alreadyherellc@gmail.com' ||
+    normalized === process.env.DISPATCH_TO_EMAIL?.trim().toLowerCase();
 }
-// Marketing starts only after explicit opt-in and confirmed receipt delivery.
-// Resend's event trigger is not a substitute for the site's consent record.
-async function startOptInNurture(lead: Lead, leadId: string): Promise<boolean> {
-  if (!lead.marketingConsent || !process.env.RESEND_API_KEY) return false;
-  const result = await fetch('https://api.resend.com/events/send', {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer ' + process.env.RESEND_API_KEY,
-      'Content-Type': 'application/json',
-      'Idempotency-Key': 'phoenix-cabling-optin/' + leadId
-    },
-    body: JSON.stringify({
-      event: 'phoenix.cabling.opted_in',
-      email: lead.email,
-      payload: {
-        company: lead.company,
-        project_stage: lead.projectStage,
-        lead_id: leadId,
-        source: lead.utmSource || 'website'
-      }
-    }),
+
+async function startOptInNurture(lead: Lead, leadId: string): Promise<NurtureStatus> {
+  if (!lead.marketingConsent || !process.env.RESEND_API_KEY) return 'failed';
+  // Synthetic internal leads may test intake and guide delivery, never nurture.
+  if (isInternalCampaignAddress(lead.email)) return 'internal_suppressed';
+  if (!isCanonicalStoreDurable()) return 'failed';
+
+  const store = getCanonicalStore();
+  const enrollmentId = canonicalId('cabling_nurture', 'phoenix-cabling-v1', lead.email);
+  const at = new Date().toISOString();
+  const claim = await store.claimEvent('campaign_nurture_enrollments', enrollmentId, {
+    campaign: 'phoenix-cabling-v1', source: 'phoenix_cabling_checklist',
+    lead_id: leadId, created_at: at
+  }, { leaseMs: 100 * 365 * 24 * 60 * 60 * 1000 });
+  if (claim !== 'claimed') return 'already_claimed';
+
+  // Mark done before any network call: concurrent submits and unknown outcomes
+  // cannot produce second sends. Delivery status remains independently auditable.
+  const reserved = await store.executeWrites([{
+    table: 'campaign_nurture_enrollments', id: enrollmentId, action: 'upsert',
+    record: { status: 'done', campaign: 'phoenix-cabling-v1',
+      lead_id: leadId, delivery_status: 'reserved', reserved_at: at }
+  }]);
+  if (!reserved.ok) return 'failed';
+
+  let accepted = false;
+  try {
+    const result = await fetch('https://api.resend.com/events/send', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + process.env.RESEND_API_KEY,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': 'phoenix-cabling-optin/' + enrollmentId
+      },
+      body: JSON.stringify({
+        event: 'phoenix.cabling.opted_in', email: lead.email,
+        payload: {
+          company: lead.company, project_stage: lead.projectStage,
+          lead_id: leadId, source: lead.utmSource || 'website'
+        }
+      }),
+      cache: 'no-store'
+    });
+    accepted = result.ok;
+  } catch {
+    // A transport error does not prove Resend failed to accept the event.
+    // Never retry without independent provider/run reconciliation.
+  }
+  try {
+    await store.executeWrites([{
+      table: 'campaign_nurture_enrollments', id: enrollmentId, action: 'upsert',
+      record: { status: 'done', delivery_status: accepted ? 'accepted' : 'manual_review',
+        last_attempt_at: new Date().toISOString() }
+    }]);
+  } catch {
+    // The durable reservation remains held if status bookkeeping fails.
+  }
+  return accepted ? 'accepted' : 'failed';
+}
+
+
     cache: 'no-store'
   });
   return result.ok;
@@ -221,13 +271,15 @@ export async function POST(request: Request) {
   // Sending a nurture event is strictly opt-in, and never blocks the requested PDF receipt.
   // Failed event delivery is observable to the owner but is not reported as enrollment.
   let marketingEnrolled = false;
+  let nurtureStatus: NurtureStatus | 'not_requested' = 'not_requested';
   if (data.marketingConsent && receiptSent && graphPersisted) {
     try {
-      marketingEnrolled = await startOptInNurture(data, leadId);
+      nurtureStatus = await startOptInNurture(data, leadId);
     } catch {
-      marketingEnrolled = false;
+      nurtureStatus = 'failed';
     }
-    if (!marketingEnrolled && resendReady) {
+    marketingEnrolled = nurtureStatus === 'accepted';
+    if (nurtureStatus === 'failed' && resendReady) {
       try {
         await sendResend({
           from: FROM, to: [process.env.DISPATCH_TO_EMAIL!],
@@ -239,7 +291,7 @@ export async function POST(request: Request) {
       }
     }
   }
-  return NextResponse.json({ ok: true, leadId, guideUrl: GUIDE_PATH, receiptSent, marketingEnrolled }, { status: 201, headers });
+  return NextResponse.json({ ok: true, leadId, guideUrl: GUIDE_PATH, receiptSent, marketingEnrolled, nurtureStatus }, { status: 201, headers });
 }
 export async function GET() {
   return NextResponse.json({
