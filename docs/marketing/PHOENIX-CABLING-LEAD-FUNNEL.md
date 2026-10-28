@@ -130,3 +130,11 @@ A **submitted and successfully delivered RFQ** tagged with a valid Phoenix cabli
 - A failed event does not block an authentic customer's RFQ; it is logged for reconciliation.
 - Local-only proof, failed dispatch delivery, other service types, and unattributed RFQs cannot generate this event.
 - The conversion signal records an **RFQ stage**, not customer revenue. Quote approval, Stripe invoice matching, paid-status reconciliation, and gross-margin proof remain independent required controls.
+
+## Duplicate-enrollment incident response — October 28, 2026
+
+Resend confirmed three distinct enrollment runs for the company-owned dispatch inbox on October 24. Each independently delivered Day 2 and Day 4. The campaign automation was temporarily disabled on October 28 to stop further enrollment while the permanent fix is validated.
+
+The intake API now guards the nurture event with a durable atomic canonical-store claim keyed by **campaign and normalized email**, not the random lead ID. It marks a reservation consumed before contacting Resend, preventing concurrent submissions, reruns, or ambiguous provider responses from emitting duplicates. Provider failure requires manual reconciliation; no blind replay. Existing receipts and service inquiries remain operational.
+
+All `@alreadyherellc.com` and `alreadyherellc@gmail.com` internal QA addresses are explicitly suppressed from marketing enrollment (including when consent is checked for a controlled test). Automated test coverage verifies concurrent submissions, suppression, and failure outcomes. **Re-enable Resend nurture only after CI and deployed production are verified.** Existing runs are not automatically cancelled merely by disabling an automation.
