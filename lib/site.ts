@@ -295,7 +295,7 @@ export const naicsCodes = [
   { code: '541512', desc: 'Computer Systems Design Services' },
   { code: '541519', desc: 'Other Computer-Related Services' },
   { code: '238210', desc: 'Electrical Contractors and Other Wiring Installation Contractors' },
-  { code: '811212', desc: 'Computer and Office Machine Repair and Maintenance' },
+  { code: '811210', desc: 'Electronic and Precision Equipment Repair and Maintenance (computer and office machine repair)' },
   { code: '541611', desc: 'Administrative Management and General Management Consulting Services' }
 ] as const;
 
