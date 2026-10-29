@@ -299,6 +299,19 @@ export const naicsCodes = [
   { code: '541611', desc: 'Administrative Management and General Management Consulting Services' }
 ] as const;
 
+// Facilities support is prime-managed: Already Here holds the contract, schedules, inspects, and closes out;
+// janitorial, landscaping, and HVAC are performed by vetted subcontract partners (HVAC by licensed partners).
+export const facilitiesNaicsCodes = [
+  { code: '561210', desc: 'Facilities Support Services', delivery: 'Prime-managed by Already Here' },
+  { code: '811412', desc: 'Appliance Repair and Maintenance', delivery: 'Performed by Already Here technicians' },
+  { code: '561720', desc: 'Janitorial Services', delivery: 'Vetted subcontract partner, Already Here managed' },
+  { code: '561730', desc: 'Landscaping Services', delivery: 'Vetted subcontract partner, Already Here managed' },
+  { code: '238220', desc: 'Plumbing, Heating, and Air-Conditioning Contractors', delivery: 'Licensed HVAC subcontract partner, Already Here managed' }
+] as const;
+
+export const facilitiesDeliveryNote =
+  'Facilities support is delivered as a single point of accountability: Already Here LLC holds the work order, schedules and supervises the crew, inspects quality, and provides documented closeout. Janitorial, landscaping, and HVAC scopes are performed by vetted subcontract partners; HVAC work is performed by appropriately licensed partners.';
+
 export const pricingTiers = [
   { label: 'Scheduled field engineering', value: '$125/hr · $250 minimum', note: 'Two-hour minimum; scheduled onsite field work' },
   { label: 'Advanced engineering / smart hands', value: '$150/hr · $300 minimum', note: 'Two-hour minimum; data center, server, and advanced infrastructure work' },
