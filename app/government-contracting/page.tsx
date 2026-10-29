@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { naicsCodes, siteConfig } from '@/lib/site';
+import { facilitiesDeliveryNote, facilitiesNaicsCodes, naicsCodes, siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
   alternates: { canonical: '/government-contracting' },
   title: 'Government Contracting Readiness',
-  description: 'Already Here LLC government, municipal, and prime-contractor readiness profile for onsite IT field execution, smart hands, infrastructure support, retail technology, and closeout-heavy technical dispatch.'
+  description: 'Already Here LLC government, municipal, and prime-contractor readiness profile for onsite IT field execution, smart hands, infrastructure support, and prime-managed facilities support across Arizona.'
 };
 
 const readiness = [
@@ -22,7 +22,8 @@ const procurementFits = [
   'Network troubleshooting and site verification',
   'Printer, endpoint, POS, kiosk, and peripheral support',
   'Data-center smart hands and controlled-site technical assistance',
-  'IT asset recovery, inventory, packing, labeling, and return logistics'
+  'IT asset recovery, inventory, packing, labeling, and return logistics',
+  'Facilities support: appliance repair, janitorial, landscaping, and HVAC under one prime-managed work order'
 ];
 
 export default function GovernmentContractingPage() {
@@ -61,6 +62,19 @@ export default function GovernmentContractingPage() {
           <div key={fit} className="card p-6 text-sm leading-7 text-slate-700">{fit}</div>
         ))}
       </div>
+
+      <section className="mt-12 card p-6 sm:p-8">
+        <h2 className="text-2xl font-semibold text-navy">Facilities support</h2>
+        <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-700">{facilitiesDeliveryNote}</p>
+        <div className="mt-6 grid gap-3 md:grid-cols-2">
+          {facilitiesNaicsCodes.map(({ code, desc, delivery }) => (
+            <div key={code} className="rounded-2xl border border-borderBrand bg-soft p-4">
+              <p className="text-sm font-semibold text-navy">{code} · {desc}</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{delivery}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-12 rounded-3xl border border-borderBrand bg-navy p-8 text-white">
         <h2 className="text-2xl font-semibold">Request procurement documents</h2>

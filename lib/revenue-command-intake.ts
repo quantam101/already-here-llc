@@ -51,6 +51,9 @@ function text(input: RevenueIntakeInput): string {
 
 export function classifyRevenueIntake(input: RevenueIntakeInput): IntakeLane {
   const value = text(input);
+  // Federal solicitations from the AH-POS scanner always belong to Procurement, even when the
+  // notice text mentions words that other lanes key on (e.g. "UPS battery", "block storage").
+  if ((input.source || '').toLowerCase().startsWith('sam_gov')) return 'Procurement';
   if (['vin', 'vehicle', 'battery', 'brake', 'starter', 'alternator', 'no-start', 'suspension', 'cooling', 'autoworks'].some((term) => value.includes(term))) return 'AutoWorks';
   if (['haul', 'junk', 'cleanout', 'pickup', 'dump', 'storage', 'trailer'].some((term) => value.includes(term))) return 'Hauling';
   if (['rfq', 'procurement', 'vendor registration', 'bid', 'portal', 'government'].some((term) => value.includes(term))) return 'Procurement';

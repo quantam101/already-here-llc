@@ -85,6 +85,21 @@ const procurement = buildRevenueIntakeProof({
 assert.equal(procurement.lane, 'Procurement');
 assert.ok(procurement.databaseReadyWrites.some((write) => write.table === 'procurement_targets'));
 
+const federal = buildRevenueIntakeProof({
+  source: 'sam_gov',
+  sourceId: 'a1b2c3d4e5f6',
+  fullName: 'Contracting Officer',
+  company: '262-NETWORK CONTRACT OFFICE 22',
+  email: '',
+  title: 'Government RFQ: UPS battery replacement and block storage pickup',
+  body: 'SAM.gov Combined Synopsis/Solicitation. Bid/no-bid decision and any submission require owner approval.',
+  serviceType: 'Federal it solicitation',
+  submittedAt: '2026-10-27T00:00:00.000Z'
+});
+assert.equal(federal.lane, 'Procurement');
+assert.ok(federal.databaseReadyWrites.some((write) => write.table === 'procurement_targets'
+  && write.record.submission_status === 'blocked_pending_owner_approval'));
+
 const product = buildRevenueIntakeProof({
   source: 'test_product',
   fullName: 'Product Test',
