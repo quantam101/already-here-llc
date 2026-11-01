@@ -14,7 +14,7 @@ concurrency:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Probe endpoints and alert on failure
         env:
@@ -23,7 +23,7 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: |
           python3 - <<'PY'
-          import json, os, subprocess, urllib.request, datetime
+          import json, os, subprocess, time, urllib.request, datetime
           # Custom domains cut over to Render/Vercel on 2026-07-12
           # (api -> CNAME profitengine-api-6cwb.onrender.com, app -> CNAME
           # cname.vercel-dns.com); onrender/vercel URLs probed too so a future
@@ -35,12 +35,23 @@ jobs:
               "https://profitengine-runtime.onrender.com/health",
           ]
           # Browser UA: the Next.js edge middleware 403s curl user-agents.
-          # -m 90: Render free tier cold-starts in ~30-60s after idle.
+          # -m 30 per probe; three attempts + 30s pauses still span a ~60s cold start
+          # while keeping the worst case under the job timeout so the alert can send.
           UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36 uptime-monitor"
+          # Render returns 503 while a sleeping free instance boots, so a 5xx is
+          # retried after a pause before it counts as DOWN (3 probes, ~2.5 min).
+          def probe(u):
+              return subprocess.run(["curl","-s","-o","/dev/null","-m","30","-L","-A",UA,"-w","%{http_code}",u],
+                                    capture_output=True, text=True).stdout.strip() or "000"
           down = []
           for u in ENDPOINTS:
-              code = subprocess.run(["curl","-s","-o","/dev/null","-m","90","-L","-A",UA,"-w","%{http_code}",u],
-                                    capture_output=True, text=True).stdout.strip() or "000"
+              code = probe(u)
+              for attempt in range(2):
+                  if code[:1] in ("2","3"):
+                      break
+                  print(f"{code}  {u} (attempt {attempt + 1}, retrying in 30s)")
+                  time.sleep(30)
+                  code = probe(u)
               print(f"{code}  {u}")
               if not code[:1] in ("2","3"):
                   down.append(f"{code}  {u}")
@@ -52,7 +63,7 @@ jobs:
           if key:
               body = ("Uptime monitor detected DOWN endpoints (run %s):\n\n%s\n\nTime: %s UTC"
                       % (os.environ.get("RUN_ID",""), "\n".join(down),
-                         datetime.datetime.utcnow().isoformat(timespec="seconds")))
+                         datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")))
               payload = json.dumps({
                   "from": "Uptime Monitor <dispatch@alreadyherellc.com>",
                   "to": [os.environ["ALERT_TO"]],
