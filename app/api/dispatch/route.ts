@@ -445,10 +445,12 @@ export async function POST(request: Request) {
       // delivered key is still deduplicated instead of delivered again.
       const prior = await store.getRecord(idempotencyTable, idempotencyKey).catch(() => undefined);
       if (prior?.status === 'done') return deduplicatedResponse(prior);
-      if (prior?.status === 'processing') {
+      // Mirror claimEvent's lease rule: only a claim inside its lease still
+      // means "a live attempt is running"; an expired one means it died.
+      if (prior?.status === 'processing' && Date.now() - Number(prior.claimed_at_ms ?? 0) <= idempotencyLeaseMs) {
         return NextResponse.json({ message: 'Identical submission is already being processed.' }, { status: 409 });
       }
-      claim = 'claimed'; // truly unknown: proceed, revenue spine still applies
+      claim = 'claimed'; // truly unknown or expired claim: proceed, revenue spine still applies
     }
     if (claim === 'done') {
       const prior = await store.getRecord(idempotencyTable, idempotencyKey).catch(() => undefined);
