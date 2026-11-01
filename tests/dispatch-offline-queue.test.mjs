@@ -93,5 +93,62 @@ const recovered = await replayDispatchQueue();
 assert.equal(recovered.replayed, 1);
 assert.equal(queuedRecords().length, 0);
 
+// Regression: a submission enqueued while a replay is awaiting the server must
+// survive the replay's write-back (previously the stale snapshot overwrote it).
+store.set(queueKey, JSON.stringify([{ ...record, id: 'offline-a', status: 'queued' }]));
+let releaseFetch;
+const fetchGate = new Promise((resolve) => { releaseFetch = resolve; });
+let concurrentFetchCalls = 0;
+globalThis.fetch = async () => {
+  concurrentFetchCalls += 1;
+  await fetchGate;
+  return new Response('{"ok":true}', { status: 200 });
+};
+
+const pendingReplay = replayDispatchQueue();
+await Promise.resolve();
+const lateForm = new FormData();
+lateForm.set('fullName', 'Late Sender');
+lateForm.set('email', 'late@example.com');
+lateForm.set('message', 'Enqueued mid-replay.');
+const lateRecord = queueDispatchSubmission(lateForm);
+assert.ok(lateRecord, 'late record queued while replay pending');
+assert.equal(queuedRecords().length, 2, 'both records present before replay commits');
+
+// Overlapping callers share the in-flight pass instead of re-sending the batch.
+const overlappingReplay = replayDispatchQueue();
+assert.equal(overlappingReplay, pendingReplay, 'overlapping replay returns the in-flight promise');
+
+releaseFetch();
+const concurrentResult = await pendingReplay;
+assert.equal(concurrentFetchCalls, 1, 'snapshot batch POSTed exactly once despite overlapping callers');
+assert.equal(concurrentResult.replayed, 1);
+assert.equal(concurrentResult.remaining, 1, 'late enqueue is reported as still pending');
+const survivors = queuedRecords();
+assert.equal(survivors.length, 1, 'late enqueue survived the replay write-back');
+assert.equal(survivors[0].id, lateRecord.id);
+assert.equal(survivors[0].status, 'queued');
+
+// After the pass settles, a fresh replay picks up the late record.
+globalThis.fetch = async () => { concurrentFetchCalls += 1; return new Response('{"ok":true}', { status: 200 }); };
+const followUp = await replayDispatchQueue();
+assert.equal(followUp.replayed, 1);
+assert.equal(concurrentFetchCalls, 2);
+assert.equal(queuedRecords().length, 0);
+
+// Failure path: the in-flight guard clears even when fetch throws, so the
+// next pass is not blocked forever.
+store.set(queueKey, JSON.stringify([{ ...record, id: 'offline-b', status: 'queued' }]));
+globalThis.fetch = async () => { throw new TypeError('network down'); };
+const thrown = await replayDispatchQueue();
+assert.equal(thrown.attempted, 1);
+assert.equal(queuedRecords()[0].status, 'failed');
+assert.equal(queuedRecords()[0].lastError, 'network down');
+store.set(queueKey, JSON.stringify([{ ...record, id: 'offline-c', status: 'queued' }]));
+globalThis.fetch = async () => new Response('{"ok":true}', { status: 200 });
+const afterThrow = await replayDispatchQueue();
+assert.equal(afterThrow.attempted, 1, 'guard released after a throwing pass');
+assert.equal(afterThrow.replayed, 1);
+
 globalThis.fetch = originalFetch;
 console.log('dispatch offline queue tests passed');

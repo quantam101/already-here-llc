@@ -82,24 +82,60 @@ export function queueDispatchSubmission(formData: FormData): OfflineDispatchReco
   return record;
 }
 
-export async function replayDispatchQueue(): Promise<{ attempted: number; replayed: number; remaining: number; deferred: number; dead: number }> {
+export type ReplayDispatchQueueResult = { attempted: number; replayed: number; remaining: number; deferred: number; dead: number };
+
+let inFlightReplay: Promise<ReplayDispatchQueueResult> | null = null;
+
+function summarizeQueue(records: OfflineDispatchRecord[], attempted: number, replayed: number, deferred: number): ReplayDispatchQueueResult {
+  return {
+    attempted,
+    replayed,
+    remaining: records.filter((r) => r.status === 'queued' || r.status === 'failed').length,
+    deferred,
+    dead: records.filter((r) => r.status === 'dead').length
+  };
+}
+
+// Merge the processed snapshot back into whatever is in storage now. Records
+// enqueued while a replay was awaiting fetch are not part of the snapshot and
+// must survive; snapshot records take the processed outcome (or drop out when
+// replayed).
+function commitReplayOutcome(snapshotIds: Set<string>, processed: Map<string, OfflineDispatchRecord>): OfflineDispatchRecord[] {
+  const merged: OfflineDispatchRecord[] = [];
+  const seen = new Set<string>();
+  for (const current of readQueue()) {
+    if (seen.has(current.id)) continue;
+    seen.add(current.id);
+    if (!snapshotIds.has(current.id)) {
+      merged.push(current);
+      continue;
+    }
+    const outcome = processed.get(current.id);
+    if (outcome) merged.push(outcome);
+  }
+  writeQueue(merged);
+  return merged;
+}
+
+async function runReplay(): Promise<ReplayDispatchQueueResult> {
   const records = readQueue();
   const now = Date.now();
   let attempted = 0;
   let replayed = 0;
   let deferred = 0;
-  const remaining: OfflineDispatchRecord[] = [];
+  const snapshotIds = new Set(records.map((record) => record.id));
+  const processed = new Map<string, OfflineDispatchRecord>();
 
   for (const record of records) {
     if (record.status === 'replayed') continue;
     if (record.status === 'dead') {
-      remaining.push(record);
+      processed.set(record.id, record);
       continue;
     }
 
     if (record.nextAttemptAt && Date.parse(record.nextAttemptAt) > now) {
       deferred += 1;
-      remaining.push(record);
+      processed.set(record.id, record);
       continue;
     }
 
@@ -116,7 +152,7 @@ export async function replayDispatchQueue(): Promise<{ attempted: number; replay
       const attempts = record.attempts + 1;
       const maxAttempts = record.maxAttempts ?? defaultMaxAttempts;
       const exhausted = attempts >= maxAttempts;
-      remaining.push({
+      processed.set(record.id, {
         ...record,
         attempts,
         status: exhausted ? 'dead' : 'failed',
@@ -127,8 +163,20 @@ export async function replayDispatchQueue(): Promise<{ attempted: number; replay
     }
   }
 
-  writeQueue(remaining);
-  return { attempted, replayed, remaining: remaining.filter((r) => r.status !== 'dead').length, deferred, dead: remaining.filter((r) => r.status === 'dead').length };
+  const merged = commitReplayOutcome(snapshotIds, processed);
+  return summarizeQueue(merged, attempted, replayed, deferred);
+}
+
+// Only one replay runs per page at a time. Overlapping callers (mount effect,
+// `online` event, manual retry) share the in-flight pass so a batch is never
+// POSTed twice.
+export function replayDispatchQueue(): Promise<ReplayDispatchQueueResult> {
+  if (inFlightReplay) return inFlightReplay;
+  const pending = runReplay().finally(() => {
+    if (inFlightReplay === pending) inFlightReplay = null;
+  });
+  inFlightReplay = pending;
+  return pending;
 }
 
 export function getDispatchQueueDepth(): number {
