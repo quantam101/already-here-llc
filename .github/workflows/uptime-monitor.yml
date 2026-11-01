@@ -31,8 +31,10 @@ jobs:
           ENDPOINTS = [
               "https://api.alreadyherellc.com/api/health",
               "https://app.alreadyherellc.com",
+              "https://www.alreadyherellc.com/api/health",
               "https://profitengine-api-6cwb.onrender.com/api/health",
               "https://profitengine-runtime.onrender.com/health",
+              "https://daily-command-os.vercel.app/api/health",
           ]
           # Browser UA: the Next.js edge middleware 403s curl user-agents.
           # -m 30 per probe; three attempts + 30s pauses still span a ~60s cold start
