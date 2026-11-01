@@ -31,12 +31,17 @@ jobs:
           ENDPOINTS = [
               "https://api.alreadyherellc.com/api/health",
               "https://app.alreadyherellc.com",
+              "https://www.alreadyherellc.com/api/health",
               "https://profitengine-api-6cwb.onrender.com/api/health",
               "https://profitengine-runtime.onrender.com/health",
+              "https://daily-command-os.vercel.app/api/health",
           ]
           # Browser UA: the Next.js edge middleware 403s curl user-agents.
-          # -m 30 per probe; three attempts + 30s pauses still span a ~60s cold start
-          # while keeping the worst case under the job timeout so the alert can send.
+          # -m 30 per probe; three attempts + 30s pauses still span a ~60s cold start.
+          # DEADLINE reserves the last 120s of the 15-min job limit for sending the
+          # alert: retries stop once it passes, so a total outage can't consume the
+          # whole job before the email fires (6 endpoints × ~150s worst case = 900s).
+          DEADLINE = time.time() + 13 * 60
           UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36 uptime-monitor"
           # Render returns 503 while a sleeping free instance boots, so a 5xx is
           # retried after a pause before it counts as DOWN (3 probes, ~2.5 min).
@@ -47,7 +52,7 @@ jobs:
           for u in ENDPOINTS:
               code = probe(u)
               for attempt in range(2):
-                  if code[:1] in ("2","3"):
+                  if code[:1] in ("2","3") or time.time() > DEADLINE:
                       break
                   print(f"{code}  {u} (attempt {attempt + 1}, retrying in 30s)")
                   time.sleep(30)
