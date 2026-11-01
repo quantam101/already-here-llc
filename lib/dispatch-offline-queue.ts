@@ -17,6 +17,31 @@ const defaultMaxAttempts = 6;
 const baseBackoffMs = 30_000;
 const maxBackoffMs = 30 * 60_000;
 
+const ulidAlphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+function encodeUlidTime(time: number): string {
+  let out = '';
+  for (let i = 0; i < 10; i += 1) {
+    out = ulidAlphabet[time % 32] + out;
+    time = Math.floor(time / 32);
+  }
+  return out;
+}
+
+function encodeUlidRandom(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  let out = '';
+  for (const byte of bytes) out += ulidAlphabet[byte % 32];
+  return out;
+}
+
+// ULID minted once per user submission intent and resent verbatim on every
+// replay, so the server can dedupe retries / double-submits to one dispatch.
+export function newDispatchIdempotencyKey(): string {
+  return encodeUlidTime(Date.now()) + encodeUlidRandom();
+}
+
 function nextAttemptDelayMs(attempts: number): number {
   return Math.min(maxBackoffMs, baseBackoffMs * 2 ** Math.max(0, attempts - 1));
 }
@@ -62,6 +87,8 @@ export function queueDispatchSubmission(formData: FormData): OfflineDispatchReco
       fields[key] = value;
     }
   }
+
+  if (!fields.idempotencyKey) fields.idempotencyKey = newDispatchIdempotencyKey();
 
   const timestamp = nowIso();
   const record: OfflineDispatchRecord = {
