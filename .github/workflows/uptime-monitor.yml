@@ -14,7 +14,7 @@ concurrency:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Probe endpoints and alert on failure
         env:
@@ -35,12 +35,13 @@ jobs:
               "https://profitengine-runtime.onrender.com/health",
           ]
           # Browser UA: the Next.js edge middleware 403s curl user-agents.
-          # -m 90: Render free tier cold-starts in ~30-60s after idle.
+          # -m 30 per probe; three attempts + 30s pauses still span a ~60s cold start
+          # while keeping the worst case under the job timeout so the alert can send.
           UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36 uptime-monitor"
           # Render returns 503 while a sleeping free instance boots, so a 5xx is
           # retried after a pause before it counts as DOWN (3 probes, ~2.5 min).
           def probe(u):
-              return subprocess.run(["curl","-s","-o","/dev/null","-m","90","-L","-A",UA,"-w","%{http_code}",u],
+              return subprocess.run(["curl","-s","-o","/dev/null","-m","30","-L","-A",UA,"-w","%{http_code}",u],
                                     capture_output=True, text=True).stdout.strip() or "000"
           down = []
           for u in ENDPOINTS:
