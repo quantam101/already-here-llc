@@ -452,6 +452,18 @@ export async function POST(request: Request) {
       }
       claim = 'claimed'; // truly unknown or expired claim: proceed, revenue spine still applies
     }
+    if (claim === 'claimed') {
+      // Degraded path reached without holding the atomic claim — write a
+      // best-effort 'processing' marker so a concurrent retry is likely to
+      // see it rather than deliver a second time. Not a CAS: the store is
+      // already presumed flaky here, this narrows the race window.
+      await store.executeWrites([{
+        table: idempotencyTable,
+        id: idempotencyKey,
+        action: 'upsert',
+        record: { status: 'processing', claimed_at_ms: Date.now(), created_at: new Date().toISOString(), source: 'dispatch' }
+      }]).catch(() => null);
+    }
     if (claim === 'done') {
       const prior = await store.getRecord(idempotencyTable, idempotencyKey).catch(() => undefined);
       return deduplicatedResponse(prior);
