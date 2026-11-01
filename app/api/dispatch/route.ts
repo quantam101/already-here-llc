@@ -30,6 +30,9 @@ const maxFieldLengths: Record<string, number> = {
 };
 
 const requiredFields = ['fullName', 'company', 'email', 'siteCity', 'serviceType', 'message'];
+const idempotencyTable = 'dispatch_submission';
+const idempotencyLeaseMs = 5 * 60_000;
+const idempotencyKeyPattern = /^[A-Za-z0-9]{26,40}$/;
 const rateLimitWindowMs = 60_000;
 const rateLimitMax = 5;
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
@@ -419,7 +422,37 @@ export async function POST(request: Request) {
   if (process.env.NODE_ENV === 'production' && !isCanonicalStoreDurable()) {
     return NextResponse.json({ message: 'Durable dispatch intake is unavailable.', dispatchId }, { status: 503 });
   }
-  const writeResult = await getCanonicalStore().executeWrites(revenueSpine.databaseReadyWrites);
+
+  // Exactly-once intake: the client mints an idempotency key per submission
+  // intent and replays resend it verbatim. A key already 'done' returns its
+  // original result instead of creating a second dispatch/email.
+  const rawIdempotencyKey = asCleanString(formData, 'idempotencyKey');
+  const idempotencyKey = idempotencyKeyPattern.test(rawIdempotencyKey) ? rawIdempotencyKey : '';
+  const store = getCanonicalStore();
+  let idempotencyClaimed = false;
+  if (idempotencyKey) {
+    let claim: 'claimed' | 'done' | 'in_progress';
+    try {
+      claim = await store.claimEvent(idempotencyTable, idempotencyKey, { created_at: new Date().toISOString(), source: 'dispatch' }, { leaseMs: idempotencyLeaseMs });
+    } catch {
+      claim = 'claimed'; // dedupe store unavailable: fail open, revenue spine still applies
+    }
+    if (claim === 'done') {
+      const prior = await store.getRecord(idempotencyTable, idempotencyKey).catch(() => undefined);
+      return NextResponse.json({
+        ok: true,
+        deduplicated: true,
+        dispatchId: typeof prior?.dispatch_id === 'string' ? prior.dispatch_id : undefined,
+        message: 'Submission already received.'
+      });
+    }
+    if (claim === 'in_progress') {
+      return NextResponse.json({ message: 'Identical submission is already being processed.' }, { status: 409 });
+    }
+    idempotencyClaimed = true;
+  }
+
+  const writeResult = await store.executeWrites(revenueSpine.databaseReadyWrites);
   if (!writeResult.ok) return NextResponse.json({ message: 'Dispatch intake could not be recorded.', dispatchId }, { status: 503 });
 
   if (!localProofMode && !hasResend && !hasFormspree) {
@@ -427,6 +460,14 @@ export async function POST(request: Request) {
   }
 
   if (localProofMode) {
+    if (idempotencyClaimed) {
+      await store.executeWrites([{
+        table: idempotencyTable,
+        id: idempotencyKey,
+        action: 'upsert',
+        record: { status: 'done', dispatch_id: dispatchId, delivery: 'local_proof_only', completed_at: new Date().toISOString() }
+      }]).catch(() => ({ ok: false, insertedIds: [], failed: [] }));
+    }
     return NextResponse.json({
       ok: true,
       dispatchId,
@@ -474,6 +515,15 @@ export async function POST(request: Request) {
       ).catch(() => {});
     }
 
+    if (idempotencyClaimed) {
+      await store.executeWrites([{
+        table: idempotencyTable,
+        id: idempotencyKey,
+        action: 'upsert',
+        record: { status: 'done', dispatch_id: dispatchId, delivery: delivery.delivery, completed_at: new Date().toISOString() }
+      }]).catch(() => ({ ok: false, insertedIds: [], failed: [] }));
+    }
+
     return NextResponse.json({
       ok: true,
       dispatchId,
@@ -487,6 +537,16 @@ export async function POST(request: Request) {
       revenueSpine
     });
   } catch (error) {
+    if (idempotencyClaimed) {
+      // Release the claim so a retry of the same intent can re-claim it now
+      // instead of waiting out the processing lease.
+      await store.executeWrites([{
+        table: idempotencyTable,
+        id: idempotencyKey,
+        action: 'upsert',
+        record: { status: 'failed', dispatch_id: dispatchId, failed_at: new Date().toISOString() }
+      }]).catch(() => ({ ok: false, insertedIds: [], failed: [] }));
+    }
     const message = error instanceof Error ? error.message : 'Dispatch submission failed.';
     return NextResponse.json({ message, dispatchId, triage, revenueSpine }, { status: 502 });
   }

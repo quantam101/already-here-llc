@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { dispatchTypes } from '@/lib/site';
-import { getDispatchQueueDepth, queueDispatchSubmission, replayDispatchQueue } from '@/lib/dispatch-offline-queue';
+import { getDispatchQueueDepth, newDispatchIdempotencyKey, queueDispatchSubmission, replayDispatchQueue } from '@/lib/dispatch-offline-queue';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 
 type SubmitState = {
@@ -88,6 +88,9 @@ export function DispatchForm() {
     }
 
     setIsSubmitting(true);
+    // One key per submission intent: retries/replays of THIS submit resend it
+    // verbatim so the server treats them as one dispatch, not duplicates.
+    formData.set('idempotencyKey', newDispatchIdempotencyKey());
 
     try {
       const response = await fetch('/api/dispatch', { method: 'POST', body: formData });

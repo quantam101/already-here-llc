@@ -219,3 +219,65 @@ await withEnv(
     }
   }
 );
+
+// Exactly-once: replaying the same idempotency key returns the original result
+// instead of creating a second dispatch.
+await withEnv(
+  {
+    RESEND_API_KEY: '',
+    DISPATCH_TO_EMAIL: '',
+    FORMSPREE_ENDPOINT: ''
+  },
+  async () => {
+    const key = '01JEXAMPLEKEY0000000000000A';
+    const localProof = { 'x-real-ip': '203.0.113.20', 'x-ah-local-proof': 'true' };
+
+    const first = await dispatchApiPost(formRequest(dispatchForm({ idempotencyKey: key }), localProof));
+    assert.equal(first.status, 200);
+    const firstJson = await first.json();
+    assert.equal(firstJson.ok, true);
+    assert.ok(firstJson.dispatchId, 'first submission mints a dispatch id');
+
+    const replay = await dispatchApiPost(formRequest(dispatchForm({ idempotencyKey: key }), localProof));
+    assert.equal(replay.status, 200);
+    const replayJson = await replay.json();
+    assert.equal(replayJson.deduplicated, true, 'replayed key is deduplicated');
+    assert.equal(replayJson.dispatchId, firstJson.dispatchId, 'replay returns the original dispatch id');
+
+    const fresh = await dispatchApiPost(
+      formRequest(dispatchForm({ idempotencyKey: '01JEXAMPLEKEY0000000000000B' }), localProof)
+    );
+    assert.equal(fresh.status, 200);
+    const freshJson = await fresh.json();
+    assert.notEqual(freshJson.deduplicated, true);
+    assert.notEqual(freshJson.dispatchId, firstJson.dispatchId, 'a new key creates a new dispatch');
+  }
+);
+
+// Delivery failure releases the claim so a retry of the same intent re-processes.
+await withEnv(
+  {
+    RESEND_API_KEY: 'test',
+    DISPATCH_TO_EMAIL: 'dispatch@example.com',
+    FORMSPREE_ENDPOINT: ''
+  },
+  async () => {
+    const key = '01JEXAMPLEKEY0000000000000C';
+    const headers = { 'x-real-ip': '203.0.113.21' };
+    const originalFetch = globalThis.fetch;
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      return new Response(JSON.stringify({ message: 'down' }), { status: 500 });
+    };
+    try {
+      const first = await dispatchApiPost(formRequest(dispatchForm({ idempotencyKey: key }), headers));
+      assert.equal(first.status, 502);
+      const retry = await dispatchApiPost(formRequest(dispatchForm({ idempotencyKey: key }), headers));
+      assert.equal(retry.status, 502, 'failed claim is released for immediate retry, not stuck in_progress');
+      assert.equal(calls, 4, 'both attempts reached the provider');
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  }
+);

@@ -150,5 +150,28 @@ const afterThrow = await replayDispatchQueue();
 assert.equal(afterThrow.attempted, 1, 'guard released after a throwing pass');
 assert.equal(afterThrow.replayed, 1);
 
+// Idempotency: every queued record carries a ULID minted at enqueue and the
+// replay POST resends it verbatim so the server can dedupe retries.
+assert.match(record.fields.idempotencyKey, /^[0-9A-Z]{26}$/, 'enqueue mints a ULID idempotency key');
+assert.match(lateRecord.fields.idempotencyKey, /^[0-9A-Z]{26}$/);
+assert.notEqual(record.fields.idempotencyKey, lateRecord.fields.idempotencyKey, 'keys are unique per submission intent');
+
+store.set(queueKey, JSON.stringify([{ ...record, id: 'offline-d', status: 'queued' }]));
+let postedKey;
+globalThis.fetch = async (input, init) => {
+  postedKey = init.body.get('idempotencyKey');
+  return new Response('{"ok":true}', { status: 200 });
+};
+const keyed = await replayDispatchQueue();
+assert.equal(keyed.replayed, 1);
+assert.equal(postedKey, record.fields.idempotencyKey, 'replay resends the same key verbatim');
+
+// A pre-minted key on the incoming FormData is preserved, not overwritten.
+const preKeyedForm = new FormData();
+preKeyedForm.set('fullName', 'Pre Keyed');
+preKeyedForm.set('idempotencyKey', '0123456789ABCDEFGHJKMNPQRS');
+const preKeyed = queueDispatchSubmission(preKeyedForm);
+assert.equal(preKeyed.fields.idempotencyKey, '0123456789ABCDEFGHJKMNPQRS', 'existing intent key is preserved');
+
 globalThis.fetch = originalFetch;
 console.log('dispatch offline queue tests passed');
