@@ -429,28 +429,51 @@ export async function POST(request: Request) {
   const rawIdempotencyKey = asCleanString(formData, 'idempotencyKey');
   const idempotencyKey = idempotencyKeyPattern.test(rawIdempotencyKey) ? rawIdempotencyKey : '';
   const store = getCanonicalStore();
+  const deduplicatedResponse = (prior: Record<string, unknown> | undefined) => NextResponse.json({
+    ok: true,
+    deduplicated: true,
+    dispatchId: typeof prior?.dispatch_id === 'string' ? prior.dispatch_id : undefined,
+    message: 'Submission already received.'
+  });
   let idempotencyClaimed = false;
   if (idempotencyKey) {
     let claim: 'claimed' | 'done' | 'in_progress';
     try {
       claim = await store.claimEvent(idempotencyTable, idempotencyKey, { created_at: new Date().toISOString(), source: 'dispatch' }, { leaseMs: idempotencyLeaseMs });
     } catch {
-      claim = 'claimed'; // dedupe store unavailable: fail open, revenue spine still applies
+      // The claim call itself failed: fall back to a read so an already
+      // delivered key is still deduplicated instead of delivered again.
+      const prior = await store.getRecord(idempotencyTable, idempotencyKey).catch(() => undefined);
+      if (prior?.status === 'done') return deduplicatedResponse(prior);
+      if (prior?.status === 'processing') {
+        return NextResponse.json({ message: 'Identical submission is already being processed.' }, { status: 409 });
+      }
+      claim = 'claimed'; // truly unknown: proceed, revenue spine still applies
     }
     if (claim === 'done') {
       const prior = await store.getRecord(idempotencyTable, idempotencyKey).catch(() => undefined);
-      return NextResponse.json({
-        ok: true,
-        deduplicated: true,
-        dispatchId: typeof prior?.dispatch_id === 'string' ? prior.dispatch_id : undefined,
-        message: 'Submission already received.'
-      });
+      return deduplicatedResponse(prior);
     }
     if (claim === 'in_progress') {
       return NextResponse.json({ message: 'Identical submission is already being processed.' }, { status: 409 });
     }
     idempotencyClaimed = true;
   }
+
+  const settleIdempotencyKey = async (record: Record<string, unknown>) => {
+    // A terminal write that fails leaves the key in 'processing', so a replay
+    // would reclaim it after the lease and deliver again — retry before giving up.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const result = await store.executeWrites([{
+        table: idempotencyTable,
+        id: idempotencyKey,
+        action: 'upsert',
+        record
+      }]).catch(() => null);
+      if (result?.ok) return;
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+  };
 
   const writeResult = await store.executeWrites(revenueSpine.databaseReadyWrites);
   if (!writeResult.ok) return NextResponse.json({ message: 'Dispatch intake could not be recorded.', dispatchId }, { status: 503 });
@@ -461,12 +484,7 @@ export async function POST(request: Request) {
 
   if (localProofMode) {
     if (idempotencyClaimed) {
-      await store.executeWrites([{
-        table: idempotencyTable,
-        id: idempotencyKey,
-        action: 'upsert',
-        record: { status: 'done', dispatch_id: dispatchId, delivery: 'local_proof_only', completed_at: new Date().toISOString() }
-      }]).catch(() => ({ ok: false, insertedIds: [], failed: [] }));
+      await settleIdempotencyKey({ status: 'done', dispatch_id: dispatchId, delivery: 'local_proof_only', completed_at: new Date().toISOString() });
     }
     return NextResponse.json({
       ok: true,
@@ -516,12 +534,7 @@ export async function POST(request: Request) {
     }
 
     if (idempotencyClaimed) {
-      await store.executeWrites([{
-        table: idempotencyTable,
-        id: idempotencyKey,
-        action: 'upsert',
-        record: { status: 'done', dispatch_id: dispatchId, delivery: delivery.delivery, completed_at: new Date().toISOString() }
-      }]).catch(() => ({ ok: false, insertedIds: [], failed: [] }));
+      await settleIdempotencyKey({ status: 'done', dispatch_id: dispatchId, delivery: delivery.delivery, completed_at: new Date().toISOString() });
     }
 
     return NextResponse.json({
@@ -537,17 +550,21 @@ export async function POST(request: Request) {
       revenueSpine
     });
   } catch (error) {
-    if (idempotencyClaimed) {
-      // Release the claim so a retry of the same intent can re-claim it now
-      // instead of waiting out the processing lease.
-      await store.executeWrites([{
-        table: idempotencyTable,
-        id: idempotencyKey,
-        action: 'upsert',
-        record: { status: 'failed', dispatch_id: dispatchId, failed_at: new Date().toISOString() }
-      }]).catch(() => ({ ok: false, insertedIds: [], failed: [] }));
-    }
     const message = error instanceof Error ? error.message : 'Dispatch submission failed.';
+    if (idempotencyClaimed) {
+      // Delivery may have partially succeeded (e.g. the dispatch email was
+      // accepted but the requester receipt failed). The lead is already
+      // durable in the revenue spine, so mark the key done rather than let a
+      // replay send the same dispatch email a second time; the error stays on
+      // the record for reconciliation.
+      await settleIdempotencyKey({
+        status: 'done',
+        dispatch_id: dispatchId,
+        delivery: 'uncertain',
+        last_error: message,
+        completed_at: new Date().toISOString()
+      });
+    }
     return NextResponse.json({ message, dispatchId, triage, revenueSpine }, { status: 502 });
   }
 }

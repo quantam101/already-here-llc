@@ -254,7 +254,8 @@ await withEnv(
   }
 );
 
-// Delivery failure releases the claim so a retry of the same intent re-processes.
+// Ambiguous delivery failure: the key settles 'done' so a replay cannot send a
+// possibly-already-sent dispatch email twice. The lead is durable in the spine.
 await withEnv(
   {
     RESEND_API_KEY: 'test',
@@ -274,8 +275,10 @@ await withEnv(
       const first = await dispatchApiPost(formRequest(dispatchForm({ idempotencyKey: key }), headers));
       assert.equal(first.status, 502);
       const retry = await dispatchApiPost(formRequest(dispatchForm({ idempotencyKey: key }), headers));
-      assert.equal(retry.status, 502, 'failed claim is released for immediate retry, not stuck in_progress');
-      assert.equal(calls, 4, 'both attempts reached the provider');
+      assert.equal(retry.status, 200, 'replay of an ambiguous failure dedupes instead of resending');
+      const retryJson = await retry.json();
+      assert.equal(retryJson.deduplicated, true);
+      assert.equal(calls, 2, 'provider is never hit a second time for the same intent');
     } finally {
       globalThis.fetch = originalFetch;
     }
