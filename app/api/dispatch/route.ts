@@ -441,28 +441,11 @@ export async function POST(request: Request) {
     try {
       claim = await store.claimEvent(idempotencyTable, idempotencyKey, { created_at: new Date().toISOString(), source: 'dispatch' }, { leaseMs: idempotencyLeaseMs });
     } catch {
-      // The claim call itself failed: fall back to a read so an already
-      // delivered key is still deduplicated instead of delivered again.
-      const prior = await store.getRecord(idempotencyTable, idempotencyKey).catch(() => undefined);
-      if (prior?.status === 'done') return deduplicatedResponse(prior);
-      // Mirror claimEvent's lease rule: only a claim inside its lease still
-      // means "a live attempt is running"; an expired one means it died.
-      if (prior?.status === 'processing' && Date.now() - Number(prior.claimed_at_ms ?? 0) <= idempotencyLeaseMs) {
-        return NextResponse.json({ message: 'Identical submission is already being processed.' }, { status: 409 });
-      }
-      claim = 'claimed'; // truly unknown or expired claim: proceed, revenue spine still applies
-    }
-    if (claim === 'claimed') {
-      // Degraded path reached without holding the atomic claim — write a
-      // best-effort 'processing' marker so a concurrent retry is likely to
-      // see it rather than deliver a second time. Not a CAS: the store is
-      // already presumed flaky here, this narrows the race window.
-      await store.executeWrites([{
-        table: idempotencyTable,
-        id: idempotencyKey,
-        action: 'upsert',
-        record: { status: 'processing', claimed_at_ms: Date.now(), created_at: new Date().toISOString(), source: 'dispatch' }
-      }]).catch(() => null);
+      // Fail closed: without the atomic claim there is no dedupe guarantee —
+      // every fallback (read-then-proceed, best-effort marker) opens a race
+      // that can double-deliver or strand the key. A 503 tells the client
+      // to retry once the store is healthy.
+      return NextResponse.json({ message: 'Submission check temporarily unavailable — please retry.' }, { status: 503 });
     }
     if (claim === 'done') {
       const prior = await store.getRecord(idempotencyTable, idempotencyKey).catch(() => undefined);
