@@ -13,7 +13,7 @@
     {
       "id": "arizona-procurement-portal",
       "type": "public_portal",
-      "url": "https://app.az.gov/page/procurement",
+      "url": "https://app.az.gov/",
       "allowedUse": "manual_review",
       "notes": "Human must verify vendor eligibility, insurance, certifications, and bid requirements."
     },
@@ -23,6 +23,69 @@
       "url": "https://www.tempe.gov/government/financial-services/procurement",
       "allowedUse": "manual_review",
       "notes": "Track opportunities relevant to field services, transport, IT support, or facilities support."
+    },
+    {
+      "id": "dla-dibbs",
+      "type": "public_portal",
+      "url": "https://www.dibbs.bsm.dla.mil/",
+      "allowedUse": "manual_review",
+      "notes": "Supply RFQs; verify stock, sourcing and landed cost."
+    },
+    {
+      "id": "piee-solicitations",
+      "type": "public_portal",
+      "url": "https://piee.eb.mil/sol/xhtml/unauth/index.xhtml",
+      "allowedUse": "manual_review",
+      "notes": "Public notices only; restricted attachments require authorized access."
+    },
+    {
+      "id": "unison-marketplace",
+      "type": "public_portal",
+      "url": "https://marketplace.unisonglobal.com/",
+      "allowedUse": "manual_review",
+      "notes": "Include transaction fees in bid economics."
+    },
+    {
+      "id": "phoenix-opengov",
+      "type": "public_portal",
+      "url": "https://www.phoenix.gov/administration/departments/finance/procurement.html",
+      "allowedUse": "manual_review",
+      "notes": "Subscribe and follow notices in OpenGov; procurePHX handles payment registration."
+    },
+    {
+      "id": "maricopa-procurement",
+      "type": "public_portal",
+      "url": "https://www.maricopa.gov/2084/Procurement-Services",
+      "allowedUse": "manual_review",
+      "notes": "Follow official county links to current bidding platform."
+    },
+    {
+      "id": "mesa-procurement",
+      "type": "public_portal",
+      "url": "https://www.mesaaz.gov/Home/Featured-Content/Vendor-Bid-Opportunities",
+      "allowedUse": "manual_review",
+      "notes": "Verify official notice and amendments."
+    },
+    {
+      "id": "chandler-procurement",
+      "type": "public_portal",
+      "url": "https://www.chandleraz.gov/business/vendor-services/purchasing",
+      "allowedUse": "manual_review",
+      "notes": "Verify mandatory meetings and submission instructions."
+    },
+    {
+      "id": "instantmarkets",
+      "type": "public_portal",
+      "url": "https://www.instantmarkets.com/",
+      "allowedUse": "public_discovery_only",
+      "notes": "Secondary discovery; no subscription or trial authorization."
+    },
+    {
+      "id": "govbidwatch",
+      "type": "public_portal",
+      "url": "https://govbidwatch.com/search",
+      "allowedUse": "public_discovery_only",
+      "notes": "Secondary discovery; paid alerts not enabled."
     }
   ],
   "includeTerms": [
@@ -36,7 +99,18 @@
     "camera installation",
     "POS support",
     "printer support",
-    "site survey"
+    "site survey",
+    "managed services",
+    "IT support",
+    "network infrastructure",
+    "wireless",
+    "structured cabling",
+    "access control",
+    "CCTV",
+    "biomedical",
+    "help desk",
+    "desktop support",
+    "data center"
   ],
   "excludeTerms": [
     "construction bond required",
@@ -50,5 +124,11 @@
     "claimCertificationsAutomatically": false,
     "requiresHumanEligibilityReview": true,
     "secretHandling": "environment_variables_only"
+  },
+  "watchPolicy": {
+    "minimumScore": 75,
+    "freshnessHours": 48,
+    "automaticSubmission": false,
+    "notificationDelivery": "pending_outbox_not_delivery_confirmation"
   }
 }
