@@ -49,8 +49,6 @@ export async function GET(request: Request) {
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '100', 10) || 100, 1000);
 
   const oci = await probeOCI();
-  await recordSystemHealthSignal({ source: 'oci', component: 'oci_vm', ...oci });
-
   const signals = await querySystemHealthSignals(limit);
   return NextResponse.json({ ok: true, oci, signals });
 }
