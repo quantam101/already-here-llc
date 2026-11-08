@@ -16,6 +16,7 @@ export interface ServiceOffer {
   exclusions: string[];
   startingPrice: string;
   startingPriceCents: number;
+  stripePriceId: string;
   productName: string;
   cta: string;
   faq: Array<{ question: string; answer: string }>;
@@ -75,6 +76,7 @@ export default function ServiceOfferPage({ offer }: { offer: ServiceOffer }) {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <StripePaymentButton
               amount={offer.startingPriceCents}
+              priceId={offer.stripePriceId}
               productName={offer.productName}
               description={offer.description}
               successPath={`/thank-you?offer=${offer.slug}`}
@@ -177,6 +179,7 @@ export default function ServiceOfferPage({ offer }: { offer: ServiceOffer }) {
               </div>
               <StripePaymentButton
                 amount={offer.startingPriceCents}
+                priceId={offer.stripePriceId}
                 productName={offer.productName}
                 description={offer.description}
                 successPath={`/thank-you?offer=${offer.slug}`}

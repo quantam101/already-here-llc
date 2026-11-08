@@ -37,6 +37,7 @@ const offer: ServiceOffer = {
   ],
   startingPrice: '$149',
   startingPriceCents: 14900,
+  stripePriceId: 'price_1UZV8FLCbDeoJgURWXxpwxxq',
   productName: 'Field Operations Workflow Review',
   cta: 'Book Workflow Review — $149',
   faq: [

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCanonicalStore } from '@/lib/canonical-store';
+import { getCanonicalStore, getCanonicalStoreMode, isCanonicalStoreDurable } from '@/lib/canonical-store';
 import { ociHealthCheck } from '@/lib/oci-canonical-client';
 import { isLiveMode, sanitizeStripeKey, stripe } from '@/lib/stripe';
 
@@ -39,15 +39,22 @@ export async function GET() {
     });
   }
 
-  // OCI canonical persistence
+  // OCI canonical persistence is required only when it is the configured canonical backend.
   const ociStart = performance.now();
+  const ociConfigured = Boolean(process.env.OCI_CANONICAL_URL?.trim() && process.env.OCI_CANONICAL_API_KEY?.trim());
+  const durableStoreMode = getCanonicalStoreMode();
+  const ociOptional = !ociConfigured && durableStoreMode !== 'remote' && isCanonicalStoreDurable();
   const ociHealth = await ociHealthCheck();
   if (ociHealth === undefined) {
     services.push({
       name: 'oci_canonical',
-      ok: false,
-      status: 'not_configured',
-      message: 'Set OCI_CANONICAL_URL and OCI_CANONICAL_API_KEY to enable OCI persistence.'
+      ok: ociOptional,
+      status: ociConfigured ? 'degraded' : (ociOptional ? 'not_required' : 'not_configured'),
+      message: ociConfigured
+        ? 'OCI canonical health check failed.'
+        : ociOptional
+          ? 'Using durable ' + durableStoreMode + ' canonical store; OCI persistence is optional.'
+          : 'Set OCI_CANONICAL_URL and OCI_CANONICAL_API_KEY to enable OCI persistence.'
     });
   } else {
     services.push({

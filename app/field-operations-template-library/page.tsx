@@ -59,6 +59,7 @@ const tiers = [
   {
     name: 'Starter',
     priceCents: 4900,
+    stripePriceId: 'price_1UZV8GLCbDeoJgURmYvwEaqb',
     price: '$49',
     description: 'Core templates for a single operator or small crew.',
     features: ['Work order template', 'Technician intake template', 'Closeout checklist']
@@ -66,6 +67,7 @@ const tiers = [
   {
     name: 'Professional',
     priceCents: 12900,
+    stripePriceId: 'price_1UZV8GLCbDeoJgURV8vhmTGh',
     price: '$129',
     description: 'Full template set plus asset register and quote-to-cash checklist.',
     features: ['All Starter files', 'Asset register template', 'Quote-to-cash checklist', 'Email support']
@@ -73,6 +75,7 @@ const tiers = [
   {
     name: 'Company',
     priceCents: 34900,
+    stripePriceId: 'price_1UZV8GLCbDeoJgURPkTw9bEo',
     price: '$349',
     description: 'Multi-user license plus custom deployment guidance.',
     features: ['All Professional files', 'Multi-site license', '1-hour implementation walkthrough', '60 days of async support']
@@ -142,6 +145,7 @@ export default function FieldOperationsTemplateLibraryPage() {
               <div className="mt-8">
                 <StripePaymentButton
                   amount={tier.priceCents}
+                  priceId={tier.stripePriceId}
                   productName={`Field Operations Template Library — ${tier.name}`}
                   description={`${tier.name} tier: ${tier.features.join(', ')}`}
                   successPath="/thank-you?download=field-ops"
