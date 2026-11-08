@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { GET as dispatchApiGet, POST as dispatchApiPost } from '../app/api/dispatch/route.ts';
+import { getCanonicalStore, resetCanonicalStore } from '../lib/canonical-store.ts';
 
 async function withEnv(patch, callback) {
   const originals = {};
@@ -253,6 +254,47 @@ await withEnv(
     assert.notEqual(freshJson.dispatchId, firstJson.dispatchId, 'a new key creates a new dispatch');
   }
 );
+
+// A delivery outage after the revenue-spine write must not multiply canonical
+// records when the same idempotency key is retried after its claim lease.
+await withEnv(
+  {
+    RESEND_API_KEY: '',
+    DISPATCH_TO_EMAIL: '',
+    FORMSPREE_ENDPOINT: ''
+  },
+  async () => {
+    resetCanonicalStore();
+    const store = getCanonicalStore();
+    const key = '01JEXAMPLEKEY0000000000000D';
+    const headers = { 'x-real-ip': '203.0.113.22' };
+
+    const first = await dispatchApiPost(formRequest(dispatchForm({ idempotencyKey: key }), headers));
+    assert.equal(first.status, 503);
+    const claim = await store.getRecord('dispatch_submission', key);
+    assert.equal(claim?.status, 'processing');
+
+    await store.executeWrites([{
+      table: 'dispatch_submission',
+      id: key,
+      action: 'upsert',
+      record: { claimed_at_ms: Date.now() - 6 * 60_000 }
+    }]);
+
+    const leadsBefore = await store.queryTable('leads', 1000);
+    const opportunitiesBefore = await store.queryTable('opportunities', 1000);
+    const retry = await dispatchApiPost(formRequest(dispatchForm({ idempotencyKey: key }), headers));
+    assert.equal(retry.status, 503);
+
+    const leadsAfter = await store.queryTable('leads', 1000);
+    const opportunitiesAfter = await store.queryTable('opportunities', 1000);
+    assert.equal(leadsAfter.length, leadsBefore.length, 'retried intake must not duplicate leads');
+    assert.equal(opportunitiesAfter.length, opportunitiesBefore.length, 'retried intake must not duplicate opportunities');
+    assert.deepEqual(leadsAfter.map((record) => record.id), leadsBefore.map((record) => record.id));
+    assert.deepEqual(opportunitiesAfter.map((record) => record.id), opportunitiesBefore.map((record) => record.id));
+  }
+);
+resetCanonicalStore();
 
 // Ambiguous delivery failure: the key settles 'done' so a replay cannot send a
 // possibly-already-sent dispatch email twice. The lead is durable in the spine.

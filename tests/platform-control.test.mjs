@@ -108,5 +108,28 @@ const plan = optimizeRoute({
 assert.ok(['recommended', 'possible_with_risk', 'not_feasible'].includes(plan.feasibility));
 assert.ok(Number.isFinite(plan.contributionMarginPerHour));
 
+process.env.AHFOS_INTERNAL_API_KEY = 'platform-control-test-key';
+delete process.env.OCI_HEALTH_URL;
+const { GET: healthTelemetryGet, POST: healthTelemetryPost } = await import('../app/api/health/telemetry/route.ts');
+const healthBefore = await store.queryTable('system_health_signals', 1000);
+const telemetryGet = await healthTelemetryGet(new Request('http://localhost/api/health/telemetry'));
+assert.equal(telemetryGet.status, 200);
+assert.equal((await store.queryTable('system_health_signals', 1000)).length, healthBefore.length, 'public telemetry GET must not write signals');
+
+const telemetryPayload = JSON.stringify({ source: 'test', component: 'deployment', status: 'healthy' });
+const unauthorizedPost = await healthTelemetryPost(new Request('http://localhost/api/health/telemetry', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: telemetryPayload
+}));
+assert.equal(unauthorizedPost.status, 401);
+const authorizedPost = await healthTelemetryPost(new Request('http://localhost/api/health/telemetry', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', 'x-internal-api-key': 'platform-control-test-key' },
+  body: telemetryPayload
+}));
+assert.equal(authorizedPost.status, 200);
+assert.equal((await store.queryTable('system_health_signals', 1000)).length, healthBefore.length + 1);
+
 resetCanonicalStore();
 console.log('platform control tests passed');

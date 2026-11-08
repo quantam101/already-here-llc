@@ -174,7 +174,7 @@ function buildDispatchRecord(dispatchId: string, formData: FormData) {
   };
 }
 
-function buildRevenueSpineProof(dispatchId: string, formData: FormData) {
+function buildRevenueSpineProof(dispatchId: string, formData: FormData, dedupeKey?: string) {
   const serviceType = asCleanString(formData, 'serviceType');
   const siteCity = asCleanString(formData, 'siteCity');
   return buildRevenueIntakeProof({
@@ -190,7 +190,7 @@ function buildRevenueSpineProof(dispatchId: string, formData: FormData) {
     ticketNumber: asCleanString(formData, 'ticketNumber'),
     requestedWindow: getScheduleSummary(formData),
     estimatedValueCents: asCleanString(formData, 'message').includes('$500') ? 50000 : 0
-  });
+  }, dedupeKey);
 }
 
 async function buildAttachments(formData: FormData, dispatchId: string): Promise<ResendAttachment[]> {
@@ -416,9 +416,11 @@ export async function POST(request: Request) {
   const localProofMode = process.env.NODE_ENV !== 'production' && (request.headers.get('x-ah-local-proof') === 'true' || url.searchParams.get('mode') === 'local-proof');
   const hasResend = !!process.env.RESEND_API_KEY && !!process.env.DISPATCH_TO_EMAIL;
   const hasFormspree = !!process.env.FORMSPREE_ENDPOINT;
-  const dispatchId = generateDispatchId();
+  const rawIdempotencyKey = asCleanString(formData, 'idempotencyKey');
+  const idempotencyKey = idempotencyKeyPattern.test(rawIdempotencyKey) ? rawIdempotencyKey : '';
+  const dispatchId = idempotencyKey ? `AH-${idempotencyKey}` : generateDispatchId();
   const triage = buildDispatchTriage(formData);
-  const revenueSpine = buildRevenueSpineProof(dispatchId, formData);
+  const revenueSpine = buildRevenueSpineProof(dispatchId, formData, idempotencyKey || undefined);
   if (process.env.NODE_ENV === 'production' && !isCanonicalStoreDurable()) {
     return NextResponse.json({ message: 'Durable dispatch intake is unavailable.', dispatchId }, { status: 503 });
   }
@@ -426,8 +428,6 @@ export async function POST(request: Request) {
   // Exactly-once intake: the client mints an idempotency key per submission
   // intent and replays resend it verbatim. A key already 'done' returns its
   // original result instead of creating a second dispatch/email.
-  const rawIdempotencyKey = asCleanString(formData, 'idempotencyKey');
-  const idempotencyKey = idempotencyKeyPattern.test(rawIdempotencyKey) ? rawIdempotencyKey : '';
   const store = getCanonicalStore();
   const deduplicatedResponse = (prior: Record<string, unknown> | undefined) => NextResponse.json({
     ok: true,

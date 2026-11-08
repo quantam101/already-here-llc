@@ -103,7 +103,7 @@ function moduleWrite(lane: IntakeLane, opportunityId: string, contactId: string,
   return null;
 }
 
-export function buildRevenueIntakeProof(input: RevenueIntakeInput): RevenueIntakeProof {
+export function buildRevenueIntakeProof(input: RevenueIntakeInput, dedupeKey?: string): RevenueIntakeProof {
   const submittedAt = input.submittedAt || new Date().toISOString();
   const lane = classifyRevenueIntake(input);
   const { priority, score } = scoreRevenueIntake(input, lane);
@@ -116,7 +116,7 @@ export function buildRevenueIntakeProof(input: RevenueIntakeInput): RevenueIntak
   const contactId = canonicalId('contact', organizationId, contactKey);
 
   const sourceKey = input.sourceId || input.source;
-  const intakeId = canonicalId('intake', sourceKey, input.title, submittedAt);
+  const intakeId = canonicalId('intake', sourceKey, input.title, dedupeKey ?? submittedAt);
   const leadId = canonicalId('lead', intakeId, 'lead');
   const opportunityId = canonicalId('opp', leadId, lane);
   const conversationId = canonicalId('conversation', leadId);
