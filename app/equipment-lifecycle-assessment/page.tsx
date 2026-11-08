@@ -37,6 +37,7 @@ const offer: ServiceOffer = {
   ],
   startingPrice: '$199',
   startingPriceCents: 19900,
+  stripePriceId: 'price_1UZV8GLCbDeoJgURx9SddEeJ',
   productName: 'Equipment Lifecycle Assessment',
   cta: 'Book Equipment Assessment — $199',
   faq: [
