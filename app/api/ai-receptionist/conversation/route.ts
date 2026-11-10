@@ -64,14 +64,22 @@ export async function POST(request: Request) {
   const score = scoreLead(data);
   const state = leadState(score, data);
   const delivery = await submitLead(request, data, score, state).then((r) => r.ok).catch(() => false);
+  const outcome = await fetch(new URL('/api/ai-receptionist/outcome', request.url), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ lead: data }),
+    cache: 'no-store'
+  }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
 
   return NextResponse.json({
     ok: true,
     status: 'complete',
     autonomous: true,
+    loop: 'closed',
     leadScore: score,
     leadState: state,
     deliveryConfirmed: delivery,
+    outcome,
     summary: `Captured ${data.serviceType || 'service request'} for ${data.location || 'unknown location'} with ${data.urgency || 'normal'} urgency.`,
     data
   });
@@ -84,7 +92,7 @@ export async function GET() {
     status: 'ready',
     autonomous: true,
     mode: 'structured_qualification',
-    capabilities: ['ask_follow_up_questions', 'qualify_leads', 'score_leads', 'route_to_dispatch', 'return_next_action'],
+    capabilities: ['ask_follow_up_questions', 'qualify_leads', 'score_leads', 'route_to_dispatch', 'return_next_action', 'close_conversation_to_outcome_loop'],
     firstQuestion: questions[0].text,
     timestamp: new Date().toISOString()
   });
