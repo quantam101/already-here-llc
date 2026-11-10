@@ -17,7 +17,7 @@
 
 import { getCanonicalStore } from '@/lib/canonical-store';
 
-const QUESTION_RE = /^(who|what|when|where|why|which|how|tell me|show me|list|count|how many|how much|status of|is there|are there|is|are|was|were|did|any)\b/i;
+const QUESTION_RE = /^(who|what|when|where|why|which|how|tell me|show me|list|count|how many|how much|status of|is there|are there|is|are|was|were|did|any|do you|do i|may i|could you|can you (?:tell|show|check|find|give|look))\b/i;
 
 export function looksLikeQuestion(text: string): boolean {
   return QUESTION_RE.test(text.trim());
@@ -80,7 +80,7 @@ async function queryCanonical(question: string): Promise<{ hits: CanonicalHit[];
 
   for (const table of scanOrder) {
     try {
-      const rows = await getCanonicalStore().queryTable(table, 200);
+      const rows = await getCanonicalStore().queryTable(table, 10_000);
       counts[table] = rows.length;
       const scored = rows
         .map((r) => ({ r, score: matches(r, needles) }))
@@ -152,7 +152,7 @@ export type KnowledgeAnswer = {
  */
 export async function answerQuestion(question: string, opts: { operator?: boolean } = {}): Promise<KnowledgeAnswer> {
   const operator = Boolean(opts.operator);
-  const countQuestion = /how many|count|total/i.test(question);
+  const countQuestion = /\bhow many\b|\bcount\b|\btotal\b/i.test(question);
   const [canonical, brain] = await Promise.all([queryCanonical(question), operator ? queryBrain(question) : Promise.resolve([])]);
 
   const lines: string[] = [];
