@@ -17,7 +17,7 @@
 
 import { getCanonicalStore } from '@/lib/canonical-store';
 
-const QUESTION_RE = /^(who|what|when|where|why|which|how|tell me|show me|list|count|how many|how much|status of|is there|are there|is|are|was|were|did|any|do you|do i|may i|could you|can you (?:tell|show|check|find|give|look))\b/i;
+const QUESTION_RE = /^(who|what|when|where|why|which|how|tell me|show me|list|count|how many|how much|status of|is there|are there|is|are|was|were|did|any|do you (?:have|know|see|track|list)|do i have|may i (?:have|see|check|ask)|(?:can|could) you (?:tell|show|check|find|give|look|list))\b/i;
 
 export function looksLikeQuestion(text: string): boolean {
   return QUESTION_RE.test(text.trim());
