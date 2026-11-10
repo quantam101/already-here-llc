@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server.js';
+import { answerQuestion, looksLikeQuestion } from '@/lib/conversation-knowledge';
 
 export const runtime = 'nodejs';
 
 const questions = [
+  { key: 'fullName', text: 'What is your name?' },
+  { key: 'contact', text: 'What phone number or email should we use to confirm?' },
   { key: 'serviceType', text: 'What service do you need: network support, door access, equipment removal, healthcare equipment, or AI receptionist setup?' },
   { key: 'location', text: 'What city or site location is this for?' },
   { key: 'urgency', text: 'How urgent is this: emergency, same day, quote request, scheduled service, or normal follow-up?' },
@@ -47,6 +50,23 @@ export async function POST(request: Request) {
   const data: Record<string, string> = Object.fromEntries(Object.entries(body.data || {}).map(([key, value]) => [key, clean(value)]));
   const answer = clean(body.answer);
 
+  if (answer && looksLikeQuestion(answer)) {
+    const pendingIdx = Math.max(step - 1, 0);
+    const operatorKey = clean(body.operatorKey);
+    const isOperator = Boolean(process.env.AI_RECEPTIONIST_OPERATOR_KEY && operatorKey === process.env.AI_RECEPTIONIST_OPERATOR_KEY);
+    const kb = await answerQuestion(answer, { operator: isOperator });
+    return NextResponse.json({
+      ok: true,
+      status: 'in_progress',
+      step: pendingIdx,
+      nextStep: pendingIdx + 1,
+      question: `${kb.answered ? kb.text : 'I could not find that in our records.'}\n\n${questions[pendingIdx].text}`,
+      field: questions[pendingIdx].key,
+      knowledge: kb,
+      data
+    });
+  }
+
   if (step > 0 && questions[step - 1]) data[questions[step - 1].key] = answer;
 
   if (step < questions.length) {
@@ -61,17 +81,33 @@ export async function POST(request: Request) {
     });
   }
 
+  if (data.contact && !data.phone && !data.email) {
+    const emailMatch = data.contact.match(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/);
+    const digits = data.contact.replace(/\(?\s*(?:ext\.?|x\.?)\s*\d+\s*\)?\s*$/i, '').replace(/\D/g, '');
+    if (emailMatch) data.email = emailMatch[0];
+    else if (digits.length >= 7) data.phone = digits;
+    else data.message = `${data.message || ''} contact: ${data.contact}`.trim();
+  }
+
   const score = scoreLead(data);
   const state = leadState(score, data);
   const delivery = await submitLead(request, data, score, state).then((r) => r.ok).catch(() => false);
+  const outcome = await fetch(new URL('/api/ai-receptionist/outcome', request.url), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ lead: { ...data, leadDelivered: String(delivery) } }),
+    cache: 'no-store'
+  }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
 
   return NextResponse.json({
     ok: true,
     status: 'complete',
     autonomous: true,
+    loop: 'closed',
     leadScore: score,
     leadState: state,
     deliveryConfirmed: delivery,
+    outcome,
     summary: `Captured ${data.serviceType || 'service request'} for ${data.location || 'unknown location'} with ${data.urgency || 'normal'} urgency.`,
     data
   });
@@ -84,7 +120,7 @@ export async function GET() {
     status: 'ready',
     autonomous: true,
     mode: 'structured_qualification',
-    capabilities: ['ask_follow_up_questions', 'qualify_leads', 'score_leads', 'route_to_dispatch', 'return_next_action'],
+    capabilities: ['ask_follow_up_questions', 'qualify_leads', 'score_leads', 'route_to_dispatch', 'return_next_action', 'close_conversation_to_outcome_loop', 'answer_questions_from_canonical_store', 'answer_questions_from_command_brain'],
     firstQuestion: questions[0].text,
     timestamp: new Date().toISOString()
   });
