@@ -17,7 +17,7 @@
 
 import { getCanonicalStore } from '@/lib/canonical-store';
 
-const QUESTION_RE = /^(who|what|when|where|why|how|is|are|was|were|do|does|did|can|could|should|would|tell me|show me|list|count|how many|how much|status of|any)\b|\?\s*$/i;
+const QUESTION_RE = /^(who|what|when|where|why|which|how|tell me|show me|list|count|how many|how much|status of|is there|are there|is|are|was|were|did|any)\b/i;
 
 export function looksLikeQuestion(text: string): boolean {
   return QUESTION_RE.test(text.trim());
@@ -143,20 +143,25 @@ export type KnowledgeAnswer = {
 };
 
 /**
- * Answer a free-text question from live business data. Returns
- * `answered: false` when no source produces anything, so the caller can
- * simply continue the intake flow.
+ * Answer a free-text question from live business data. `operator: true`
+ * (callers that proved access with the operator key) unlocks record-level
+ * summaries and command-brain facts; public callers get aggregate counts
+ * only — never record contents or brain rows. Returns `answered: false`
+ * when no source produces anything, so the caller can simply continue the
+ * intake flow.
  */
-export async function answerQuestion(question: string): Promise<KnowledgeAnswer> {
-  const [canonical, brain] = await Promise.all([queryCanonical(question), queryBrain(question)]);
+export async function answerQuestion(question: string, opts: { operator?: boolean } = {}): Promise<KnowledgeAnswer> {
+  const operator = Boolean(opts.operator);
+  const countQuestion = /how many|count|total/i.test(question);
+  const [canonical, brain] = await Promise.all([queryCanonical(question), operator ? queryBrain(question) : Promise.resolve([])]);
 
   const lines: string[] = [];
-  const total = Object.values(canonical.counts).reduce((a, b) => a + b, 0);
-  if (canonical.hits.length) {
-    lines.push(...canonical.hits.map((h) => h.summary));
-  } else if (total > 0 || /how many|count|total|status/i.test(question)) {
-    const nonzero = Object.entries(canonical.counts).filter(([, n]) => n > 0).map(([t, n]) => `${n} ${TABLE_LABELS[t] || t}${n === 1 ? '' : 's'}`);
+  const nonzero = Object.entries(canonical.counts).filter(([, n]) => n > 0).map(([t, n]) => `${n} ${TABLE_LABELS[t] || t}${n === 1 ? '' : 's'}`);
+  if (countQuestion || !operator || !canonical.hits.length) {
     if (nonzero.length) lines.push(`Current records: ${nonzero.join(', ')}.`);
+  }
+  if (operator && !countQuestion && canonical.hits.length) {
+    lines.push(...canonical.hits.map((h) => h.summary));
   }
   if (brain.length) lines.push(...brain);
 

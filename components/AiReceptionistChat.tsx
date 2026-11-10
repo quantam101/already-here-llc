@@ -22,6 +22,7 @@ export default function AiReceptionistChat() {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [operatorKey, setOperatorKey] = useState('');
   const dataRef = useRef<Record<string, string>>({});
   const stepRef = useRef(0);
 
@@ -29,7 +30,7 @@ export default function AiReceptionistChat() {
     const res = await fetch('/api/ai-receptionist/conversation', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ step: stepRef.current, answer, data: dataRef.current })
+      body: JSON.stringify({ step: stepRef.current, answer, data: dataRef.current, operatorKey: operatorKey || undefined })
     });
     const body: ConversationResponse = await res.json();
     if (body.status === 'in_progress' && body.question) {
@@ -123,6 +124,17 @@ export default function AiReceptionistChat() {
           </button>
         </form>
       )}
+
+      <details className="mt-4 text-xs text-slate-500">
+        <summary className="cursor-pointer font-semibold">Operator access</summary>
+        <input
+          value={operatorKey}
+          onChange={(event) => setOperatorKey(event.target.value)}
+          placeholder="Operator key"
+          type="password"
+          className="mt-2 w-full rounded-full border border-borderBrand px-4 py-2 text-xs outline-none focus:border-action"
+        />
+      </details>
 
     </div>
   );

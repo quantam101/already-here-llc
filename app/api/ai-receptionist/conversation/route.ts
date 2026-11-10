@@ -52,7 +52,9 @@ export async function POST(request: Request) {
 
   if (answer && looksLikeQuestion(answer)) {
     const pendingIdx = Math.max(step - 1, 0);
-    const kb = await answerQuestion(answer);
+    const operatorKey = clean(body.operatorKey);
+    const isOperator = Boolean(process.env.AI_RECEPTIONIST_OPERATOR_KEY && operatorKey === process.env.AI_RECEPTIONIST_OPERATOR_KEY);
+    const kb = await answerQuestion(answer, { operator: isOperator });
     return NextResponse.json({
       ok: true,
       status: 'in_progress',

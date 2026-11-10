@@ -87,6 +87,7 @@ assert.equal(looksLikeQuestion('What is the status of my work order'), true);
 assert.equal(looksLikeQuestion('Tell me about open leads'), true);
 assert.equal(looksLikeQuestion('Phoenix, AZ'), false);
 assert.equal(looksLikeQuestion('tomorrow morning'), false);
+assert.equal(looksLikeQuestion('Can you fix my Wi-Fi?'), false, 'service requests phrased as questions must advance intake');
 
 // Knowledge layer: answers come back even when stores are empty or unconfigured
 const kb = await answerQuestion('how many work orders exist?');
