@@ -64,8 +64,11 @@ export async function POST(request: Request) {
   }
 
   if (data.contact && !data.phone && !data.email) {
-    if (data.contact.includes('@')) data.email = data.contact;
-    else data.phone = data.contact;
+    const emailMatch = data.contact.match(/[\w.+-]+@[\w-]+\.[\w.]+/);
+    const digits = data.contact.replace(/\D/g, '');
+    if (emailMatch) data.email = emailMatch[0];
+    else if (digits.length >= 7) data.phone = digits;
+    else data.message = `${data.message || ''} contact: ${data.contact}`.trim();
   }
 
   const score = scoreLead(data);
@@ -74,7 +77,7 @@ export async function POST(request: Request) {
   const outcome = await fetch(new URL('/api/ai-receptionist/outcome', request.url), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ lead: data }),
+    body: JSON.stringify({ lead: { ...data, leadDelivered: String(delivery) } }),
     cache: 'no-store'
   }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
 

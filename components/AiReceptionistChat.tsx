@@ -63,6 +63,9 @@ export default function AiReceptionistChat() {
     setBusy(true);
     try {
       await send(answer);
+    } catch {
+      setMessages((prev) => [...prev, { role: 'agent', text: 'That answer did not go through — please send it again.' }]);
+      setInput(answer);
     } finally {
       setBusy(false);
     }

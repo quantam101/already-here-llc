@@ -56,6 +56,7 @@ export type OutcomeLead = {
   source?: string;
   leadScore?: string;
   leadState?: string;
+  leadDelivered?: string;
 };
 
 type ServiceCatalogEntry = {
@@ -339,6 +340,9 @@ export async function executeOutcome(requestUrl: string, lead: OutcomeLead, deci
  * dispatch through the standard intake email path so no emergency vanishes.
  */
 async function deliverViaIntake(requestUrl: string, lead: OutcomeLead, reason: string): Promise<OutcomeExecutionResult> {
+  if (lead.leadDelivered === 'true') {
+    return { executed: 'intake_fallback', error: `${reason} (lead already delivered via intake)` };
+  }
   const url = new URL('/api/ai-receptionist/intake', requestUrl);
   try {
     const res = await fetch(url, {
