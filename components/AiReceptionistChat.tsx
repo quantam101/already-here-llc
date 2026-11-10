@@ -34,7 +34,7 @@ export default function AiReceptionistChat() {
     const body: ConversationResponse = await res.json();
     if (body.status === 'in_progress' && body.question) {
       dataRef.current = { ...(body as unknown as { data?: Record<string, string> }).data };
-      stepRef.current = stepRef.current + 1;
+      stepRef.current = (body as { nextStep?: number }).nextStep ?? stepRef.current + 1;
       setMessages((prev) => [...prev, { role: 'agent', text: body.question! }]);
     } else if (body.status === 'complete') {
       const confirmation = body.outcome?.confirmation;

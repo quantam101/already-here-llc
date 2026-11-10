@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server.js';
+import { answerQuestion, looksLikeQuestion } from '@/lib/conversation-knowledge';
 
 export const runtime = 'nodejs';
 
@@ -48,6 +49,21 @@ export async function POST(request: Request) {
   const step = Number(body.step || 0);
   const data: Record<string, string> = Object.fromEntries(Object.entries(body.data || {}).map(([key, value]) => [key, clean(value)]));
   const answer = clean(body.answer);
+
+  if (answer && looksLikeQuestion(answer)) {
+    const pendingIdx = Math.max(step - 1, 0);
+    const kb = await answerQuestion(answer);
+    return NextResponse.json({
+      ok: true,
+      status: 'in_progress',
+      step: pendingIdx,
+      nextStep: pendingIdx + 1,
+      question: `${kb.answered ? kb.text : 'I could not find that in our records.'}\n\n${questions[pendingIdx].text}`,
+      field: questions[pendingIdx].key,
+      knowledge: kb,
+      data
+    });
+  }
 
   if (step > 0 && questions[step - 1]) data[questions[step - 1].key] = answer;
 
@@ -102,7 +118,7 @@ export async function GET() {
     status: 'ready',
     autonomous: true,
     mode: 'structured_qualification',
-    capabilities: ['ask_follow_up_questions', 'qualify_leads', 'score_leads', 'route_to_dispatch', 'return_next_action', 'close_conversation_to_outcome_loop'],
+    capabilities: ['ask_follow_up_questions', 'qualify_leads', 'score_leads', 'route_to_dispatch', 'return_next_action', 'close_conversation_to_outcome_loop', 'answer_questions_from_canonical_store', 'answer_questions_from_command_brain'],
     firstQuestion: questions[0].text,
     timestamp: new Date().toISOString()
   });

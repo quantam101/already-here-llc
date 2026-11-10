@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { decideOutcome, executeOutcome, parseLocation, serviceCatalog } from '../lib/conversation-outcome.ts';
 import { GET as outcomeGet } from '../app/api/ai-receptionist/outcome/route.ts';
+import { looksLikeQuestion, answerQuestion } from '../lib/conversation-knowledge.ts';
 
 function lead(overrides = {}) {
   return {
@@ -79,6 +80,19 @@ const cityOnly = await executeOutcome(
   decideOutcome(lead({ location: 'Phoenix, AZ', urgency: 'emergency' }))
 );
 assert.equal(cityOnly.executed, 'intake_fallback');
+
+// Knowledge layer: question detection
+assert.equal(looksLikeQuestion('how many jobs are open?'), true);
+assert.equal(looksLikeQuestion('What is the status of my work order'), true);
+assert.equal(looksLikeQuestion('Tell me about open leads'), true);
+assert.equal(looksLikeQuestion('Phoenix, AZ'), false);
+assert.equal(looksLikeQuestion('tomorrow morning'), false);
+
+// Knowledge layer: answers come back even when stores are empty or unconfigured
+const kb = await answerQuestion('how many work orders exist?');
+assert.equal(typeof kb.answered, 'boolean');
+assert.equal(typeof kb.text, 'string');
+assert.ok('canonical' in kb.sources && 'brain' in kb.sources);
 
 // GET route reports the loop
 const getRes = await outcomeGet();
