@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server.js';
 export const runtime = 'nodejs';
 
 const questions = [
+  { key: 'fullName', text: 'What is your name?' },
+  { key: 'contact', text: 'What phone number or email should we use to confirm?' },
   { key: 'serviceType', text: 'What service do you need: network support, door access, equipment removal, healthcare equipment, or AI receptionist setup?' },
   { key: 'location', text: 'What city or site location is this for?' },
   { key: 'urgency', text: 'How urgent is this: emergency, same day, quote request, scheduled service, or normal follow-up?' },
@@ -59,6 +61,11 @@ export async function POST(request: Request) {
       field: questions[step].key,
       data
     });
+  }
+
+  if (data.contact && !data.phone && !data.email) {
+    if (data.contact.includes('@')) data.email = data.contact;
+    else data.phone = data.contact;
   }
 
   const score = scoreLead(data);

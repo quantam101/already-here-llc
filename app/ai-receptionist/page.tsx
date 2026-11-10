@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import AiReceptionistChat from '@/components/AiReceptionistChat';
 
 export const metadata: Metadata = {
   title: 'AI Receptionist & Lead Recovery',
@@ -56,6 +57,8 @@ export default function AiReceptionistPage() {
             </div>
           </div>
 
+          <div className="grid gap-6">
+          <AiReceptionistChat />
           <form action="/api/ai-receptionist/intake" method="post" className="card p-6 sm:p-8">
             <input type="text" name="website" className="hidden" tabIndex={-1} autoComplete="off" />
             <input type="hidden" name="source" value="website_ai_receptionist_page" />
@@ -125,6 +128,7 @@ export default function AiReceptionistPage() {
               Submission confirms intake only. Scheduling, quote, or dispatch is confirmed after Already Here LLC reviews scope, location, timing, and coverage.
             </p>
           </form>
+          </div>
         </div>
       </section>
 
