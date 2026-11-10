@@ -101,6 +101,7 @@ async function queryCanonical(question: string): Promise<{ hits: CanonicalHit[];
 function brainSecret(): string | undefined {
   return (
     process.env.BRAIN_QUERY_SECRET?.trim() ||
+    process.env.BRAIN_ADMIN_SECRET?.trim() ||
     process.env.DCOS_SYNC_SECRET?.trim() ||
     process.env.CRON_SECRET?.trim() ||
     undefined
@@ -115,7 +116,7 @@ async function queryBrain(question: string): Promise<string[]> {
     const res = await fetch(`${base}/api/brain/answer`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', Authorization: `Bearer ${secret}` },
-      body: JSON.stringify({ question, limit: 5 }),
+      body: JSON.stringify({ question, scopes: ['business', 'repo', 'sop', 'template'], limit: 5 }),
       cache: 'no-store',
       signal: AbortSignal.timeout(10_000)
     });
@@ -124,8 +125,12 @@ async function queryBrain(question: string): Promise<string[]> {
     const facts = Array.isArray(body.facts) ? body.facts : [];
     return facts
       .slice(0, 5)
-      .map((f: Record<string, unknown>) => String(f.value || f.text || f.fact || f.key || ''))
-      .filter(Boolean);
+      .map((f: Record<string, unknown>) => {
+        const v = f.value ?? f.text ?? f.fact ?? f.key;
+        const text = typeof v === 'string' ? v : v == null ? '' : JSON.stringify(v);
+        return f.key ? `${String(f.key)}: ${text}` : text;
+      })
+      .filter((s: string) => s.length > 0);
   } catch {
     return [];
   }
