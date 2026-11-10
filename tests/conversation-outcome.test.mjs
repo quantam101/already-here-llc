@@ -72,6 +72,14 @@ assert.equal(none.executed, 'none');
 const fallback = await executeOutcome('http://localhost/api/ai-receptionist/outcome', lead({ location: 'Austin, TX', urgency: 'emergency' }), emergency);
 assert.equal(fallback.executed, 'intake_fallback');
 
+// City-only emergency never creates a work order with a pending street address
+const cityOnly = await executeOutcome(
+  'http://localhost/api/ai-receptionist/outcome',
+  lead({ location: 'Phoenix, AZ', urgency: 'emergency' }),
+  decideOutcome(lead({ location: 'Phoenix, AZ', urgency: 'emergency' }))
+);
+assert.equal(cityOnly.executed, 'intake_fallback');
+
 // GET route reports the loop
 const getRes = await outcomeGet();
 const getBody = await getRes.json();

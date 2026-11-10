@@ -293,7 +293,11 @@ export async function executeOutcome(requestUrl: string, lead: OutcomeLead, deci
   }
 
   const parsed = parseLocation(text(lead.location, lead.city, lead.zip));
-  if (!parsed) return { executed: 'intake_fallback' };
+  if (!parsed || parsed.siteAddress === 'Site address pending') {
+    return deliverViaIntake(requestUrl, lead, 'unparsable_location');
+  }
+
+  const email = lead.email?.trim() || `phone-${(lead.phone || '').replace(/\D/g, '') || Date.now()}@conversation.alreadyherellc.com`;
 
   const url = new URL('/api/work-orders', requestUrl);
   const service = serviceCatalog.find((entry) => entry.id === decision.serviceId) || serviceCatalog[serviceCatalog.length - 1];
@@ -306,7 +310,7 @@ export async function executeOutcome(requestUrl: string, lead: OutcomeLead, deci
         sourceId: `conv-${Date.now()}`,
         customerName: lead.fullName || lead.name || 'Conversation customer',
         company: lead.company || 'Individual / conversation intake',
-        email: lead.email || 'no-email-captured@alreadyherellc.com',
+        email,
         phone: lead.phone,
         siteAddress: parsed.siteAddress,
         siteCity: parsed.siteCity,
@@ -322,10 +326,33 @@ export async function executeOutcome(requestUrl: string, lead: OutcomeLead, deci
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok || !body.ok) {
-      return { executed: 'intake_fallback', error: body.error || `work-orders responded ${res.status}` };
+      return deliverViaIntake(requestUrl, lead, body.error || `work-orders responded ${res.status}`);
     }
     return { executed: 'work_order', workOrderId: body.workOrderId, matchCandidates: body.matchCandidates };
   } catch (error) {
-    return { executed: 'intake_fallback', error: error instanceof Error ? error.message : 'work-order request failed' };
+    return deliverViaIntake(requestUrl, lead, error instanceof Error ? error.message : 'work-order request failed');
+  }
+}
+
+/**
+ * Failover: when a work order can't be created, the lead is still delivered to
+ * dispatch through the standard intake email path so no emergency vanishes.
+ */
+async function deliverViaIntake(requestUrl: string, lead: OutcomeLead, reason: string): Promise<OutcomeExecutionResult> {
+  const url = new URL('/api/ai-receptionist/intake', requestUrl);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ...lead, source: lead.source || 'conversation_outcome_fallback', leadState: 'urgent_escalation' }),
+      cache: 'no-store'
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok || !body.ok) {
+      return { executed: 'intake_fallback', error: `intake fallback failed (${reason}): ${body.message || res.status}` };
+    }
+    return { executed: 'intake_fallback', error: reason };
+  } catch (error) {
+    return { executed: 'intake_fallback', error: `intake fallback failed (${reason}): ${error instanceof Error ? error.message : 'unknown'}` };
   }
 }
