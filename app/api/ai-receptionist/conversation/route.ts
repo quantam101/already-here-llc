@@ -65,7 +65,7 @@ export async function POST(request: Request) {
 
   if (data.contact && !data.phone && !data.email) {
     const emailMatch = data.contact.match(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/);
-    const digits = data.contact.replace(/\s*(ext\.?|x)\b.*$/i, '').replace(/\D/g, '');
+    const digits = data.contact.replace(/(\d)\s*(?:ext\.?|x)\s*\d+\s*$/i, '$1').replace(/\D/g, '');
     if (emailMatch) data.email = emailMatch[0];
     else if (digits.length >= 7) data.phone = digits;
     else data.message = `${data.message || ''} contact: ${data.contact}`.trim();
