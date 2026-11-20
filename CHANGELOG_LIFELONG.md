@@ -49,3 +49,7 @@
 ### Operating rule
 
 Automated checks may block production, but they must not fabricate revenue, claim posting success, or push unsafe production changes without validation.
+
+## 2026-11-03 — Contract Desk first increment
+
+Expanded existing procurement source policy, added SQLite notice/amendment history, duplicate-safe pending alert queue, conservative SAM adapter, and offline mobile-responsive snapshot desk. New tests cover restart durability, cross-portal duplicates, superseded alerts, stale/expired evidence, partial scans and credential-safe failures. This increment does not establish live collector coverage, canonical production persistence or notification delivery.

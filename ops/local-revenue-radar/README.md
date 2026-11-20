@@ -64,3 +64,7 @@ npm run lint
 npm run typecheck
 npm run build
 ```
+
+## Contract Desk extension
+
+`contract-watch.mjs` adds durable procurement notice history and a pending alert queue; `contract-desk.html` reads exported snapshots offline. See [research, usage, limitations and release gates](../../docs/CONTRACT_DESK_RESEARCH.md). Run `npm run test:contract-watch`. The expanded portal registry is not evidence of live collectors or subscriptions. SAM imports need private runtime credentials and human qualification. Notification transport and canonical database integration remain separate release gates.
