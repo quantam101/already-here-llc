@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { engagementStatusNote, naicsCodes, representativeWork, siteConfig } from '@/lib/site';
+import { engagementStatusNote, facilitiesDeliveryNote, facilitiesNaicsCodes, naicsCodes, representativeWork, siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Capability Statement | Managed IT Services & Technical Field Operations',
@@ -21,7 +21,8 @@ const coreCompetencies = [
   'Server, storage, warranty, RMA, and component replacement',
   'POS, kiosk, payment-device, retail-technology, and multi-site field support',
   'RFID, barcode, asset tracking, IoT, survey, and site-verification work',
-  'Rollout, modernization, decommissioning, asset recovery, and documentation-driven closeout'
+  'Rollout, modernization, decommissioning, asset recovery, and documentation-driven closeout',
+  'Prime-managed facilities support: appliance repair in-house; janitorial, landscaping, and HVAC through vetted subcontract partners'
 ];
 
 const differentiators = [
@@ -163,6 +164,34 @@ export default function CapabilityStatementPage() {
                 <tr key={item.code}>
                   <td className="px-5 py-3 font-mono font-semibold text-navy">{item.code}</td>
                   <td className="px-5 py-3 text-slate-600">{item.desc}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="card mb-8 p-8 sm:p-10">
+        <h2 className="grid-label mb-4">Facilities support NAICS</h2>
+        <p className="mb-6 max-w-3xl text-sm leading-7 text-slate-600">{facilitiesDeliveryNote}</p>
+        <div className="overflow-hidden rounded-2xl border border-borderBrand">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-borderBrand bg-soft">
+                <th className="px-5 py-3 text-left font-normal grid-label">Code</th>
+                <th className="px-5 py-3 text-left font-normal grid-label">Description</th>
+                <th className="hidden px-5 py-3 text-left font-normal grid-label sm:table-cell">Delivery</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-borderBrand">
+              {facilitiesNaicsCodes.map((item) => (
+                <tr key={item.code}>
+                  <td className="px-5 py-3 align-top font-mono font-semibold text-navy">{item.code}</td>
+                  <td className="px-5 py-3 text-slate-600">
+                    {item.desc}
+                    <span className="mt-1 block text-xs text-slate-500 sm:hidden">{item.delivery}</span>
+                  </td>
+                  <td className="hidden px-5 py-3 text-slate-600 sm:table-cell">{item.delivery}</td>
                 </tr>
               ))}
             </tbody>
