@@ -31,7 +31,7 @@ files and **does not back up production customer records**.
 
    - `UPSTASH_REDIS_TCP_URL`: native TLS connection URI (`rediss://...`) for the
      exact Upstash Redis database serving production. This is not the REST URL.
-   - Upload authorization is **not configured**: the current implementation still requires a privileged `VERCEL_BLOB_BACKUP_TOKEN`. Do not provision it to Actions. Replace this with a per-run, short-lived, path-scoped upload-only signed URL from a separately protected signer.
+   - Upload authorization is **not configured**: the uploader no longer accepts `VERCEL_BLOB_BACKUP_TOKEN`. Manual dispatch currently accepts a short-lived path-scoped signed PUT URL. **Do not run this with real backup data yet**: workflow-dispatch inputs are not a suitable private credential channel, and the URL may expire during dependency installation. A separately protected signer must issue the URL inside the job after encryption and verification, with authenticated GitHub job identity, before activation.
    - `BACKUP_ENCRYPTION_KEY`: a random 32-byte secret encoded as base64. Generate
      locally with `python -c 'import base64,secrets;print(base64.b64encode(secrets.token_bytes(32)).decode())'`.
 
@@ -39,8 +39,7 @@ files and **does not back up production customer records**.
    secrets. **Without it, every offsite backup becomes permanently unreadable.**
 4. Before merging the workflow to the default branch, run its unit tests and
    verify a native Upstash `DUMP`/`RESTORE` works on an isolated scratch database.
-5. Once merged and configured, manually run Actions > Upstash encrypted recovery
-   backup > Run workflow. Confirm `Create`, `verify`, and `upload` all pass.
+5. Do not run the real-data workflow until a secure signer is integrated and the isolated recovery drill passes. The current manual dispatch input is an intermediate code interface, **not an approved production credential-delivery method**.
 6. Confirm the private backup store contains an encrypted `.aes` object. Nightly scheduling and retention must be enabled only in a separately reviewed change after an isolated restore succeeds.
 
 Neither Vercel nor Upstash must be upgraded for the code to run, but actual
