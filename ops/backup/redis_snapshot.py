@@ -63,7 +63,12 @@ def redis_client(redis_url: str):
 
 def create_payload(client, redis_url: str) -> dict:
     started = utc_now()
+    max_keys = int(os.environ.get('BACKUP_MAX_KEYS', '1000'))
+    if not 1 <= max_keys <= 10000:
+        raise ValueError('BACKUP_MAX_KEYS must be between 1 and 10000')
     observed_before = int(client.dbsize())
+    if observed_before > max_keys:
+        raise RuntimeError('Key budget exceeded before scan; no backup created')
     entries = []
     seen = set()
     cursor = 0
@@ -74,6 +79,8 @@ def create_payload(client, redis_url: str) -> dict:
             if key in seen:
                 continue
             seen.add(key)
+            if len(seen) > max_keys:
+                raise RuntimeError('Key budget exceeded during scan; no backup created')
             # Keep each key's type, TTL, and binary dump from one transaction.
             with client.pipeline(transaction=True) as tx:
                 tx.type(key)
