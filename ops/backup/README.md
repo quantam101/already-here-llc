@@ -1,75 +1,46 @@
-# Already Here LLC: zero-subscription-cost Redis recovery copies
+# Encrypted Redis recovery — staged rollout
 
-This draft implements a best-effort encrypted recovery-copy format and a manual GitHub Actions workflow. **It does not provide operational backups yet.** Secure upload authorization, a successful isolated end-to-end restore drill, scheduling, and retention enforcement are not implemented or verified. Do not use this draft as the only recovery strategy. This is separate from `scripts/backup.sh`, which archives source
-files and **does not back up production customer records**.
+## Current implementation
 
-## Safety and accuracy boundaries
+The isolated test workflow in `.github/workflows/upstash-private-backup.yml` is manually triggered. It reads **only** the `RECOVERY_TEST_REDIS_TCP_URL` GitHub Actions secret, encrypts the best-effort Redis copy using AES-256-GCM, verifies the encrypted file, and uploads it as a private GitHub Actions artifact with `retention-days: 30`. GitHub repository artifact retention limits may shorten that period. This is not a production backup schedule.
 
-- **Best effort, not a transactionally consistent snapshot.** Redis `SCAN`
-  across changing keys is non-atomic. Each individual key's `TYPE`, `PTTL`, and
-  `DUMP` is read transactionally, and before/after `DBSIZE` must match, but
-  simultaneous changes can still evade detection. Financial event recovery
-  also requires processor/bank reconciliation.
-- The encrypted file preserves binary `DUMP` values and absolute key-expiration
-  times. It never writes plaintext database records to disk.
-- The restore command refuses the source Redis host and refuses nonempty
-  targets. It cannot be triggered by the scheduled workflow.
-- The dedicated Blob store must not be connected to the Already Here production
-  Vercel project. Do not grant the backup job a permanent Blob read/write token. Upload-only signed URLs and a separately protected signer are still required before activation.
-- Do not post credentials, dump files, or decrypted records in GitHub issues,
-  repository history, screenshots, or chat.
+The repository's `redis-recovery-tests.yml` additionally performs synthetic DUMP/RESTORE testing against a disposable Redis service. No production Redis credentials are required for that CI job.
 
-## One-time setup (account owner)
+## Security boundaries
 
-1. In Vercel Storage, create a **Private** Blob store named for backup use.
-   Keep it unconnected to the production `already-here-llc` project.
-2. After a separately protected upload signer and isolated drill are approved, in GitHub `quantam101/already-here-llc` > Settings > Secrets and variables >
-   Actions, create these **repository secrets** without putting values in chat:
+- Store `RECOVERY_TEST_REDIS_TCP_URL` and `BACKUP_ENCRYPTION_KEY` in GitHub Actions secrets. Do not put their values in source control, issue comments, workflow inputs, or chat.
+- The test workflow does **not** read `UPSTASH_REDIS_TCP_URL` and must never point the recovery-test secret at production.
+- The GitHub artifact contains an encrypted file, not plaintext Redis data. Anyone with repository read access may be able to download artifacts, so encryption key separation is mandatory.
+- Keep an independent offline copy of the encryption key; losing it makes backups unreadable.
+- Backups use SCAN and are **not atomic**. Payment and financial records require independent ledger reconciliation.
+- The backup command budgets Redis calls and refuses incomplete key scans. The restore refuses source-host matches and nonempty targets.
+- The test backup workflow has no nightly schedule, no production access, and no automatic restore.
+- Retention of 30 days applies to each uploaded artifact, subject to GitHub's repository retention policy. There is no independently verified second-provider copy.
 
-   - `UPSTASH_REDIS_TCP_URL`: native TLS connection URI (`rediss://...`) for the
-     exact Upstash Redis database serving production. This is not the REST URL.
-   - Upload authorization is **not configured**: the uploader no longer accepts `VERCEL_BLOB_BACKUP_TOKEN`. Manual dispatch currently accepts a short-lived path-scoped signed PUT URL. **Do not run this with real backup data yet**: workflow-dispatch inputs are not a suitable private credential channel, and the URL may expire during dependency installation. A separately protected signer must issue the URL inside the job after encryption and verification, with authenticated GitHub job identity, before activation.
-   - `BACKUP_ENCRYPTION_KEY`: a random 32-byte secret encoded as base64. Generate
-     locally with `python -c 'import base64,secrets;print(base64.b64encode(secrets.token_bytes(32)).decode())'`.
+## Isolated drill
 
-3. Keep the encryption key in a separate password manager as well as Actions
-   secrets. **Without it, every offsite backup becomes permanently unreadable.**
-4. Before merging the workflow to the default branch, run its unit tests and
-   verify a native Upstash `DUMP`/`RESTORE` works on an isolated scratch database.
-5. Do not run the real-data workflow until a secure signer is integrated and the isolated recovery drill passes. The current manual dispatch input is an intermediate code interface, **not an approved production credential-delivery method**.
-6. Confirm the private backup store contains an encrypted `.aes` object. Nightly scheduling and retention must be enabled only in a separately reviewed change after an isolated restore succeeds.
-
-Neither Vercel nor Upstash must be upgraded for the code to run, but actual
-availability, quota, billing, account plan, and Redis command support must be
-confirmed before production activation. **No payment method or paid upgrade
-should be authorized just to enable this workflow.** If the free Vercel Blob
-quota is unavailable, do not silently substitute public storage.
-
-## Restore drill (strictly isolated)
-
-1. Create a **separate scratch Redis database** with its own TLS endpoint.
-2. Download an encrypted `.aes` backup from the private Blob store into a
-   trusted local directory with restricted permissions.
-3. Install `pip install -r ops/backup/requirements.txt`. Export the encryption
-   key from your password manager, and execute:
+1. Configure a dedicated Upstash test Redis database using a TLS `rediss://` connection string in the `RECOVERY_TEST_REDIS_TCP_URL` Actions secret. Keep it separate from production.
+2. Configure a base64-encoded random 32-byte `BACKUP_ENCRYPTION_KEY` Actions secret. Store the key in an independent secure password manager.
+3. Populate the isolated test Redis database with synthetic keys of multiple types, including binary values and TTLs.
+4. Manually run **Encrypted Redis recovery artifact (isolated test database only)** from GitHub Actions.
+5. Confirm the run succeeds and its encrypted `.aes` artifact is available. Download it into a trusted environment.
+6. Verify and restore to a **different, empty** scratch Redis instance:
 
    ```bash
-   python ops/backup/redis_snapshot.py verify --file /secure/backup.aes
-   export REDIS_RESTORE_TCP_URL='rediss://...scratch-db...'
-   export BACKUP_RESTORE_TARGET='SCRATCH_ONLY'
-   python ops/backup/redis_snapshot.py restore --file /secure/backup.aes --confirm-scratch
+   python -m pip install -r ops/backup/requirements.txt
+   export BACKUP_ENCRYPTION_KEY='(retrieve securely from password manager)'
+   python ops/backup/redis_snapshot.py verify --file /secure/isolated-recovery.aes
+   export REDIS_RESTORE_TCP_URL='rediss://(separate scratch database)'
+   export BACKUP_RESTORE_TARGET=SCRATCH_ONLY
+   python ops/backup/redis_snapshot.py restore --file /secure/isolated-recovery.aes --confirm-scratch
    ```
 
-4. Compare restored key count, types, and application-level customer/work-order
-   totals. Reconcile independent financial evidence. Redis keys whose original
-   TTL has since elapsed are intentionally omitted.
-5. After verifying the drill, delete the **scratch database only** using its
-   console and record the restore date, duration, results, and discrepancies.
+7. Compare key count, types, TTL behavior, and application-level records. Document recovery time, missing records, and independent ledger checks.
 
-## Validation
+## Production activation criteria
 
-```bash
-python -m unittest discover -s ops/backup -p 'test_*.py' -v
-```
+Do not repurpose the test secret, enable nightly production backups, or merge this as an operational recovery solution until the real Upstash test export, GitHub artifact download, and scratch restore have passed. Production rollout should use a protected GitHub environment, explicit source identification, least-privilege credentials where supported, documented quotas, a separate encryption-key escrow, and a second-provider/offline recovery copy where practical.
 
-The existing automated CI should run these tests when updating this module.
+## Why GitHub artifacts instead of Vercel Blob signing?
+
+GitHub Actions artifacts avoid distributing Vercel Blob write credentials or implementing a separate signed-URL service. The original Blob uploader remains experimental and is not invoked by the isolated workflow. For higher assurance, Vercel Private Blob now supports short-lived OIDC credentials and signed URLs, but connecting an isolated Vercel project and protecting its signer must be completed and tested separately.
