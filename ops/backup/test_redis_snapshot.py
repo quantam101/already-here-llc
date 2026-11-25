@@ -88,9 +88,23 @@ class SnapshotTests(unittest.TestCase):
         self.assertGreater(destination.items[b"canonical:queue"]["ttl_ms"], 0)
 
     def test_hard_command_budget_aborts_before_partial_export(self):
+        calls = {'dbsize': 0, 'scan': 0, 'pipeline': 0}
+        class CountingRedis(FakeRedis):
+            def dbsize(self):
+                calls['dbsize'] += 1
+                return super().dbsize()
+            def scan(self, cursor=0, count=250):
+                calls['scan'] += 1
+                return super().scan(cursor, count)
+            def pipeline(self, transaction=True):
+                calls['pipeline'] += 1
+                return super().pipeline(transaction)
+        database = CountingRedis(self.source.items)
         with patch.dict(os.environ, {'BACKUP_MAX_COMMANDS': '10'}):
             with self.assertRaisesRegex(RuntimeError, 'command budget exhausted'):
-                create_payload(self.source, self.SOURCE)
+                create_payload(database, self.SOURCE)
+        self.assertEqual(calls, {'dbsize': 1, 'scan': 1, 'pipeline': 1})
+        # No payload was returned, so the caller cannot seal or upload a partial snapshot.
 
     def test_rejects_wrong_key_and_tampered_backup(self):
         data = seal(create_payload(self.source, self.SOURCE), self.key)
