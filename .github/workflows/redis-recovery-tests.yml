@@ -21,6 +21,16 @@ jobs:
   recovery-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd 'redis-cli ping'
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,6 +44,10 @@ jobs:
       - name: Install test dependencies
         run: python -m pip install --disable-pip-version-check -r ops/backup/requirements.txt
       - name: Verify encrypted recovery tests
+        run: python -m unittest discover -s ops/backup -p 'test_*.py' -v
+      - name: Verify synthetic encrypted backup and restore on isolated Redis
+        env:
+          BACKUP_INTEGRATION_REDIS: '1'
         run: python -m unittest discover -s ops/backup -p 'test_*.py' -v
       - name: Verify uploader syntax
         run: node --check ops/backup/upload.mjs
