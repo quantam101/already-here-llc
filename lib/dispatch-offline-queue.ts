@@ -92,7 +92,7 @@ export function queueDispatchSubmission(formData: FormData): OfflineDispatchReco
 
   const timestamp = nowIso();
   const record: OfflineDispatchRecord = {
-    id: `offline-${timestamp.replace(/[^0-9]/g, '')}-${Math.random().toString(16).slice(2, 10)}`,
+    id: `offline-${timestamp.replace(/[^0-9]/g, '')}-${crypto.randomUUID()}`,
     createdAt: timestamp,
     updatedAt: timestamp,
     attempts: 0,

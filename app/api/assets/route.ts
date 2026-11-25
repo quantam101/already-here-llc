@@ -1,30 +1,18 @@
 import { NextResponse } from 'next/server';
-import { timingSafeEqual } from 'crypto';
 import { getCanonicalStore } from '@/lib/canonical-store';
+import { isInternalAuthorized, unauthorizedInternalResponse } from '@/lib/internal-auth';
 import { buildAssetIntakeWithFollowUp, buildAssetIntakeRecords } from '@/lib/assets';
 import type { AssetIntakeInput } from '@/lib/assets';
+import { trustedClientKey } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
-
-const INTERNAL_API_KEY = process.env.AHFOS_INTERNAL_API_KEY;
-
-function isValidKey(provided: string | null): boolean {
-  if (!INTERNAL_API_KEY) return true;
-  if (!provided) return false;
-  const expected = Buffer.from(INTERNAL_API_KEY);
-  const actual = Buffer.from(provided);
-  if (expected.length !== actual.length) return false;
-  return timingSafeEqual(expected, actual);
-}
 
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 20;
 
 function getClientKey(request: Request): string {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim()
-    || 'unknown';
+  return trustedClientKey(request);
 }
 
 function isRateLimited(key: string): boolean {
@@ -42,9 +30,7 @@ export async function GET(request: Request) {
   if (isRateLimited(getClientKey(request))) {
     return NextResponse.json({ ok: false, error: 'Rate limit exceeded.' }, { status: 429 });
   }
-  if (!isValidKey(request.headers.get('x-internal-api-key'))) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isInternalAuthorized(request)) return unauthorizedInternalResponse();
 
   const url = new URL(request.url);
   const store = getCanonicalStore();
@@ -99,9 +85,7 @@ export async function POST(request: Request) {
   if (isRateLimited(getClientKey(request))) {
     return NextResponse.json({ ok: false, error: 'Rate limit exceeded.' }, { status: 429 });
   }
-  if (!isValidKey(request.headers.get('x-internal-api-key'))) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!isInternalAuthorized(request)) return unauthorizedInternalResponse();
 
   const body = await request.json().catch(() => ({})) as Record<string, unknown>;
   const input = validateInput(body);

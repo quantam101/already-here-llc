@@ -110,9 +110,11 @@ export function isValidReferralCode(code: string): boolean {
 
 export function generateReferralCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
   let result = 'AH-';
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (const byte of bytes) {
+    result += chars.charAt(byte % chars.length);
   }
   return result;
 }

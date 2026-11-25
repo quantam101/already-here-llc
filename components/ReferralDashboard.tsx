@@ -24,7 +24,7 @@ export function ReferralDashboard() {
     setStatus("loading");
     setError("");
     try {
-      const response = await fetch("/api/referrals", {
+      const response = await fetch("/dashboard/api/referrals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })

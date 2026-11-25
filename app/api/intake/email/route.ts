@@ -3,6 +3,7 @@ import { classifyEmail, ingestEmails, type ParsedEmail } from '@/lib/email-intak
 import { getCanonicalStore } from '@/lib/canonical-store';
 import { isInternalAuthorized } from '@/lib/internal-auth';
 import { isRateLimited } from '@/lib/ginc-store';
+import { isJsonRequest } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,9 @@ const MAX_BATCH = 500;
 export async function POST(request: Request) {
   if (!isInternalAuthorized(request)) {
     return NextResponse.json({ ok: false, error: 'Internal key required.' }, { status: 401 });
+  }
+  if (!isJsonRequest(request)) {
+    return NextResponse.json({ ok: false, error: 'Expected JSON.' }, { status: 415 });
   }
   if (await isRateLimited(request.headers.get('x-real-ip') ?? 'unknown', 20, 60)) {
     return NextResponse.json({ ok: false, error: 'Too many requests.' }, { status: 429 });

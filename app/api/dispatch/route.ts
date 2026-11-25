@@ -4,6 +4,7 @@ import { buildRevenueIntakeProof } from '@/lib/revenue-command-intake';
 import { getCanonicalStore } from '@/lib/canonical-store';
 import { triageDispatchRequest } from '@/lib/dispatch-triage';
 import { getRedis } from '@/lib/redis';
+import { trustedClientKey } from '@/lib/request-security';
 import { isCanonicalStoreDurable } from '@/lib/canonical-store';
 import { buildPhoenixRfqConversionEvent } from '@/lib/phoenix-rfq-conversion';
 
@@ -45,9 +46,7 @@ function generateDispatchId(): string {
 }
 
 function getClientKey(request: Request): string {
-  // Only trust the proxy-owned connecting IP, not client-supplied forwarded chains.
-  const header = (process.env.TRUSTED_IP_HEADER || 'x-real-ip').toLowerCase();
-  return request.headers.get(header)?.trim() || 'unknown';
+  return trustedClientKey(request);
 }
 
 async function isRateLimited(key: string): Promise<boolean> {

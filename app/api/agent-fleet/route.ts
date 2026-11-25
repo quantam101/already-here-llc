@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isInternalAuthorized, unauthorizedInternalResponse } from '@/lib/internal-auth';
 import {
   EXPECTED_AGENT_COUNT,
   EXPECTED_THREAD_COUNT,
@@ -13,6 +14,7 @@ import {
 export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
+  if (!isInternalAuthorized(request)) return unauthorizedInternalResponse();
   const url = new URL(request.url);
   const repoParam = url.searchParams.get('repo');
   const agentParam = url.searchParams.get('agent');

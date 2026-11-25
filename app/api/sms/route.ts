@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server.js';
 import { formatSmsPayload } from '@/lib/sms';
+import { trustedClientKey } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 
@@ -17,7 +18,7 @@ function limited(key: string): boolean {
 }
 
 function clientKey(request: Request): string {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
+  return trustedClientKey(request);
 }
 
 export async function POST(request: Request) {

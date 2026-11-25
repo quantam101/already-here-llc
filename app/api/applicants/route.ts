@@ -4,6 +4,7 @@ import { buildTechnicianRecords, type TechnicianInput } from '@/lib/technician';
 import { getCanonicalStore, getCanonicalStoreMode, isCanonicalStoreDurable } from '@/lib/canonical-store';
 import { canonicalId } from '@/lib/canonical-ids';
 import { buildFollowUpRecord } from '@/lib/followups';
+import { trustedClientKey } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 
@@ -52,9 +53,7 @@ const maxFieldLengths: Record<string, number> = {
 };
 
 function getClientKey(request: Request): string {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim()
-    || 'unknown';
+  return trustedClientKey(request);
 }
 
 function isRateLimited(key: string): boolean {

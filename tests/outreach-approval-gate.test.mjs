@@ -21,13 +21,25 @@ function outreachBody(overrides = {}) {
 function post(body, headers = {}) {
   return new Request('http://localhost/api/outreach', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.50', ...headers },
+    headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.50', 'x-api-key': 'test-internal-key', ...headers },
     body: JSON.stringify(body)
   });
 }
 
+// The outreach queue contains private customer/prospect data, so even draft
+// creation requires an internal credential or operator Basic auth.
+{
+  const response = await POST(new Request('http://localhost/api/outreach', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.50' },
+    body: JSON.stringify(outreachBody({ status: 'draft' }))
+  }));
+  assert.equal(response.status, 401);
+}
+
 // approvals/policy.yaml: client_outreach/email_send always require approval.
-// Unauthenticated callers may stage drafts but cannot assert outbound actions.
+// Approved internal callers may stage drafts but cannot assert outbound actions
+// unless the separate outbound approval key is present.
 {
   const response = await POST(post(outreachBody({ status: 'sent' })));
   assert.equal(response.status, 403);

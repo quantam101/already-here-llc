@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server.js';
+import { trustedClientKey } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 
@@ -16,7 +17,7 @@ function generateLeadId(): string {
 }
 
 function getClientKey(request: Request): string {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip')?.trim() || 'unknown';
+  return trustedClientKey(request);
 }
 
 function isRateLimited(key: string): boolean {

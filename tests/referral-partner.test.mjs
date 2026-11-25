@@ -2,6 +2,7 @@ import assert from 'assert';
 
 process.env.NEXT_PUBLIC_SITE_URL = 'https://www.alreadyherellc.com';
 process.env.CANONICAL_STORE_TYPE = 'memory';
+process.env.AHFOS_INTERNAL_API_KEY = 'test-internal-key';
 
 const { getCanonicalStore, resetCanonicalStore } = await import('../lib/canonical-store.ts');
 const {
@@ -112,11 +113,24 @@ const partnerJson = await partnerResponse.json();
 assert.strictEqual(partnerJson.ok, true);
 assert.ok(isValidReferralCode(partnerJson.referralCode));
 
-// Test 7: referral POST route creates a user code
+
 const { POST: referralPost } = await import('../app/api/referrals/route.ts');
+
+// Referral lookup/conversion APIs are internal because they expose activity
+// and can alter reward accounting.
+{
+  const unauthorized = await referralPost(new Request('http://localhost:3000/api/referrals', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'unauthorized@example.invalid' })
+  }));
+  assert.strictEqual(unauthorized.status, 401);
+}
+
+// Test 7: referral POST route creates a user code
 const referralResponse = await referralPost(new Request('http://localhost:3000/api/referrals', {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-internal-key' },
   body: JSON.stringify({ email: 'post@example.invalid' })
 }));
 assert.strictEqual(referralResponse.status, 200);
@@ -128,7 +142,7 @@ assert.ok(isValidReferralCode(referralJson.stats.code));
 const { POST: convertPost } = await import('../app/api/referrals/convert/route.ts');
 const convertResponse = await convertPost(new Request('http://localhost:3000/api/referrals/convert', {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-internal-key' },
   body: JSON.stringify({
     code: referralJson.stats.code,
     sourceId: 'rev_post_123',

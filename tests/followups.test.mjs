@@ -26,9 +26,17 @@ assert.equal(record.lane, 'test');
 
 const { POST } = await import('../app/api/followups/route.ts');
 
-const update = await POST(new Request('http://localhost:3000/api/followups', {
+const unauthorized = await POST(new Request('http://localhost:3000/api/followups', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ id: followUp.id, status: 'closed', notes: 'Completed' })
+}));
+assert.equal(unauthorized.status, 401);
+
+process.env.AHFOS_INTERNAL_API_KEY = 'test-internal-key';
+const update = await POST(new Request('http://localhost:3000/api/followups', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-api-key': 'test-internal-key' },
   body: JSON.stringify({ id: followUp.id, status: 'closed', notes: 'Completed' })
 }));
 
