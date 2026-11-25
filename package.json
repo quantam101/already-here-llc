@@ -18,6 +18,8 @@
     "test:regression": "node scripts/regression-config-check.mjs",
     "test:dispatch": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/dispatch-contract.test.mjs && node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/dispatch-triage.test.mjs && node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/dispatch-offline-queue.test.mjs && node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/agent-reliability-eval.test.mjs",
     "test:technician": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/technician.test.mjs",
+    "test:area-prospecting": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/area-prospecting.test.mjs",
+    "prospecting:backfill": "node --experimental-strip-types --import ./tests/register-next-alias.mjs scripts/backfill-area-prospecting.mjs",
     "test:field-operations": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/field-operations.test.mjs",
     "test:autoworks": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/autoworks.test.mjs",
     "test:ahfos": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/ahfos.test.mjs",
