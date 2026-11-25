@@ -66,6 +66,18 @@ def create_payload(client, redis_url: str) -> dict:
     max_keys = int(os.environ.get('BACKUP_MAX_KEYS', '1000'))
     if not 1 <= max_keys <= 10000:
         raise ValueError('BACKUP_MAX_KEYS must be between 1 and 10000')
+    max_commands = int(os.environ.get('BACKUP_MAX_COMMANDS', '1000'))
+    if not 10 <= max_commands <= 10000:
+        raise ValueError('BACKUP_MAX_COMMANDS must be between 10 and 10000')
+    commands_reserved = 0
+
+    def reserve(cost):
+        nonlocal commands_reserved
+        if commands_reserved + cost > max_commands:
+            raise RuntimeError('Redis command budget exhausted; no backup created')
+        commands_reserved += cost
+
+    reserve(1)
     observed_before = int(client.dbsize())
     if observed_before > max_keys:
         raise RuntimeError('Key budget exceeded before scan; no backup created')
@@ -81,6 +93,7 @@ def create_payload(client, redis_url: str) -> dict:
         if scan_calls >= max_scan_calls:
             raise RuntimeError('SCAN command budget exhausted; no backup created')
         scan_calls += 1
+        reserve(1)
         cursor, keys = client.scan(cursor=cursor, count=250)
         for key in keys:
             if key in seen:
@@ -89,6 +102,8 @@ def create_payload(client, redis_url: str) -> dict:
             if len(seen) > max_keys:
                 raise RuntimeError('Key budget exceeded during scan; no backup created')
             # Keep each key's type, TTL, and binary dump from one transaction.
+            # MULTI + TYPE + PTTL + DUMP + EXEC = five server commands.
+            reserve(5)
             with client.pipeline(transaction=True) as tx:
                 tx.type(key)
                 tx.pttl(key)
@@ -112,6 +127,7 @@ def create_payload(client, redis_url: str) -> dict:
         if int(cursor) == 0:
             break
 
+    reserve(1)
     observed_after = int(client.dbsize())
     if observed_before != observed_after or observed_after != len(entries):
         raise RuntimeError("Key count changed while copying; retry rather than save a partial backup")
