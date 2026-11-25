@@ -1,66 +1,32 @@
-name: Upstash encrypted recovery backup
+name: Upstash encrypted recovery backup (preflight only)
 
+# Production data access and upload are intentionally disabled until
+# a protected signer and isolated end-to-end restore are verified.
 on:
   workflow_dispatch:
-    inputs:
-      signed_put_url:
-        description: 'Fresh 5-minute private Blob PUT URL for already-here-redis-<run-id>-<attempt>.aes'
-        required: true
-        type: string
 
 permissions:
   contents: read
 
-concurrency:
-  group: upstash-private-backup
-  cancel-in-progress: false
-
 jobs:
-  backup:
+  preflight:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Check required protected secrets
-        env:
-          UPSTASH_REDIS_TCP_URL: ${{ secrets.UPSTASH_REDIS_TCP_URL }}
-          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
-        run: |
-          test -n "$UPSTASH_REDIS_TCP_URL" || { echo '::error::Missing UPSTASH_REDIS_TCP_URL'; exit 1; }
-          test -n "$BACKUP_ENCRYPTION_KEY" || { echo '::error::Missing BACKUP_ENCRYPTION_KEY'; exit 1; }
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install backup-only dependencies
+      - name: Install isolated test dependencies
+        run: python -m pip install --disable-pip-version-check -r ops/backup/requirements.txt
+      - name: Verify backup safety without production secrets
         run: |
-          python -m pip install --disable-pip-version-check -r ops/backup/requirements.txt
-          npm install --prefix ops/backup --ignore-scripts --no-audit --no-fund
-      - name: Verify backup and recovery safety tests
-        run: python -m unittest discover -s ops/backup -p 'test_*.py' -v
-      - name: Create and verify encrypted recovery copy
-        env:
-          UPSTASH_REDIS_TCP_URL: ${{ secrets.UPSTASH_REDIS_TCP_URL }}
-          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
-        run: |
-          set -euo pipefail
-          umask 077
-          mkdir -p "$RUNNER_TEMP/redis-backup"
-          SNAPSHOT="$RUNNER_TEMP/redis-backup/already-here-redis-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.aes"
-          python ops/backup/redis_snapshot.py create --file "$SNAPSHOT"
-          python ops/backup/redis_snapshot.py verify --file "$SNAPSHOT"
-          echo "SNAPSHOT=$SNAPSHOT" >> "$GITHUB_ENV"
-      - name: Upload to separate private Vercel Blob store
-        env:
-          BACKUP_SIGNED_PUT_URL: ${{ inputs.signed_put_url }}
-        run: node ops/backup/upload.mjs "$SNAPSHOT"
-      - name: Remove ephemeral local copy
-        if: always()
-        run: |
-          if [ -n "${SNAPSHOT:-}" ]; then
-            rm -f -- "$SNAPSHOT"
-          fi
+          python -m unittest discover -s ops/backup -p 'test_*.py' -v
+          node --check ops/backup/upload.mjs
+      - name: Activation gate
+        run: echo "::notice::Preflight only; no production backup is performed."
