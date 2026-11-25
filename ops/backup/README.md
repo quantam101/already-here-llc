@@ -18,7 +18,7 @@ files and **does not back up production customer records**.
 - The restore command refuses the source Redis host and refuses nonempty
   targets. It cannot be triggered by the scheduled workflow.
 - The dedicated Blob store must not be connected to the Already Here production
-  Vercel project. Keep its static write token only in the GitHub Actions secret.
+  Vercel project. Do not grant the backup job a permanent Blob read/write token. Upload-only signed URLs and a separately protected signer are still required before activation.
 - Do not post credentials, dump files, or decrypted records in GitHub issues,
   repository history, screenshots, or chat.
 
@@ -31,8 +31,7 @@ files and **does not back up production customer records**.
 
    - `UPSTASH_REDIS_TCP_URL`: native TLS connection URI (`rediss://...`) for the
      exact Upstash Redis database serving production. This is not the REST URL.
-   - `VERCEL_BLOB_BACKUP_TOKEN`: read/write token for the dedicated **private**
-     Blob store, obtained from its Vercel settings.
+   - Upload authorization is **not configured**: the current implementation still requires a privileged `VERCEL_BLOB_BACKUP_TOKEN`. Do not provision it to Actions. Replace this with a per-run, short-lived, path-scoped upload-only signed URL from a separately protected signer.
    - `BACKUP_ENCRYPTION_KEY`: a random 32-byte secret encoded as base64. Generate
      locally with `python -c 'import base64,secrets;print(base64.b64encode(secrets.token_bytes(32)).decode())'`.
 
@@ -42,8 +41,7 @@ files and **does not back up production customer records**.
    verify a native Upstash `DUMP`/`RESTORE` works on an isolated scratch database.
 5. Once merged and configured, manually run Actions > Upstash encrypted recovery
    backup > Run workflow. Confirm `Create`, `verify`, and `upload` all pass.
-6. Confirm `Vercel Storage > private backup store` contains an encrypted `.aes`
-   object. The job runs nightly at **03:17 America/Phoenix** (10:17 UTC).
+6. Confirm the private backup store contains an encrypted `.aes` object. Nightly scheduling and retention must be enabled only in a separately reviewed change after an isolated restore succeeds.
 
 Neither Vercel nor Upstash must be upgraded for the code to run, but actual
 availability, quota, billing, account plan, and Redis command support must be
