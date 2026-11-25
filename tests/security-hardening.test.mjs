@@ -26,7 +26,10 @@ const spoofed = new Request('http://localhost/test', {
     'x-vercel-forwarded-for': '192.0.2.30'
   }
 });
+assert.equal(trustedClientKey(spoofed), '203.0.113.20');
+process.env.VERCEL = '1';
 assert.equal(trustedClientKey(spoofed), '192.0.2.30');
+process.env.VERCEL = '';
 const previousNodeEnv = process.env.NODE_ENV;
 process.env.NODE_ENV = 'production';
 assert.equal(trustedClientKey(new Request('http://localhost/test', { headers: { 'x-forwarded-for': '198.51.100.10' } })), 'unknown');
@@ -40,6 +43,9 @@ assert.equal(isInternalAuthorized(new Request('http://localhost/internal')), fal
 assert.equal(isInternalAuthorized(new Request('http://localhost/internal', { headers: { 'x-api-key': 'internal-test-key' } })), true);
 const basic = `Basic ${btoa('ops:ops-test-password')}`;
 assert.equal(isInternalAuthorized(new Request('http://localhost/internal', { headers: { authorization: basic } })), true);
+assert.equal(isInternalAuthorized(new Request('http://localhost/internal', { headers: { authorization: basic, origin: 'https://evil.example' } })), false);
+assert.equal(isInternalAuthorized(new Request('http://localhost/internal', { headers: { authorization: basic, 'sec-fetch-site': 'cross-site' } })), false);
+assert.equal(isInternalAuthorized(new Request('http://localhost/internal', { headers: { authorization: basic, origin: 'http://localhost', 'sec-fetch-site': 'same-origin' } })), true);
 assert.equal(isInternalAuthorized(new Request('http://localhost/internal', { headers: { authorization: `Basic ${btoa('ops:wrong')}` } })), false);
 
 function checkoutRequest(body, headers = {}) {

@@ -22,6 +22,20 @@ export function extractInternalApiKey(headers: Headers): string | null {
  * customers, technicians, work orders, revenue). Accepts
  * AHFOS_INTERNAL_API_KEY or GINC_ADMIN_KEY; constant-time compare.
  */
+function isCrossSiteBrowserRequest(request: Request): boolean {
+  const origin = request.headers.get('origin');
+  if (origin) {
+    try {
+      if (new URL(origin).origin !== new URL(request.url).origin) return true;
+    } catch {
+      return true;
+    }
+  }
+
+  const fetchSite = request.headers.get('sec-fetch-site')?.toLowerCase();
+  return fetchSite === 'cross-site' || fetchSite === 'same-site';
+}
+
 export function isInternalAuthorized(request: Request): boolean {
   const token = extractInternalApiKey(request.headers)?.trim() ?? '';
   const keys = [process.env.AHFOS_INTERNAL_API_KEY, process.env.GINC_ADMIN_KEY]
@@ -42,9 +56,13 @@ export function isInternalAuthorized(request: Request): boolean {
   // a copyable internal API key in browser JavaScript.
   const opsPassword = process.env.OPS_PORTAL_PASSWORD ?? '';
   const opsUser = process.env.OPS_PORTAL_USER || 'ops';
+  if (isCrossSiteBrowserRequest(request)) return false;
   return isAuthorizedBasic(request.headers.get('authorization'), opsUser, opsPassword);
 }
 
 export function unauthorizedInternalResponse() {
-  return Response.json({ ok: false, error: 'Internal authorization required.' }, { status: 401 });
+  return Response.json(
+    { ok: false, error: 'Internal authorization required.' },
+    { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="Already Here Operations", charset="UTF-8"' } }
+  );
 }

@@ -9,13 +9,14 @@ function firstForwardedAddress(value: string | null): string {
 /**
  * Returns the best proxy-owned client identity available to the deployment.
  *
- * On Vercel, x-vercel-forwarded-for and x-real-ip are populated by the edge.
- * x-forwarded-for is accepted only outside production so local tests and
+ * On Vercel, x-vercel-forwarded-for is trusted only when Vercel deployment
+ * markers are present; otherwise proxy-owned x-real-ip wins. x-forwarded-for is accepted only outside production so local tests and
  * development can identify callers; in production it may be rewritten by an
  * upstream proxy and is not treated as the primary source of truth here.
  */
 export function trustedClientKey(request: Request): string {
-  const vercelForwarded = firstForwardedAddress(request.headers.get('x-vercel-forwarded-for'));
+  const runningOnVercel = Boolean(process.env.VERCEL || process.env.VERCEL_ENV);
+  const vercelForwarded = runningOnVercel ? firstForwardedAddress(request.headers.get('x-vercel-forwarded-for')) : '';
   if (vercelForwarded) return vercelForwarded;
 
   const realIp = request.headers.get('x-real-ip')?.trim();
@@ -50,6 +51,10 @@ function inMemoryRateLimited(key: string, maxRequests: number, windowMs: number)
  * Sensitive production callers can pass requireDistributed=true to fail closed
  * when Upstash is not configured instead of relying on per-instance memory.
  */
+export function isJsonRequest(request: Request): boolean {
+  return request.headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase() === 'application/json';
+}
+
 export async function rateLimitExceeded(input: {
   scope: string;
   key: string;
