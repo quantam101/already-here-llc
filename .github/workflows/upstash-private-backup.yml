@@ -2,8 +2,6 @@ name: Upstash encrypted recovery backup
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '17 10 * * *' # 03:17 America/Phoenix year-round
 
 permissions:
   contents: read
