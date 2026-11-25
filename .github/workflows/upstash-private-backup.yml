@@ -2,6 +2,11 @@ name: Upstash encrypted recovery backup
 
 on:
   workflow_dispatch:
+    inputs:
+      signed_put_url:
+        description: 'Fresh 5-minute private Blob PUT URL for already-here-redis-<run-id>-<attempt>.aes'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -22,11 +27,9 @@ jobs:
         env:
           UPSTASH_REDIS_TCP_URL: ${{ secrets.UPSTASH_REDIS_TCP_URL }}
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
-          VERCEL_BLOB_BACKUP_TOKEN: ${{ secrets.VERCEL_BLOB_BACKUP_TOKEN }}
         run: |
           test -n "$UPSTASH_REDIS_TCP_URL" || { echo '::error::Missing UPSTASH_REDIS_TCP_URL'; exit 1; }
           test -n "$BACKUP_ENCRYPTION_KEY" || { echo '::error::Missing BACKUP_ENCRYPTION_KEY'; exit 1; }
-          test -n "$VERCEL_BLOB_BACKUP_TOKEN" || { echo '::error::Missing VERCEL_BLOB_BACKUP_TOKEN'; exit 1; }
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -47,13 +50,13 @@ jobs:
           set -euo pipefail
           umask 077
           mkdir -p "$RUNNER_TEMP/redis-backup"
-          SNAPSHOT="$RUNNER_TEMP/redis-backup/already-here-redis-$(date -u +%Y%m%dT%H%M%SZ).aes"
+          SNAPSHOT="$RUNNER_TEMP/redis-backup/already-here-redis-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.aes"
           python ops/backup/redis_snapshot.py create --file "$SNAPSHOT"
           python ops/backup/redis_snapshot.py verify --file "$SNAPSHOT"
           echo "SNAPSHOT=$SNAPSHOT" >> "$GITHUB_ENV"
       - name: Upload to separate private Vercel Blob store
         env:
-          VERCEL_BLOB_BACKUP_TOKEN: ${{ secrets.VERCEL_BLOB_BACKUP_TOKEN }}
+          BACKUP_SIGNED_PUT_URL: ${{ inputs.signed_put_url }}
         run: node ops/backup/upload.mjs "$SNAPSHOT"
       - name: Remove ephemeral local copy
         if: always()
