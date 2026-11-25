@@ -294,7 +294,7 @@ export function resetEnterpriseStore(): void {
 
 export function createEnterpriseEvent(agent: EnterpriseAgent, operation: EnterpriseOperation, summary: string, payload: Record<string, unknown>): EnterpriseEvent {
   return {
-    eventId: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+    eventId: `evt-${crypto.randomUUID()}`,
     agentId: agent.id,
     operation,
     summary,
