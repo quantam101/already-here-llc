@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { buildWorkOrderRecords, matchTechniciansForWorkOrder, type WorkOrderInput } from '@/lib/field-operations';
 import { getCanonicalStore } from '@/lib/canonical-store';
+import { isInternalAuthorized, unauthorizedInternalResponse } from '@/lib/internal-auth';
 import { buildFollowUpRecord } from '@/lib/followups';
+import { trustedClientKey } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 
@@ -10,9 +12,7 @@ const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 20;
 
 function getClientKey(request: Request): string {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim()
-    || 'unknown';
+  return trustedClientKey(request);
 }
 
 function isRateLimited(key: string): boolean {
@@ -82,6 +82,7 @@ function inputFromBody(body: Record<string, unknown>): WorkOrderInput | null {
 }
 
 export async function POST(request: Request) {
+  if (!isInternalAuthorized(request)) return unauthorizedInternalResponse();
   if (isRateLimited(getClientKey(request))) {
     return NextResponse.json({ ok: false, error: 'Rate limit exceeded.' }, { status: 429 });
   }
@@ -129,6 +130,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  if (!isInternalAuthorized(request)) return unauthorizedInternalResponse();
   if (isRateLimited(getClientKey(request))) {
     return NextResponse.json({ ok: false, error: 'Rate limit exceeded.' }, { status: 429 });
   }

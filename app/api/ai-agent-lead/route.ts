@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server.js';
 import { scoreAgentLead, type AgentLeadPayload } from '../../../lib/ai-agent-products';
+import { rateLimitExceeded, trustedClientKey } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 
@@ -27,10 +28,6 @@ const maxFieldLengths: Record<keyof AgentLeadPayload | 'websiteTrap', number> = 
 };
 
 const requiredFields: Array<keyof AgentLeadPayload> = ['fullName', 'company', 'email', 'phone', 'businessType', 'goals'];
-const rateLimitWindowMs = 60_000;
-const rateLimitMax = 5;
-const rateLimit = new Map<string, { count: number; resetAt: number }>();
-
 type LeadGrade = 'A' | 'B' | 'C';
 
 type SalesBrief = {
@@ -68,23 +65,6 @@ type ResendDeliveryResult = {
 function generateLeadId(): string {
   const stamp = new Date().toISOString().replaceAll('-', '').replaceAll(':', '').replaceAll('.', '');
   return `AIA-${stamp}-${randomUUID().slice(0, 8).toUpperCase()}`;
-}
-
-function getClientKey(request: Request): string {
-  const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  const realIp = request.headers.get('x-real-ip')?.trim();
-  return forwardedFor || realIp || 'unknown';
-}
-
-function isRateLimited(key: string): boolean {
-  const now = Date.now();
-  const current = rateLimit.get(key);
-  if (!current || current.resetAt <= now) {
-    rateLimit.set(key, { count: 1, resetAt: now + rateLimitWindowMs });
-    return false;
-  }
-  current.count += 1;
-  return current.count > rateLimitMax;
 }
 
 function clean(value: unknown): string {
@@ -434,8 +414,9 @@ async function sendViaFormspree(record: LeadRecord): Promise<void> {
 }
 
 export async function POST(request: Request) {
-  const clientKey = getClientKey(request);
-  if (isRateLimited(clientKey)) return NextResponse.json({ message: 'Too many submissions. Try again later.' }, { status: 429 });
+  if (await rateLimitExceeded({ scope: 'ai-agent-lead', key: trustedClientKey(request), maxRequests: 5, windowMs: 60_000 })) {
+    return NextResponse.json({ message: 'Too many submissions. Try again later.' }, { status: 429 });
+  }
 
   const raw = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!raw) return NextResponse.json({ message: 'Invalid JSON payload.' }, { status: 400 });

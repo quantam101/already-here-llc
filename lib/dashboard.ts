@@ -44,18 +44,18 @@ export interface DashboardMetrics {
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const store = getCanonicalStore();
   const counts: Record<string, number> = {};
+  const recordsByTable = new Map<string, Record<string, unknown>[]>();
 
   await Promise.all(TRACKED_TABLES.map(async (table) => {
     const records = await store.queryTable(table, 10000);
+    recordsByTable.set(table, records);
     counts[table] = records.length;
   }));
 
-  const [technicians, revenueEvents, followups, recent] = await Promise.all([
-    await store.queryTable('technicians', 10000),
-    await store.queryTable('revenue_events', 10000),
-    await store.queryTable('followups', 10000),
-    await store.queryAll(10)
-  ]);
+  const technicians = recordsByTable.get('technicians') ?? [];
+  const revenueEvents = recordsByTable.get('revenue_events') ?? [];
+  const followups = recordsByTable.get('followups') ?? [];
+  const recent = await store.queryAll(10);
 
   const dispatchReadyTechnicians = technicians.filter(
     (t) => typeof t.dispatch_readiness_score === 'number' && t.dispatch_readiness_score >= 70

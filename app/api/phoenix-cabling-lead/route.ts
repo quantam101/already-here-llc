@@ -3,6 +3,7 @@ import { canonicalId } from '@/lib/canonical-ids';
 import { NextResponse } from 'next/server';
 import { buildRevenueIntakeProof } from '@/lib/revenue-command-intake';
 import { getCanonicalStore, isCanonicalStoreDurable } from '@/lib/canonical-store';
+import { rateLimitExceeded, trustedClientKey } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 
@@ -11,7 +12,6 @@ const FROM = 'Already Here LLC <dispatch@alreadyherellc.com>';
 const OWNER_FALLBACK = 'dispatch@alreadyherellc.com';
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_PER_WINDOW = 4;
-const attempts = new Map<string, { count: number; expires: number }>();
 
 type Lead = {
   fullName: string;
@@ -34,20 +34,6 @@ function html(value: string): string {
 }
 function isEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 160;
-}
-function clientKey(request: Request): string {
-  return request.headers.get('x-real-ip') ||
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-}
-function rateLimited(key: string): boolean {
-  const now = Date.now();
-  const entry = attempts.get(key);
-  if (!entry || entry.expires <= now) {
-    attempts.set(key, { count: 1, expires: now + WINDOW_MS });
-    return false;
-  }
-  entry.count += 1;
-  return entry.count > MAX_PER_WINDOW;
 }
 function normalize(body: Record<string, unknown>): Lead {
   return {
@@ -172,7 +158,7 @@ export async function POST(request: Request) {
   if (origin && origin !== new URL(request.url).origin) {
     return NextResponse.json({ message: 'Invalid request origin.' }, { status: 403, headers });
   }
-  if (rateLimited(clientKey(request))) {
+  if (await rateLimitExceeded({ scope: 'phoenix-cabling-lead', key: trustedClientKey(request), maxRequests: MAX_PER_WINDOW, windowMs: WINDOW_MS })) {
     return NextResponse.json({ message: 'Too many requests. Try again later.' }, { status: 429, headers });
   }
   const rawText = await request.text();

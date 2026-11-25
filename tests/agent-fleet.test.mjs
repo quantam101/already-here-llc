@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+
+process.env.AHFOS_INTERNAL_API_KEY = 'test-internal-key';
 import { GET as fleetGet } from '../app/api/agent-fleet/route.ts';
 import {
   EXPECTED_AGENT_COUNT,
@@ -13,7 +15,7 @@ import {
 } from '../lib/agent-fleet.ts';
 
 function request(path) {
-  return new Request(`http://localhost${path}`);
+  return new Request(`http://localhost${path}`, { headers: { 'x-api-key': 'test-internal-key' } });
 }
 
 {
@@ -80,6 +82,12 @@ function request(path) {
   assert.equal(isFleetRepo('not-a-repo'), false);
   assert.equal(getAgent('missing-agent'), undefined);
   assert.equal(getAgent('dc-cost-guard')?.repo, 'daily-command-os');
+}
+
+
+{
+  const unauthorized = await fleetGet(new Request('http://localhost/api/agent-fleet'));
+  assert.equal(unauthorized.status, 401);
 }
 
 {

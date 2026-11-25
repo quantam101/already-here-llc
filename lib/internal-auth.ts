@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'crypto';
+import { isAuthorizedBasic } from './route-policy';
 
 export function isInternalApiKeyValid(provided: string | null): boolean {
   const expectedValue = process.env.AHFOS_INTERNAL_API_KEY?.trim();
@@ -23,11 +24,10 @@ export function extractInternalApiKey(headers: Headers): string | null {
  */
 export function isInternalAuthorized(request: Request): boolean {
   const token = extractInternalApiKey(request.headers)?.trim() ?? '';
-  if (!token) return false;
   const keys = [process.env.AHFOS_INTERNAL_API_KEY, process.env.GINC_ADMIN_KEY]
     .map((k) => k?.trim())
     .filter((k): k is string => !!k);
-  return keys.some((key) => {
+  const bearerAuthorized = Boolean(token) && keys.some((key) => {
     if (key.length !== token.length) return false;
     try {
       return timingSafeEqual(Buffer.from(key), Buffer.from(token));
@@ -35,4 +35,16 @@ export function isInternalAuthorized(request: Request): boolean {
       return false;
     }
   });
+  if (bearerAuthorized) return true;
+
+  // Protected operator screens already authenticate with Basic auth. Accept
+  // the same server-side credential on API routes so those pages do not need
+  // a copyable internal API key in browser JavaScript.
+  const opsPassword = process.env.OPS_PORTAL_PASSWORD ?? '';
+  const opsUser = process.env.OPS_PORTAL_USER || 'ops';
+  return isAuthorizedBasic(request.headers.get('authorization'), opsUser, opsPassword);
+}
+
+export function unauthorizedInternalResponse() {
+  return Response.json({ ok: false, error: 'Internal authorization required.' }, { status: 401 });
 }

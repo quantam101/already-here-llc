@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isInternalAuthorized, unauthorizedInternalResponse } from '@/lib/internal-auth';
 import { runDailyCommandSuperAiOperation, type DailyCommandSuperAiOperation } from '@/lib/daily-command-super-ai';
 
 function toOperation(value: string | null | undefined): DailyCommandSuperAiOperation | undefined {
@@ -7,6 +8,7 @@ function toOperation(value: string | null | undefined): DailyCommandSuperAiOpera
 }
 
 export async function GET(request: Request) {
+  if (!isInternalAuthorized(request)) return unauthorizedInternalResponse();
   const url = new URL(request.url);
   const response = runDailyCommandSuperAiOperation({
     operation: toOperation(url.searchParams.get('operation')),
@@ -22,6 +24,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!isInternalAuthorized(request)) return unauthorizedInternalResponse();
   const body = await request.json().catch(() => ({}));
   const response = runDailyCommandSuperAiOperation({
     operation: body?.operation,

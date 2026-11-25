@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { buildAutoworksIntakeRecords, matchTechniciansForAutoworksJob, type AutoworksIntakeInput } from '@/lib/autoworks';
 import { getCanonicalStore } from '@/lib/canonical-store';
 import { buildFollowUpRecord } from '@/lib/followups';
+import { trustedClientKey } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 
@@ -10,9 +11,7 @@ const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 20;
 
 function getClientKey(request: Request): string {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')?.trim()
-    || 'unknown';
+  return trustedClientKey(request);
 }
 
 function isRateLimited(key: string): boolean {

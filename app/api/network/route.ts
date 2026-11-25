@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { loadConnectionGraph, lookupGraph, type GraphNodeKind } from '@/lib/connection-graph';
 import { isInternalAuthorized } from '@/lib/internal-auth';
 import { isRateLimited } from '@/lib/ginc-store';
+import { trustedClientKey } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,15 +13,7 @@ const KINDS = new Set<GraphNodeKind>([
 ]);
 
 function clientKey(request: Request): string {
-  const realIp = request.headers.get('x-real-ip')?.trim();
-  if (realIp) return realIp;
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    const parts = forwarded.split(',').map((s) => s.trim()).filter(Boolean);
-    const last = parts[parts.length - 1];
-    if (last) return last;
-  }
-  return 'unknown';
+  return trustedClientKey(request);
 }
 
 /**

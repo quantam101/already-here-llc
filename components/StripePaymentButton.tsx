@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { siteConfig } from '@/lib/site';
 
 export interface StripePaymentButtonProps {
@@ -35,9 +35,11 @@ export function StripePaymentButton({
   children
 }: StripePaymentButtonProps) {
   const [loading, setLoading] = useState(false);
+  const checkoutIntentRef = useRef<string | null>(null);
 
   async function handleClick() {
     setLoading(true);
+    checkoutIntentRef.current ??= crypto.randomUUID();
     try {
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
@@ -53,6 +55,7 @@ export function StripePaymentButton({
           successPath,
           cancelPath,
           referralCode,
+          checkoutIntentId: checkoutIntentRef.current,
           metadata: { rentalId: rentalId ?? '', ...metadata }
         })
       });

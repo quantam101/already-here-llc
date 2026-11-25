@@ -36,12 +36,13 @@ async function run() {
     checks.push({ route, statusCode: response.status, ok: response.ok, hasExpectedText: /Submit|Quote|Revenue Command|Owned database|Dispatch/i.test(html) });
   }
 
-  const spineResponse = await fetch(`${baseUrl}/api/revenue-command-spine`);
+  const internalHeaders = process.env.AHFOS_INTERNAL_API_KEY ? { 'x-api-key': process.env.AHFOS_INTERNAL_API_KEY } : {};
+  const spineResponse = await fetch(`${baseUrl}/api/revenue-command-spine`, { headers: internalHeaders });
   const spineText = await spineResponse.text();
   const spineJson = JSON.parse(spineText);
   checks.push({ route: '/api/revenue-command-spine', statusCode: spineResponse.status, ok: spineResponse.ok, agentCoverage: spineJson?.agentCoverage?.oneAgentPerTask === true, records: spineJson?.agentCoverage?.recordCount, agents: spineJson?.agentCoverage?.agentCount });
 
-  const proofResponse = await fetch(`${baseUrl}/api/revenue-command-spine/intake?demo=all`);
+  const proofResponse = await fetch(`${baseUrl}/api/revenue-command-spine/intake?demo=all`, { headers: internalHeaders });
   const proofText = await proofResponse.text();
   const proofJson = JSON.parse(proofText);
   checks.push({ route: '/api/revenue-command-spine/intake?demo=all', statusCode: proofResponse.status, ok: proofResponse.ok, demoCount: proofJson?.demos?.length, demoLanes: proofJson?.demos?.map((demo) => demo.lane) });

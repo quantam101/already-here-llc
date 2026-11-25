@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { rateLimitExceeded, trustedClientKey } from '@/lib/request-security';
 import {
   buildRevenueMeshPlan,
   productizedRevenueOffers as productizedOffers,
@@ -9,27 +10,6 @@ import {
 } from '@/lib/revenue-mesh';
 
 export const runtime = 'nodejs';
-
-const rateLimitWindowMs = 60_000;
-const rateLimitMax = 20;
-const rateLimit = new Map<string, { count: number; resetAt: number }>();
-
-function getClientKey(request: Request): string {
-  const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  const realIp = request.headers.get('x-real-ip')?.trim();
-  return forwardedFor || realIp || 'unknown';
-}
-
-function isRateLimited(key: string): boolean {
-  const now = Date.now();
-  const current = rateLimit.get(key);
-  if (!current || current.resetAt <= now) {
-    rateLimit.set(key, { count: 1, resetAt: now + rateLimitWindowMs });
-    return false;
-  }
-  current.count += 1;
-  return current.count > rateLimitMax;
-}
 
 function clean(value: unknown, maxLength = 1200): string | undefined {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) || undefined : undefined;
@@ -99,8 +79,7 @@ function normalizeOpportunities(raw: unknown): RevenueOpportunityInput[] {
 }
 
 export async function POST(request: Request) {
-  const clientKey = getClientKey(request);
-  if (isRateLimited(clientKey)) {
+  if (await rateLimitExceeded({ scope: 'revenue-mesh', key: trustedClientKey(request), maxRequests: 20, windowMs: 60_000 })) {
     return NextResponse.json({ ok: false, message: 'Request limit reached. Try again later.' }, { status: 429 });
   }
 

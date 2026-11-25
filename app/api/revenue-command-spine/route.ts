@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRevenueCommandAgents, validateRevenueAgentCoverage } from '@/lib/revenue-command-agents';
 import { applyReviewAction, getDatabaseReadyRecords, getRevenueCommandSpineResponse, type ReviewAction } from '@/lib/revenue-command-spine';
 import { getCanonicalStore } from '@/lib/canonical-store';
+import { isInternalAuthorized, unauthorizedInternalResponse } from '@/lib/internal-auth';
 
 const VALID_RECORD_IDS = new Set(getDatabaseReadyRecords().map((record) => record.id));
 
@@ -13,7 +14,8 @@ function isValidRecordId(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= 120 && VALID_RECORD_IDS.has(value);
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (!isInternalAuthorized(request)) return unauthorizedInternalResponse();
   return NextResponse.json({
     ...getRevenueCommandSpineResponse(),
     agents: getRevenueCommandAgents(),
@@ -22,6 +24,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!isInternalAuthorized(request)) return unauthorizedInternalResponse();
   const body = await request.json().catch(() => ({}));
   const recordId = isValidRecordId(body?.recordId) ? body.recordId : undefined;
   const action = isReviewAction(body?.action) ? body.action : 'review';

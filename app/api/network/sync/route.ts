@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { syncFromDailyCommand } from '@/lib/command-sync';
 import { isRateLimited } from '@/lib/ginc-store';
+import { trustedClientKey } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,9 +23,7 @@ function isAuthorized(request: Request): boolean {
 }
 
 function clientKey(request: Request): string {
-  return request.headers.get('x-real-ip')?.trim()
-    || request.headers.get('x-forwarded-for')?.split(',').pop()?.trim()
-    || 'unknown';
+  return trustedClientKey(request);
 }
 
 /**

@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { buildRevenueCommandProofDemos, buildRevenueIntakeProof, type RevenueIntakeInput } from '@/lib/revenue-command-intake';
 import { getCanonicalStore } from '@/lib/canonical-store';
+import { isInternalAuthorized, unauthorizedInternalResponse } from '@/lib/internal-auth';
 import { buildFollowUpRecord } from '@/lib/followups';
+import { trustedClientKey } from '@/lib/request-security';
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 10;
@@ -27,9 +29,7 @@ const FIELD_LIMITS: Record<keyof RevenueIntakeInput, number> = {
 };
 
 function getClientKey(request: Request): string {
-  const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  const realIp = request.headers.get('x-real-ip')?.trim();
-  return forwardedFor || realIp || 'unknown';
+  return trustedClientKey(request);
 }
 
 function isRateLimited(key: string): boolean {
@@ -83,6 +83,7 @@ function validateInput(input: RevenueIntakeInput): string | null {
 }
 
 export async function GET(request: Request) {
+  if (!isInternalAuthorized(request)) return unauthorizedInternalResponse();
   const url = new URL(request.url);
   if (url.searchParams.get('demo') === 'all') {
     return NextResponse.json({ ok: true, demos: buildRevenueCommandProofDemos() });
@@ -110,6 +111,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!isInternalAuthorized(request)) return unauthorizedInternalResponse();
   const clientKey = getClientKey(request);
   if (isRateLimited(clientKey)) {
     return NextResponse.json({ ok: false, error: 'Rate limit exceeded. Try again later.' }, { status: 429 });

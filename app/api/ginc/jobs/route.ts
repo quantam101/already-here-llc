@@ -3,21 +3,14 @@ import { logAudit } from '@/lib/audit';
 import { GincJob } from '@/lib/ginc';
 import { gincJobSchema } from '@/lib/ginc-schemas';
 import { addJob, addMember, buildGincMember, generateGincId, isRateLimited, loadNetwork } from '@/lib/ginc-store';
+import { trustedClientKey } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 
 const allowedStatuses = new Set(['open', 'filled', 'closed']);
 
 function clientKey(request: Request): string {
-  const realIp = request.headers.get('x-real-ip')?.trim();
-  if (realIp) return realIp;
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    const parts = forwarded.split(',').map((s) => s.trim()).filter(Boolean);
-    const last = parts[parts.length - 1];
-    if (last) return last;
-  }
-  return 'unknown';
+  return trustedClientKey(request);
 }
 
 function clean(value: unknown, max = 3000): string {

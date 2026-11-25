@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import { z } from 'zod';
+import { trustedClientKey } from '@/lib/request-security';
 import {
   runEnterpriseOperation,
   ENTERPRISE_OPERATIONS,
@@ -41,9 +42,7 @@ const RATE_LIMIT_MAX = 30;
 const requestLog = new Map<string, number[]>();
 
 function getClientId(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  return request.headers.get('x-real-ip') ?? 'unknown';
+  return trustedClientKey(request);
 }
 
 function isRateLimited(clientId: string): boolean {
