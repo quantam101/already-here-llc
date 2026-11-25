@@ -82,7 +82,8 @@ function deterministicLLMFallback(messages: LLMMessage[]): string {
 
 export async function llmComplete(
   messages: LLMMessage[],
-  maxTokens = 1500
+  maxTokens = 1500,
+  options: { deterministicFallback?: boolean } = {}
 ): Promise<string | null> {
   const event = createLevel4Event({
     type: 'llm.completion',
@@ -113,6 +114,8 @@ export async function llmComplete(
 
       throw new Error('All LLM providers unavailable or unconfigured.');
     },
-    fallback: () => deterministicLLMFallback(messages)
+    // Callers that parse the completion as structured data opt out of the fallback text:
+    // it echoes the user request and must never be mistaken for provider output.
+    fallback: () => (options.deterministicFallback === false ? null : deterministicLLMFallback(messages))
   });
 }

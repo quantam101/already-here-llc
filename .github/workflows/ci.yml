@@ -49,7 +49,7 @@ jobs:
         run: npm ci --silent
 
       - name: ProfitEngine content quality tests
-        run: node --test profitengine/tests/quality-gate.test.js
+        run: node --test profitengine/tests/quality-gate.test.js profitengine/tests/limits.test.js
 
       - name: Quality gate
         shell: bash

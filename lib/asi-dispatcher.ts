@@ -4,7 +4,14 @@ import {
   type EnterpriseOperation,
   type EnterpriseItem,
 } from './global-enterprise-orchestrator';
+import { z } from 'zod';
 import { llmComplete } from './llm-gateway';
+
+const llmDispatchSchema = z.object({
+  operation: z.enum(ENTERPRISE_OPERATIONS),
+  title: z.string().trim().min(1).max(200).catch('ASI dispatched objective'),
+  body: z.string().trim().min(1).max(4000).catch('No additional detail provided.'),
+});
 
 const OPERATION_FOR_LANE: Record<string, EnterpriseOperation> = {
   'Daily Command': 'summarize_daily_command',
@@ -68,14 +75,8 @@ function parseLLMResponse(text: string): { operation: EnterpriseOperation; title
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   const json = jsonMatch ? jsonMatch[0] : text;
   try {
-    const parsed = JSON.parse(json) as Record<string, unknown>;
-    const operation = String(parsed.operation || '');
-    if (!ENTERPRISE_OPERATIONS.includes(operation as EnterpriseOperation)) return undefined;
-    return {
-      operation: operation as EnterpriseOperation,
-      title: String(parsed.title || 'ASI dispatched objective'),
-      body: String(parsed.body || 'No additional detail provided.'),
-    };
+    const result = llmDispatchSchema.safeParse(JSON.parse(json));
+    return result.success ? result.data : undefined;
   } catch {
     return undefined;
   }
@@ -93,7 +94,8 @@ export async function dispatchObjective(
       { role: 'system', content: ASI_SYSTEM_PROMPT },
       { role: 'user', content: `Objective: ${objective}` },
     ],
-    500
+    500,
+    { deterministicFallback: false }
   ).catch(() => null);
 
   const parsed = providerOutput ? parseLLMResponse(providerOutput) : undefined;
