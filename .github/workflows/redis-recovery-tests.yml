@@ -1,0 +1,76 @@
+name: Redis recovery safety tests
+
+on:
+  pull_request:
+    paths:
+      - 'ops/backup/**'
+      - '.github/workflows/upstash-private-backup.yml'
+      - '.github/workflows/redis-recovery-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/backup/**'
+      - '.github/workflows/upstash-private-backup.yml'
+      - '.github/workflows/redis-recovery-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recovery-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check -r ops/backup/requirements.txt
+      - name: Verify encrypted recovery tests
+        run: python -m unittest discover -s ops/backup -p 'test_*.py' -v
+      - name: Verify synthetic encrypted backup and restore on isolated Redis
+        env:
+          BACKUP_INTEGRATION_REDIS: '1'
+        run: python -m unittest discover -s ops/backup -p 'test_*.py' -v
+      - name: Generate ephemeral synthetic-only encryption key
+        run: |
+          echo "BACKUP_ENCRYPTION_KEY=$(python -c 'import base64,secrets; print(base64.b64encode(secrets.token_bytes(32)).decode())')" >> "$GITHUB_ENV"
+      - name: Encrypt synthetic Redis backup
+        env:
+          BACKUP_INTEGRATION_REDIS: '1'
+          PYTHONPATH: ops/backup
+        run: python ops/backup/synthetic_artifact_drill.py create --file "$RUNNER_TEMP/synthetic-recovery.aes"
+      - name: Upload encrypted synthetic artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-redis-recovery
+          path: ${{ runner.temp }}/synthetic-recovery.aes
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+      - name: Remove original before download
+        run: rm -f "$RUNNER_TEMP/synthetic-recovery.aes"
+      - name: Download encrypted synthetic artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: synthetic-redis-recovery
+          path: ${{ runner.temp }}/recovered
+      - name: Restore and verify downloaded artifact
+        env:
+          BACKUP_INTEGRATION_REDIS: '1'
+          PYTHONPATH: ops/backup
+        run: python ops/backup/synthetic_artifact_drill.py restore --file "$RUNNER_TEMP/recovered/synthetic-recovery.aes"
+      - name: Verify uploader syntax
+        run: node --check ops/backup/upload.mjs

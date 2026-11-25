@@ -1,0 +1,59 @@
+name: Encrypted Redis recovery artifact (isolated test database only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upstash-recovery-test-artifact
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install backup dependencies
+        run: python -m pip install --disable-pip-version-check -r ops/backup/requirements.txt
+      - name: Run recovery safety tests
+        run: python -m unittest discover -s ops/backup -p 'test_*.py' -v
+      - name: Verify isolated recovery credentials exist
+        env:
+          RECOVERY_TEST_REDIS_TCP_URL: ${{ secrets.RECOVERY_TEST_REDIS_TCP_URL }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          test -n "$RECOVERY_TEST_REDIS_TCP_URL" || { echo "::error::Missing isolated recovery test Redis credential"; exit 1; }
+          test -n "$BACKUP_ENCRYPTION_KEY" || { echo "::error::Missing backup encryption key"; exit 1; }
+          case "$RECOVERY_TEST_REDIS_TCP_URL" in rediss://*) ;; *) echo "::error::TLS Redis URL required"; exit 1;; esac
+      - name: Create and verify encrypted test recovery copy
+        env:
+          UPSTASH_REDIS_TCP_URL: ${{ secrets.RECOVERY_TEST_REDIS_TCP_URL }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/redis-backup"
+          SNAPSHOT="$RUNNER_TEMP/redis-backup/isolated-recovery-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.aes"
+          python ops/backup/redis_snapshot.py create --file "$SNAPSHOT"
+          python ops/backup/redis_snapshot.py verify --file "$SNAPSHOT"
+          echo "SNAPSHOT=$SNAPSHOT" >> "$GITHUB_ENV"
+      - name: Store encrypted artifact for 30 days
+        uses: actions/upload-artifact@v4
+        with:
+          name: isolated-redis-recovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.SNAPSHOT }}
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+      - name: Remove runner copy
+        if: always()
+        run: |
+          if [ -n "${SNAPSHOT:-}" ]; then rm -f -- "$SNAPSHOT"; fi
