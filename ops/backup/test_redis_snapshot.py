@@ -1,4 +1,6 @@
 import base64
+import os
+from unittest.mock import patch
 import unittest
 
 from redis_snapshot import (
@@ -84,6 +86,11 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual(destination.items[b"canonical:jobs:a"]["dump"], b"\x00\x11test binary\xff")
         self.assertEqual(destination.items[b"canonical:jobs:a"]["ttl_ms"], 0)
         self.assertGreater(destination.items[b"canonical:queue"]["ttl_ms"], 0)
+
+    def test_hard_command_budget_aborts_before_partial_export(self):
+        with patch.dict(os.environ, {'BACKUP_MAX_COMMANDS': '10'}):
+            with self.assertRaisesRegex(RuntimeError, 'command budget exhausted'):
+                create_payload(self.source, self.SOURCE)
 
     def test_rejects_wrong_key_and_tampered_backup(self):
         data = seal(create_payload(self.source, self.SOURCE), self.key)
