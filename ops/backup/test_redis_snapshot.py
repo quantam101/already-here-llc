@@ -106,6 +106,26 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual(calls, {'dbsize': 1, 'scan': 1, 'pipeline': 1})
         # No payload was returned, so the caller cannot seal or upload a partial snapshot.
 
+    def test_scan_cursor_loop_aborts_without_payload(self):
+        class StuckCursorRedis(FakeRedis):
+            def scan(self, cursor=0, count=250):
+                return 1, []
+
+        with patch.dict(os.environ, {'BACKUP_MAX_SCAN_CALLS': '2'}):
+            with self.assertRaisesRegex(RuntimeError, 'SCAN command budget exhausted'):
+                create_payload(StuckCursorRedis(), self.SOURCE)
+
+    def test_command_budget_counts_scan_and_final_dbsize(self):
+        class ExtraScanRedis(FakeRedis):
+            def scan(self, cursor=0, count=250):
+                if cursor == 0:
+                    return 1, []
+                return 0, list(self.items)
+
+        with patch.dict(os.environ, {'BACKUP_MAX_COMMANDS': '12'}):
+            with self.assertRaisesRegex(RuntimeError, 'command budget exhausted'):
+                create_payload(ExtraScanRedis(self.source.items), self.SOURCE)
+
     def test_rejects_wrong_key_and_tampered_backup(self):
         data = seal(create_payload(self.source, self.SOURCE), self.key)
         with self.assertRaises(Exception):
