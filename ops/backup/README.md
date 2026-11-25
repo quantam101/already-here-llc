@@ -1,9 +1,6 @@
 # Already Here LLC: zero-subscription-cost Redis recovery copies
 
-This workflow backs up the **live Upstash Redis keyspace** and uploads a
-client-side AES-256-GCM encrypted file to a **dedicated private Vercel Blob
-store**, with a 30-day retention window. It uses a GitHub Actions scheduled
-workflow. This is separate from `scripts/backup.sh`, which archives source
+This draft implements a best-effort encrypted recovery-copy format and a manual GitHub Actions workflow. **It does not provide operational backups yet.** Secure upload authorization, a successful isolated end-to-end restore drill, scheduling, and retention enforcement are not implemented or verified. Do not use this draft as the only recovery strategy. This is separate from `scripts/backup.sh`, which archives source
 files and **does not back up production customer records**.
 
 ## Safety and accuracy boundaries
@@ -26,7 +23,7 @@ files and **does not back up production customer records**.
 
 1. In Vercel Storage, create a **Private** Blob store named for backup use.
    Keep it unconnected to the production `already-here-llc` project.
-2. In GitHub `quantam101/already-here-llc` > Settings > Secrets and variables >
+2. After a separately protected upload signer and isolated drill are approved, in GitHub `quantam101/already-here-llc` > Settings > Secrets and variables >
    Actions, create these **repository secrets** without putting values in chat:
 
    - `UPSTASH_REDIS_TCP_URL`: native TLS connection URI (`rediss://...`) for the
