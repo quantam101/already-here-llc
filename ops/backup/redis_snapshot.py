@@ -72,8 +72,15 @@ def create_payload(client, redis_url: str) -> dict:
     entries = []
     seen = set()
     cursor = 0
+    max_scan_calls = int(os.environ.get('BACKUP_MAX_SCAN_CALLS', '20'))
+    if not 1 <= max_scan_calls <= 1000:
+        raise ValueError('BACKUP_MAX_SCAN_CALLS must be between 1 and 1000')
+    scan_calls = 0
 
     while True:
+        if scan_calls >= max_scan_calls:
+            raise RuntimeError('SCAN command budget exhausted; no backup created')
+        scan_calls += 1
         cursor, keys = client.scan(cursor=cursor, count=250)
         for key in keys:
             if key in seen:
