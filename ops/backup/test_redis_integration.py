@@ -8,6 +8,7 @@ from redis_snapshot import create_payload, restore_payload, seal, unseal
 SOURCE = "rediss://synthetic-source.invalid:6379"
 TARGET = "rediss://synthetic-scratch.invalid:6379"
 
+@unittest.skipUnless(os.environ.get('BACKUP_INTEGRATION_REDIS') == '1', 'requires isolated CI Redis service')
 class RedisIntegrationTests(unittest.TestCase):
     def test_binary_ttl_type_and_count_round_trip(self):
         source = Redis(host="127.0.0.1", port=6379, db=14, socket_timeout=5)
