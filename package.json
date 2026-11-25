@@ -37,7 +37,7 @@
     "test:ai-agent": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/ai-agent-lead.test.mjs",
     "test:revenue-mesh": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/revenue-mesh.test.mjs",
     "test:level4": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/level4-resiliency.test.mjs",
-    "test:enterprise": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/enterprise-orchestrator.test.mjs",
+    "test:enterprise": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/enterprise-orchestrator.test.mjs && node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/asi-dispatcher.test.mjs",
     "test:referral-partner": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/referral-partner.test.mjs",
     "test:agent-fleet": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/agent-fleet.test.mjs",
     "test:canonical-upstash": "node --experimental-strip-types --import ./tests/register-next-alias.mjs tests/canonical-store-upstash.test.mjs",

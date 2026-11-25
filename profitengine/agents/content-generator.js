@@ -4,8 +4,9 @@ const Groq = require('groq-sdk');
 const { getTodayTopic } = require('../config/topics');
 const { validatePost, getRecentTitles } = require('../quality-gate');
 
+const { resolveMaxGenerationAttempts } = require('../config/limits');
+
 const AMAZON_TAG = 'alreadyhere-20';
-const MAX_GENERATION_ATTEMPTS = 3;
 
 function slugify(value) {
   return String(value)
@@ -130,7 +131,7 @@ async function generatePost(overrideTopic) {
   const topic = overrideTopic || getTodayTopic(now);
   const dateStr = now.toISOString().split('T')[0];
   const recentTitles = getRecentTitles(30);
-  const maxAttempts = Number(process.env.CONTENT_MAX_ATTEMPTS || MAX_GENERATION_ATTEMPTS);
+  const maxAttempts = resolveMaxGenerationAttempts(process.env.CONTENT_MAX_ATTEMPTS);
   let retryFeedback = '';
   let lastFailure = null;
 

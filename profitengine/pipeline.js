@@ -6,6 +6,7 @@ const { generatePost } = require('./agents/content-generator');
 const filesystemPublisher = require('./publishers/filesystem');
 const devtoPublisher = require('./publishers/devto');
 const githubPublisher = require('./publishers/github');
+const { resolvePostsPerRun } = require('./config/limits');
 
 const POSTS_DB = path.join(__dirname, 'data', 'posts.json');
 
@@ -32,7 +33,7 @@ function requiredPlatforms() {
 }
 
 async function runContentPipeline(options = {}) {
-  const count = options.count || parseInt(process.env.POSTS_PER_RUN || '1', 10);
+  const count = resolvePostsPerRun(options.count || process.env.POSTS_PER_RUN);
   const results = [];
 
   for (let i = 0; i < count; i += 1) {
