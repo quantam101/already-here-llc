@@ -6,9 +6,11 @@ const HARD_MAX_GENERATION_ATTEMPTS = 5;
 const DEFAULT_POSTS_PER_RUN = 1;
 const HARD_MAX_POSTS_PER_RUN = 5;
 
+// Unset uses the default; a set value keeps its meaning (0 or invalid runs nothing) up to the hard cap.
 function boundedInt(value, fallback, hardMax) {
-  const parsed = Number.parseInt(String(value ?? ''), 10);
-  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  if (value === undefined || value === null || value === '') return fallback;
+  const parsed = Number.parseInt(String(value), 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return 0;
   return Math.min(parsed, hardMax);
 }
 

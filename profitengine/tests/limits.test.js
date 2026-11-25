@@ -15,15 +15,17 @@ test('generation attempts keep the default and never exceed the hard cap', () =>
   assert.equal(resolveMaxGenerationAttempts(undefined), 3);
   assert.equal(resolveMaxGenerationAttempts('2'), 2);
   assert.equal(resolveMaxGenerationAttempts('1000'), HARD_MAX_GENERATION_ATTEMPTS);
-  assert.equal(resolveMaxGenerationAttempts('not-a-number'), 3);
-  assert.equal(resolveMaxGenerationAttempts('0'), 3);
+  assert.equal(resolveMaxGenerationAttempts(''), 3);
+  assert.equal(resolveMaxGenerationAttempts('not-a-number'), 0);
+  assert.equal(resolveMaxGenerationAttempts('0'), 0);
 });
 
 test('posts per run keep the default and never exceed the hard cap', () => {
   assert.equal(resolvePostsPerRun(undefined), 1);
   assert.equal(resolvePostsPerRun('2'), 2);
   assert.equal(resolvePostsPerRun(500), HARD_MAX_POSTS_PER_RUN);
-  assert.equal(resolvePostsPerRun('abc'), 1);
+  assert.equal(resolvePostsPerRun('0'), 0);
+  assert.equal(resolvePostsPerRun('abc'), 0);
 });
 
 test('the LLM loops read their bounds from the capped resolvers', () => {
