@@ -1,0 +1,65 @@
+name: Upstash encrypted recovery backup
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 10 * * *' # 03:17 America/Phoenix year-round
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upstash-private-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check required protected secrets
+        env:
+          UPSTASH_REDIS_TCP_URL: ${{ secrets.UPSTASH_REDIS_TCP_URL }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          VERCEL_BLOB_BACKUP_TOKEN: ${{ secrets.VERCEL_BLOB_BACKUP_TOKEN }}
+        run: |
+          test -n "$UPSTASH_REDIS_TCP_URL" || { echo '::error::Missing UPSTASH_REDIS_TCP_URL'; exit 1; }
+          test -n "$BACKUP_ENCRYPTION_KEY" || { echo '::error::Missing BACKUP_ENCRYPTION_KEY'; exit 1; }
+          test -n "$VERCEL_BLOB_BACKUP_TOKEN" || { echo '::error::Missing VERCEL_BLOB_BACKUP_TOKEN'; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install backup-only dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r ops/backup/requirements.txt
+          npm install --prefix ops/backup --ignore-scripts --no-audit --no-fund
+      - name: Verify backup and recovery safety tests
+        run: python -m unittest discover -s ops/backup -p 'test_*.py' -v
+      - name: Create and verify encrypted recovery copy
+        env:
+          UPSTASH_REDIS_TCP_URL: ${{ secrets.UPSTASH_REDIS_TCP_URL }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/redis-backup"
+          SNAPSHOT="$RUNNER_TEMP/redis-backup/already-here-redis-$(date -u +%Y%m%dT%H%M%SZ).aes"
+          python ops/backup/redis_snapshot.py create --file "$SNAPSHOT"
+          python ops/backup/redis_snapshot.py verify --file "$SNAPSHOT"
+          echo "SNAPSHOT=$SNAPSHOT" >> "$GITHUB_ENV"
+      - name: Upload to separate private Vercel Blob store
+        env:
+          VERCEL_BLOB_BACKUP_TOKEN: ${{ secrets.VERCEL_BLOB_BACKUP_TOKEN }}
+        run: node ops/backup/upload.mjs "$SNAPSHOT"
+      - name: Remove ephemeral local copy
+        if: always()
+        run: |
+          if [ -n "${SNAPSHOT:-}" ]; then
+            rm -f -- "$SNAPSHOT"
+          fi
