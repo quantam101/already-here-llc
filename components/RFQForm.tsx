@@ -62,11 +62,20 @@ export function RFQForm() {
     const attributedLeadId = (campaignParams.get('lead_id') || '').trim();
     const validCampaignLeadId = /^AH-CBL-[0-9a-f-]{36}$/.test(attributedLeadId) ? attributedLeadId : '';
     const utmSource = (campaignParams.get('utm_source') || '').slice(0, 100);
+    const cleanParam = (name: string) => {
+      const value = (campaignParams.get(name) || '').trim();
+      return /^[A-Za-z0-9_.-]{1,120}$/.test(value) ? value : '';
+    };
+    const utmCampaign = cleanParam('utm_campaign');
+    const utmContent = cleanParam('utm_content');
+    const adClickId = cleanParam('gclid');
 
     const message = [
       'RFQ / Project-based bid request',
       ...(validCampaignLeadId ? [`Attributed Phoenix cabling guide lead: ${validCampaignLeadId}`] : []),
       ...(utmSource ? [`RFQ referral source: ${utmSource}`] : []),
+      ...(utmCampaign ? [`RFQ campaign: ${utmCampaign}${utmContent ? ` (${utmContent})` : ''}`] : []),
+      ...(adClickId ? [`Google Ads click ID: ${adClickId}`] : []),
       '',
       `Project scope: ${String(sourceData.get('projectScope') || '').trim()}`,
       `Timeline / bid deadline: ${String(sourceData.get('timeline') || '').trim()}`,
