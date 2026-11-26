@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   ENTERPRISE_OPERATIONS,
   buildEnterpriseItem,
@@ -63,18 +64,23 @@ Return ONLY a compact JSON object with no markdown, no explanation, and no comme
 {"operation":"<one of the allowed values>","title":"<short 5-8 word title>","body":"<longer description of the work to perform>"}
 If the objective is unclear, choose "orchestrate" and describe the ambiguity in the body.`;
 
+const dispatchResponseSchema = z.object({
+  operation: z.enum(ENTERPRISE_OPERATIONS as unknown as [EnterpriseOperation, ...EnterpriseOperation[]]),
+  title: z.string().trim().max(200).optional(),
+  body: z.string().trim().max(4000).optional(),
+});
+
 function parseLLMResponse(text: string): { operation: EnterpriseOperation; title: string; body: string } | undefined {
   if (!text) return undefined;
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   const json = jsonMatch ? jsonMatch[0] : text;
   try {
-    const parsed = JSON.parse(json) as Record<string, unknown>;
-    const operation = String(parsed.operation || '');
-    if (!ENTERPRISE_OPERATIONS.includes(operation as EnterpriseOperation)) return undefined;
+    const parsed = dispatchResponseSchema.safeParse(JSON.parse(json));
+    if (!parsed.success) return undefined;
     return {
-      operation: operation as EnterpriseOperation,
-      title: String(parsed.title || 'ASI dispatched objective'),
-      body: String(parsed.body || 'No additional detail provided.'),
+      operation: parsed.data.operation,
+      title: parsed.data.title || 'ASI dispatched objective',
+      body: parsed.data.body || 'No additional detail provided.',
     };
   } catch {
     return undefined;
@@ -93,7 +99,8 @@ export async function dispatchObjective(
       { role: 'system', content: ASI_SYSTEM_PROMPT },
       { role: 'user', content: `Objective: ${objective}` },
     ],
-    500
+    500,
+    { deterministicFallback: false }
   ).catch(() => null);
 
   const parsed = providerOutput ? parseLLMResponse(providerOutput) : undefined;
